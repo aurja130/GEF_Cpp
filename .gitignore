@@ -1,0 +1,72 @@
+# Validation data (large; tracked by SHA-256 manifests under manifests/)
+validation/
+
+# omp agent workspace (machine-specific config, sessions)
+.omp/
+
+# CMake / build trees
+build/
+build-*/
+cmake-build-*/
+out/build/
+CMakeUserPresets.json
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+CTestTestfile.cmake
+Testing/
+_deps/
+compile_commands.json
+.ninja_deps
+.ninja_log
+
+# Compiled objects and binaries
+*.o
+*.obj
+*.a
+*.lib
+*.so
+*.so.*
+*.dylib
+*.dll
+*.exe
+*.out
+*.gch
+*.pch
+
+# Debug, profiling and sanitizer leftovers
+/core
+core.[0-9]*
+vgcore.*
+*.profraw
+*.profdata
+*.gcda
+*.gcno
+*.gcov
+perf.data*
+asan.log*
+ubsan.log*
+tsan.log*
+
+# Language-server and tool caches
+.cache/
+.clangd/
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.venv/
+venv/
+*.egg-info/
+.coverage
+htmlcov/
+
+# Editors and OS
+.vscode/
+.idea/
+*.swp
+*~
+.DS_Store
