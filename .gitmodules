@@ -1,0 +1,6 @@
+[submodule "Reference/GEF_code"]
+	path = Reference/GEF_code
+	url = https://git.oecd-nea.org/gef/code.git
+[submodule "Reference/GEF_data"]
+	path = Reference/GEF_data
+	url = https://git.oecd-nea.org/gef/data.git
