@@ -1,0 +1,14 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Aurora Jahan
+# See LICENSE.txt in the repository root for the full license text.
+#
+# Test-only relaxation of the root .clang-tidy; everything else is inherited unchanged.
+---
+InheritParentConfig: true
+CheckOptions:
+  # Every Catch2 assertion macro (REQUIRE, CHECK, INFO, ...) expands to a try/catch block
+  # with branches, so a test case with a dozen assertions scores ~50 against the threshold
+  # of 25 although its own control flow is trivial. Count only the code written in the test.
+  - key: readability-function-cognitive-complexity.IgnoreMacros
+    value: true
+...

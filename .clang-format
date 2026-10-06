@@ -1,0 +1,45 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Aurora Jahan
+# See LICENSE.txt in the repository root for the full license text.
+#
+# Project C++ style. Checked with: clang-format --dry-run --Werror <files>
+---
+Language: Cpp
+# LLVM style is the base: widely known, stable across clang-format releases.
+BasedOnStyle: LLVM
+# Parse and format with the newest C++ standard rules (the project is C++23).
+Standard: Latest
+# Four-space indentation matches the Python tooling and .editorconfig.
+IndentWidth: 4
+ContinuationIndentWidth: 4
+# Access specifiers sit at the class-keyword column (LLVM default would be -2 with width 2).
+AccessModifierOffset: -4
+# 100 columns: room for long physics expressions and qualified names without wrapping.
+ColumnLimit: 100
+# `double* p`, `int& r`: the pointer/reference belongs to the type.
+PointerAlignment: Left
+DerivePointerAlignment: false
+ReferenceAlignment: Pointer
+# Keep `namespace a::b {` bodies flush left; namespaces are not scopes worth indenting.
+NamespaceIndentation: None
+FixNamespaceComments: true
+# Group includes: own header first (main include), then project headers, then
+# third-party (Catch2), then standard library.
+IncludeBlocks: Regroup
+IncludeCategories:
+  - Regex: '^<catch2/'
+    Priority: 3
+  - Regex: '^<'
+    Priority: 4
+  - Regex: '^"'
+    Priority: 2
+SortIncludes: CaseSensitive
+# Braced initialiser lists are formatted like function calls (LLVM default, stated explicitly).
+Cpp11BracedListStyle: true
+# Short functions only on one line when they are empty or inside a class body.
+AllowShortFunctionsOnASingleLine: Inline
+AllowShortIfStatementsOnASingleLine: Never
+# Always break after template declarations: keeps long template heads readable.
+BreakTemplateDeclarations: Yes
+InsertNewlineAtEOF: true
+...

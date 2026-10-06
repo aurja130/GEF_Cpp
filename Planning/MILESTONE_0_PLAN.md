@@ -1,6 +1,6 @@
 # Milestone 0: Foundations
 
-**Status:** not started
+**Status:** complete (2026-10-06)
 **Strategy reference:** `IMPLEMENTATION_STRATEGY.md` §3, M0
 **Depends on:** nothing
 **Unblocks:** M1 (reference harness), M3 (FreeBASIC runtime emulation), and through them every later milestone
@@ -62,7 +62,7 @@ Planning/
 Tasks are listed in execution order. Mark each one done here when finished, and update `CURRENT_PROJECT_STATE.md` (see `.omp/AGENTS.md`).
 
 ### M0.1 Save the planning-session code maps
-- [ ] Copy the six code-mapping reports from the planning session into `Planning/code_maps/`, one Markdown file each:
+- [x] Copy the six code-mapping reports from the planning session into `Planning/code_maps/`, one Markdown file each:
   - `control_flow.md`
   - `physics_core.md`
   - `data_layer.md`
@@ -71,7 +71,7 @@ Tasks are listed in execution order. Mark each one done here when finished, and 
   - `outputs.md`
 
   They currently exist only in the session store under `.omp/sessions/`.
-- [ ] Add a short `README.md` there: what each map covers, the source commit (`ba9f0aa`), and the claims since corrected:
+- [x] Add a short `README.md` there: what each map covers, the source commit (`ba9f0aa`), and the claims since corrected:
   - 46 perturbed parameters, not 48;
   - `GEFSUB` is dead code;
   - `ctl/` in `test_run` holds all three control files.
@@ -87,76 +87,76 @@ Tasks are listed in execution order. Mark each one done here when finished, and 
   - clangd caches, Python caches and virtual environments, and editor files.
 
   Checked with `git check-ignore`: `Planning/` and `Cpp_implementation/src/core/` are not ignored.
-- [ ] Add `.editorconfig`, `.clang-format` (project style, C++23), and `.clang-tidy` (bugprone, cert, cppcoreguidelines, modernize, performance, readability, with documented exclusions).
-- [ ] Fix `.omp/lsp.json`: clangd currently points at `--compile-commands-dir=build/match_simulation`, which belongs to another project. Point it at this project's preset build directory and export `compile_commands.json` from CMake.
-- [ ] Extend `.omp/LOCAL_ENVIRONMENT.md` with FreeBASIC (path, version), Universal Ctags, clang-format, and glibc 2.43.
+- [x] Add `.editorconfig`, `.clang-format` (project style, C++23), and `.clang-tidy` (bugprone, cert, cppcoreguidelines, modernize, performance, readability, with documented exclusions).
+- [x] Fix `.omp/lsp.json`: clangd currently points at `--compile-commands-dir=build/match_simulation`, which belongs to another project. Point it at this project's preset build directory and export `compile_commands.json` from CMake.
+- [x] Extend `.omp/LOCAL_ENVIRONMENT.md` with FreeBASIC (path, version), Universal Ctags, clang-format, and glibc 2.43.
 
 **Done when:** clangd resolves the M0 C++ sources through `xd://lsp` with no unresolved includes.
 
 ### M0.3 Toolchain pin and check
-- [ ] `tools/toolchain/check_toolchain.py` verifies minimum versions and reports exact versions for: GCC, Clang, CMake, Ninja, Python, ruff, basedpyright, pytest, clang-tidy, clang-format, ctags, fbc. It also reports the glibc version.
-- [ ] fbc is resolved from `GEF_FBC`, falling back to `~/Downloads/FreeBASIC-1.10.1-linux-x86_64/bin/fbc`. The check confirms that `fbc -version` reports 1.10.1 and, when the tarball is present, that its SHA-256 matches `844aa9e997f9ff93566a28f05c502cf24f5aefefc64c4aca0e7a304994f508bc`.
-- [ ] Capture fbc's backend invocation (`fbc -v` on a one-line program). Store the gcc command line, the `as`/`ld` commands and the system `gcc --version` in `manifests/toolchain.txt`. The known `libtinfo`/`ospeed` warnings are filtered out and recorded as harmless.
+- [x] `tools/toolchain/check_toolchain.py` verifies minimum versions and reports exact versions for: GCC, Clang, CMake, Ninja, Python, ruff, basedpyright, pytest, clang-tidy, clang-format, ctags, fbc. It also reports the glibc version.
+- [x] fbc is resolved from `GEF_FBC`, falling back to `~/Downloads/FreeBASIC-1.10.1-linux-x86_64/bin/fbc`. The check confirms that `fbc -version` reports 1.10.1 and, when the tarball is present, that its SHA-256 matches `844aa9e997f9ff93566a28f05c502cf24f5aefefc64c4aca0e7a304994f508bc`.
+- [x] Capture fbc's backend invocation (`fbc -v` on a one-line program). Store the gcc command line, the `as`/`ld` commands and the system `gcc --version` in `manifests/toolchain.txt`. The known `libtinfo`/`ospeed` warnings are filtered out and recorded as harmless.
 
 **Done when:** the check passes on this machine, and fails with a clear message when `GEF_FBC` points at a missing or wrong fbc.
 
 ### M0.4 C++ skeleton and exact-mode build policy
-- [ ] Top-level `CMakeLists.txt` with targets:
+- [x] Top-level `CMakeLists.txt` with targets:
   - `gef_fbrt` (library);
   - `gef` (CLI).
-- [ ] Shared compile options as an interface target, `gef_exact_fp`, so every later target inherits the floating-point flags in §2.
-- [ ] `CMakePresets.json` with four presets:
+- [x] Shared compile options as an interface target, `gef_exact_fp`, so every later target inherits the floating-point flags in §2.
+- [x] `CMakePresets.json` with four presets:
   - `dev-gcc`: Debug;
   - `dev-clang`: Debug;
   - `asan-ubsan`: GCC with `-fsanitize=address,undefined -fno-omit-frame-pointer`;
   - `release-exact`: GCC, optimised, exact flags.
-- [ ] `gef_fbrt`: `fp_environment` module, a runtime self-check of the assumptions exact mode depends on:
+- [x] `gef_fbrt`: `fp_environment` module, a runtime self-check of the assumptions exact mode depends on:
   - `FLT_EVAL_METHOD == 0`;
   - IEEE 754 `float`/`double` (`std::numeric_limits<T>::is_iec559`);
   - rounding mode is to-nearest at start-up;
   - no FMA contraction: a known `a*b+c` case that rounds differently with and without FMA gives the non-FMA result.
-- [ ] `gef --version` prints the project version, git revision, compiler and version, build preset, the floating-point flags compiled in, and the `fp_environment` verdict. M1/M2 manifests record this output for every C++ run.
+- [x] `gef --version` prints the project version, git revision, compiler and version, build preset, the floating-point flags compiled in, and the `fp_environment` verdict. M1/M2 manifests record this output for every C++ run.
 
 **Done when:** all four presets configure and build with zero warnings, and `gef --version` reports a passing floating-point environment for each preset.
 
 ### M0.5 Test infrastructure
-- [ ] Catch2 v3 via `FetchContent`, pinned to a release tag and archive hash, registered with CTest through `catch_discover_tests`.
-- [ ] Tag convention:
+- [x] Catch2 v3 via `FetchContent`, pinned to a release tag and archive hash, registered with CTest through `catch_discover_tests`.
+- [x] Tag convention:
   - `[unit]` for implementation tests;
   - `[T0]`…`[T5]` for differential and integral tiers;
   - `[slow]` for anything over 10 s.
 
   CTest labels mirror the tags, so `ctest -L T1` runs one tier.
-- [ ] Tests for `fp_environment`. Each assumption gets one test that would fail on a contracting or fast-math build.
-- [ ] Negative check, performed once and recorded in the plan's completion notes: building the FMA test with `-mfma -ffp-contract=fast` makes it fail.
+- [x] Tests for `fp_environment`. Each assumption gets one test that would fail on a contracting or fast-math build.
+- [x] Negative check, performed once and recorded in the plan's completion notes: building the FMA test with `-mfma -ffp-contract=fast` makes it fail.
 
 **Done when:** `ctest --preset <each>` passes, and the negative check is observed and recorded.
 
 ### M0.6 Python tooling environment
-- [ ] `pyproject.toml` for the in-repo tooling packages (`tools/` now; `harness/` and `compare/` later):
+- [x] `pyproject.toml` for the in-repo tooling packages (`tools/` now; `harness/` and `compare/` later):
   - ruff settings (lint and format);
   - basedpyright in strict mode for new code;
   - pytest configuration.
-- [ ] Dependencies declared: NumPy and SciPy (already installed). Nothing new needs installing for M0.
+- [x] Dependencies declared: NumPy and SciPy (already installed). Nothing new needs installing for M0.
 
 **Done when:** `ruff check`, `ruff format --check`, `basedpyright` and `pytest` all run cleanly on the M0 Python code.
 
 ### M0.7 BASIC-source tooling (FreeBASIC → C translation, line lookup, symbol index)
 This task carries the tooling folded in from the LSP discussion. It is the main way to work out what a BASIC line computes, and it must be usable for every later milestone.
 
-- [ ] `tools/fbsrc/emit_c.py`:
+- [x] `tools/fbsrc/emit_c.py`:
   1. Copies `Reference/GEF_code/source/` into `build/fbsrc/<submodule-rev>/src/`. The submodule is never written to.
   2. Runs `fbc -gen gcc -R -g -c GEF.bas` there.
   3. Keeps `GEF.c`.
   4. Writes `build/fbsrc/<rev>/manifest.json`: fbc path and version, the full command line, submodule revision, SHA-256 of `GEF.c`, and wall time.
 
   Accepts `--patch-dir` so M1 can emit C from patched harness copies with the same tool.
-- [ ] `tools/fbsrc/fbline.py <file>:<line>[-<line>]`: prints the BASIC source line(s) and the C statements generated from them, found through the `#line` directives. Works for included files (e.g. `Spectra.bas:1505`, `ENDF.bas:1170`) as well as `GEF.bas`. Optional flags:
+- [x] `tools/fbsrc/fbline.py <file>:<line>[-<line>]`: prints the BASIC source line(s) and the C statements generated from them, found through the `#line` directives. Works for included files (e.g. `Spectra.bas:1505`, `ENDF.bas:1170`) as well as `GEF.bas`. Optional flags:
   - `--context N`;
   - `--raw`, to keep tabs and temporaries;
   - `--symbols`, to annotate fbc-mangled names (`E_INTR_HEAVY$`) with their BASIC spelling.
-- [ ] `tools/fbsrc/fbdef.py <name>`: case-insensitive definition lookup from a Universal Ctags index of all 38 `.bas`/`.bi`/`.mac` files (`--map-Basic=+.bi --map-Basic=+.mac`). Reports kind (function, label, variable, type, constant), file and line. With `--refs`, it also lists case-insensitive whole-word references, so `E_MIN` and `E_min` resolve to the same symbol.
-- [ ] pytest suite for the three tools, using the facts established during planning as fixtures:
+- [x] `tools/fbsrc/fbdef.py <name>`: case-insensitive definition lookup from a Universal Ctags index of all 38 `.bas`/`.bi`/`.mac` files (`--map-Basic=+.bi --map-Basic=+.mac`). Reports kind (function, label, variable, type, constant), file and line. With `--refs`, it also lists case-insensitive whole-word references, so `E_MIN` and `E_min` resolve to the same symbol.
+- [x] pytest suite for the three tools, using the facts established during planning as fixtures:
   - `fbline GEF.bas:8392` shows the division done in `double` and narrowed with `(float)`.
   - `fbline GEF.bas:9417` shows the discarded `EGAMMA(...)` call with a comparison argument.
   - `fbdef PGauss` → `GEF.bas:17956`; `fbdef calcstart` → label at `GEF.bas:4811`; `fbdef E_tunn` → `GEF.bas:791`.
@@ -165,21 +165,21 @@ This task carries the tooling folded in from the LSP discussion. It is the main 
 **Done when:** the fixtures pass, a full emit takes under 60 s (measured about 11 s during planning), and the README in `tools/fbsrc/` documents the usage.
 
 ### M0.8 Validation data manifests
-- [ ] `tools/toolchain/manifest_validation.py` writes `manifests/validation_reference.sha256` (all 382 reference tapes plus the two sequence files) and `manifests/validation_test_run.sha256` (the binary, `run.log`, the ENDF tape, `out/`, `dmp/` and `tmp/`).
-- [ ] It also verifies those manifests and reports missing, changed or extra files.
-- [ ] Record in the manifest header that `validation/test_run/` is **not** a clean run: it has stale `ctl/` and a two-tape ENDF file. It must be used as recorded evidence only, never as a working directory.
+- [x] `tools/toolchain/manifest_validation.py` writes `manifests/validation_reference.sha256` (all 382 reference tapes plus the two sequence files) and `manifests/validation_test_run.sha256` (the binary, `run.log`, the ENDF tape, `out/`, `dmp/` and `tmp/`).
+- [x] It also verifies those manifests and reports missing, changed or extra files.
+- [x] Record in the manifest header that `validation/test_run/` is **not** a clean run: it has stale `ctl/` and a two-tape ENDF file. It must be used as recorded evidence only, never as a working directory.
 
 **Done when:** the manifests are committed-ready and verification passes against the current files.
 
 ### M0.9 Living project documents
-- [ ] **`Planning/CODING_STANDARDS.md`**:
+- [x] **`Planning/CODING_STANDARDS.md`**:
   - C++ conventions: naming, ownership, no mutable globals, explicit `Rng&` parameters, `float` for BASIC `Single` and `double` for BASIC `Double`, every conversion through `fb::` helpers once M3 provides them.
   - Provenance comments: `// GEF.bas:8392` on every ported statement group.
   - Quirk annotations: `// QUIRK(Q-0xx)`, linked to the register.
   - Test naming and tier tags.
   - Python conventions.
   - Commit hygiene: commits only when the user asks.
-- [ ] **`Planning/QUIRKS.md`**: register format (ID, BASIC location, observed or expected effect, evidence status: *confirmed in output* / *confirmed by fbc C* / *read only*, fidelity switch name, owning milestone). Seed it with the quirks already identified, at minimum:
+- [x] **`Planning/QUIRKS.md`**: register format (ID, BASIC location, observed or expected effect, evidence status: *confirmed in output* / *confirmed by fbc C* / *read only*, fidelity switch name, owning milestone). Seed it with the quirks already identified, at minimum:
 
   | Seed | Location | Short description |
   |---|---|---|
@@ -210,12 +210,12 @@ This task carries the tooling folded in from the LSP discussion. It is the main 
   | Outputs opened `For Append`, `ctl/` never cleaned | `GEF.bas:10077`, `ENDF.bas:676` | Two-tape ENDF file in `test_run` |
 
   Every seed entry is checked against the source with `fbline` (M0.7) before it is added. Entries not confirmable in M0 are marked *read only*, with the milestone that will confirm them.
-- [ ] **`Planning/COVERAGE_MATRIX.md`**: rows are the dimensions in vision §4.4 (system classes, kinds of fission, energy regimes and thresholds, options, observables, internal behaviours). Columns are the tiers T0–T5. Each cell holds status (*uncovered* / *planned (Mxx)* / *covered (test id)*). Initial state: every cell *uncovered* or *planned* with its owning milestone from the strategy.
+- [x] **`Planning/COVERAGE_MATRIX.md`**: rows are the dimensions in vision §4.4 (system classes, kinds of fission, energy regimes and thresholds, options, observables, internal behaviours). Columns are the tiers T0–T5. Each cell holds status (*uncovered* / *planned (Mxx)* / *covered (test id)*). Initial state: every cell *uncovered* or *planned* with its owning milestone from the strategy.
 
 **Done when:** the three documents exist, the quirk seeds are verified as described, and every matrix cell has an owning milestone or an explicit "deferred — needs user approval" mark.
 
 ### M0.10 Local CI entry point
-- [ ] `scripts/ci.sh` runs, in order:
+- [x] `scripts/ci.sh` runs, in order:
   1. toolchain check (M0.3);
   2. configure, build and test for `dev-gcc`, `dev-clang` and `asan-ubsan`;
   3. clang-tidy over `Cpp_implementation/src`;
@@ -230,13 +230,13 @@ This task carries the tooling folded in from the LSP discussion. It is the main 
 **Done when:** `scripts/ci.sh` passes from a clean checkout plus `build/` deletion, and a deliberately introduced warning makes it fail.
 
 ### M0.11 Close-out
-- [ ] Update `IMPLEMENTATION_STRATEGY.md` if any decision here changed it.
-- [ ] Update `CURRENT_PROJECT_STATE.md` with:
+- [x] Update `IMPLEMENTATION_STRATEGY.md` if any decision here changed it.
+- [x] Update `CURRENT_PROJECT_STATE.md` with:
   - what exists now;
   - the CI command;
   - the tool usage (`emit_c`, `fbline`, `fbdef`);
   - open risks.
-- [ ] Mark this plan complete.
+- [x] Mark this plan complete.
 
 ## 5. Exit gate (all must hold)
 
@@ -273,4 +273,34 @@ This task carries the tooling folded in from the LSP discussion. It is the main 
 
 ## 8. Completion notes
 
-*(Filled in when M0 closes: dates, measured timings, the FMA negative-check observation, deviations from this plan.)*
+Closed 2026-10-06 (started and finished the same day).
+
+**Exit gate.**
+
+| # | Gate | Result |
+|---|---|---|
+| 1 | `scripts/ci.sh` passes | Full run from an empty `build/`: all 11 steps PASS in 89 s (toolchain 0 s, dev-gcc 10 s, dev-clang 11 s, asan-ubsan 13 s, clang-tidy 3 s, clang-format 1 s, ruff 0 s, basedpyright 1 s, pytest 49 s, manifests 1 s). Warm run about 25 s. With a deliberately added `float f(double x) { return x; }` in `fp_environment.cpp`, `scripts/ci.sh --quick` failed at `build-test-dev-gcc` (`-Werror=float-conversion`) and exited 1 |
+| 2 | Four presets build with zero warnings | `dev-gcc`, `dev-clang`, `asan-ubsan`, `release-exact`: 0 warnings; `ctest --preset <each>` 7/7 passed |
+| 3 | `gef --version` passes for each preset | `fp_environment verdict: PASS` for all four (GNU 16.2.1 ×3, Clang 22.1.8) |
+| 4 | FMA negative check observed | See below |
+| 5 | `fbline`/`fbdef` facts and deterministic emission | pytest fixtures pass; repeated emission gives `GEF.c` SHA-256 `cf0c88ea…40ff4` every time |
+| 6 | Validation manifests verify | 384 reference files and 1719 test-run files verify (0.4 s warm); GNU `sha256sum -c --strict` also accepts both |
+| 7 | Documents exist | `Planning/code_maps/` (6 maps + README), `QUIRKS.md`, `COVERAGE_MATRIX.md`, `CODING_STANDARDS.md` |
+| 8 | clangd resolves the C++ sources | `xd://lsp` diagnostics: no issues in all three `.cpp` files; go-to-definition from `main.cpp` resolves `check_fp_environment` in `fp_environment.cpp` |
+
+**FMA negative check (M0.5).** Throwaway build tree `build/negative-fma` (GCC, Release), with `-mfma -ffp-contract=fast` appended after the target flags by overriding `CMAKE_CXX_COMPILE_OBJECT` (in `CMAKE_CXX_FLAGS` they would be overridden by `gef_exact_fp`'s `-ffp-contract=off`). Result: `fbrt: a*b+c is not contracted to a fused multiply-add` FAILED with `double (1+2^-27)(1-2^-27) - 1 = -0x1p-54; float (1+2^-13)(1-2^-13) - 1 = -0x1p-26` (the unfused results are 0); the combined-report test and the `gef --version` CTest also failed (3 of 7 tests), and `gef --version` printed `[FAIL] no_fma_contraction` with verdict FAIL. A second throwaway configuration with `-ffast-math` failed 6 of 7 tests (`NaN != NaN = false`, `__FAST_MATH__` defined). The tree was deleted afterwards.
+
+**Measured timings.** Full `GEF.c` emission: fbc step 11.5–17.6 s depending on machine load (limit 60 s); `fbline` about 0.7 s per call and `fbdef` 0.6–0.9 s once `GEF.c` and the index exist; toolchain check about 1.5 s; manifest verify 0.4 s with a warm page cache.
+
+**Deviations and additions.**
+- **Determinism of C emission needed `SOURCE_DATE_EPOCH`.** `GEF.bas:17` embeds `__DATE_ISO__`/`__TIME__`, so two plain emissions differed. `emit_c` sets `SOURCE_DATE_EPOCH` to the submodule commit time (recorded in the manifest). fbc also writes absolute `#line` paths for included files, so the manifest records a path-normalised hash as well (`QUIRKS.md` B-003).
+- **Patch-directory format** (for M1): unified diffs `*.patch`/`*.diff`, applied in name order with `patch -p1`; the emission key gets a `-p<hash>` suffix.
+- **`fbdef` corrects the ctags Basic parser**, which misses `Static` declarations, `ReDim`-only arrays and `#Define`, mis-tags `Const As Single pi`, and creates labels from comments.
+- **fbc backend flags include `-fwrapv -fno-strict-aliasing`**, which are not in §2's exact-mode list. They do not affect floating point; recorded as `QUIRKS.md` B-002 for M3.
+- **fbc reassociates multiplication chains** and applies literals last (found while checking the quirk seeds); recorded as `QUIRKS.md` B-004. The coding standards already require porting from the generated C.
+- **Quirk seeds:** the seed table has 25 rows; the isomer row was split into two entries (Q-013, Q-014), three entries were added from the vision and strategy (Q-027–Q-029), and the `Parameters.bas` re-include was merged into Q-018. 15 seed locations were corrected and 7 seed claims refined, each with evidence in the register (e.g. `MyParameters.dat` is ignored in every mode, not only batch; the `J_attempt` retry can count an event up to four times).
+- **Coverage matrix:** 114 rows; 424 cells planned, 259 n/a with a reason, 1 deferred (the `Static Ntimes` negative-TKE guard at T4) pending user approval.
+- **CTest `noTestsAction=error`** in the test presets: a label filter that matches nothing (e.g. `-L T1` today) fails instead of passing silently.
+- **Clang and `-fexcess-precision=standard`:** accepted, but on Clang it only governs `_Float16`/`__bf16`; `FLT_EVAL_METHOD == 0` is checked at run time instead.
+- **License notices:** every source file carries an SPDX MIT notice (`.omp/AGENTS.md`, `CODING_STANDARDS.md` §1).
+- `IMPLEMENTATION_STRATEGY.md` needed no change: no decision in this plan altered it.

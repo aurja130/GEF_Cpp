@@ -1,0 +1,64 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Aurora Jahan
+# See LICENSE.txt in the repository root for the full license text.
+
+# Python tooling for the GEF C++ port. The packages are run in place from the
+# repository root (`python3 -m tools.<package>.<module>`); nothing is installed.
+# `harness/` (M1) and `compare/` (M2) join `tools/` when their milestones start.
+
+[project]
+name = "gef-cpp-tooling"
+version = "0.0.0"
+description = "Build, reference and comparison tooling for the GEF C++ port"
+license = "MIT"
+license-files = ["LICENSE.txt"]
+requires-python = ">=3.14"
+dependencies = [
+    "numpy>=2.4",
+    "scipy>=1.17",
+]
+
+[project.optional-dependencies]
+dev = [
+    "basedpyright>=1.39",
+    "pytest>=9.1",
+    "ruff>=0.16",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py314"
+src = ["."]
+include = ["tools/**/*.py"]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "N",   # pep8-naming
+    "UP",  # pyupgrade
+    "B",   # flake8-bugbear
+    "SIM", # flake8-simplify
+    "PTH", # use pathlib
+    "RUF", # ruff-specific
+]
+
+[tool.ruff.format]
+quote-style = "double"
+
+[tool.basedpyright]
+include = ["tools"]
+pythonVersion = "3.14"
+typeCheckingMode = "strict"
+reportMissingModuleSource = false
+
+[tool.pytest.ini_options]
+testpaths = ["tools"]
+pythonpath = ["."]
+addopts = ["--import-mode=importlib", "-ra", "--strict-markers"]
+markers = [
+    "fbc: needs the pinned FreeBASIC compiler (GEF_FBC or the default path)",
+    "slow: takes more than 10 s",
+]

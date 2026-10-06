@@ -1,0 +1,23 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Aurora Jahan
+// See LICENSE.txt in the repository root for the full license text.
+
+// Template for the generated build_info.cpp (configure_file @ONLY in src/app/CMakeLists.txt).
+
+#include "app/build_info.hpp"
+
+namespace gef::app {
+
+BuildInfo build_info() noexcept {
+    return BuildInfo{
+        .project_version = "@PROJECT_VERSION@",
+        .compiler_id = "@CMAKE_CXX_COMPILER_ID@",
+        .compiler_version = "@CMAKE_CXX_COMPILER_VERSION@",
+        .build_preset = "@GEF_BUILD_PRESET@",
+        .build_type = "@CMAKE_BUILD_TYPE@",
+        .exact_fp_flags = "@GEF_EXACT_FP_FLAGS_TEXT@",
+        .general_cxx_flags = "@GEF_GENERAL_CXX_FLAGS_TEXT@",
+    };
+}
+
+} // namespace gef::app

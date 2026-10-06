@@ -1,0 +1,28 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Aurora Jahan
+# See LICENSE.txt in the repository root for the full license text.
+
+# Catch2 v3, pinned by release tag and archive SHA-256. Downloaded once at first configure.
+# SYSTEM: Catch2 headers are system headers for our targets, so our warning set does not
+# apply to them; Catch2 itself is built without gef_warnings.
+include(FetchContent)
+FetchContent_Declare(Catch2
+    URL https://github.com/catchorg/Catch2/archive/refs/tags/v3.16.0.tar.gz
+    URL_HASH SHA256=0957cae5821b17ce07f0833aaa52b5137643a8382203221f363a8303c109af34
+    DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+    SYSTEM
+    EXCLUDE_FROM_ALL)
+FetchContent_MakeAvailable(Catch2)
+list(APPEND CMAKE_MODULE_PATH "${catch2_SOURCE_DIR}/extras")
+include(Catch)
+
+add_executable(gef_tests
+    fp_environment_test.cpp)
+target_link_libraries(gef_tests PRIVATE gef_fbrt Catch2::Catch2WithMain)
+gef_apply_policy(gef_tests)
+
+# Test tags become CTest labels ([unit] -> unit, [T1] -> T1), so `ctest -L T1` runs one tier.
+# PRE_TEST discovery lists the tests when CTest runs, not as a build step.
+catch_discover_tests(gef_tests
+    ADD_TAGS_AS_LABELS
+    DISCOVERY_MODE PRE_TEST)

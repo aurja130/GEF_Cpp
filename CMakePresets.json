@@ -1,0 +1,123 @@
+{
+  "version": 10,
+  "cmakeMinimumRequired": {
+    "major": 4,
+    "minor": 0,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "base",
+      "hidden": true,
+      "$comment": "Common settings. GEF_BUILD_PRESET records the preset name for gef --version.",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "cacheVariables": {
+        "GEF_BUILD_PRESET": "${presetName}",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+      }
+    },
+    {
+      "name": "gcc",
+      "hidden": true,
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_CXX_COMPILER": "g++"
+      }
+    },
+    {
+      "name": "dev-gcc",
+      "displayName": "GCC Debug",
+      "description": "Primary compiler (shares fbc's gcc code generation), Debug, exact-mode FP flags",
+      "inherits": "gcc",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "dev-clang",
+      "displayName": "Clang Debug",
+      "description": "Second compiler for warnings and portability, Debug; feeds clangd and clang-tidy",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_CXX_COMPILER": "clang++",
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "asan-ubsan",
+      "displayName": "GCC AddressSanitizer + UndefinedBehaviorSanitizer",
+      "description": "GCC Debug with ASan and UBSan; -fno-sanitize-recover=all makes any UB fail the test",
+      "inherits": "gcc",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_CXX_FLAGS": "-fsanitize=address,undefined -fno-omit-frame-pointer -fno-sanitize-recover=all",
+        "CMAKE_EXE_LINKER_FLAGS": "-fsanitize=address,undefined",
+        "CMAKE_SHARED_LINKER_FLAGS": "-fsanitize=address,undefined"
+      }
+    },
+    {
+      "name": "release-exact",
+      "displayName": "GCC Release, exact mode",
+      "description": "GCC, optimised (Release), exact-mode FP flags",
+      "inherits": "gcc",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "dev-gcc",
+      "configurePreset": "dev-gcc"
+    },
+    {
+      "name": "dev-clang",
+      "configurePreset": "dev-clang"
+    },
+    {
+      "name": "asan-ubsan",
+      "configurePreset": "asan-ubsan"
+    },
+    {
+      "name": "release-exact",
+      "configurePreset": "release-exact"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "base",
+      "hidden": true,
+      "output": {
+        "outputOnFailure": true
+      },
+      "execution": {
+        "noTestsAction": "error"
+      }
+    },
+    {
+      "name": "dev-gcc",
+      "inherits": "base",
+      "configurePreset": "dev-gcc"
+    },
+    {
+      "name": "dev-clang",
+      "inherits": "base",
+      "configurePreset": "dev-clang"
+    },
+    {
+      "name": "asan-ubsan",
+      "inherits": "base",
+      "configurePreset": "asan-ubsan",
+      "environment": {
+        "ASAN_OPTIONS": "detect_leaks=1:abort_on_error=1",
+        "UBSAN_OPTIONS": "print_stacktrace=1:halt_on_error=1"
+      }
+    },
+    {
+      "name": "release-exact",
+      "inherits": "base",
+      "configurePreset": "release-exact"
+    }
+  ]
+}

@@ -1,7 +1,7 @@
 # GEF in C++: Current Project State
 
 **As of:** 2026-10-06
-**Phase:** M0 planned (`Planning/MILESTONE_0_PLAN.md`), not started. No C++ code exists.
+**Phase:** M0 (Foundations) complete (`Planning/MILESTONE_0_PLAN.md`). Next: plans for M1 (reference harness) and M2 (comparison toolkit); M3 (FreeBASIC runtime emulation) can start in parallel. No GEF physics has been ported yet.
 
 ## 1. Summary
 
@@ -9,18 +9,24 @@
 |---|---|
 | Vision | Written: `Planning/GEF_CPP_VISION.md` |
 | Implementation strategy | Written: `Planning/IMPLEMENTATION_STRATEGY.md`, 19 milestones (M0–M18) |
-| Milestone plan files (`Planning/MILESTONE_<n>_PLAN.md`) | M0 written; M1–M18 not started |
-| C++ implementation (`Cpp_implementation/`) | Empty directory |
-| Reference harness (`harness/`) | Not started |
-| Comparison toolkit (`compare/`) | Not started; one ad-hoc analysis done (§4) |
-| Quirk register / coverage matrix | Not created; scheduled for M0 |
-| Version control | One commit (`28bc926`, adds the submodules). `.gitignore` (now covering `validation/`, `.omp/` and C++/Python build artifacts) and `Planning/` are untracked and uncommitted |
+| Milestone plan files (`Planning/MILESTONE_<n>_PLAN.md`) | M0 written and complete; M1–M18 not started |
+| C++ implementation (`Cpp_implementation/`) | Build skeleton: `gef_fbrt` library (floating-point environment self-check) and `gef` CLI (`--version`); Catch2 tests; four CMake presets |
+| Python tooling (`tools/`) | Toolchain check and fbc pin, validation-data manifests, BASIC-source tools (`emit_c`, `fbline`, `fbdef`) |
+| Local CI | `scripts/ci.sh` (full) and `scripts/ci.sh --quick` |
+| Reference harness (`harness/`) | Not started (M1) |
+| Comparison toolkit (`compare/`) | Not started (M2); one ad-hoc analysis done (§4) |
+| Quirk register | `Planning/QUIRKS.md`: 29 quirks (Q-001–Q-029) and 4 build notes (B-001–B-004) |
+| Coverage matrix | `Planning/COVERAGE_MATRIX.md`: 114 rows × T0–T5; no cell covered yet; one cell deferred pending user approval |
+| Coding standards | `Planning/CODING_STANDARDS.md` |
+| Code maps | `Planning/code_maps/`: the six planning-session reports, with a README listing corrected claims |
+| Version control | `.omp/` and `validation/` are gitignored; everything else of M0 is committed |
 
 ## 2. Repository inventory
 
 ### 2.1 BASIC reference: `Reference/GEF_code` (submodule)
 - Pinned at `ba9f0aa`. `git describe` reports `2023-V3.2-12-gba9f0aa`, but the source declares `C_GEF_Version = "2025/1.2"` (`GEF.bas:3`). The tag name is stale; the code is 2025/1.2.
-- Source: `source/` holds about 88k lines.
+- Licensed GPL-3.0 (`Reference/GEF_code/LICENSE`); this repository is MIT (`LICENSE.txt`).
+- Source: `source/` holds about 88k lines in 40 files (38 `.bas`/`.bi`/`.mac` plus 2 `.dat`).
   - `GEF.bas` has 18,176 lines: module-level main program at 1–15670, functions at 15691–18176.
   - About 45k lines are `DATA` tables.
 - Prebuilt binaries: `binaries/GEF64` (SHA-256 prefix `e4228385d276efad`), `GEF32`, `GEF.exe`.
@@ -40,7 +46,9 @@
 | `test_run/gef_reference` | Linux x86-64 BASIC binary built 2026-09-15 with debug info (SHA-256 prefix `1942e588a32e29a1`). It is a different build from `binaries/GEF64` |
 | `test_run/` outputs | One BASIC run of Rn-215 (n,f), 59 energies: `out/`, `dmp/` (59 energy folders × 27 analyzers), `tmp/` (`ptb`, `_Single.mvd`, `par`, `CUMU`), `ENDF/GEFY_86_214_n.dat`, `run.log` |
 
-**Caveats about `test_run/`:**
+**Checksums:** `manifests/validation_reference.sha256` (384 files: 382 tapes and 2 sequence files) and `manifests/validation_test_run.sha256` (1719 files: binary, `run.log`, ENDF tape, `out/`, `dmp/`, `tmp/`). Verify with `python3 -m tools.toolchain.manifest_validation verify`, or with GNU `sha256sum -c --strict` from inside `validation/` (that cannot detect extra files). `test_run/in/`, `file.in` and the empty `BestFit/`, `External/`, `GRAF/` are not covered, as the M0 plan specified.
+
+**Caveats about `test_run/`** (also recorded in the manifest header):
 - It is **not** a clean working directory.
 - `ctl/` still holds `thread.ctl`, `done.ctl` and `sync.ctl`.
 - The ENDF file contains two concatenated tapes:
@@ -50,39 +58,56 @@
 
 ### 2.4 Toolchain on this workstation
 
-| Tool | Status |
+Recorded in `manifests/toolchain.txt`; checked by `python3 -m tools.toolchain.check_toolchain` (about 1.5 s).
+
+| Tool | Version |
 |---|---|
-| FreeBASIC 1.10.1 | Present at `~/Downloads/FreeBASIC-1.10.1-linux-x86_64`. Compiles and runs, with harmless `libtinfo` warnings. **Not on PATH** |
-| GCC 16.2.1, Clang 22.1.8 | Available |
-| CMake 4.3.0, Ninja | Available |
-| Python 3, NumPy 2.4.6, SciPy 1.17.1 | Available |
-| Meson, Conan, vcpkg | Not installed (not required by the strategy) |
+| GCC (primary), Clang | 16.2.1, 22.1.8 |
+| CMake, Ninja | 4.3.0, 1.13.2 |
+| clang-tidy, clang-format, clangd | 22.1.8 |
+| Python, ruff, basedpyright, pytest | 3.14.7, 0.16.6, 1.39.10, 9.1.1 (NumPy 2.4.6, SciPy 1.17.1) |
+| Universal Ctags | 6.2.1 |
+| glibc; GNU as/ld | 2.43; 2.46.1 |
+| FreeBASIC fbc | 1.10.1 at `~/Downloads/FreeBASIC-1.10.1-linux-x86_64` (not on PATH; override with `GEF_FBC`). Tarball SHA-256 `844aa9e9…08bc` verified. Prints harmless `libtinfo`/`ospeed` loader warnings, which the tools filter |
+| Catch2 | v3.16.0, fetched by CMake `FetchContent`, pinned by archive SHA-256 |
 | CPU | 20 cores |
-| Universal Ctags 6.2.1 | Available. Its `Basic` parser indexes the GEF sources correctly (functions, subs, `GoTo` labels, `Dim Shared` globals) |
-| FreeBASIC LSP server | None exists (not in the official LSP server list; the best editor tooling is an in-process VS Code extension that omp cannot use) |
 
-**FreeBASIC → C translation (checked 2026-10-06).**
-- `fbc -gen gcc -R -g -c GEF.bas`, run on a copy of `source/`, takes about 11 s.
-- It produces a 230k-line `GEF.c` with about 100k `#line` directives that map back to `GEF.bas` and the include files.
-- The C shows the exact type promotions and casts. For example, `GEF.bas:8392` (`I_A_heavy_sci/I_A_sci`) becomes a double division, and the `Egamma(N) = Egamma(N) + 1` no-op at `GEF.bas:9417` becomes a discarded accessor call with a boolean argument.
-- This translation is the planned semantic reference for porting. It is not yet scripted into the repository.
+**fbc backend (captured with `fbc -v`):** `gcc -m64 -march=x86-64 -S -nostdlib -nostdinc -Wall -Wno-unused -Wno-main -Werror-implicit-function-declaration -O0 -fno-strict-aliasing -frounding-math -fno-math-errno -fwrapv -fno-exceptions -fno-asynchronous-unwind-tables -funwind-tables -Wno-format -masm=intel`, then GNU `as` and `ld` with `-lfb -ltinfo -lm -ldl -lpthread -lgcc -lgcc_eh -lc`.
 
-## 3. Planning documents
+## 3. What exists after M0
 
-- **`GEF_CPP_VISION.md`** covers:
-  - the goal: a faithful, modern C++ GEF;
-  - what is out of scope;
-  - differential and integral testing, in test tiers T0–T5;
-  - the reference harness concept;
-  - the coverage dimensions;
-  - statistical acceptance rules;
-  - the definition of done.
-- **`IMPLEMENTATION_STRATEGY.md`** covers:
-  - a component inventory mapped to BASIC line ranges;
-  - strategic decisions: fidelity-first quirk register, exact numeric mode, FreeBASIC-compatible RNG with a per-event reseed mode, scope-based state model, generated data, reference harness with neutrality proofs, null-calibrated comparisons;
-  - the milestones with their gates;
-  - a dependency graph with a physics track (M6–M10) and an analysis/output track (M11–M13) that meet at M14;
-  - risks.
+### 3.1 C++ build
+
+- Top-level `CMakeLists.txt` (C++23 ISO mode, compile commands exported) and `CMakePresets.json`:
+
+  | Preset | Compiler | Build |
+  |---|---|---|
+  | `dev-gcc` | GCC | Debug |
+  | `dev-clang` | Clang | Debug (its `compile_commands.json` feeds clangd and clang-tidy) |
+  | `asan-ubsan` | GCC | ASan + UBSan, `-fno-sanitize-recover=all` |
+  | `release-exact` | GCC | Release (`-O3`) |
+
+- `Cpp_implementation/cmake/GefCompilerPolicy.cmake`: interface targets `gef_exact_fp` (exact-mode FP flags `-march=x86-64 -ffp-contract=off -fno-fast-math -frounding-math -fno-math-errno -fexcess-precision=standard`, linked PUBLIC) and `gef_warnings` (`-Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wdouble-promotion -Wshadow -Werror`, our targets only). New targets call `gef_apply_policy(<target>)`.
+- `gef_fbrt` (`gef::fb`): `fp_environment` checks `FLT_EVAL_METHOD == 0`, IEEE 754 types with NaN semantics and no fast-math, round-to-nearest at start-up, and no FMA contraction.
+- `gef --version`: project version, git revision (refreshed on every build), compiler, preset, build type, FP flags, per-check fp_environment verdict; exits 1 on FAIL.
+- Tests: `Cpp_implementation/tests/` (Catch2 tags become CTest labels, e.g. `ctest --preset dev-gcc -L fbrt`). Test presets use `noTestsAction=error`, so a label filter that matches nothing fails instead of passing silently.
+- `.clang-format`, `.clang-tidy` (with documented exclusions; tests relax one check for Catch2 macros), `.editorconfig`. clangd uses `build/dev-clang` (`.omp/lsp.json`).
+
+### 3.2 Python tooling (run from the repository root)
+
+| Command | Purpose |
+|---|---|
+| `python3 -m tools.toolchain.check_toolchain [--write-manifest]` | Check tool versions and the fbc pin; compare against or rewrite `manifests/toolchain.txt` |
+| `python3 -m tools.toolchain.manifest_validation write\|verify` | Write or verify the validation-data manifests. Exit 77 when `validation/` is absent |
+| `python3 -m tools.fbsrc.emit_c [--patch-dir DIR] [--force]` | Translate the BASIC source to C in `build/fbsrc/<rev>[-p<hash>]/` (`fbc -gen gcc -R -g -c GEF.bas`, `SOURCE_DATE_EPOCH` = submodule commit time, so output is deterministic). Patch dirs hold unified diffs applied with `patch -p1` |
+| `python3 -m tools.fbsrc.fbline <file>:<line>[-<line>] [--context N] [--raw] [--symbols]` | BASIC line(s) and the C generated from them; works for included files |
+| `python3 -m tools.fbsrc.fbdef <name> [--refs]` | Case-insensitive definition lookup (ctags index corrected for `Static`, `ReDim`, `#Define`) and whole-word references outside comments |
+
+Configuration: `pyproject.toml` (ruff, basedpyright strict, pytest markers `fbc` and `slow`). Details: `tools/fbsrc/README.md`, `Planning/CODING_STANDARDS.md` §3.
+
+### 3.3 Local CI
+
+`scripts/ci.sh` runs the toolchain check; configure, build and test for `dev-gcc`, `dev-clang`, `asan-ubsan`; clang-tidy; clang-format; ruff lint and format; basedpyright; pytest; validation-manifest verification (skipped with a notice without `validation/`). One summary line per step, logs in `build/ci/`, non-zero exit on any failure. `--quick` runs the `dev-gcc` pipeline and the Python steps. A full run from an empty `build/` took 89 s (pytest 49 s, most of it the first `GEF.c` emission; the three C++ builds 10–13 s each); a warm run about 25 s.
 
 ## 4. Established findings
 
@@ -106,50 +131,35 @@
 
 ### 4.2 Facts about the BASIC code
 
-These are the facts the strategy depends on, and how each was confirmed.
-
 | Fact | How confirmed |
 |---|---|
 | `Randomize ,3` (`GEF.bas:1553`) seeds the Mersenne Twister from the clock; runs are not reproducible | read |
 | Nominal pass uses `Fenhance·10⁵` events. Perturbed passes: `Int(sqrt(100·Fenhance))` passes (31 for `Fenhance = 10`) of 32,258 events each | read; matches `run.log` |
-| 46 parameters are perturbed (`GEF.bas:5104–5162`) | counted |
+| 46 parameters are perturbed (`GEF.bas:5104–5162`; a 47th `PGauss` line is commented out) | counted |
 | `GEFSUB`/`GEFRESULTS` (`GEF.bas:7514–7919`) is dead code inside a nested comment | read |
-| `Egamma(N) = Egamma(N) + 1` (`GEF.bas:9417`) is a silent no-op, so heavy-fragment E1 gammas are missing from the total gamma spectrum | fbc 1.10.1 test program; consistent with `Egamma.dmp` |
 | Float → integer conversion rounds half to even | fbc 1.10.1 test program |
 | ENDF n-induced runs use N + 3 energy steps; the first two and the last write no MT454 data | read; matches `run.log` |
-| Outputs are opened `For Append`, and `ctl/` is never cleaned; this is how the two-tape ENDF file arose | read; matches `done.ctl` |
-| Further quirks to be entered in the quirk register in M0 (e.g. `d_ZISOPOST` cap adds instead of setting, `EdefoA` always zero, `ZApre`/`ZApost` written through a closed file number, `MyParameters.dat` ignored in batch) | read; some confirmed in `test_run` outputs. Full list in `IMPLEMENTATION_STRATEGY.md` §1.3 |
+| fbc reassociates multiplication chains and applies numeric literals last (`a * 0.03 * b * c` → `((a*b)*c)*0.03`); port arithmetic from the generated C | fbc C (`QUIRKS.md` B-004) |
+| `MyParameters.dat` is never applied in any mode (not only batch): `MyparRead` runs once at `GEF.bas:1017`, before its flag can be set | fbc C (`QUIRKS.md` Q-018) |
+| All quirks and their evidence | `Planning/QUIRKS.md` (13 confirmed in output, 12 confirmed by fbc C, 4 read only) |
 
-### 4.3 Where the detailed code maps live
+### 4.3 Code maps
 
-The four slice analyses and the two earlier overviews exist only in the agent session that produced them. They covered data layer, setup physics, event loop, outputs, control flow and physics core.
+The six planning-session reports are saved in `Planning/code_maps/` (M0.1). Their README lists three claims corrected since (46 perturbed parameters; `GEFSUB` dead; `ctl/` holds all three control files).
 
-`IMPLEMENTATION_STRATEGY.md` keeps their essentials. The milestone plans will need to re-derive the details: per-component data contracts, per-quirk line numbers and probe points. One option is to save the reports into `Planning/` before they are lost.
+## 5. Open risks and items
 
-## 5. What does not exist yet
+1. **License compatibility.** Upstream GEF is GPL-3.0; this repository is MIT. A port that translates GEF's code may count as a derivative work of the GPL code. Needs a decision by the project owner before ported code is published.
+2. **Optimisation level vs fbc's `-O0`** (`QUIRKS.md` B-001): measured by M3/M5 T1 tests; fallback `-O0` per translation unit.
+3. **fbc expression reordering** (B-004): the extent of fbc's constant folding and reassociation is not characterised yet. M3 drivers must establish the rules.
+4. **`-fwrapv` in the fbc backend** (B-002): BASIC integer overflow wraps; C++ helpers must make it explicit (M3).
+5. **Reference rebuild reproducibility** (B-003): M1 must build with `SOURCE_DATE_EPOCH` or mask the `compiled on` line.
+6. **Deferred coverage cell:** the `Static Ntimes` negative-TKE guard at T4 cannot be triggered statistically; marked "deferred — needs user approval" in `COVERAGE_MATRIX.md`.
+7. **Unregistered quirk candidates** seen in the code maps but not yet verified, to be registered by their owning milestones: `d_ZISOPOST` reader checks `_ZISOPOST` bounds (`Spectra.bas:1779–1787`); two-system covariance issues (`GEF.bas:11651–11652, 11905`); 1st-isomer β⁻2n line prints `Radd` instead of `2*Radd` (`Branchings.bas:578`); `TKEmin` exponents 0.33333/0.3333 (`GEF.bas:8254`); `DEFOtab(A_post - Z_sci, Z_sci)` (`GEF.bas:9313/9433`); `EexcA2d` registered as `Eexc2dlight` (`Spectra.bas:512–514`); `#If EgammaA` missing its `B_` prefix (`GEF.bas:9418`).
+8. **`FetchContent` needs network** on the first configure of each build tree. Offline fallback: `catch2-devel` via dnf and `find_package`.
 
-- Any C++ source, build files or tests.
-- The reference harness:
-  - patches;
-  - seed control;
-  - probes;
-  - FreeBASIC drivers;
-  - the clean-run runner;
-  - the reference store and manifests.
-- The comparison toolkit. The analysis in §4.1 was a throwaway script and was not saved.
-- `QUIRKS.md`, `COVERAGE_MATRIX.md`, `CODING_STANDARDS.md` (all M0 deliverables), and plans for M1–M18.
-- A clean, seeded BASIC reference run.
-- Checksums or manifests for `validation/`.
+## 6. Next steps
 
-## 6. Open items and decisions pending
-
-1. **Commit the planning work.** `.gitignore` and `Planning/` are untracked.
-2. **Toolchain pinning:** decided in the M0 plan. fbc is not vendored; it is located through `GEF_FBC` and verified by version and tarball SHA-256. Rebuilding a binary equivalent to `validation/test_run/gef_reference` is an M1 task.
-3. **Validation data management:** decided in the M0 plan. SHA-256 manifests are committed under `manifests/`; the data stays in gitignored `validation/`.
-4. **Test framework and C++ standard:** decided in the M0 plan. C++23 in ISO mode and Catch2 v3, fetched with `FetchContent` (needs network once).
-5. **The planning-session code maps exist only in `.omp/sessions/`.** M0.1 saves them into `Planning/code_maps/` and should run first.
-
-## 7. Next steps
-
-1. Run M0 per `Planning/MILESTONE_0_PLAN.md`, starting with M0.1 (saving the code maps).
-2. Write `MILESTONE_1_PLAN.md` (reference harness) and `MILESTONE_2_PLAN.md` (comparison toolkit).
+1. Write `MILESTONE_1_PLAN.md` (reference harness) and `MILESTONE_2_PLAN.md` (comparison toolkit). M1 builds the patched reference binary with `tools/fbsrc` patch directories and the pinned fbc.
+2. Write `MILESTONE_3_PLAN.md` (FreeBASIC runtime emulation); it can run in parallel with M1/M2 and should start by characterising fbc's expression reordering (B-004).
+3. Decide the license question (§5 item 1).
