@@ -26,8 +26,8 @@ Artifact layout (a directory, storable with ``harness.store add DIR --id ID --ki
 ``files/<idx>.npz``
     One per source file: the union key layout (``extract.write_layout_npz``) and, per numeric field,
     ``cls`` / ``mean`` / ``v`` (class, ensemble mean or deterministic value, variance model),
-    per label ``lfloor`` (variance floor of fields not seen nonzero), ``lquantum`` / ``lfano``
-    (event quantum and Fano factor of discrete count columns, NaN elsewhere),
+    per label ``lfloor`` (variance floor of fields not seen nonzero), ``lquantum`` / ``lfano`` /
+    ``lpsi`` (event quantum, phi / q and quadratic dispersion of discrete count columns),
     per text key ``tcls`` (0 deterministic, 1 stochastic) and ``tvals`` (JSON list, the value of
     deterministic text), per family ``fparams`` (columns ``PARAM_COLS``), ``nruns`` (runs that
     had the family) and the K leave-one-out draws ``loo_d`` / ``loo_m``.
@@ -112,7 +112,7 @@ MIN_POOL_DRAWS = 500  # z values needed to pool the families without a global te
 PARAM_COLS: tuple[str, ...] = (
     "n_stoch", "count_like", "phi", "vfloor", "n_draws", "d_mean", "d_var", "a", "nu",
     "kappa2", "nu_local", "degenerate", "z2_sum", "z4_sum", "z2_count", "n_empirical",
-    "mode_var", "n_sparse", "od_num", "od_den",
+    "mode_var", "psi", "mode_dof", "n_sparse", "od_num", "od_den",
     "n_zero", "n_det", "n_ign", "n_tdet", "n_tstoch", "n_numeric",
 )  # fmt: skip
 _COL = {name: i for i, name in enumerate(PARAM_COLS)}
@@ -141,6 +141,8 @@ def null_from_row(row: FloatArray) -> NullParams:
         z2_count=int(row[_COL["z2_count"]]),
         n_empirical=int(row[_COL["n_empirical"]]),
         mode_var=float(row[_COL["mode_var"]]),
+        psi=float(row[_COL["psi"]]),
+        mode_dof=float(row[_COL["mode_dof"]]),
         n_sparse=int(row[_COL["n_sparse"]]),
         od_num=float(row[_COL["od_num"]]),
         od_den=float(row[_COL["od_den"]]),
@@ -167,6 +169,8 @@ class CalFamily:
     label_floor: FloatArray
     label_quantum: FloatArray
     label_fano: FloatArray
+    label_psi: FloatArray
+    mode: FloatArray
     tlabels: tuple[str, ...]
     tkmat: NDArray[np.int64]
     tcls: NDArray[np.int8]
@@ -214,6 +218,8 @@ class CalFile:
             e["lfloor"][l0:l1],
             e["lquantum"][l0:l1],
             e["lfano"][l0:l1],
+            e["lpsi"][l0:l1],
+            e["mode"][n0:n1],
             f.tlabels,
             self.layout.tkmat[f.tkpos : f.tkpos + f.nt * (1 + f.twidth)].reshape(
                 f.nt, 1 + f.twidth
@@ -438,6 +444,8 @@ def _calibrate_file(job: tuple[str, int, list[str], str]) -> FileResult:
     lfloor_parts: list[FloatArray] = []
     lquantum_parts: list[FloatArray] = []
     lfano_parts: list[FloatArray] = []
+    lpsi_parts: list[FloatArray] = []
+    mode_parts: list[FloatArray] = []
     tcls_parts: list[NDArray[np.int8]] = []
     tvals: list[str] = []
     rows: list[FloatArray] = []
@@ -500,6 +508,8 @@ def _calibrate_file(job: tuple[str, int, list[str], str]) -> FileResult:
         lfloor_parts.append(fit.label_floor)
         lquantum_parts.append(fit.label_quantum)
         lfano_parts.append(fit.label_fano)
+        lpsi_parts.append(fit.label_psi)
+        mode_parts.append(fit.mode)
         for g in map(int, np.unique(aligned.kmat[cls == CLS_STOCH, 0]).tolist()):
             if np.isfinite(fit.label_floor[g]):
                 floors.setdefault(aligned.labels[g], []).append(float(fit.label_floor[g]))
@@ -518,6 +528,8 @@ def _calibrate_file(job: tuple[str, int, list[str], str]) -> FileResult:
         "lfloor": _cat(lfloor_parts, np.float64),
         "lquantum": _cat(lquantum_parts, np.float64),
         "lfano": _cat(lfano_parts, np.float64),
+        "lpsi": _cat(lpsi_parts, np.float64),
+        "mode": _cat(mode_parts, np.float64),
         "tcls": _cat(tcls_parts, np.int8),
         "tvals": np.array(json.dumps(tvals)),
         "fparams": fparams,

@@ -41,6 +41,7 @@ __all__ = [
     "DISPERSION_LIMIT",
     "FLOOR_QUANTILE",
     "INTEGRAL_TOL",
+    "PSI_MIN_FIELDS",
     "SPARSE_MEAN",
     "UNTESTED_KINDS",
     "FamilyFit",
@@ -52,8 +53,10 @@ __all__ = [
     "classify_fields",
     "critical_z",
     "discrete_z",
+    "field_fano",
     "file_kind",
     "fit_family",
+    "fit_phi_psi",
     "group_quantum",
     "holm",
     "judge_values",
@@ -73,6 +76,8 @@ SPARSE_MEAN = 20.0  # expected counts per run below which a count field uses its
 MAX_FANO = 3.0  # a count-like group more overdispersed than this is not treated as counts
 MAX_CHECKED = 1000.0  # ratios above this (in quanta) are not used to test for whole numbers
 INTEGRAL_TOL = 0.02  # a value is a whole number of quanta within this (plus 1e-4 relative)
+PSI_MIN_FIELDS = 20  # dense fields needed to fit the quadratic variance term
+MODE_SPREAD = 0.25  # participation ratio / fields needed to treat the leading mode as common
 MIN_GLOBAL_FIELDS = 30  # fewer stochastic fields: the family has no global test
 MIN_LOO_DRAWS = 3  # fewer valid leave-one-out draws than this: only the local test is used
 _CHUNK = 2000  # fields per leave-one-out gather
@@ -130,6 +135,11 @@ def ndtri_array(q: FloatArray) -> FloatArray:
     return np.asarray(_ndtri(q), dtype=np.float64)  # pyright: ignore[reportUnknownArgumentType]
 
 
+def student_pdf(x: FloatArray, nu: float) -> FloatArray:
+    """Density of Student's t with ``nu`` degrees of freedom, elementwise."""
+    return np.asarray(_student_t.pdf(x, nu), dtype=np.float64)  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType]
+
+
 def student_sf(x: float, nu: float) -> float:
     """Survival function of Student's t with ``nu`` degrees of freedom."""
     return float(_student_t.sf(x, nu))  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType]
@@ -180,8 +190,8 @@ def classify_fields(
     finite in all runs, else ignored.
 
     A group is count-like if it has at least ``COUNT_LIKE_MIN_FIELDS`` stochastic fields, all
-    their values are >= 0, and ``var / mean`` of its fields is consistent with one inflation
-    factor: the largest ``var / mean`` is at most ``DISPERSION_LIMIT`` times their median.
+    their values are >= 0, and ``var / mean`` of its fields is consistent with ``phi + psi * mean``
+    (``fit_phi_psi``): the largest ratio of ``var / mean`` to it is at most ``DISPERSION_LIMIT``.
     Columns of conditional means (zero in empty bins, a typical value elsewhere) fail the last
     test. A table column that is not count-like and has more than ``ZERO_INFLATED_FRACTION``
     zero entries is *zero-inflated*:
@@ -206,8 +216,12 @@ def classify_fields(
     gs = gid[stoch]
     for g in np.flatnonzero(count_like):
         cols = sv[:, gs == g]
-        ratio = cols.var(axis=0, ddof=1) / cols.mean(axis=0)
-        count_like[g] = ratio.max() <= DISPERSION_LIMIT * np.median(ratio)
+        mean_g = cols.mean(axis=0)
+        ratio = cols.var(axis=0, ddof=1) / mean_g
+        dense = np.count_nonzero(cols, axis=0) >= SPARSE_RUNS
+        phi_g, psi_g = fit_phi_psi(mean_g[None, :], ratio[None, :], dense[None, :])
+        expected = phi_g[0] + psi_g[0] * mean_g  # phi + psi * mean: the dispersion of this column
+        count_like[g] = bool(expected.min() > 0.0 and np.max(ratio / expected) <= DISPERSION_LIMIT)
     zero_inflated = np.zeros(n_groups, dtype=bool)
     for g in np.flatnonzero(table_like & ~count_like):
         cols = sv[:, gs == g]
@@ -232,8 +246,40 @@ class VarianceModel:
 
     v: FloatArray  # (R, n), NaN rows where no floor exists
     phi: FloatArray  # (R, G): inflation of count-like groups, NaN elsewhere
+    psi: FloatArray  # (R, G): quadratic (run-to-run scale) term of count-like groups
     group_floor: FloatArray  # (R, G): smallest positive v of the group, else the family floor
     floor: FloatArray  # (R,): smallest positive v of the family, NaN if none
+
+
+def fit_phi_psi(
+    m: FloatArray, ratio: FloatArray, dense: BoolArray
+) -> tuple[FloatArray, FloatArray]:
+    """Robust fit of ``var / mean = phi + psi * mean`` for ``R`` rows of ``n`` fields.
+
+    ``ratio`` is ``var / mean`` (NaN where the mean is 0) and ``dense`` marks the well-populated
+    fields. ``psi >= 0`` is the slope between the lowest and highest quartile of the means of the
+    dense fields (medians of both coordinates); ``phi`` is the median of ``ratio - psi * mean``.
+    With fewer than ``PSI_MIN_FIELDS`` dense fields in some row, ``psi = 0`` and ``phi`` is the
+    plain median of ``ratio``.
+    """
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", RuntimeWarning)
+        phi = np.nanmedian(ratio, axis=1)
+        psi = np.zeros(m.shape[0])
+        if int(dense.sum(axis=1).min()) >= PSI_MIN_FIELDS:
+            dense_m = np.where(dense, m, np.nan)
+            lo_q, hi_q = np.nanquantile(dense_m, [0.25, 0.75], axis=1)
+            in_lo = dense_m <= lo_q[:, None]
+            in_hi = dense_m >= hi_q[:, None]
+            m_lo = np.nanmedian(np.where(in_lo, m, np.nan), axis=1)
+            m_hi = np.nanmedian(np.where(in_hi, m, np.nan), axis=1)
+            r_lo = np.nanmedian(np.where(in_lo, ratio, np.nan), axis=1)
+            r_hi = np.nanmedian(np.where(in_hi, ratio, np.nan), axis=1)
+            slope = (r_hi - r_lo) / np.where(m_hi > m_lo, m_hi - m_lo, np.nan)
+            psi = np.where(np.isfinite(slope), np.maximum(slope, 0.0), 0.0)
+            resid = np.where(dense, ratio - psi[:, None] * m, np.nan)
+            phi = np.maximum(np.nanmedian(resid, axis=1), 0.05 * r_lo)
+    return phi, psi
 
 
 def variance_model(
@@ -252,8 +298,12 @@ def variance_model(
 
     ``mean``, ``var``, ``peak`` (largest absolute value), ``occupied`` (number of nonzero runs)
     and ``nonzero_mean`` (mean over the nonzero runs) are ``(R, n)``, each row computed from
-    ``runs`` ensemble runs. Count-like group: ``v = phi * mean`` with ``phi`` the median of
-    ``var / mean`` over the fields of the group with a positive mean. Other groups: ``v = var``.
+    ``runs`` ensemble runs. Count-like group: ``v = phi * mean + psi * mean^2``. ``psi >= 0`` is
+    the slope of ``var / mean`` against ``mean`` between the lowest and highest quartile of the
+    well-populated fields (0, and ``phi`` the plain median of ``var / mean``, with fewer than
+    ``PSI_MIN_FIELDS`` of them), ``phi`` the median of ``var / mean - psi * mean``: a run-to-run
+    scale factor (a perturbed parameter set) multiplies all counts and makes the variance grow
+    faster than Poisson. Other groups: ``v = var``.
 
     The *group floor* is the variance of a field of the group that has not been seen nonzero in
     the ensemble (a zero field, or a field new in the candidate). For a count-like group it is
@@ -279,10 +329,11 @@ def variance_model(
     rows, n = int(mean.shape[0]), int(mean.shape[1])
     groups = len(count_like)
     phi = np.full((rows, groups), np.nan)
+    psi = np.zeros((rows, groups))
     group_floor = np.full((rows, groups), np.nan)
     v = var.copy()
     if n == 0:
-        return VarianceModel(v, phi, group_floor, np.full(rows, np.nan, dtype=np.float64))
+        return VarianceModel(v, phi, psi, group_floor, np.full(rows, np.nan, dtype=np.float64))
     if fallback_var is not None:
         plain = ~count_like[gid]
         v[:, plain] = np.where(v[:, plain] == 0.0, fallback_var[plain][None, :], v[:, plain])
@@ -299,8 +350,9 @@ def variance_model(
                 m = mean[:, sel]
                 positive = m > 0.0
                 ratio = np.where(positive, var[:, sel] / np.where(positive, m, 1.0), np.nan)
-                phi[:, g] = np.nanmedian(ratio, axis=1)
-                v[:, sel] = phi[:, g, None] * m
+                dense = positive & (occupied[:, sel] >= SPARSE_RUNS)
+                phi[:, g], psi[:, g] = fit_phi_psi(m, ratio, dense)
+                v[:, sel] = phi[:, g, None] * m + psi[:, g, None] * m * m
                 vs = np.where(v[:, sel] > 0.0, v[:, sel], np.nan)
                 quantum = np.nanquantile(
                     np.where(occupied[:, sel] > 0.0, np.abs(nonzero_mean[:, sel]), np.nan),
@@ -325,8 +377,12 @@ def variance_model(
             v[:, inflated] = np.maximum(v[:, inflated], seen)
         sparse = occupied < SPARSE_RUNS
         v = np.where(sparse, np.maximum(v, group_floor[:, gid]), v)
+    # a variance is never zero: estimates of 0 (a column constant in a leave-one-out ensemble, a
+    # phi of 0) take the floor of their group; without any floor the field is not testable (NaN)
+    v = np.where(v > 0.0, v, group_floor[:, gid])
+    v = np.where(v > 0.0, v, np.nan)
     v = np.where(np.isnan(floor)[:, None], np.nan, v)
-    return VarianceModel(v, phi, group_floor, floor)
+    return VarianceModel(v, phi, psi, group_floor, floor)
 
 
 # --------------------------------------------------------------------------------------------
@@ -346,14 +402,19 @@ def _whole_multiples(ratio: FloatArray, minimum: int = 5) -> bool:
 
 
 def group_quantum(
-    sv: FloatArray, gs: NDArray[np.int64], count_like: BoolArray, phi: FloatArray
+    sv: FloatArray,
+    gs: NDArray[np.int64],
+    count_like: BoolArray,
+    phi: FloatArray,
+    psi: FloatArray,
 ) -> tuple[FloatArray, FloatArray]:
     """Event quantum and Fano factor per count-like variance group, NaN elsewhere.
 
     The quantum ``q`` is the smallest positive value of the group; the group is *discrete* if
     at least 99.5 % of its nonzero values are whole multiples of ``q`` (counts times a
-    normalization, such as 1 / events). The Fano factor ``phi / q`` is 1 for Poisson counts; a
-    group more overdispersed than ``MAX_FANO`` is not treated as counts.
+    normalization, such as 1 / events). The Fano factor ``phi / q`` is 1 for Poisson counts and
+    ``phi / q + psi * n`` for a field of ``n`` counts; a group whose factor at ``SPARSE_MEAN``
+    counts exceeds ``MAX_FANO`` is not treated as counts.
     """
     groups = len(count_like)
     quantum = np.full(groups, np.nan)
@@ -364,8 +425,9 @@ def group_quantum(
         if not len(positive):
             continue
         q = float(positive.min())
-        f = max(1.0, float(phi[g]) / q) if np.isfinite(phi[g]) else float("nan")
-        if _whole_multiples(positive / q) and f <= MAX_FANO:
+        f = float(phi[g]) / q if np.isfinite(phi[g]) else float("nan")
+        edge = max(1.0, f) + float(psi[g]) * SPARSE_MEAN  # dispersion at the largest low count
+        if _whole_multiples(positive / q) and edge <= MAX_FANO:
             quantum[g], fano[g] = q, f
     return quantum, fano
 
@@ -376,19 +438,26 @@ def apply_quantum_hint(
     vals: FloatArray,
     gid: NDArray[np.int64],
     hint: FloatArray,
+    phi: FloatArray,
+    psi: FloatArray,
 ) -> None:
     """Give small groups the quantum of the same label in larger families of the file.
 
     A histogram column with a handful of stochastic fields cannot show its own quantum, but
     the events normalization is the same for every analyzer of a file. The hint is accepted if
-    the group's positive values are whole multiples of it (or it has none), with Fano factor 1.
+    the group's positive values are whole multiples of it (or it has none) and the group's own
+    dispersion at that quantum is within ``MAX_FANO`` as for a quantum of its own (a column
+    that is overdispersed against Poisson stays on the Gaussian path).
     """
     for g in np.flatnonzero(np.isfinite(hint) & ~np.isfinite(quantum)):
         cols = vals[:, gid == g]
         positive = cols[cols > 0.0]
         if len(positive) and not _whole_multiples(positive / hint[g], minimum=0):
             continue
-        quantum[g], fano[g] = hint[g], 1.0
+        f = float(phi[g]) / hint[g] if np.isfinite(phi[g]) else 1.0
+        if max(1.0, f) + float(psi[g]) * SPARSE_MEAN > MAX_FANO:
+            continue
+        quantum[g], fano[g] = hint[g], f
 
 
 def run_scale(sv: FloatArray, quantum: FloatArray) -> FloatArray:
@@ -404,6 +473,11 @@ def run_scale(sv: FloatArray, quantum: FloatArray) -> FloatArray:
     others = (total.sum() - total) / (len(total) - 1)
     ratio = np.where(others > 0.0, total / np.where(others > 0.0, others, 1.0), 1.0)
     return np.asarray(np.clip(ratio, 0.2, 5.0), dtype=np.float64)
+
+
+def field_fano(fano: FloatArray, psi: FloatArray, counts: FloatArray) -> FloatArray:
+    """Dispersion of a field of ``counts`` expected events: ``max(1, phi / q + psi * counts)``."""
+    return np.maximum(1.0, fano + psi * counts)
 
 
 def discrete_z(
@@ -458,6 +532,8 @@ class NullParams:
     od_num: float  # sum of squared deviations of the low-count fields from their ensemble mean
     od_den: float  # and its Poisson expectation: their ratio is the clustering of events
     mode_var: float  # variance of the leading common mode of z (a chi2_1 part of D)
+    psi: float = 0.0  # quadratic variance term of the largest count-like group
+    mode_dof: float = float("inf")  # degrees of freedom of the common-mode amplitude (K - 2)
 
 
 @dataclass
@@ -469,7 +545,9 @@ class FamilyFit:
     v: FloatArray  # variance model (stochastic and zero fields), 0 elsewhere
     label_floor: FloatArray  # (G,) variance floor per label, used for fields new in a candidate
     label_quantum: FloatArray  # (G,) event quantum of discrete count groups, else NaN
-    label_fano: FloatArray  # (G,) Fano factor of those groups
+    label_fano: FloatArray  # (G,) phi / q of those groups (the Fano factor of one event)
+    label_psi: FloatArray  # (G,) quadratic dispersion of those groups (counts^2 term)
+    mode: FloatArray  # (U,) unit loadings of the leading common mode of the dense fields
     null: NullParams
     loo_d: FloatArray  # (K,) NaN for invalid draws
     loo_m: FloatArray
@@ -534,13 +612,17 @@ def fit_family(
     label_floor = np.full(n_groups, np.nan)
     quantum_g = np.full(n_groups, np.nan)
     fano_g = np.full(n_groups, np.nan)
+    psi_g = np.zeros(n_groups)
     phi = vfloor = float("nan")
+    psi_main = 0.0
+    overdispersed = False
     loo_d = np.full(runs, np.nan)
     loo_m = np.full(runs, np.nan)
     z2_sum = z4_sum = 0.0
     z2_count = 0
     n_sparse = 0
     od_num = od_den = 0.0
+    mode = np.zeros(u)  # loadings of the leading common mode of the dense fields
     proj2 = np.zeros(runs)  # squared projection of each leave-one-out z on the leading mode
     if n_stoch:
         sv = vals[:, stoch]
@@ -572,7 +654,10 @@ def fit_family(
         big = np.flatnonzero(count_like_g)
         if len(big):
             sizes = np.bincount(gs, minlength=n_groups)
-            phi = float(model.phi[0, big[np.argmax(sizes[big])]])
+            main = big[np.argmax(sizes[big])]
+            phi = float(model.phi[0, main])
+            psi_main = float(model.psi[0, main])
+            overdispersed = psi_main * float(np.median(m_full[gs == main])) >= phi > 0.0
         # leave-one-out: run j as a single candidate against the other K - 1 runs
         m_loo, s2_loo, peak_loo, occ_loo, nzm_loo = _loo_moments(sv)
         v_loo = variance_model(
@@ -588,9 +673,10 @@ def fit_family(
             s2_full,
         ).v
         z = (sv - m_loo) / np.sqrt(v_loo * (1.0 + 1.0 / (runs - 1)))
-        quantum_g, fano_g = group_quantum(sv, gs, count_like_g, model.phi[0])
+        psi_g = np.where(np.isfinite(model.psi[0]), model.psi[0], 0.0)
+        quantum_g, fano_g = group_quantum(sv, gs, count_like_g, model.phi[0], psi_g)
         if quantum_hint is not None:
-            apply_quantum_hint(quantum_g, fano_g, vals, gid, quantum_hint)
+            apply_quantum_hint(quantum_g, fano_g, vals, gid, quantum_hint, model.phi[0], psi_g)
         # a column that is not counts has no one-event scale: an unseen field can be as large as
         # the largest field of the column (deterministic ones included), once in K runs
         peak_group = np.zeros(n_groups)
@@ -610,18 +696,46 @@ def fit_family(
             # the whole histogram is larger or smaller in a run (shared normalization): the
             # share of one run in a bin is scaled by that run's size against the others
             scale = run_scale(sv, q_f)
-            z[:, sparse] = discrete_z(counts, rest, scale[:, None], runs - 1.0, fano_g[gs][sparse])
+            fano_f = field_fano(fano_g[gs][sparse], psi_g[gs][sparse], m_full[sparse] / q_f[sparse])
+            z[:, sparse] = discrete_z(counts, rest, scale[:, None], runs - 1.0, fano_f)
         valid = np.all(np.isfinite(z), axis=1)
         z2 = z * z
         loo_d[valid] = z2[valid].sum(axis=1)
         n_sparse = int(sparse.sum())
+        z_loc = z
         if n_stoch >= MIN_GLOBAL_FIELDS and int(valid.sum()) > MIN_LOO_DRAWS:
             # the leading mode of the draws (the shared pre-pass shifts every field together)
             zv = z[valid]
             top = np.linalg.svd(zv, full_matrices=False)[2][0]
             proj2[valid] = (zv @ top) ** 2
+            # the local test is judged on the dense fields with their own leading mode removed:
+            # the mode belongs to the global test, and it would otherwise make the local law so
+            # heavy that a single shifted bin could not be seen (STATISTICS.md section 4)
+            dense_cols = np.flatnonzero(~sparse)
+            zd = z[valid][:, dense_cols] if len(dense_cols) >= MIN_GLOBAL_FIELDS else None
+            top_d = np.linalg.svd(zd, full_matrices=False)[2][0] if zd is not None else None
+            # a *common* mode has loadings spread over the fields (participation ratio of at
+            # least a quarter of them); one concentrated on a few fields is an event in those
+            # bins (an edge bin of a table), whose projection would collapse the local law
+            if (
+                zd is not None
+                and top_d is not None
+                and 1.0 / float(np.sum(top_d**4)) >= MODE_SPREAD * len(dense_cols)
+            ):
+                # each draw is projected with the mode of the *other* draws, as a fresh run is
+                # (projecting with its own would remove noise and make the local law too narrow)
+                resid = np.empty_like(zd)
+                for i in range(len(zd)):
+                    others = np.delete(zd, i, axis=0)
+                    top_i = np.linalg.svd(others, full_matrices=False)[2][0]
+                    resid[i] = zd[i] - float(zd[i] @ top_i) * top_i
+                z_loc = z.copy()
+                z_loc[np.ix_(valid, dense_cols)] = resid
+                mode_s = np.zeros(n_stoch)
+                mode_s[dense_cols] = top_d
+                mode[stoch] = mode_s
         # the local null is that of the well-populated fields; low counts carry their exact p
-        zd2 = z2[:, ~sparse]
+        zd2 = (z_loc * z_loc)[:, ~sparse]
         if zd2.shape[1]:
             loo_m[valid] = np.sqrt(zd2[valid].max(axis=1))
         else:
@@ -651,21 +765,30 @@ def fit_family(
         rest = loo_d[ok] - proj2[ok]
         r_mean = float(rest.mean())
         r_var = max(float(rest.var(ddof=1)) * (1.0 + VAR_SAFETY * safety), 1e-12 * r_mean**2)
-        a = r_var / (2.0 * r_mean)
-        nu = 2.0 * r_mean * r_mean / r_var
+        if r_mean > 0.0:
+            a = r_var / (2.0 * r_mean)
+            nu = 2.0 * r_mean * r_mean / r_var
+        else:  # the mode explains all of D: no scale for the rest, only the local test
+            degenerate = True
     n_empirical = int((stoch & ~count_like_g[gid]).sum())
-    nu_cap = float(runs - 2) if 2 * n_empirical > n_stoch else float("inf")
+    # a quantity estimated from K runs has a t tail: variances that are sample variances, and the
+    # shared run-to-run factor (psi) of overdispersed counts
+    nu_cap = float(runs - 2) if 2 * n_empirical > n_stoch or overdispersed else float("inf")
     own = local_null(z2_sum, z4_sum, z2_count, nu_cap)
     kappa2 = own.kappa2 if z2_count and not degenerate else float("nan")
     nu_local = own.nu if z2_count and not degenerate else float("nan")
     null = NullParams(
         n_stoch, bool(count_like_g.any()), phi, vfloor, draws, d_mean, d_var, a, nu,
         kappa2, nu_local, degenerate, z2_sum, z4_sum, z2_count, n_empirical, n_sparse,
-        od_num, od_den, mode_var,
+        od_num, od_den, mode_var, psi_main, float(max(runs - 2, 3)),
     )  # fmt: skip
     if quantum_hint is not None and not n_stoch:
-        apply_quantum_hint(quantum_g, fano_g, vals, gid, quantum_hint)
-    return FamilyFit(cls, mean, v_full, label_floor, quantum_g, fano_g, null, loo_d, loo_m)
+        apply_quantum_hint(
+            quantum_g, fano_g, vals, gid, quantum_hint, np.full(n_groups, np.nan), psi_g
+        )
+    return FamilyFit(
+        cls, mean, v_full, label_floor, quantum_g, fano_g, psi_g, mode, null, loo_d, loo_m
+    )
 
 
 # --------------------------------------------------------------------------------------------
@@ -760,23 +883,33 @@ def chi2_scaled_sf(d: float, a: float, nu: float) -> float:
 _GL_X, _GL_W = np.polynomial.legendre.leggauss(256)
 
 
-def global_sf(d: float, mode_var: float, a: float, nu: float) -> float:
-    """``P(mode_var * chi2_1 + a * chi2_nu >= d)``: the null of the global statistic.
+def global_sf(
+    d: float, mode_var: float, a: float, nu: float, mode_dof: float = float("inf")
+) -> float:
+    """``P(mode_var * x^2 + a * chi2_nu >= d)``: the null of the global statistic.
 
-    The leading mode is integrated over its normal law; where it alone exceeds ``d`` the
-    probability is 1.
+    ``x`` is the amplitude of the leading common mode, of unit variance: normal, or, with
+    ``mode_dof`` finite, a scaled Student t. A shared factor is estimated from K runs only, so a
+    fresh run's amplitude in units of the ensemble's spread is a t variable with K - 2 degrees of
+    freedom (the pivotal law that makes the p-value valid across ensembles). Where the mode alone
+    exceeds ``d`` the probability is 1.
     """
     if d <= 0.0:
         return 1.0
     if mode_var <= 0.0:
         return chi2_scaled_sf(d, a, nu)
     t_max = float(np.sqrt(d / mode_var))
-    t = 0.5 * t_max * (_GL_X + 1.0)
-    rest = gammaincc(nu / 2.0, (d - mode_var * t * t) / (2.0 * a))
-    integral = (
-        0.5 * t_max * float(np.sum(_GL_W * 2.0 * np.exp(-0.5 * t * t) / np.sqrt(2 * np.pi) * rest))
-    )
-    return float(min(1.0, integral + 2.0 * ndtr(-t_max)))
+    x = 0.5 * t_max * (_GL_X + 1.0)
+    rest = gammaincc(nu / 2.0, (d - mode_var * x * x) / (2.0 * a))
+    if np.isfinite(mode_dof):
+        scale = float(np.sqrt((mode_dof - 2.0) / mode_dof))
+        density = 2.0 * student_pdf(x / scale, mode_dof) / scale
+        tail = 2.0 * student_sf(t_max / scale, mode_dof)
+    else:
+        density = 2.0 * np.exp(-0.5 * x * x) / np.sqrt(2.0 * np.pi)
+        tail = 2.0 * ndtr(-t_max)
+    integral = 0.5 * t_max * float(np.sum(_GL_W * density * rest))
+    return float(min(1.0, integral + tail))
 
 
 def judge_values(
@@ -788,6 +921,7 @@ def judge_values(
     sparse: BoolArray | None = None,
     n_extra_sparse: int = 0,
     clustering: float = 1.0,
+    mode: FloatArray | None = None,
 ) -> Judgement:
     """Statistics and the family p-value for the z-scores of the tested fields (§3, §4).
 
@@ -806,6 +940,9 @@ def judge_values(
     n_sparse = null.n_sparse + n_extra_sparse
     n_dense = n_test - n_sparse
     z_dense = z[~flags]
+    if mode is not None and len(z_dense) and float(np.dot(mode[~flags], mode[~flags])) > 0.0:
+        load = mode[~flags]
+        z_dense = z_dense - float(np.dot(z_dense, load)) * load  # global test's part
     z_sparse = z[flags]
     m_dense = float(np.max(np.abs(z_dense))) if len(z_dense) else 0.0
     m_sparse = float(np.max(np.abs(z_sparse))) if len(z_sparse) else 0.0
@@ -822,7 +959,7 @@ def judge_values(
         p_local = 1.0
     if null.degenerate:
         return Judgement(d, m, n_test, float("nan"), p_local, p_local, local, z)
-    p_global = global_sf(d, null.mode_var, null.a, null.nu)
+    p_global = global_sf(d, null.mode_var, null.a, null.nu, null.mode_dof)
     p = min(1.0, 2.0 * min(p_global, p_local))
     return Judgement(d, m, n_test, p_global, p_local, p, local, z)
 

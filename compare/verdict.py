@@ -78,6 +78,7 @@ from compare.stats import (
     UNTESTED_KINDS,
     NullParams,
     discrete_z,
+    field_fano,
     file_kind,
     holm,
     judge_values,
@@ -401,7 +402,11 @@ def judge_family(
                     # a whole number of events in a count column: exact discrete p, no events seen
                     z_one = discrete_z(
                         np.array([runs_c * ratio]), np.zeros(1), weight, k,
-                        fam.label_fano[lid : lid + 1],
+                        field_fano(
+                            fam.label_fano[lid : lid + 1],
+                            fam.label_psi[lid : lid + 1],
+                            np.array([ratio]),
+                        ),
                     )  # fmt: skip
                     zs.append(float(z_one[0]))
                     new_sparse.append(True)
@@ -431,7 +436,8 @@ def judge_family(
         nlab = len(fam.label_quantum)
         if nlab:  # low counts of a discrete column: exact discrete p as a normal-equivalent score
             qf = fam.label_quantum[np.minimum(fam.kmat[:, 0], nlab - 1)]
-            ff = fam.label_fano[np.minimum(fam.kmat[:, 0], nlab - 1)]
+            ff_raw = fam.label_fano[np.minimum(fam.kmat[:, 0], nlab - 1)]
+            pp = fam.label_psi[np.minimum(fam.kmat[:, 0], nlab - 1)]
             disc = (
                 stat_fields
                 & np.isfinite(qf)
@@ -439,7 +445,11 @@ def judge_family(
             )
             if disc.any():
                 z_field[disc] = discrete_z(
-                    runs_c * cm[disc] / qf[disc], k * fam.mean[disc] / qf[disc], weight, k, ff[disc]
+                    runs_c * cm[disc] / qf[disc],
+                    k * fam.mean[disc] / qf[disc],
+                    weight,
+                    k,
+                    field_fano(ff_raw[disc], pp[disc], fam.mean[disc] / qf[disc]),
                 )
         zero_nonzero = stat_fields & ((fam.cls == CLS_ZERO) | pinned) & (cm != fam.mean)
         test = ((fam.cls == CLS_STOCH) & stat_fields) | zero_nonzero
@@ -451,6 +461,7 @@ def judge_family(
             fam.null, z_test, cal.local_pool(kind), n_extra=n_extra, sparse=flags,
             n_extra_sparse=n_extra_sparse,
             clustering=cal.clustering(kind),
+            mode=np.concatenate([fam.mode[test], np.zeros(len(z_new))]),
         )  # fmt: skip
         res.d, res.m, res.n_test = j.d, j.m, j.n_test
         res.p_global, res.p_local, res.p = j.p_global, j.p_local, j.p
@@ -505,7 +516,7 @@ def _unseen_family(rel: str, block: str, group: str) -> CalFamily:
     )  # fmt: skip
     return CalFamily(
         rel, block, group, (), empty_i, np.zeros(0, np.int8), np.zeros(0), np.zeros(0), np.zeros(0),
-        np.zeros(0), np.zeros(0),
+        np.zeros(0), np.zeros(0), np.zeros(0), np.zeros(0),
         (), empty_i, np.zeros(0, np.int8), [], null, 0, np.zeros(0), np.zeros(0),
     )  # fmt: skip
 

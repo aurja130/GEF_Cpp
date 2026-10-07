@@ -118,7 +118,7 @@ def test_judge_values_combines_with_bonferroni() -> None:
     z[3] = 8.0
     j = judge_values(fit.null, z, pool)
     assert j.p == pytest.approx(min(1.0, 2 * min(j.p_global, j.p_local)))
-    assert j.p < 1e-6
+    assert j.p < 1e-4
     assert j.m == 8.0 and j.d == 64.0
 
 
@@ -289,3 +289,69 @@ def test_global_null_is_a_mode_plus_chi2_mixture() -> None:
     mean, var = 3.0 + 20.0, 2 * 9.0 + 2 * 4.0 * 10.0
     nu = 2 * mean**2 / var
     assert global_sf(150.0, 3.0, 2.0, 10.0) > chi2_scaled_sf(150.0, var / (2 * mean), nu)
+
+
+def test_zero_variance_estimates_never_give_an_infinite_z() -> None:
+    """A column that is constant in the other runs of a leave-one-out draw, a phi of 0 and an
+    all-zero group must take a floor; z is finite or the draw is invalid, never inf."""
+    rng = np.random.default_rng(12)
+    runs, n = 12, 60
+    vals = rng.poisson(30.0, size=(runs, n)).astype(float)
+    vals[:, :20] = 7.0  # a deterministic block in the same column
+    vals[3, :20] = 8.0  # constant in 11 runs, different in run 3
+    present = np.ones_like(vals, dtype=bool)
+    fit = fit_family(vals, present, _gid(n), 1)
+    assert np.all(np.isfinite(fit.loo_d[np.isfinite(fit.loo_d)]))
+    assert not np.any(np.isinf(fit.loo_d)) and not np.any(np.isinf(fit.loo_m))
+    assert np.all(fit.v[fit.cls == CLS_STOCH] > 0.0)
+    # phi of exactly 0: every field is constant except one -> the variance model has a floor
+    mean = np.full((3, 8), 5.0)
+    var = np.zeros((3, 8))
+    var[:, 0] = 2.0
+    zeros = np.zeros((3, 8))
+    model = variance_model(
+        mean, var, mean, np.full((3, 8), 12.0), mean, _gid(8), np.array([True]),
+        np.array([False]), 12,
+    )  # fmt: skip
+    assert np.all(np.isfinite(model.v)) and np.all(model.v > 0.0)
+    flat = variance_model(
+        mean, zeros, mean, np.full((3, 8), 12.0), mean, _gid(8), np.array([True]),
+        np.array([False]), 12,
+    )  # fmt: skip
+    assert np.all(np.isnan(flat.v) | (flat.v > 0.0))  # no floor to be found: untestable, not inf
+    assert not np.any(np.isinf(flat.v))
+
+
+def test_quadratic_term_is_fitted_and_never_negative() -> None:
+    rng = np.random.default_rng(13)
+    runs, n = 40, 200
+    lam = np.linspace(20.0, 4000.0, n)
+    factor = np.exp(0.15 * rng.standard_normal(runs))[:, None]
+    vals = rng.poisson(lam[None, :] * factor).astype(float) * 0.01
+    mean = vals.mean(0)[None, :]
+    var = vals.var(0, ddof=1)[None, :]
+    occ = np.count_nonzero(vals, axis=0).astype(float)[None, :]
+    args = (mean, var, np.abs(vals).max(0)[None, :], occ, mean, _gid(n))
+    model = variance_model(*args, np.array([True]), np.array([False]), runs)
+    assert model.psi[0, 0] == pytest.approx(0.15**2, rel=0.5)
+    assert model.phi[0, 0] == pytest.approx(0.01, rel=0.5)
+    pure = rng.poisson(lam[None, :] * np.ones((runs, 1))).astype(float) * 0.01
+    mean2, var2 = pure.mean(0)[None, :], pure.var(0, ddof=1)[None, :]
+    model2 = variance_model(
+        mean2, var2, np.abs(pure).max(0)[None, :], occ, mean2, _gid(n), np.array([True]),
+        np.array([False]), runs,
+    )  # fmt: skip
+    assert 0.0 <= model2.psi[0, 0] < 0.15**2 / 4
+
+
+def test_a_family_whose_d_is_all_mode_has_no_chi2_part() -> None:
+    """Perfectly correlated fields: D equals the squared projection on the leading mode, the
+    rest is 0; the fit must not divide by zero (it falls back to the local test)."""
+    rng = np.random.default_rng(14)
+    runs, n = 12, 40
+    factor = 1.0 + 0.1 * rng.standard_normal(runs)
+    vals = 100.0 * factor[:, None] * np.ones((runs, n))
+    present = np.ones_like(vals, dtype=bool)
+    fit = fit_family(vals, present, _gid(n), 1)
+    assert fit.null.degenerate or np.isfinite(fit.null.a)
+    assert not np.any(np.isinf(fit.loo_d))

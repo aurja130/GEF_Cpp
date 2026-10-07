@@ -265,12 +265,12 @@ def _input_override(args: argparse.Namespace) -> str | None:
 
 def _judge_and_save(
     results: Path, name: str, kind: str, cal: Calibration, spec: str, override: str | None,
-    group_map: dict[str, str],
+    group_map: dict[str, str], cache: Path = DEFAULT_CACHE,
 ) -> None:  # fmt: skip
     done = results / f"{name}.json"
     if done.is_file():
         return
-    ex = load_extract(spec)
+    ex = load_extract(spec, cache)
     check_inputs(cal, [ex], override)
     result = judge(cal, [ex], names=[spec], group_map=group_map)
     record = summarize(result, name)
@@ -336,7 +336,9 @@ def run_null(args: argparse.Namespace) -> int:
                 jobs=args.jobs, mde=[], input_sha256=override, log=None,
             )  # fmt: skip
         print(f"[{j + 1}/{len(members)}] judging {member}", file=sys.stderr, flush=True)
-        _judge_and_save(results, name, "loo", Calibration.open(cal_dir), member, override, {})
+        _judge_and_save(
+            results, name, "loo", Calibration.open(cal_dir), member, override, {}, args.cache
+        )
         if not args.keep_calibrations:
             shutil.rmtree(cal_dir, ignore_errors=True)
     held = [h for h in args.held_out]
@@ -348,7 +350,9 @@ def run_null(args: argparse.Namespace) -> int:
         for spec in held:
             run, _, mapping = spec.partition("@")
             gmap = _parse_group_map([m for m in mapping.split(",") if m])
-            _judge_and_save(results, f"held-{Path(run).name}", "held-out", cal, run, override, gmap)
+            _judge_and_save(
+                results, f"held-{Path(run).name}", "held-out", cal, run, override, gmap, args.cache
+            )
     records = [json.loads(p.read_text()) for p in sorted(results.glob("*.json"))]
     ps = [np.load(p) for p in sorted(results.glob("*.p.npy"))]
     summary = aggregate_null(records, ps)

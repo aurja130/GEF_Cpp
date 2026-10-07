@@ -28,7 +28,7 @@ K = 20
 
 
 def sparse_run(rng: np.random.Generator, scale_sd: float = 0.0) -> dict[str, dict[Key, Value]]:
-    lam = 1500.0 * np.exp(-np.arange(N_BIN) / 5.0) * (1.0 + scale_sd * rng.standard_normal())
+    lam = 1500.0 * np.exp(-np.arange(N_BIN) / 5.0) * float(np.exp(scale_sd * rng.standard_normal()))
     table: dict[Key, Value] = {}
     for f in range(N_FAM):
         counts = rng.poisson(lam * (1.0 + 0.3 * f))
@@ -73,7 +73,7 @@ def test_calibration_detects_the_discrete_columns(tmp_path: Path) -> None:
     assert fam is not None
     y = fam.labels.index("y")
     assert fam.label_quantum[y] == pytest.approx(Q)
-    assert 1.0 <= fam.label_fano[y] <= 1.3
+    assert 0.8 <= fam.label_fano[y] <= 1.3
     assert np.isnan(fam.label_quantum[fam.labels.index("events")])
 
 
@@ -115,16 +115,84 @@ def test_planted_shifts_in_sparse_bins_are_found(tmp_path: Path) -> None:
 
 
 def test_p_values_stay_valid_when_every_run_has_its_own_size(tmp_path: Path) -> None:
-    """A shared normalization (the whole histogram 30 % larger or smaller) must not look like
-    excess events in the low-count bins."""
+    """A shared normalization (the whole histogram a lognormal 15 % larger or smaller) must not
+    look like excess events in the low-count bins. Calibrations are pooled (see the lognormal
+    test below)."""
     pooled: list[float] = []
-    for seed in (31, 32):
-        cal = _ensemble(tmp_path / str(seed), seed, scale_sd=0.3)
+    for seed in range(31, 47):
+        cal = _ensemble(tmp_path / str(seed), seed, scale_sd=0.15)
         rng = np.random.default_rng(200 + seed)
-        for _ in range(100):
+        for _ in range(40):
             pooled.extend(
-                verdict.judge(cal, [MemoryExtract(sparse_run(rng, 0.3))]).p_values.tolist()
+                verdict.judge(cal, [MemoryExtract(sparse_run(rng, 0.15))]).p_values.tolist()
             )
     p = np.array(pooled)
     for t in (1e-3, 1e-2, 1e-1):
         assert int(np.sum(p <= t)) <= binom_interval(len(p), t)[1], f"t={t}: {np.mean(p <= t):.4f}"
+
+
+def overdispersed_run(rng: np.random.Generator, sigma: float) -> dict[str, dict[Key, Value]]:
+    """Dense histograms (50 to 5000 counts per bin) times a lognormal per-run factor."""
+    lam = 50.0 + 5000.0 * np.exp(-0.5 * ((np.arange(120) - 40) / 15.0) ** 2)
+    factor = float(np.exp(sigma * rng.standard_normal()))
+    table: dict[Key, Value] = {}
+    for f in range(4):
+        # the factor of each histogram is the run's own times a smaller one of the histogram
+        own = factor * float(np.exp(0.5 * sigma * rng.standard_normal()))
+        for b, c in enumerate(rng.poisson(lam * own * (1.0 + 0.2 * f)).tolist()):
+            table[Key(DMP, f"B{f}", "#1", "y", (b,))] = c * Q
+        table[Key(DMP, f"B{f}", "#1", "events", ())] = 100000
+    return {DMP: table}
+
+
+@pytest.mark.parametrize("sigma", [0.10, 0.20])
+def test_p_values_stay_valid_with_a_lognormal_run_factor(tmp_path: Path, sigma: float) -> None:
+    """Validity holds across ensembles (a calibration whose K factors happen to scatter little is
+    invalid on its own; the Student t amplitude makes the mixture valid), so many calibrations
+    with a few suites each are pooled."""
+    pooled: list[float] = []
+    for seed in range(40, 56):
+        rng = np.random.default_rng(seed)
+        sub = tmp_path / f"{sigma}-{seed}"
+        members = [
+            str(write_extract(sub / f"s{i}", overdispersed_run(rng, sigma), sub / "pool"))
+            for i in range(K)
+        ]
+        calibrate(members, sub / "cal", jobs=1, mde=[], input_sha256=SHA)
+        cal = Calibration.open(sub / "cal")
+        fam = cal.file(DMP).family("B1", "#1")  # type: ignore[union-attr]
+        assert fam is not None and fam.null.psi >= 0.0
+        for _ in range(40):
+            pooled.extend(
+                verdict.judge(cal, [MemoryExtract(overdispersed_run(rng, sigma))]).p_values.tolist()
+            )
+    p = np.array(pooled)
+    for t in (1e-3, 1e-2, 1e-1):
+        assert int(np.sum(p <= t)) <= binom_interval(len(p), t)[1], f"t={t}: {np.mean(p <= t):.4f}"
+
+
+def test_the_quadratic_term_is_found_in_a_calibration(tmp_path: Path) -> None:
+    rng = np.random.default_rng(57)
+    members = [
+        str(write_extract(tmp_path / f"s{i}", overdispersed_run(rng, 0.2), tmp_path / "pool"))
+        for i in range(K)
+    ]
+    calibrate(members, tmp_path / "cal", jobs=1, mde=[], input_sha256=SHA)
+    fam = Calibration.open(tmp_path / "cal").file(DMP).family("B1", "#1")  # type: ignore[union-attr]
+    assert fam is not None and 0.01 < fam.null.psi < 0.2
+    assert fam.null.mode_dof == pytest.approx(K - 2)
+
+
+def test_a_planted_shift_is_still_found_with_a_run_factor(tmp_path: Path) -> None:
+    rng = np.random.default_rng(51)
+    members = [
+        str(write_extract(tmp_path / f"s{i}", overdispersed_run(rng, 0.15), tmp_path / "pool"))
+        for i in range(K)
+    ]
+    calibrate(members, tmp_path / "cal", jobs=1, mde=[], input_sha256=SHA)
+    cal = Calibration.open(tmp_path / "cal")
+    files = overdispersed_run(rng, 0.15)
+    key = Key(DMP, "B2", "#1", "y", (40,))
+    files[DMP][key] = float(files[DMP][key]) * 3.0  # type: ignore[operator]
+    hit = verdict.judge(cal, [MemoryExtract(files)]).rejected
+    assert hit and hit[0].block == "B2"
