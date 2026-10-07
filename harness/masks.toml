@@ -1,0 +1,152 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2026 Aurora Jahan
+# Licensed under the GNU GPL v3 or later, WITHOUT ANY WARRANTY; see LICENSE.txt.
+#
+# Time-dependent output fields of GEF (plan M1.3). `compare_runs` replaces each regex match
+# with <MASK:id> before comparing two run directories. Every pattern uses a look-behind so
+# that only the time-dependent text is replaced; the rest of the line stays comparable. The
+# patterns are anchored to the line start/end, and each is limited to the files that the
+# BASIC site writes, so a date in any other place is NOT masked and shows up as a difference.
+#
+# How the list was built (enumeration, 2026-10-07)
+# ------------------------------------------------
+# All 38 BASIC files of Reference/GEF_code/source were searched (case-insensitive, comments
+# skipped by eye) for: Date, Time, Now, Timer, Format(..) of dates, Rdatetime, __DATE__,
+# __DATE_ISO__, __TIME__, Compilationstamp, CurDir, ExePath, Command, Environ, Shell, Dir,
+# FileDateTime, Exec, getpid, Width, Locate, Pos, Csrlin, Cls, Color, Screen, Inkey, Sleep,
+# Randomize, Open Cons/Pipe/Err, and ctl/thread.ctl handling. Each site was read in context
+# and its output compared with the real files in validation/test_run/.
+#
+# Site table (BASIC site -> output -> mask id)
+#   GEF.bas:17-18        compile stamp (__DATE_ISO__ at __TIME__)  stdout banner      compile_stamp
+#   GEF.bas:9990-9993    Now, progress line                        stdout             progress_time
+#   GEF.bas:11973-11975  Now, "Output written on"                  out/*, tmp/*.ptb   out_written
+#   GEF.bas:10646-10648  Now, "* Output written on"                tmp/*.mvd          mvd_written
+#   GEF.bas:4824-4827    Now, "* Output written on"                out/<lmd file>     lmd_written
+#   GEF.bas:15022-15024  Now, "C: Written on"                      dmp/*/ZApre.dmp    dmp_written
+#   GEF.bas:15088-15090  Now, "C: Written on"                      dmp/*/ZApost.dmp   dmp_written
+#   GEF.bas:15739-15741  Now, "C: Written on" (1-D analyzer dump)  dmp/*/*.dmp        dmp_written
+#   GEF.bas:15785-15787  Now, "C: Written on" (2-D analyzer dump)  dmp/*/*.dmp        dmp_written
+#   GEF.bas:1887-1888    Timer -> Timeoffset, thread 1 only        ctl/thread.ctl     thread_timeoffset
+#   ParameterUpdate.mac:17-21  Now (included at GEF.bas:1017 and 2543)  tmp/ParameterUpdate.dat  update_written
+#   FitparWrite.bas:7-12 Now (fit mode only)                       Fitpar.dat         fitpar_written
+#   Plotting.bas:241     Rdatetime (fit mode only)                 tmp/Fitlog<n>.dat  fitlog_started
+#   Plotting.bas:266     Rdatetime (fit mode only)                 tmp/Fitlog<n>.dat  fitlog_set
+#   Plotting.bas:44      Rdatetime (needs the PLOT option, graphics) GRAF/*.grf       grf_written
+#
+# Time sources that do NOT reach any output file (no mask needed)
+#   GEF.bas:1553 Randomize,3 seeds from Timer: the seed is fixed by the harness (GEF_SEED) and
+#       is never printed.
+#   GEF.bas:704 await(): Timer is used only to pick a 100 ms slot for ctl/ file access;
+#       it changes wall time, never the content (a single process, thread 1, owns every slot).
+#   GEF.bas:5179 (tmp/*.par): "* Output written on" prints a LOCAL Rdatetime that is never
+#       assigned (declared at 5165), i.e. Format(0) = 30.12.1899, 00:00:00 in every run.
+#       Deterministic, deliberately NOT masked (test_run: 60 such lines, all 1899).
+#   GEF.bas:4160, 4189 (tmp/*.pfis, *.pfis2): written only when Bfilein = 0 (no file.in), so
+#       never in a harness run.
+#   GEF.bas:2546-2548, Plotting.bas:2861 Shell("cp -r GRAF BestFit"): fit mode only; copies
+#       .grf files (covered by grf_written), prints a fixed line.
+#   GEF.bas:1941, 3298, 15523-15568 Screen 0 / Plotting.bas Screenres: graphics only (PLOT
+#       option), no output text.
+#   ENDF.bas:790-803, 1033 (C_EDATE "EVAL-JUN25", C_DDATE, C_RDATE "DIST-JUN25"): string
+#       literals in the source, not clock values. The ENDF tape's 4-digit "2026" is a record
+#       number field, not a year.
+#   The numeric text "2026" in out/*.dat, tmp/*.ptb, dmp/** is yield data (counts), not a date.
+#   No site uses CurDir, ExePath, Command, Environ, FileDateTime, Dir, Width, Locate, Pos,
+#   Csrlin, Inkey, a process id, or an elapsed-time print. Absolute paths and the user name
+#   are never printed.
+#
+# Environment / terminal dependence: none found. GEF reads no environment variable and no
+# terminal size. Verified with a probe program compiled by the pinned fbc: its output
+# (long lines, comma tab zones, Using) is byte-identical with stdout redirected to a file,
+# with LINES/COLUMNS set to other values, and on a pty of 40 and 200 columns. Therefore
+# the LINES/COLUMNS variables that gdb sets cannot change GEF's output. Zone printing
+# wraps at a fixed 80 columns.
+#
+# `thread_timeoffset` assumes thread number 1 (fresh run directory), whose line is
+# "1" + tab zone + Timer. validation/test_run was run as thread 2 with a stale ctl/, so its
+# thread.ctl also has a second line "2" (no time on it).
+
+[[mask]]
+id = "compile_stamp"
+files = ["stdout.log"]
+pattern = '''(?<=^   GEF \d{4}/\d\.\d compiled on )\d{4}-\d{2}-\d{2} at \d{2}:\d{2}:\d{2}(?=\.$)'''
+source = "GEF.bas:17"
+reason = "Compile date/time of the binary (__DATE_ISO__, __TIME__); differs if the build epoch differs."
+
+[[mask]]
+id = "progress_time"
+files = ["stdout.log"]
+pattern = '''(?<=events processed at )\d{2}\.\d{2}\.\d{4}, \d{2}:\d{2}:\d{2}$'''
+source = "GEF.bas:9993"
+reason = "Wall-clock time (Now) of each event-progress line."
+
+[[mask]]
+id = "out_written"
+files = ["work/out/*", "work/tmp/*.ptb"]
+pattern = '''(?<=^Output written on )\d{2}\.\d{2}\.\d{4}, \d{2}:\d{2}:\d{2}$'''
+source = "GEF.bas:11975"
+reason = "Wall-clock time (Now) at which the result file block was written."
+
+[[mask]]
+id = "mvd_written"
+files = ["work/tmp/*.mvd"]
+pattern = '''(?<=^\* Output written on )\d{2}\.\d{2}\.\d{4}, \d{2}:\d{2}:\d{2}$'''
+source = "GEF.bas:10648"
+reason = "Wall-clock time (Now) of each multi-variate-distribution block."
+
+[[mask]]
+id = "lmd_written"
+files = ["work/out/*"]
+pattern = '''(?<=^\* Output written on )\d{2}\.\d{2}\.\d{4}, \d{2}:\d{2}:\d{2}$'''
+source = "GEF.bas:4827"
+reason = "Wall-clock time (Now) in the header of the list-mode (lmd) file."
+
+[[mask]]
+id = "dmp_written"
+files = ["work/dmp/*"]
+pattern = '''(?<=^C: Written on )\d{2}\.\d{2}\.\d{4}, \d{2}:\d{2}:\d{2}$'''
+source = "GEF.bas:15741"
+reason = "Wall-clock time (Now) of every analyzer dump block (also GEF.bas:15024, 15090, 15787)."
+
+[[mask]]
+id = "thread_timeoffset"
+files = ["work/ctl/thread.ctl"]
+pattern = '''(?<=^ 1 {13})\d+(?:\.\d+)?$'''
+source = "GEF.bas:1888"
+reason = "Timer value (Timeoffset) that the thread-1 process writes after its thread number."
+
+[[mask]]
+id = "update_written"
+files = ["work/tmp/ParameterUpdate.dat"]
+pattern = '''(?<=^' This update was written on )\d{2}\.\d{2}\.\d{4}, \d{2}:\d{2}:\d{2}$'''
+source = "ParameterUpdate.mac:21"
+reason = "Wall-clock time (Now) when the parameter list was written at program start."
+
+[[mask]]
+id = "fitpar_written"
+files = ["work/Fitpar.dat"]
+pattern = '''(?<=^' Written on )\d{2}\.\d{2}\.\d{4}, \d{2}:\d{2}:\d{2}$'''
+source = "FitparWrite.bas:12"
+reason = "Wall-clock time (Now) of a fit-parameter record (fit mode only)."
+
+[[mask]]
+id = "fitlog_started"
+files = ["work/tmp/Fitlog*.dat"]
+pattern = '''(?<=^' Calculation started on )\d{2}\.\d{2}\.\d{4}, \d{2}:\d{2}:\d{2}$'''
+source = "Plotting.bas:241"
+reason = "Wall-clock time of the first fit loop (fit mode only)."
+
+[[mask]]
+id = "fitlog_set"
+files = ["work/tmp/Fitlog*.dat"]
+pattern = '''^\d{2}\.\d{2}\.\d{4}, \d{2}:\d{2}:\d{2}$'''
+source = "Plotting.bas:266"
+reason = "Wall-clock time of each new fit-parameter set (fit mode only); the whole line is the time."
+
+[[mask]]
+id = "grf_written"
+files = ["work/GRAF/*", "work/BestFit/GRAF/*"]
+pattern = '''(?<=^C: )\d{2}\.\d{2}\.\d{4}, \d{2}:\d{2}:\d{2}$'''
+source = "Plotting.bas:44"
+reason = "Wall-clock time in the GRAF copy of a mass-yield plot (PLOT option only)."

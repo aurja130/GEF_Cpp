@@ -1,0 +1,93 @@
+{
+  "created_utc": "2026-10-07T10:40:29Z",
+  "file_count": 46,
+  "files": {
+    "capture.json": "c4bed5eb625542406ed3625869b01c830bb6538b99351466af3130a51407fdd6",
+    "capture_seed.gdb.py": "ffd9ef7717ce992df4d7c27095b38a37355c6f13646d6d88b4d2915195b8da4f",
+    "gdb.log": "ae7a5701c20f3abedd010d8970e871d03c3c81ba9c5e226d5fe94c29772e08a0",
+    "run.json": "7402ceb7c5e528491d862791d794e3e5fa19d80559e54fcc91f32ba7455b1010",
+    "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout.log": "7f8202e378b8482b93b0cd657694bdd40c6ed16f4144343bfdc3865de80d7a37",
+    "work/ENDF/GEFY_98_252_s.dat": "2c036dffd3ce184e98515b9e7fa1e29071e5ea886ebfcececfac74034837b3cb",
+    "work/ctl/IMATmax.ctl": "d3af3fe5c14adfa5be3a59652ec5c2abd759def7795c85909cfa7a5a8261f7c2",
+    "work/ctl/done.ctl": "ab436efb40836efbc332caef8364900e93b966deb044ac38bf48f6650f371c6d",
+    "work/ctl/sync.ctl": "082f1b30dfd690d2eb56f15099a07810daa4555b553e0f0a8f7cb61e5f0aff94",
+    "work/ctl/thread.ctl": "960b13aa28c96bf85056ec75305d7a1617461c0b839d07d0128b6c2454dcc5dc",
+    "work/dmp/Z98_A252_sf_E0MeV/Apost.dmp": "558d3057befb49f945f665388e91c6e7e23f0eb52a20a9c22646e7b34363bb9f",
+    "work/dmp/Z98_A252_sf_E0MeV/Apre.dmp": "c431c6448126ccba0969e36255c51557c401e8910c9c4fc76c97d1f5e732b749",
+    "work/dmp/Z98_A252_sf_E0MeV/Aprov.dmp": "939007eaf8e1c2c07d29694c99fc3352c2dbadfc9afb0f36c678f5d7473f57d8",
+    "work/dmp/Z98_A252_sf_E0MeV/DNlocal.dmp": "348302c73014ae59c10d42b72993f1f50656ab02382eb5568fa5da1c1f6846ff",
+    "work/dmp/Z98_A252_sf_E0MeV/DPlocal.dmp": "c2d1deaaa65285f8d210901b982b7d824111b0f00c8f7fa1580b4dbd9177e601",
+    "work/dmp/Z98_A252_sf_E0MeV/Decay.dmp": "86fa8b727cadc88f452d45f78a00cb9b9b63e131e1a39311413c0e59db14fd7f",
+    "work/dmp/Z98_A252_sf_E0MeV/EMpot.dmp": "b1371659f4f897ffda7ab36e360490bbd606f1543157b5e34403fc1a718df73c",
+    "work/dmp/Z98_A252_sf_E0MeV/EN.dmp": "e4a852c4921c1b5ed5726791707796ce917447058adb40d4c8a2c378574f1124",
+    "work/dmp/Z98_A252_sf_E0MeV/Eexc.dmp": "ce1a7f9d3bdcbf95fa46422b73fb5b8ccd8dfa080afe36b4e569baafb6270f79",
+    "work/dmp/Z98_A252_sf_E0MeV/Egamma.dmp": "3ea9d8059b89f34315d4aa456c9eb34cfb3ce42374a9a24dd8762e9cdd2172c7",
+    "work/dmp/Z98_A252_sf_E0MeV/Ekin.dmp": "d6ca32ae75d25a6052f385cb0bc435e8cfedd9d6195dccebdb059b1c99267704",
+    "work/dmp/Z98_A252_sf_E0MeV/Multichance.dmp": "6ed8d3d9830040bc3c13183ddcba20ef253b06888163062ba9ce1024501a850b",
+    "work/dmp/Z98_A252_sf_E0MeV/NA.dmp": "7725e730db98b76daa4961e2098654bbc2dbdd500682ba53cefb0c46fd13d0df",
+    "work/dmp/Z98_A252_sf_E0MeV/NN.dmp": "bde86e97f62dd89127ff83cb1dc2add5c6b53cb9456c193a0a7019b6e7882dd1",
+    "work/dmp/Z98_A252_sf_E0MeV/NP.dmp": "b039184a822b16ca332d45689ddfccbd56cc1aaac7612d04c6f6d76a6805622a",
+    "work/dmp/Z98_A252_sf_E0MeV/Ngammatot.dmp": "bc994d1eac20411fed2a8335d8783a45a6b9912ee2d94747487c8dda962a893a",
+    "work/dmp/Z98_A252_sf_E0MeV/Npost.dmp": "289b2b88dcf73744ffe8da4761c9a036df3ff77b2b15934e5e40ceb9dd40cd96",
+    "work/dmp/Z98_A252_sf_E0MeV/Npre.dmp": "cd14157fe5ed48fb81bca5e8fd427ea3296c13f6c8ad7a39e88695362295f5c6",
+    "work/dmp/Z98_A252_sf_E0MeV/Qvalues.dmp": "6b7c7d7b6c192cbc22b4d241ba4f7436147c976344752cfb1d7d93adcbe37b0a",
+    "work/dmp/Z98_A252_sf_E0MeV/SigmaZpost.dmp": "e70612af5f88291ebd4014d58081e7f789aaad72a5e1971c929215939ed55499",
+    "work/dmp/Z98_A252_sf_E0MeV/SigmaZpre.dmp": "e886b4667d3e34f30fd4f550a8d0804cd199221b7e4dfce7aba2cbfd4ca0e29c",
+    "work/dmp/Z98_A252_sf_E0MeV/XE.dmp": "65c108d3af3ddbd7bf4c6e9cbe671cf8f22152fc64b7871969a2a99e17ed3207",
+    "work/dmp/Z98_A252_sf_E0MeV/ZApost.dmp": "fd785aa8477bbdbc9e4f63a09d493d22ef102caeb9e5807304477fe486596033",
+    "work/dmp/Z98_A252_sf_E0MeV/ZApre.dmp": "aaa7fad1c064c2a1c72a61665c2ab56b17a5f6f0586e184cb6f01151788c3360",
+    "work/dmp/Z98_A252_sf_E0MeV/ZPolarpost.dmp": "e177e5f6d31f56df2bf22f664791b334032bace4e7b57d33c8f3ae6ef774f5d2",
+    "work/dmp/Z98_A252_sf_E0MeV/ZPolarpre.dmp": "9a2eaaf691ea6ad0d0d66bd1d29c6768963c564960da9e8a8b4caab8e9a3cfdb",
+    "work/dmp/Z98_A252_sf_E0MeV/Zpost.dmp": "27a1231b9f11fa8189036d441047345115d1f7b4dfa6a1699db5cc7652b98a22",
+    "work/file.in": "2557da627a17a5acf138a14d34ffe7a4a92d5c70c2835a84f6cc11fcd44f11e8",
+    "work/in/m1_cf252_gs.in": "848a5b72a88654130261b4ec23be123cd9e6a968c0e4505d797bc6fb1591a458",
+    "work/out/GEF_98_252_sf.dat": "e8c92151833753bc69cfdeec9501c4eb4e6922d4949984ed775c5f5c910de95d",
+    "work/tmp/CUMU1.dat": "7721f1248179b6c2afa72b350205a1947845a8f45bb8b11c5bb77c24803f5f3b",
+    "work/tmp/GEF_98_252_sf.par": "23f187387b8a5af162e7db790122b1943a57cb0f8fd4a6eff749cd65440d9c7d",
+    "work/tmp/ParameterUpdate.dat": "6952ae21361a60c9da8dbdb172561a1b34947cf302973626a0c9e2312988131d",
+    "work/tmp/Z98_A252_sf_E0MeV.ptb": "1c69fd55507c984fb51495beb6edba78d48f56e38b88d0addb95f0fbe77e53e7",
+    "work/tmp/Z98_A252_sf_E0MeV_Single.mvd": "0acaab4c2a0c5f05262c12df599909dbeccec4d8db795af17d0b03dfb7ccf6c0"
+  },
+  "id": "m1-g1-cf252-gefref",
+  "kind": "capture",
+  "note": "M1 G1: original gef_reference under gdb, seed captured from the clock",
+  "run_json": {
+    "binary": {
+      "path": "/home/aurja/Programming/GEF_Cpp/validation/test_run/gef_reference",
+      "sha256": "1942e588a32e29a1090ca8b6d9c0a61d56994f6bc438ea42ab0ed8d4f3915053"
+    },
+    "captured_seed": 1776917293,
+    "command": [
+      "gdb",
+      "-batch",
+      "-nx",
+      "-x",
+      "/home/aurja/Programming/GEF_Cpp/build/m1_gates/g1/m1_cf252_gs/ref/capture_seed.gdb.py"
+    ],
+    "cwd": "/home/aurja/Programming/GEF_Cpp/build/m1_gates/g1/m1_cf252_gs/ref/work",
+    "end_utc": "2026-10-07T09:28:45+00:00",
+    "env_set": {},
+    "exit_code": 0,
+    "gdb_exit_code": 0,
+    "input": {
+      "name": "m1_cf252_gs.in",
+      "sha256": "848a5b72a88654130261b4ec23be123cd9e6a968c0e4505d797bc6fb1591a458"
+    },
+    "mode": "capture",
+    "mt_init_hits": 1,
+    "randomize_args": [
+      [
+        -1.0,
+        3
+      ]
+    ],
+    "reseed": false,
+    "schema": 1,
+    "seed": null,
+    "start_utc": "2026-10-07T09:10:56+00:00",
+    "wall_time_s": 1068.575
+  },
+  "schema": 1,
+  "total_bytes": 15293734
+}

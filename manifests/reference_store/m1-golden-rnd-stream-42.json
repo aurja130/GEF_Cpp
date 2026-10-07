@@ -1,0 +1,31 @@
+{
+  "created_utc": "2026-10-07T09:26:53Z",
+  "driver_json": {
+    "binary_sha256": "eded243e36c65f3a9ca3f26fa48e9dd84e7345a05d9f4104bd3479fde0db69c5",
+    "command": [
+      "rnd_stream"
+    ],
+    "cuts": [],
+    "driver": "rnd_stream",
+    "driver_sha256": "826e84df6c7edd82a0ea8c2c8d6de4f39a7bd2b965e2ed723b5113005bf04e9c",
+    "fbc_version": "1.10.1",
+    "includes": [],
+    "outputs": {
+      "rnd_stream_42.txt": "2ac2ac5adfe263039df7e12305f0323901c7bbe5859fb88785008c25524a868b",
+      "stdout.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "returncode": 0,
+    "run_wall_time_s": 0.137
+  },
+  "file_count": 3,
+  "files": {
+    "driver.json": "7bf02966af9faeab7d8a7ab2327de9a75f98706d68f89442047d15ec5f53bc77",
+    "rnd_stream_42.txt": "2ac2ac5adfe263039df7e12305f0323901c7bbe5859fb88785008c25524a868b",
+    "stdout.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "id": "m1-golden-rnd-stream-42",
+  "kind": "driver",
+  "note": "M1 G5: Randomize 42,3 then 10^6 Rnd values as u32 hex (fbc 1.10.1); matches harness.fbmt",
+  "schema": 1,
+  "total_bytes": 9000544
+}

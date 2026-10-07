@@ -1,0 +1,4 @@
+# Patch set "seed-reseed": GEF_SEED, scope selectors and the per-event reseed mode (GEF_RESEED=1).
+seed
+scope
+reseed

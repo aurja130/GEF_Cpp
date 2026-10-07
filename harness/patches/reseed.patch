@@ -1,0 +1,168 @@
+--- a/GEF.bas
++++ b/GEF.bas
+@@ -1552,7 +1552,7 @@
+ 
+   #Include Once "harness_seed.bi"
+   Randomize Harness_Seed(),3   ' Seed from GEF_SEED (harness patch)
+-
++#Include Once "harness_reseed.bi"
+                                
+ /'<'/
+ 
+@@ -4238,7 +4238,7 @@
+            ' Sov. J. Nucl. Phys. 32 (1980) 184
+                 K = 0
+            
+-                Do Until Imulti >= N_multi_sample 
++                Do Until Imulti >= N_multi_sample : Harness_Reseed(1, 5, Ifilein, Iline, I_Double_Covar, I_E_step, K)
+                   IFIStot = 0  ' default: no fission
+                   If Emode = 13 Then   ' Dice energy from energy distribution from file
+     Dice_I_Estep:   
+@@ -4704,7 +4704,7 @@
+                     End If  
+                     Exit Do
+                   End If
+-                Loop  '  Do Until Imulti >= N_multi_sample
++                Loop : Harness_ReseedEnd(1)  '  Do Until Imulti >= N_multi_sample
+                 Scope
+                   Dim As Double Rnorm_N,Rnorm_P
+                   Rnorm_N = 0
+@@ -5109,7 +5109,7 @@
+             ' Mode for single system or for passage of first system
+             ' set values to perturbed parameters
+               If B_Fit Then Print "New set of GEF parameters, number ";I_Fitloop;"."
+-              P_DZ_Mean_S1 = PGauss(_P_DZ_Mean_S1,Var_P_DZ_Mean_S1)
++              Harness_Reseed(2, 5, Ifilein, Iline, I_Double_Covar, I_E_step, I_Error) : P_DZ_Mean_S1 = PGauss(_P_DZ_Mean_S1,Var_P_DZ_Mean_S1)
+               P_corr_S1 = PGauss(_P_corr_S1,Var_P_corr_S1)
+               P_DZ_Mean_S2 = PGauss(_P_DZ_Mean_S2,Var_P_DZ_Mean_S2)
+               P_DZ_Mean_S3 = PGauss(_P_DZ_Mean_S3,Var_P_DZ_Mean_S3)
+@@ -5157,7 +5157,7 @@
+             ' P_Shell_S1 = P_Shell_S1 * (1 - PGauss(0,Var_P_Att_Pol) * Delta_NZ_Pol)
+               HOMPOL = PGauss(_HOMPOL,Var_HOMPOL)
+               POLARadd = PGauss(_POLARadd,Var_POLARadd)  
+-              Jscaling = PGauss(_Jscaling,Var_Jscaling)
++              Jscaling = PGauss(_Jscaling,Var_Jscaling) : Harness_ReseedEnd(2)
+     
+               Scope 
+                 Dim As Integer fpar
+@@ -7923,7 +7923,7 @@
+       
+             /'      Choosing fission mode'/
+     
+-                      Scope
++                      Scope : Harness_Reseed(3, 10, Ifilein, Iline, I_Double_Covar, I_E_step, I_Error, I_E_Distr, I_N_Multi, I_Z_Multi, I_E_Multi, ILoop)
+                         Dim As Single R_Sum_0,R_Sum_1,R_Sum_2,R_Sum_3,R_Sum_4,R_Sum_5,R_Sum_6,R_Sum_7
+                         Dim As Single R_Choice,Rincr
+           
+@@ -9994,7 +9994,7 @@
+                         End If
+                       End Scope 
+         
+-                    Next ILoop : Harness_Event = 0  ' For ILoop = 1 To NEVTused
++                    Next ILoop : Harness_ReseedEnd(3) : Harness_Event = 0  ' For ILoop = 1 To NEVTused
+     
+                   End If  ' If NEVTused  (from W_spectrum(I_E_distr)) > 0     
+       '           End of loop over energy spectrum from file   
+@@ -17957,7 +17957,7 @@
+   ' Box-Mueller method
+   Static As Integer ISet = 0
+   Dim As Single V1,V2,R,Fac,GasDev,Result
+-  Static As Single GSet
++  Static As Single GSet : If Harness_PGaussReset <> 0 Then ISet = 0 : Harness_PGaussReset = 0
+   If ISet = 0 then
+     Repeat:
+     V1 = 2.E0 * Rnd - 1.E0
+--- /dev/null
++++ b/harness_reseed.bi
+@@ -0,0 +1,91 @@
++' SPDX-License-Identifier: GPL-3.0-or-later
++' Copyright (C) 2026 Aurora Jahan
++' Licensed under the GNU GPL v3 or later, WITHOUT ANY WARRANTY; see LICENSE.txt.
++' Ported from GEF 2025/1.2, Copyright (C) 2009-2025 Karl-Heinz Schmidt and Beatriz Jurado.
++' Harness patch "reseed": per-scope reseeding of the random generator (harness/RESEED_SPEC.md).
++'
++' GEF_RESEED unset or empty: inert, nothing here changes a draw or an output.
++' GEF_RESEED=1: Harness_Reseed(scope, ...) is called at the start of every scope instance
++' (pre-pass history 1, perturbation block 2, event 3). It derives a 32-bit seed from the
++' master seed GEF_SEED, the scope ID and the BASIC loop counters of the instance, calls
++' Randomize seed, 3 and clears the cached second value of PGauss.
++' Any other value of GEF_RESEED stops the program with exit code 2 at start-up.
++'
++' Requires harness_seed.bi (Harness_Seed) to be included before, and, for the log markers,
++' harness_rndlog.bi and harness_scope.bi (only used with -d GEF_RNDLOG).
++
++Dim Shared As Long Harness_ReseedOn           ' 1 in reseed mode
++Dim Shared As Long Harness_PGaussReset        ' 1: PGauss must forget its cached value
++Dim Shared As ULongInt Harness_ReseedMaster   ' GEF_SEED
++
++' One SplitMix64 step: output for state Ux (all arithmetic modulo 2^64).
++Private Function Harness_SplitMix64(ByVal Ux As ULongInt) As ULongInt
++  Dim As ULongInt Uz
++  Ux += &h9E3779B97F4A7C15ULL
++  Uz = Ux
++  Uz = (Uz Xor (Uz Shr 30)) * &hBF58476D1CE4E5B9ULL
++  Uz = (Uz Xor (Uz Shr 27)) * &h94D049BB133111EBULL
++  Return Uz Xor (Uz Shr 31)
++End Function
++
++' Seed of one scope instance: Pv(0 .. Ncount-1) are the tuple elements (signed 64-bit).
++Function Harness_DeriveSeed(ByVal Umaster As ULongInt, ByVal Iscope As LongInt, _
++                            ByVal Ncount As Long, ByVal Pv As LongInt Ptr) As ULong
++  Dim As ULongInt Uh = Harness_SplitMix64(Umaster)
++  Dim As Long Ie
++  Uh = Harness_SplitMix64(Uh Xor CULngInt(Iscope))
++  For Ie = 0 To Ncount - 1
++    Uh = Harness_SplitMix64(Uh Xor CULngInt(Pv[Ie]))
++  Next
++  Return CULng(Uh Shr 32)
++End Function
++
++Private Sub Harness_ReseedInit()
++  Dim As String Cmode = Environ("GEF_RESEED")
++  If Len(Cmode) = 0 Then Return
++  If Cmode <> "1" Then
++    Print "<harness> GEF_RESEED must be unset, empty or 1, got '";Cmode;"'."
++    End 2
++  End If
++  Harness_ReseedMaster = CULngInt(Harness_Seed())
++  Harness_ReseedOn = 1
++End Sub
++Harness_ReseedInit()
++
++' Start of a scope instance: Iscope and the first Ncount of V0 .. V9.
++Sub Harness_Reseed(ByVal Iscope As LongInt, ByVal Ncount As Long, _
++                   ByVal V0 As LongInt = 0, ByVal V1 As LongInt = 0, ByVal V2 As LongInt = 0, _
++                   ByVal V3 As LongInt = 0, ByVal V4 As LongInt = 0, ByVal V5 As LongInt = 0, _
++                   ByVal V6 As LongInt = 0, ByVal V7 As LongInt = 0, ByVal V8 As LongInt = 0, _
++                   ByVal V9 As LongInt = 0)
++  If Harness_ReseedOn = 0 Then Return
++  Dim As LongInt Av(0 To 9)
++  Dim As Long Ie
++  Av(0) = V0 : Av(1) = V1 : Av(2) = V2 : Av(3) = V3 : Av(4) = V4
++  Av(5) = V5 : Av(6) = V6 : Av(7) = V7 : Av(8) = V8 : Av(9) = V9
++  Dim As ULong Useed = Harness_DeriveSeed(Harness_ReseedMaster, Iscope, Ncount, @Av(0))
++  Randomize CDbl(Useed), 3
++  Harness_PGaussReset = 1
++#ifdef GEF_RNDLOG
++  If Harness_Traced() Then
++    If Harness_RndFile = 0 Then Harness_RndOpen()
++    Harness_fprintf(Harness_RndFile, !"B %lld %08x", Iscope, Useed)
++    For Ie = 0 To Ncount - 1
++      Harness_fprintf(Harness_RndFile, !" %lld", Av(Ie))
++    Next
++    Harness_fprintf(Harness_RndFile, !"\n")
++  End If
++#endif
++End Sub
++
++' End of a scope instance (Rnd log marker only; the generator is not touched).
++Sub Harness_ReseedEnd(ByVal Iscope As LongInt)
++#ifdef GEF_RNDLOG
++  If Harness_ReseedOn <> 0 Then
++    If Harness_Traced() Then
++      If Harness_RndFile = 0 Then Harness_RndOpen()
++      Harness_fprintf(Harness_RndFile, !"E %lld\n", Iscope)
++    End If
++  End If
++#endif
++End Sub

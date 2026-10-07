@@ -1,0 +1,1 @@
+# Patch set "none": the unmodified GEF source (re-establishes the plan 3 byte-equivalence fact).

@@ -1,0 +1,6 @@
+# Patch set "seed-reseed-probes": GEF_SEED, scope selectors, the reseed mode and the probes
+# (build with -d GEF_PROBES; per-event reseeding is active only with GEF_RESEED=1).
+seed
+scope
+reseed
+probes

@@ -1,0 +1,6 @@
+# Patch set "seed-rndlog-probes": GEF_SEED, scope selectors, the Rnd log and the probes
+# (build with -d GEF_RNDLOG -d GEF_PROBES).
+seed
+scope
+rndlog
+probes

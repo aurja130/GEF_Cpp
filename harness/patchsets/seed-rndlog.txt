@@ -1,0 +1,4 @@
+# Patch set "seed-rndlog": GEF_SEED plus scope selectors plus the Rnd log (build with -d GEF_RNDLOG).
+seed
+scope
+rndlog

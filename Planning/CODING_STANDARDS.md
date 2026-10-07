@@ -137,14 +137,24 @@ Every ported statement group carries a comment naming its BASIC source location,
 
 - Configuration is `pyproject.toml` at the root (do not fork it per package):
   - **ruff** lint and format, line length 100, rules `E,W,F,I,N,UP,B,SIM,PTH,RUF`;
-  - **basedpyright strict** over `tools/` (and `harness/`, `compare/` when added);
-  - **pytest**: `testpaths=["tools"]`, `pythonpath=["."]`, importlib import mode, `--strict-markers`.
-- Markers: `@pytest.mark.fbc` for tests that need the pinned fbc, `@pytest.mark.slow` for tests over 10 s. No other markers without adding them to `pyproject.toml`.
-- Tools are packages run from the repository root: `python3 -m tools.<pkg>.<module> ...`. Each package has an `__init__.py` with the license notice.
-- Tests live in `tools/<pkg>/tests/test_*.py`, with an `__init__.py`.
+  - **basedpyright strict** over `tools/` and `harness/` (and `compare/` when added);
+  - **pytest**: `testpaths=["tools", "harness"]`, `pythonpath=["."]`, importlib import mode, `--strict-markers`.
+- Markers: `fbc` (needs the pinned fbc), `slow` (over 10 s), `gdb` (needs gdb), `validation` (needs the gitignored `validation/` data). No other markers without adding them to `pyproject.toml`. Marked tests skip cleanly when their prerequisite is missing.
+- Tools are packages run from the repository root: `python3 -m tools.<pkg>.<module> ...` or `python3 -m harness.<module> ...`. Each package has an `__init__.py` with the license notice.
+- Tests live in `tools/<pkg>/tests/test_*.py` and `harness/tests/test_*.py`, with an `__init__.py`.
 - fbc is located only through `tools/toolchain/fbc.py` (`resolve_fbc()`, env `GEF_FBC`); never hard-code its path elsewhere.
 - Use `pathlib`, type annotations everywhere, and no mutable module-level state.
 - Generated output goes only under `build/` (gitignored). Never write into `Reference/`, and never into `validation/` except through the documented manifest tools.
+
+### 3.1 FreeBASIC harness code (patches and drivers)
+
+- **The submodule is never edited.** BASIC changes are unified diffs in `harness/patches/`, applied to a copy by named patch sets (`harness/patchsets/`) in the canonical order `seed → scope → reseed → rndlog → probes`. A new patch takes its place in that order and must apply with `patch -p1 --fuzz=0` on top of its predecessors in every patch set that contains it (a pytest test checks this).
+- **Keep `GEF.bas` line numbers.** Draw-site tags and probe locations use the original numbering. Put harness code in new `harness_<name>.bi` files; include them by replacing a blank line or appending to an existing line with `:`. If lines must be inserted, follow them with a `#line` directive that restores the numbering.
+- **Neutral by construction.** Harness code only reads GEF state: no change to GEF variables, control flow, file numbers or the random stream. Optional features sit behind `#ifdef GEF_<NAME>` or an environment variable that is inert when unset. Every patch set is proven neutral with `harness.compare_runs` before it is used (plan M1, gate G3).
+- **Check the generated C.** Use `python3 -m tools.fbsrc.emit_c --patch-dir build/harness/patchdirs/<set>` to confirm a patch changes only what it intends.
+- **Drivers** live in `harness/drivers/<name>.bas`. They pull GEF code in only through `'@include-source` and `'@cut` directives, so `driver.json` records exactly which source lines a result depends on. Their outputs are stored with `harness.store`, never edited.
+- **Output for comparison** is written as hex bit patterns (`Single` 8 digits, `Double` 16) or exact integers, never as rounded decimals.
+- License notice per §1, with `'` comments; files containing GEF code also carry the GEF copyright line.
 
 ## 4. Commands that must stay clean
 

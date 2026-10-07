@@ -1,0 +1,6 @@
+# Patch set "seed-reseed-rndlog": GEF_SEED, scope selectors, reseed mode and the Rnd log
+# (build with -d GEF_RNDLOG).
+seed
+scope
+reseed
+rndlog

@@ -414,7 +414,7 @@ These describe how the toolchain, not GEF, can make the C++ results differ from 
 
 - **Source:** `GEF.bas:17` `#Define Compilationstamp __DATE_ISO__ + " at " __TIME__`, printed at `GEF.bas:18`.
 - **Issue:** the date and time of compilation are embedded in the generated C, so emitted C and binaries are reproducible only with `SOURCE_DATE_EPOCH` set. `tools/fbsrc/emit_c.py` sets it to the submodule commit time (manifest `source_date_epoch` = 1752832402): GEF.c:19600 shows the expansion `$"2025-07-18"` / `$"09:53:22"`. The reference binary in `validation/test_run/` was built without it (`run.log:11`: `compiled on 2026-09-15 at 17:20:38`).
-- **Status:** handled for emission. M1 rebuilds of the reference binary must also set `SOURCE_DATE_EPOCH` (or mask the `compiled on` line) when comparing builds byte for byte.
+- **Status:** handled (M1, 2026-10-07). `harness.build` sets `SOURCE_DATE_EPOCH` to the submodule commit time for every harness build, and builds are reproducible. Built with the epoch of 2026-09-15 17:20:38 UTC, the unpatched source reproduces every loaded section of `gef_reference` byte for byte. Run comparisons mask the `compiled on` line (`harness/masks.toml`, mask `compile_stamp`).
 - **Owning milestone:** M1
 
 ### B-004 fbc moves numeric literals to the end of multiplication chains
@@ -459,5 +459,5 @@ These describe how the toolchain, not GEF, can make the C++ results differ from 
 | Q-029 | `d_NZIcumu` capped only in printed window | `Branchings.bas:876-899, 963-978` | read only | `fix_cumulative_uncertainty_cap` | M12 |
 | B-001 | Optimisation level vs fbc `-O0` | (toolchain) | open risk | — | M3, M5 |
 | B-002 | fbc gcc passes `-fwrapv -fno-strict-aliasing` | (toolchain) | open | — | M3 |
-| B-003 | `Compilationstamp` needs `SOURCE_DATE_EPOCH` | `GEF.bas:17` | handled for emission | — | M1 |
+| B-003 | `Compilationstamp` needs `SOURCE_DATE_EPOCH` | `GEF.bas:17` | handled (M1) | — | M1 |
 | B-004 | fbc moves literals to the end of multiplication chains | `GEF.bas:2608, 2610` | confirmed by fbc C | — | M3, M5 |

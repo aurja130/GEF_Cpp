@@ -33,6 +33,13 @@ Tiers (vision §4.2, strategy §3 *Conventions*):
 - `n/a` may be changed only with a reason; never leave a cell blank.
 - Recompute the summary tables at the end after every update.
 
+### Update log
+
+| Milestone | Date | Cells changed |
+|---|---|---|
+| M0 | 2026-10-06 | Matrix created; no cell covered |
+| M1 | 2026-10-07 | None. M1 builds the BASIC oracle (reference binary, probes, draw logs, drivers), not the port, so no cell can close. Its T0–T3 capture tooling is what the owning milestones' tests will use |
+
 ## Matrix
 
 ### 1. Fissioning system

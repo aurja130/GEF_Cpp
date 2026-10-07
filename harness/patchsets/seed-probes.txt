@@ -1,0 +1,4 @@
+# Patch set "seed-probes": GEF_SEED, scope selectors and the probes (build with -d GEF_PROBES).
+seed
+scope
+probes

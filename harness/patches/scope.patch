@@ -1,0 +1,188 @@
+--- a/GEF.bas
++++ b/GEF.bas
+@@ -1,4 +1,4 @@
+-
++#include "harness_scope.bi"
+   Static Shared As String C_GEF_Version  
+   C_GEF_Version = "2025/1.2"
+   ' example:      "2012/3.1"  (must have the same length)   
+@@ -3439,12 +3439,12 @@
+         End If  
+       ' End If       
+     
+-        For I_E_step = 1 To N_E_steps 
++        For I_E_step = 1 To N_E_steps : Harness_Step = I_E_step 
+     
+           C_pfis = ""
+           C_pfis2 = ""
+           #include "CLEARerrors.bas"
+-          I_Error = 0
++          I_Error = 0 : Harness_Pass = I_Error
+            
+           If BFilein Then
+             If Emode = 0 Then
+@@ -4808,7 +4808,7 @@
+       
+           Chisqr_min = 1.E10        ' initialize for one series of perturbed calculations
+                                  ' separately for each system
+-    calcstart:
++    calcstart: Harness_Pass = I_Error
+       ' Start point of the loop for the error analysis. 
+       ' Several calculations with perturbed parameter sets and
+       ' finally one calculation with the nominal parameter set are performed.
+@@ -7919,7 +7919,7 @@
+      
+                     Racc = 100.E0 / NEVTtot * P_selected  ' Normalization of spectra  
+      
+-                    For ILoop = 1 To NEVTused        /' Loop for events with same parameters '/
++                    For ILoop = 1 To NEVTused : Harness_Event = CLng(ILoop)        /' Loop for events with same parameters '/
+       
+             /'      Choosing fission mode'/
+     
+@@ -9994,7 +9994,7 @@
+                         End If
+                       End Scope 
+         
+-                    Next ILoop  ' For ILoop = 1 To NEVTused
++                    Next ILoop : Harness_Event = 0  ' For ILoop = 1 To NEVTused
+     
+                   End If  ' If NEVTused  (from W_spectrum(I_E_distr)) > 0     
+       '           End of loop over energy spectrum from file   
+@@ -15579,7 +15579,7 @@
+           End If     
+           
+     
+-        Next I_E_step  ' I_E_step
++        Next I_E_step : Harness_Step = 0 : Harness_Pass = 0  ' I_E_step
+ 
+ 
+  /'     #ifdef B_ENDF  
+--- /dev/null
++++ b/harness_scope.bi
+@@ -0,0 +1,126 @@
++' SPDX-License-Identifier: GPL-3.0-or-later
++' Copyright (C) 2026 Aurora Jahan
++' Licensed under the GNU GPL v3 or later, WITHOUT ANY WARRANTY; see LICENSE.txt.
++' Harness patch "scope": tells the harness where GEF currently is, so that Rnd logging and
++' probes can be restricted to chosen energy steps, passes and events. It changes no GEF
++' variable, control flow or random draw.
++'
++' Harness_Step   = I_E_step inside the energy-step loop, else 0
++' Harness_Pass   = I_Error (parameter-set pass) inside the energy-step loop, else 0
++'                  (the multi-chance pre-pass runs with I_Error = 0, so it is pass 0)
++' Harness_Event  = ILoop inside the event loop, else 0
++'
++' Selectors (environment variables GEF_TRACE_STEPS, GEF_TRACE_PASSES, GEF_TRACE_EVENTS):
++' comma-separated non-negative integers or ranges, for example "1,3-5". An unset or empty
++' selector selects nothing. Anything else stops the program with exit code 2 at start-up.
++'
++' Harness_Traced() is true when the step and the pass are selected and, inside the event loop
++' (Harness_Event <> 0), the event is selected as well. Outside the event loop the event
++' selector is not consulted, so draws and probes that sit between the events of a pass are
++' in scope whenever their step and pass are.
++
++Const Harness_SelMax = 64
++
++Type Harness_Selector
++  N As Long
++  Lo(0 To Harness_SelMax - 1) As LongInt
++  Hi(0 To Harness_SelMax - 1) As LongInt
++End Type
++
++Dim Shared As Long Harness_Step, Harness_Pass, Harness_Event
++Dim Shared As Harness_Selector Harness_SelSteps, Harness_SelPasses, Harness_SelEvents
++Dim Shared As Long Harness_Armed  ' steps and passes both selected something
++
++' Parses Ctext into Sel. Returns 1 on success, 0 on a malformed list.
++Private Function Harness_ParseSelector(ByRef Ctext As String, ByRef Sel As Harness_Selector) As Long
++  Dim As Long Ipos = 1, Ilen = Len(Ctext), Itok, Idash
++  Dim As Long Ibad = 0, Ic
++  Dim As LongInt Rlo, Rhi
++  Dim As String Ctok, Cnum
++  Sel.N = 0
++  If Ilen = 0 Then Return 1
++  Do
++    Itok = InStr(Ipos, Ctext, ",")
++    If Itok = 0 Then Itok = Ilen + 1
++    Ctok = Trim(Mid(Ctext, Ipos, Itok - Ipos))
++    Idash = InStr(Ctok, "-")
++    Ibad = 0
++    If Len(Ctok) = 0 Then Ibad = 1
++    For Ic = 0 To Len(Ctok) - 1
++      If (Ctok[Ic] < 48 Or Ctok[Ic] > 57) And Ctok[Ic] <> 45 Then Ibad = 1
++    Next
++    If Ibad = 0 Then
++      If Idash = 0 Then
++        Cnum = Ctok
++        If Len(Cnum) > 9 Then Ibad = 1
++        If Ibad = 0 Then
++          Rlo = ValLng(Cnum)
++          Rhi = Rlo
++        End If
++      Else
++        Cnum = Left(Ctok, Idash - 1)
++        If Len(Cnum) = 0 Or Len(Cnum) > 9 Then Ibad = 1
++        If Ibad = 0 Then
++          Rlo = ValLng(Cnum)
++          Cnum = Mid(Ctok, Idash + 1)
++          If Len(Cnum) = 0 Or Len(Cnum) > 9 Or InStr(Cnum, "-") > 0 Then Ibad = 1
++        End If
++        If Ibad = 0 Then
++          Rhi = ValLng(Cnum)
++          If Rhi < Rlo Then Ibad = 1
++        End If
++      End If
++    End If
++    If Ibad Or Sel.N >= Harness_SelMax Then Return 0
++    Sel.Lo(Sel.N) = Rlo
++    Sel.Hi(Sel.N) = Rhi
++    Sel.N += 1
++    Ipos = Itok + 1
++  Loop While Ipos <= Ilen
++  ' A trailing comma leaves nothing after it: that is a malformed list as well.
++  If Right(Ctext, 1) = "," Then Return 0
++  Return 1
++End Function
++
++Private Function Harness_InSelector(ByRef Sel As Harness_Selector, ByVal Ivalue As LongInt) As Long
++  Dim As Long Ir
++  For Ir = 0 To Sel.N - 1
++    If Ivalue >= Sel.Lo(Ir) And Ivalue <= Sel.Hi(Ir) Then Return 1
++  Next
++  Return 0
++End Function
++
++Private Sub Harness_ScopeInit(ByRef Cname As String, ByRef Sel As Harness_Selector)
++  Dim As String Ctext = Environ(Cname)
++  If Harness_ParseSelector(Ctext, Sel) = 0 Then
++    Print "<harness> " & Cname & " must be a comma-separated list of non-negative integers or ranges" _
++      & " such as 1,3-5 (at most " & Harness_SelMax & " items), got '" & Ctext & "'."
++    End 2
++  End If
++End Sub
++
++Harness_ScopeInit("GEF_TRACE_STEPS", Harness_SelSteps)
++Harness_ScopeInit("GEF_TRACE_PASSES", Harness_SelPasses)
++Harness_ScopeInit("GEF_TRACE_EVENTS", Harness_SelEvents)
++Harness_Armed = (Harness_SelSteps.N > 0) And (Harness_SelPasses.N > 0)
++
++' True when the current position is selected (see the header). Cached per position: Rnd
++' logging calls this for every draw.
++Function Harness_Traced() As Long
++  Static As Long Istep = -1, Ipass = -1, Ievent = -1, Iresult = 0
++  If Harness_Armed = 0 Then Return 0
++  If Harness_Step <> Istep Or Harness_Pass <> Ipass Or Harness_Event <> Ievent Then
++    Istep = Harness_Step
++    Ipass = Harness_Pass
++    Ievent = Harness_Event
++    Iresult = Harness_InSelector(Harness_SelSteps, Istep) And Harness_InSelector(Harness_SelPasses, Ipass)
++    If Iresult <> 0 And Ievent <> 0 Then Iresult = Harness_InSelector(Harness_SelEvents, Ievent)
++  End If
++  Return Iresult
++End Function
++
++' True when only the step is selected (pass and event ignored), for step-level probes.
++Function Harness_StepSelected() As Long
++  If Harness_Armed = 0 Then Return 0
++  Return Harness_InSelector(Harness_SelSteps, Harness_Step)
++End Function

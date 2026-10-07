@@ -305,6 +305,9 @@ def emit(
     """Return the emission for (submodule revision, patch dir), creating it if needed."""
     start = time.perf_counter()
     rev = submodule_revision()
+    if patch_dir is not None:
+        # `patch -d` changes directory before reading the patch file, so paths must be absolute.
+        patch_dir = patch_dir.resolve()
     patches = patch_files(patch_dir) if patch_dir is not None else []
     patch_sha = patch_dir_sha256(patches) if patch_dir is not None else None
     key = emission_key(rev.short, patch_sha)

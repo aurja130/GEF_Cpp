@@ -1,0 +1,1508 @@
+--- a/GEF.bas
++++ b/GEF.bas
+@@ -1570,2 +1570,4 @@
+   #Include Once "ElmtNames.bas"
++#Include "harness_probe_t0.bi"
++#line 1570
+ 
+@@ -3881,2 +3883,4 @@
+     
++#Include "harness_probe_p1.bi"
++#line 3881
+       /'  *** Erase spectra of gammas and nucleons from CN here *** '/
+@@ -4800,2 +4804,4 @@
+           End If  ' If Emode < 3 etc.   
++#Include "harness_probe_p2.bi"
++#line 4800
+     
+@@ -7920,2 +7926,4 @@
+                     Racc = 100.E0 / NEVTtot * P_selected  ' Normalization of spectra  
++#Include "harness_probe_p3.bi"
++#line 7920
+      
+--- /dev/null
++++ b/harness_probes.bi
+@@ -0,0 +1,336 @@
++' SPDX-License-Identifier: GPL-3.0-or-later
++' Copyright (C) 2026 Aurora Jahan
++' Licensed under the GNU GPL v3 or later, WITHOUT ANY WARRANTY; see LICENSE.txt.
++' Harness patch "probes" (define GEF_PROBES): shared writer procedures and dump macros.
++' The probe points (harness_probe_t0.bi, _p1.bi, _p2.bi, _p3.bi) include this file once.
++' Everything here only READS GEF variables: no ReDim, no random draw, no change of any
++' value or of control flow. The format is specified in harness/PROBES.md.
++'
++' Record line:  <ID> <context> <NAME> <idx|-> <type> <value>
++'   type S: Single, 8 hex digits of the bit pattern; D: Double, 16 hex digits;
++'   I: integer types, decimal; Z: string, quoted with escapes;
++'   B / BS: array bounds record, value "<element type S|D|I|Z> lo:hi,lo:hi"; B = dense array,
++'           BS = sparse array (elements whose bit pattern is zero are omitted).
++
++#ifdef GEF_PROBES
++
++#ifndef HP_PROBES_DEFINED
++#define HP_PROBES_DEFINED
++
++Dim Shared As Long HP_File = 0
++Dim Shared As String HP_Prefix
++Dim Shared As Long HP_Count(0 To 3)
++
++Function HP_Esc(ByRef Cin As String) As String
++  Dim As String Cout = """"
++  Dim As Long Ichar, Ic
++  For Ichar = 1 To Len(Cin)
++    Ic = Cin[Ichar - 1]
++    If Ic = 34 Or Ic = 92 Then
++      Cout = Cout + "\" + Chr(Ic)
++    ElseIf Ic < 32 Or Ic > 126 Then
++      Cout = Cout + "\x" + Hex(Ic, 2)
++    Else
++      Cout = Cout + Chr(Ic)
++    End If
++  Next Ichar
++  Return Cout + """"
++End Function
++
++Function HP_Hex Overload (ByVal x As Single) As String
++  Dim As ULong Ubits = *CPtr(ULong Ptr, @x)
++  Return Hex(Ubits, 8)
++End Function
++
++Function HP_Hex Overload (ByVal x As Double) As String
++  Dim As ULongInt Ubits = *CPtr(ULongInt Ptr, @x)
++  Return Hex(Ubits, 16)
++End Function
++
++Function HP_Nz Overload (ByVal x As Single) As Long
++  Dim As ULong Ubits = *CPtr(ULong Ptr, @x)
++  Return Ubits <> 0
++End Function
++
++Function HP_Nz Overload (ByVal x As Double) As Long
++  Dim As ULongInt Ubits = *CPtr(ULongInt Ptr, @x)
++  Return Ubits <> 0
++End Function
++
++Function HP_Nz Overload (ByVal x As LongInt) As Long
++  Return x <> 0
++End Function
++
++Function HP_Nz Overload (ByVal x As ULongInt) As Long
++  Return x <> 0
++End Function
++
++Sub HP_Begin(ByVal Iprobe As Long, ByRef Cid As String, ByRef Cstep As String, ByRef Cpass As String, ByRef Cbin As String)
++  Dim As Long Ierr = MkDir("probes")
++  HP_Count(Iprobe) = HP_Count(Iprobe) + 1
++  If Iprobe = 0 Then
++    HP_Prefix = Cid + " - "
++  Else
++    HP_Prefix = Cid + " step=" + Cstep + " pass=" + Cpass + " bin=" + Cbin + " rec=" + Trim(Str(HP_Count(Iprobe))) + " "
++  End If
++  HP_File = FreeFile
++  If Open("probes/" + Cid + ".txt" For Append As #HP_File) <> 0 Then
++    Print "<harness> cannot open probes/" + Cid + ".txt"
++    End 3
++  End If
++End Sub
++
++Sub HP_End()
++  Close #HP_File
++  HP_File = 0
++End Sub
++
++Sub HP_Line(ByRef Cname As String, ByRef Cidx As String, ByRef Ctype As String, ByRef Cval As String)
++  Print #HP_File, HP_Prefix + Cname + " " + Cidx + " " + Ctype + " " + Cval
++End Sub
++
++Function HP_Ty Overload (ByVal x As Single) As String
++  Return "S"
++End Function
++
++Function HP_Ty Overload (ByVal x As Double) As String
++  Return "D"
++End Function
++
++Function HP_Ty Overload (ByVal x As Byte) As String
++  Return "I"
++End Function
++
++Function HP_Ty Overload (ByVal x As UByte) As String
++  Return "I"
++End Function
++
++Function HP_Ty Overload (ByVal x As Short) As String
++  Return "I"
++End Function
++
++Function HP_Ty Overload (ByVal x As UShort) As String
++  Return "I"
++End Function
++
++Function HP_Ty Overload (ByVal x As Long) As String
++  Return "I"
++End Function
++
++Function HP_Ty Overload (ByVal x As ULong) As String
++  Return "I"
++End Function
++
++Function HP_Ty Overload (ByVal x As Integer) As String
++  Return "I"
++End Function
++
++Function HP_Ty Overload (ByVal x As UInteger) As String
++  Return "I"
++End Function
++
++Function HP_Ty Overload (ByVal x As LongInt) As String
++  Return "I"
++End Function
++
++Function HP_Ty Overload (ByVal x As ULongInt) As String
++  Return "I"
++End Function
++
++Function HP_Ty Overload (ByRef x As String) As String
++  Return "Z"
++End Function
++
++Sub HP_Bounds(ByRef Cname As String, ByRef Ctype As String, ByRef Cbounds As String, ByVal Bsparse As Long)
++  If Bsparse Then
++    HP_Line(Cname, "-", "BS", Ctype + " " + Cbounds)
++  Else
++    HP_Line(Cname, "-", "B", Ctype + " " + Cbounds)
++  End If
++End Sub
++
++Sub HP_Val Overload (ByRef Cname As String, ByRef Cidx As String, ByVal x As Single)
++  HP_Line(Cname, Cidx, "S", HP_Hex(x))
++End Sub
++
++Sub HP_Val Overload (ByRef Cname As String, ByRef Cidx As String, ByVal x As Double)
++  HP_Line(Cname, Cidx, "D", HP_Hex(x))
++End Sub
++
++Sub HP_Val Overload (ByRef Cname As String, ByRef Cidx As String, ByVal x As Byte)
++  HP_Line(Cname, Cidx, "I", Trim(Str(x)))
++End Sub
++
++Sub HP_Val Overload (ByRef Cname As String, ByRef Cidx As String, ByVal x As UByte)
++  HP_Line(Cname, Cidx, "I", Trim(Str(x)))
++End Sub
++
++Sub HP_Val Overload (ByRef Cname As String, ByRef Cidx As String, ByVal x As Short)
++  HP_Line(Cname, Cidx, "I", Trim(Str(x)))
++End Sub
++
++Sub HP_Val Overload (ByRef Cname As String, ByRef Cidx As String, ByVal x As UShort)
++  HP_Line(Cname, Cidx, "I", Trim(Str(x)))
++End Sub
++
++Sub HP_Val Overload (ByRef Cname As String, ByRef Cidx As String, ByVal x As Long)
++  HP_Line(Cname, Cidx, "I", Trim(Str(x)))
++End Sub
++
++Sub HP_Val Overload (ByRef Cname As String, ByRef Cidx As String, ByVal x As ULong)
++  HP_Line(Cname, Cidx, "I", Trim(Str(x)))
++End Sub
++
++Sub HP_Val Overload (ByRef Cname As String, ByRef Cidx As String, ByVal x As Integer)
++  HP_Line(Cname, Cidx, "I", Trim(Str(x)))
++End Sub
++
++Sub HP_Val Overload (ByRef Cname As String, ByRef Cidx As String, ByVal x As UInteger)
++  HP_Line(Cname, Cidx, "I", Trim(Str(x)))
++End Sub
++
++Sub HP_Val Overload (ByRef Cname As String, ByRef Cidx As String, ByVal x As LongInt)
++  HP_Line(Cname, Cidx, "I", Trim(Str(x)))
++End Sub
++
++Sub HP_Val Overload (ByRef Cname As String, ByRef Cidx As String, ByVal x As ULongInt)
++  HP_Line(Cname, Cidx, "I", Trim(Str(x)))
++End Sub
++
++Sub HP_Val Overload (ByRef Cname As String, ByRef Cidx As String, ByRef x As String)
++  HP_Line(Cname, Cidx, "Z", HP_Esc(x))
++End Sub
++
++' Scalar.
++#define HP_V(a) HP_Val(#a, "-", a)
++
++' Array, dense (every element over the current bounds) or sparse (only elements whose
++' bit pattern is non-zero; the bounds record says "BS"). Rank 1 to 4.
++#macro HP_A1N(n, a)
++  HP_Bounds(n, HP_Ty(a(LBound(a, 1))), Trim(Str(LBound(a, 1))) + ":" + Trim(Str(UBound(a, 1))), 0)
++  For hp_i1 As Long = LBound(a, 1) To UBound(a, 1)
++    HP_Val(n, Trim(Str(hp_i1)), a(hp_i1))
++  Next hp_i1
++#endmacro
++
++#define HP_A1(a) HP_A1N(#a, a)
++
++#macro HP_A2(a)
++  HP_Bounds(#a, HP_Ty(a(LBound(a, 1), LBound(a, 2))), Trim(Str(LBound(a, 1))) + ":" + Trim(Str(UBound(a, 1))) + "," + _
++                Trim(Str(LBound(a, 2))) + ":" + Trim(Str(UBound(a, 2))), 0)
++  For hp_i1 As Long = LBound(a, 1) To UBound(a, 1)
++    For hp_i2 As Long = LBound(a, 2) To UBound(a, 2)
++      HP_Val(#a, Trim(Str(hp_i1)) + "," + Trim(Str(hp_i2)), a(hp_i1, hp_i2))
++    Next hp_i2
++  Next hp_i1
++#endmacro
++
++#macro HP_A3(a)
++  HP_Bounds(#a, HP_Ty(a(LBound(a, 1), LBound(a, 2), LBound(a, 3))), Trim(Str(LBound(a, 1))) + ":" + Trim(Str(UBound(a, 1))) + "," + _
++                Trim(Str(LBound(a, 2))) + ":" + Trim(Str(UBound(a, 2))) + "," + _
++                Trim(Str(LBound(a, 3))) + ":" + Trim(Str(UBound(a, 3))), 0)
++  For hp_i1 As Long = LBound(a, 1) To UBound(a, 1)
++    For hp_i2 As Long = LBound(a, 2) To UBound(a, 2)
++      For hp_i3 As Long = LBound(a, 3) To UBound(a, 3)
++        HP_Val(#a, Trim(Str(hp_i1)) + "," + Trim(Str(hp_i2)) + "," + Trim(Str(hp_i3)), a(hp_i1, hp_i2, hp_i3))
++      Next hp_i3
++    Next hp_i2
++  Next hp_i1
++#endmacro
++
++#macro HP_S1(a)
++  HP_Bounds(#a, HP_Ty(a(LBound(a, 1))), Trim(Str(LBound(a, 1))) + ":" + Trim(Str(UBound(a, 1))), 1)
++  For hp_i1 As Long = LBound(a, 1) To UBound(a, 1)
++    If HP_Nz(a(hp_i1)) Then HP_Val(#a, Trim(Str(hp_i1)), a(hp_i1))
++  Next hp_i1
++#endmacro
++
++#macro HP_S2(a)
++  HP_Bounds(#a, HP_Ty(a(LBound(a, 1), LBound(a, 2))), Trim(Str(LBound(a, 1))) + ":" + Trim(Str(UBound(a, 1))) + "," + _
++                Trim(Str(LBound(a, 2))) + ":" + Trim(Str(UBound(a, 2))), 1)
++  For hp_i1 As Long = LBound(a, 1) To UBound(a, 1)
++    For hp_i2 As Long = LBound(a, 2) To UBound(a, 2)
++      If HP_Nz(a(hp_i1, hp_i2)) Then HP_Val(#a, Trim(Str(hp_i1)) + "," + Trim(Str(hp_i2)), a(hp_i1, hp_i2))
++    Next hp_i2
++  Next hp_i1
++#endmacro
++
++#macro HP_S3(a)
++  HP_Bounds(#a, HP_Ty(a(LBound(a, 1), LBound(a, 2), LBound(a, 3))), Trim(Str(LBound(a, 1))) + ":" + Trim(Str(UBound(a, 1))) + "," + _
++                Trim(Str(LBound(a, 2))) + ":" + Trim(Str(UBound(a, 2))) + "," + _
++                Trim(Str(LBound(a, 3))) + ":" + Trim(Str(UBound(a, 3))), 1)
++  For hp_i1 As Long = LBound(a, 1) To UBound(a, 1)
++    For hp_i2 As Long = LBound(a, 2) To UBound(a, 2)
++      For hp_i3 As Long = LBound(a, 3) To UBound(a, 3)
++        If HP_Nz(a(hp_i1, hp_i2, hp_i3)) Then _
++          HP_Val(#a, Trim(Str(hp_i1)) + "," + Trim(Str(hp_i2)) + "," + Trim(Str(hp_i3)), a(hp_i1, hp_i2, hp_i3))
++      Next hp_i3
++    Next hp_i2
++  Next hp_i1
++#endmacro
++
++#macro HP_S4(a)
++  HP_Bounds(#a, HP_Ty(a(LBound(a, 1), LBound(a, 2), LBound(a, 3), LBound(a, 4))), Trim(Str(LBound(a, 1))) + ":" + Trim(Str(UBound(a, 1))) + "," + _
++                Trim(Str(LBound(a, 2))) + ":" + Trim(Str(UBound(a, 2))) + "," + _
++                Trim(Str(LBound(a, 3))) + ":" + Trim(Str(UBound(a, 3))) + "," + _
++                Trim(Str(LBound(a, 4))) + ":" + Trim(Str(UBound(a, 4))), 1)
++  For hp_i1 As Long = LBound(a, 1) To UBound(a, 1)
++    For hp_i2 As Long = LBound(a, 2) To UBound(a, 2)
++      For hp_i3 As Long = LBound(a, 3) To UBound(a, 3)
++        For hp_i4 As Long = LBound(a, 4) To UBound(a, 4)
++          If HP_Nz(a(hp_i1, hp_i2, hp_i3, hp_i4)) Then _
++            HP_Val(#a, Trim(Str(hp_i1)) + "," + Trim(Str(hp_i2)) + "," + Trim(Str(hp_i3)) + "," + Trim(Str(hp_i4)), _
++                   a(hp_i1, hp_i2, hp_i3, hp_i4))
++        Next hp_i4
++      Next hp_i3
++    Next hp_i2
++  Next hp_i1
++#endmacro
++
++' Field of a one-dimensional array of UDT elements, over lo..hi:  a(i).f  -> NAME "a.f"
++' (HP_F1N takes the NAME explicitly).
++#macro HP_F1N(n, a, f, lo, hi)
++  HP_Bounds(n, HP_Ty(a(lo).f), Trim(Str(lo)) + ":" + Trim(Str(hi)), 0)
++  For hp_i1 As Long = lo To hi
++    HP_Val(n, Trim(Str(hp_i1)), a(hp_i1).f)
++  Next hp_i1
++#endmacro
++
++#define HP_F1(a, f, lo, hi) HP_F1N(#a + "." + #f, a, f, lo, hi)
++
++' Sparse variant of HP_F1 (zero fields omitted).
++#macro HP_FS1(a, f, lo, hi)
++  HP_Bounds(#a + "." + #f, HP_Ty(a(lo).f), Trim(Str(lo)) + ":" + Trim(Str(hi)), 1)
++  For hp_i1 As Long = lo To hi
++    If HP_Nz(a(hp_i1).f) Then HP_Val(#a + "." + #f, Trim(Str(hp_i1)), a(hp_i1).f)
++  Next hp_i1
++#endmacro
++
++' Array field (one dimension) of a one-dimensional UDT array: a(i).f(j)  -> idx "i,j".
++#macro HP_FA1(a, f, lo, hi)
++  HP_Bounds(#a + "." + #f, HP_Ty(a(lo).f(LBound(a(lo).f, 1))), Trim(Str(lo)) + ":" + Trim(Str(hi)) + "," + _
++            Trim(Str(LBound(a(lo).f, 1))) + ":" + Trim(Str(UBound(a(lo).f, 1))), 0)
++  For hp_i1 As Long = lo To hi
++    For hp_i2 As Long = LBound(a(lo).f, 1) To UBound(a(lo).f, 1)
++      HP_Val(#a + "." + #f, Trim(Str(hp_i1)) + "," + Trim(Str(hp_i2)), a(hp_i1).f(hp_i2))
++    Next hp_i2
++  Next hp_i1
++#endmacro
++
++' Array field (two dimensions) of a one-dimensional UDT array: a(i).f(j,k)  -> idx "i,j,k".
++#macro HP_FA2(a, f, lo, hi)
++  HP_Bounds(#a + "." + #f, HP_Ty(a(lo).f(LBound(a(lo).f, 1), LBound(a(lo).f, 2))), Trim(Str(lo)) + ":" + Trim(Str(hi)) + "," + _
++            Trim(Str(LBound(a(lo).f, 1))) + ":" + Trim(Str(UBound(a(lo).f, 1))) + "," + _
++            Trim(Str(LBound(a(lo).f, 2))) + ":" + Trim(Str(UBound(a(lo).f, 2))), 0)
++  For hp_i1 As Long = lo To hi
++    For hp_i2 As Long = LBound(a(lo).f, 1) To UBound(a(lo).f, 1)
++      For hp_i3 As Long = LBound(a(lo).f, 2) To UBound(a(lo).f, 2)
++        HP_Val(#a + "." + #f, Trim(Str(hp_i1)) + "," + Trim(Str(hp_i2)) + "," + Trim(Str(hp_i3)), a(hp_i1).f(hp_i2, hp_i3))
++      Next hp_i3
++    Next hp_i2
++  Next hp_i1
++#endmacro
++
++#endif ' HP_PROBES_DEFINED
++
++#endif ' GEF_PROBES
+--- /dev/null
++++ b/harness_probe_t0.bi
+@@ -0,0 +1,471 @@
++' SPDX-License-Identifier: GPL-3.0-or-later
++' Copyright (C) 2026 Aurora Jahan
++' Licensed under the GNU GPL v3 or later, WITHOUT ANY WARRANTY; see LICENSE.txt.
++' Ported from GEF 2025/1.2, Copyright (C) 2009-2025 Karl-Heinz Schmidt and Beatriz Jurado.
++' Harness patch "probes", probe T0: static tables and parameters as loaded, after GEF.bas:1570.
++' Written once per process (guard HP_Count(0)). Format and variable list: harness/PROBES.md.
++' Contains a copy of the BranchData/INlast loader of Branchings.bas (marked below), writing to
++' private arrays, because GEF itself loads BranchData only in the post-pass.
++
++#ifdef GEF_PROBES
++#include once "harness_probes.bi"
++
++If HP_Count(0) = 0 Then
++  HP_Begin(0, "T0", "-", "-", "-")
++  ' --- table sizes
++  HP_V(N_MAT_MAX)
++  HP_V(N_ISO_TOT)
++  HP_V(N_Anl)
++  #ifdef B_delayed
++    HP_V(Z_min_branching)
++    HP_V(Z_max_branching)
++    HP_V(A_max_branching)
++  #endif
++  ' --- mass, shell and deformation tables
++  HP_A2(BEldmTF)
++  HP_A2(BEexp)
++  HP_A2(DEFOtab)
++  HP_A2(ShellMO)
++  HP_S2(EVOD)
++  ' --- element names
++  HP_A1(CElement)
++  ' --- neutron-spectrum bin limits (Spectra.bas:798)
++  HP_A1(ENfrvar_lim)
++  ' --- NucTab / MAT_for_ISO / Isotab
++  HP_A1(MAT_for_ISO)
++  HP_F1(NucTab, I_Z, 0, N_MAT_MAX)
++  HP_F1(NucTab, I_A, 0, N_MAT_MAX)
++  HP_F1(NucTab, I_ISO, 0, N_MAT_MAX)
++  HP_F1(NucTab, R_SPI, 0, N_MAT_MAX)
++  HP_F1(NucTab, I_PAR, 0, N_MAT_MAX)
++  HP_F1(NucTab, R_AWR, 0, N_MAT_MAX)
++  HP_F1(NucTab, R_EXC, 0, N_MAT_MAX)
++  HP_F1(Isotab, I_MAT, 0, N_ISO_TOT)
++  HP_F1(Isotab, I_Z, 0, N_ISO_TOT)
++  HP_F1(Isotab, I_A, 0, N_ISO_TOT)
++  HP_F1(Isotab, N_STATES, 0, N_ISO_TOT)
++  HP_FA1(Isotab, I_ISO, 0, N_ISO_TOT)
++  HP_FA1(Isotab, R_SPI, 0, N_ISO_TOT)
++  HP_FA1(Isotab, I_PAR, 0, N_ISO_TOT)
++  HP_FA1(Isotab, R_EXC, 0, N_ISO_TOT)
++  HP_FA1(Isotab, R_Lim, 0, N_ISO_TOT)
++  HP_FA1(Isotab, R_Prob, 0, N_ISO_TOT)
++  ' --- BranchData / INlast: result of the Branchings.bas loader, private arrays
++  #ifdef B_delayed
++  Scope
++    Static As BranchType HP_BranchData(0 To 3425)
++    Static As Integer HP_INlast(0 To 90)
++    ' BEGIN copy of Branchings.bas:44-251 (BranchData -> HP_BranchData, INlast -> HP_INlast)
++
++      Scope
++        Dim As Integer I_Branch = 0
++        Dim As Single Rtot_beta,Rtot_beta_m,Rtot_beta_mm
++        Dim As Single Rtot_beta_plus,Rtot_beta_plus_m,Rtot_beta_plus_mm
++        Dim As Single beta_np,beta_2np
++        Dim As Single t,r_unit
++        Dim As String unit
++        Dim As Integer I_m
++        Dim As Single R_Dummy
++
++        Dim As Integer I_Work
++        Dim As Single R_Work
++
++        Dim As Integer Alarm = -1
++
++
++        Restore BranchTable
++
++        Do
++          Read I_Work
++          If I_Work > 0 Then  ' negative I_Work denotes decays into isomers
++            I_Branch = I_Branch + 1
++          End If
++          HP_BranchData(I_Branch).I_Z = Abs(I_Work)
++      '    If HP_BranchData(I_Branch).I_Z < 20 or HP_BranchData(I_Branch).I_Z > 110 Then
++      '      Print "<E> Error in branching table: Z , nmbr",I_Work, I_Branch
++      '      Print "GEF stopped."
++      '      Sleep
++      '    End If
++          Read HP_BranchData(I_Branch).I_A
++          Read HP_BranchData(I_Branch).I_ISO
++          If HP_BranchData(I_Branch).I_ISO < 0 or HP_BranchData(I_Branch).I_ISO > 9 Then
++            Print "<E> Error in branching table: I_ISO, nmbr ",HP_BranchData(I_Branch).I_ISO, I_Branch
++            Print "GEF stopped."
++            Sleep
++          End If
++
++          Read t
++          Read unit
++
++    ' Print I_work, I_Branch, HP_BranchData(I_Branch).I_Z,HP_BranchData(I_Branch).I_A,HP_BranchData(I_Branch).I_ISO,t, unit
++
++          If I_Work > 0 Then
++            I_m = 0
++
++            Read Rtot_beta
++            Rtot_beta = Rtot_beta * 0.01
++
++            Read Rtot_beta_plus
++            Rtot_beta_plus = Rtot_beta_plus * 0.01
++
++            Read beta_np
++            beta_np = beta_np * 0.01
++
++            Read beta_2np
++            beta_2np = beta_2np * 0.01
++
++            If Rtot_beta > 0 Then
++              HP_BranchData(I_Branch).R_beta_n = beta_np
++              HP_BranchData(I_Branch).R_beta_2n = beta_2np
++            End If
++
++            If Rtot_beta_plus > 0 Then
++              HP_BranchData(I_Branch).R_beta_p = beta_np
++              HP_BranchData(I_Branch).R_beta_2p = beta_2np
++            End If
++
++            HP_BranchData(I_Branch).R_beta = Rtot_beta - HP_BranchData(I_Branch).R_beta_n _
++                                                  - HP_BranchData(I_Branch).R_beta_2n
++            HP_BranchData(I_Branch).R_beta_plus = Rtot_beta_plus - HP_BranchData(I_Branch).R_beta_p _
++                                                  - HP_BranchData(I_Branch).R_beta_2p
++
++            Read HP_BranchData(I_Branch).R_IT
++            HP_BranchData(I_Branch).R_IT = HP_BranchData(I_Branch).R_IT * 0.01
++
++            Read HP_BranchData(I_Branch).R_alpha
++            HP_BranchData(I_Branch).R_alpha = HP_BranchData(I_Branch).R_alpha * 0.01
++
++          Else
++            I_m = I_m + 1
++
++     '      If I_m = 1 Then
++              Read Rtot_beta_m
++              Rtot_beta_m = Rtot_beta_m * 0.01
++
++              Read Rtot_beta_plus_m
++              Rtot_beta_plus_m = Rtot_beta_plus_m * 0.01
++
++              Read beta_np
++              beta_np = beta_np * 0.01
++
++              Read beta_2np
++              beta_2np = beta_2np * 0.01
++
++              If Rtot_beta_m > 0 Then
++                HP_BranchData(I_Branch).R_beta_n_m = beta_np
++                HP_BranchData(I_Branch).R_beta_2n_m = beta_2np
++              End If
++
++              If Rtot_beta_plus_m > 0 Then
++                HP_BranchData(I_Branch).R_beta_p_m = beta_np
++                HP_BranchData(I_Branch).R_beta_2p_m = beta_2np
++              End If
++
++              HP_BranchData(I_Branch).R_beta_m = Rtot_beta_m - HP_BranchData(I_Branch).R_beta_n_m _
++                                                        - HP_BranchData(I_Branch).R_beta_2n_m
++              HP_BranchData(I_Branch).R_beta_plus_m = Rtot_beta_plus_m - HP_BranchData(I_Branch).R_beta_p_m _
++                                                  - HP_BranchData(I_Branch).R_beta_2p_m
++
++              Read HP_BranchData(I_Branch).R_IT_m
++              HP_BranchData(I_Branch).R_IT_m = HP_BranchData(I_Branch).R_IT_m * 0.01
++
++              Read HP_BranchData(I_Branch).R_alpha_m
++              HP_BranchData(I_Branch).R_alpha = HP_BranchData(I_Branch).R_alpha_m * 0.01
++      /'    End If
++            If I_m = 2 Then
++              Read Rtot_beta_mm
++              Rtot_beta_mm = Rtot_beta_mm * 0.01
++
++              Read Rtot_beta_plus_mm
++              Rtot_beta_plus_mm = Rtot_beta_plus_mm * 0.01
++
++              Read beta_np
++              beta_np = beta_np * 0.01
++
++              Read beta_2np
++              beta_2np = beta_2np * 0.01
++
++              If Rtot_beta_mm > 0 Then
++                HP_BranchData(I_Branch).R_beta_n_mm = beta_np
++                HP_BranchData(I_Branch).R_beta_2n_mm = beta_2np
++              End If
++
++              If Rtot_beta_plus_mm > 0 Then
++                HP_BranchData(I_Branch).R_beta_p_mm = beta_np
++                HP_BranchData(I_Branch).R_beta_2p_mm = beta_2np
++              End If
++
++              HP_BranchData(I_Branch).R_beta_mm = Rtot_beta_mm - HP_BranchData(I_Branch).R_beta_n_mm _
++                                                        - HP_BranchData(I_Branch).R_beta_2n_mm
++              HP_BranchData(I_Branch).R_beta_plus_mm = Rtot_beta_plus_mm - HP_BranchData(I_Branch).R_beta_p_mm _
++                                                    - HP_BranchData(I_Branch).R_beta_2p_mm
++
++              Read HP_BranchData(I_Branch).R_IT_mm
++              HP_BranchData(I_Branch).R_IT_mm = HP_BranchData(I_Branch).R_IT_mm * 0.01
++
++              Read HP_BranchData(I_Branch).R_alpha_mm
++              HP_BranchData(I_Branch).R_alpha = HP_BranchData(I_Branch).R_alpha_mm * 0.01
++            End If '/
++
++          End If
++
++          Select Case unit
++            Case "ns"
++              r_unit = 1.E-9
++            Case "ms"
++              r_unit = 1.E-3
++            Case "s"
++              r_unit = 1
++            Case "min"
++              r_unit = 60
++            Case "h"
++              r_unit = 3600
++            Case "d"
++              r_unit = 3600 * 24
++            Case "y"
++              r_unit = 3600 * 24 * 365.2422
++            Case "stable"
++              r_unit = 1.E20
++            Case Else
++              Print "Error in time unit ";unit;" ";I_Branch
++              sleep
++          End Select
++          HP_BranchData(I_Branch).R_life = t * r_unit
++
++    '     print HP_BranchData(I_Branch).I_Z,HP_BranchData(I_Branch).I_A,HP_BranchData(I_Branch).I_ISO, _
++    '          t, unit, Rtot_beta, HP_BranchData(I_Branch).R_beta_n
++
++    '    If I Mod 4 = 0 Then Input "Continue",unit
++
++          If HP_BranchData(I_Branch).I_Z = 88 and HP_BranchData(I_Branch).I_A = 234 Then
++            Alarm = 0
++            Exit Do
++          End If
++
++        Loop
++     '     Print "Number of nuclei in branch table: ";I_Branch
++
++        If Alarm Then
++          Print "Dimension of BranchData in DCLbranching too small!"
++          Print "GEF stopped."
++          Sleep
++        End If
++
++      End Scope
++
++      Scope
++        Dim As Integer IZ,IA
++          ' Lower N limit at stability, eventually needed for cumulative yields
++          ' Independent and cumulative yiels should be written for the same nuclei!
++        Restore EndA:
++        For IZ = 1 To 90
++          Read IA
++          HP_INlast(IZ) = IA - IZ
++        Next
++      End Scope
++
++    ' END copy of Branchings.bas:44-251
++    HP_F1N("BranchData.I_Z", HP_BranchData, I_Z, 0, 3425)
++    HP_F1N("BranchData.I_A", HP_BranchData, I_A, 0, 3425)
++    HP_F1N("BranchData.I_ISO", HP_BranchData, I_ISO, 0, 3425)
++    HP_F1N("BranchData.R_Life", HP_BranchData, R_Life, 0, 3425)
++    HP_F1N("BranchData.R_beta", HP_BranchData, R_beta, 0, 3425)
++    HP_F1N("BranchData.R_beta_plus", HP_BranchData, R_beta_plus, 0, 3425)
++    HP_F1N("BranchData.R_beta_n", HP_BranchData, R_beta_n, 0, 3425)
++    HP_F1N("BranchData.R_beta_2n", HP_BranchData, R_beta_2n, 0, 3425)
++    HP_F1N("BranchData.R_beta_p", HP_BranchData, R_beta_p, 0, 3425)
++    HP_F1N("BranchData.R_beta_2p", HP_BranchData, R_beta_2p, 0, 3425)
++    HP_F1N("BranchData.R_IT", HP_BranchData, R_IT, 0, 3425)
++    HP_F1N("BranchData.R_alpha", HP_BranchData, R_alpha, 0, 3425)
++    HP_F1N("BranchData.R_beta_m", HP_BranchData, R_beta_m, 0, 3425)
++    HP_F1N("BranchData.R_beta_plus_m", HP_BranchData, R_beta_plus_m, 0, 3425)
++    HP_F1N("BranchData.R_beta_n_m", HP_BranchData, R_beta_n_m, 0, 3425)
++    HP_F1N("BranchData.R_beta_2n_m", HP_BranchData, R_beta_2n_m, 0, 3425)
++    HP_F1N("BranchData.R_beta_p_m", HP_BranchData, R_beta_p_m, 0, 3425)
++    HP_F1N("BranchData.R_beta_2p_m", HP_BranchData, R_beta_2p_m, 0, 3425)
++    HP_F1N("BranchData.R_IT_m", HP_BranchData, R_IT_m, 0, 3425)
++    HP_F1N("BranchData.R_alpha_m", HP_BranchData, R_alpha_m, 0, 3425)
++    HP_F1N("BranchData.R_beta_mm", HP_BranchData, R_beta_mm, 0, 3425)
++    HP_F1N("BranchData.R_beta_plus_mm", HP_BranchData, R_beta_plus_mm, 0, 3425)
++    HP_F1N("BranchData.R_beta_n_mm", HP_BranchData, R_beta_n_mm, 0, 3425)
++    HP_F1N("BranchData.R_beta_2n_mm", HP_BranchData, R_beta_2n_mm, 0, 3425)
++    HP_F1N("BranchData.R_beta_p_mm", HP_BranchData, R_beta_p_mm, 0, 3425)
++    HP_F1N("BranchData.R_beta_2p_mm", HP_BranchData, R_beta_2p_mm, 0, 3425)
++    HP_F1N("BranchData.R_IT_mm", HP_BranchData, R_IT_mm, 0, 3425)
++    HP_F1N("BranchData.R_alpha_mm", HP_BranchData, R_alpha_mm, 0, 3425)
++    HP_A1N("INlast", HP_INlast)
++  End Scope
++  #endif
++  ' --- analyzer registry Anl_Par(0..N_Anl)
++  HP_F1(Anl_Par, C_Name, 0, N_Anl)
++  HP_F1(Anl_Par, C_Title, 0, N_Anl)
++  HP_F1(Anl_Par, C_xaxis, 0, N_Anl)
++  HP_F1(Anl_Par, C_yaxis, 0, N_Anl)
++  HP_F1(Anl_Par, C_Linesymbol, 0, N_Anl)
++  HP_F1(Anl_Par, C_Type, 0, N_Anl)
++  HP_F1(Anl_Par, I_Dim, 0, N_Anl)
++  HP_FA2(Anl_Par, R_ALim, 0, N_Anl)
++  ' --- nominal parameters as loaded (Parameters.bas, FitparRead, ...)
++  HP_V(Emax_valid)
++  HP_V(Eexc_min_multi)
++  HP_V(_Delta_S0)
++  HP_V(EOscale)
++  HP_V(Emode)
++  HP_V(D_Par_Fac)
++  HP_V(Chisqr_Fit_min)
++  HP_V(_P_DZ_Mean_S1)
++  HP_V(_P_corr_S1)
++  HP_V(_P_DZ_Mean_S2)
++  HP_V(_P_DZ_Mean_S3)
++  HP_V(_P_DZ_Mean_S4)
++  HP_V(_P_DZ_Mean_SL5)
++  HP_V(_P_DZ_Mean_S5)
++  HP_V(ZC_Mode_SL5)
++  HP_V(_P_Z_Curv_S1)
++  HP_V(P_Z_Curvmod_S1)
++  HP_V(_P_Z_CurV_S2)
++  HP_V(_S2leftmod)
++  HP_V(P_Z_Curvmod_S2)
++  HP_V(_P_A_Width_S2)
++  HP_V(P_Cut_S2)
++  HP_V(Fmod_slope_S2)
++  HP_V(_P_Z_Curv_S3)
++  HP_V(P_Z_Curvmod_S3)
++  HP_V(_P_Z_Curv_S4)
++  HP_V(_P_Z_Curv_SL5)
++  HP_V(_P_Z_Curv_S5)
++  HP_V(P_Z_Curvmod_S4)
++  HP_V(P_Z_Curvmod_S5)
++  HP_V(_P_Shell_S1)
++  HP_V(_P_Shell_S2)
++  HP_V(_P_Shell_S3)
++  HP_V(_P_Shell_S4)
++  HP_V(_P_Shell_SL5)
++  HP_V(_P_Shell_S5)
++  HP_V(P_S5_mod)
++  HP_V(_PZ_S3_olap_pos)
++  HP_V(_PZ_S3_olap_curv)
++  HP_V(ETHRESHSUPPS1)
++  HP_V(ESIGSUPPS1)
++  HP_V(Level_S11)
++  HP_V(Shell_fading)
++  HP_V(_T_low_S1)
++  HP_V(_T_low_S2)
++  HP_V(_T_low_S3)
++  HP_V(_T_low_S4)
++  HP_V(_T_low_S5)
++  HP_V(_T_low_SL)
++  HP_V(T_low_S11)
++  HP_V(T_low_S22)
++  HP_V(_P_att_pol)
++  HP_V(P_att_pol2)
++  HP_V(P_att_pol3)
++  HP_V(_P_att_rel)
++  HP_V(_dE_Defo_S1)
++  HP_V(_dE_Defo_S2)
++  HP_V(_dE_Defo_S3)
++  HP_V(_dE_Defo_S4)
++  HP_V(_dE_Defo_S5)
++  HP_V(_betaL0)
++  HP_V(_betaL1)
++  HP_V(_betaH0)
++  HP_V(_betaH1)
++  HP_V(_dbeta_S3)
++  HP_V(kappa)
++  HP_V(kappa4)
++  HP_V(BFC)
++  HP_V(TCOLLFRAC)
++  HP_V(_ECOLLFRAC)
++  HP_V(TFCOLL)
++  HP_V(TCOLLMIN)
++  HP_V(ESHIFTSASCI_intr)
++  HP_V(ESHIFTSASCI_coll)
++  HP_V(_EDISSFRAC)
++  HP_V(Epot_shift)
++  HP_V(SIGDEFO)
++  HP_V(SIGDEFO_0)
++  HP_V(SIGDEFO_slope)
++  HP_V(SIGENECK)
++  HP_V(EexcSIGrel)
++  HP_V(DNECK)
++  HP_V(FTRUNC50)
++  HP_V(ZTRUNC50)
++  HP_V(FTRUNC28)
++  HP_V(ZTRUNC28)
++  HP_V(ZMAX_S2)
++  HP_V(NTRANSFEREO)
++  HP_V(NTRANSFERE)
++  HP_V(Csort)
++  HP_V(PZ_EO_symm)
++  HP_V(PN_EO_Symm)
++  HP_V(R_EO_THRESH)
++  HP_V(R_EO_SIGMA)
++  HP_V(R_EO_MAX)
++  HP_V(_POLARadd)
++  HP_V(POLARfac)
++  HP_V(T_POL_RED)
++  HP_V(_HOMPOL)
++  HP_V(ZPOL1)
++  HP_V(P_n_x)
++  HP_V(Tscale)
++  HP_V(Econd)
++  HP_V(Etrans)
++  HP_V(T_orbital)
++  HP_V(_Jscaling)
++  HP_V(Spin_odd)
++  HP_V(Esort_extend)
++  HP_V(Esort_slope)
++  HP_V(Esort_slope_S0)
++  HP_V(B_MyParameters)
++  ' --- initial perturbation widths (GEF.bas:1348-1394)
++  HP_V(Fred_par)
++  HP_V(Var_P_DZ_Mean_S1)
++  HP_V(Var_P_Corr_S1)
++  HP_V(Var_P_DZ_Mean_S2)
++  HP_V(Var_P_A_Width_S2)
++  HP_V(Var_P_DZ_Mean_S3)
++  HP_V(Var_P_DZ_Mean_S4)
++  HP_V(Var_P_DZ_Mean_SL5)
++  HP_V(Var_P_DZ_Mean_S5)
++  HP_V(Var_Delta_S0)
++  HP_V(Var_P_Shell_S1)
++  HP_V(Var_P_Shell_S2)
++  HP_V(Var_P_Shell_S3)
++  HP_V(Var_P_Shell_S4)
++  HP_V(Var_P_Shell_SL5)
++  HP_V(Var_P_Shell_S5)
++  HP_V(Var_P_Z_Curv_S1)
++  HP_V(Var_P_Z_Curv_S2)
++  HP_V(Var_S2leftmod)
++  HP_V(Var_P_Z_Curv_S3)
++  HP_V(Var_P_Z_Curv_S4)
++  HP_V(Var_P_Z_Curv_SL5)
++  HP_V(Var_P_Z_Curv_S5)
++  HP_V(Var_PZ_S3_olap_pos)
++  HP_V(Var_PZ_S3_olap_curv)
++  HP_V(Var_dE_Defo_S1)
++  HP_V(Var_dE_Defo_S2)
++  HP_V(Var_dE_Defo_S3)
++  HP_V(Var_dE_Defo_S4)
++  HP_V(Var_dE_Defo_S5)
++  HP_V(Var_betaL0)
++  HP_V(Var_betaL1)
++  HP_V(Var_betaH0)
++  HP_V(Var_betaH1)
++  HP_V(Var_dbeta_S3)
++  HP_V(Var_T_low_S1)
++  HP_V(Var_T_low_S2)
++  HP_V(Var_T_low_S3)
++  HP_V(Var_T_low_S4)
++  HP_V(Var_T_low_S5)
++  HP_V(Var_T_low_SL)
++  HP_V(Var_ECOLLFRAC)
++  HP_V(Var_EDISSFRAC)
++  HP_V(Var_P_att_pol)
++  HP_V(Var_HOMPOL)
++  HP_V(Var_POLARadd)
++  HP_V(Var_Jscaling)
++  HP_End()
++End If
++
++#endif ' GEF_PROBES
+--- /dev/null
++++ b/harness_probe_p1.bi
+@@ -0,0 +1,225 @@
++' SPDX-License-Identifier: GPL-3.0-or-later
++' Copyright (C) 2026 Aurora Jahan
++' Licensed under the GNU GPL v3 or later, WITHOUT ANY WARRANTY; see LICENSE.txt.
++' Harness patch "probes", probe P1: step setup, before the multi-chance pre-pass (GEF.bas:3881/3882).
++' Written for energy steps selected by GEF_TRACE_STEPS. List: harness/PROBES.md.
++' Needs harness_probe_t0.bi (included earlier) for the writer procedures.
++
++#ifdef GEF_PROBES
++If Harness_StepSelected() Then
++  HP_Begin(1, "P1", Trim(Str(Harness_Step)), "-", "-")
++  ' --- run position and plan
++  HP_V(Iline)
++  HP_V(Ifilein)
++  HP_V(I_Double_Covar)
++  HP_V(N_Double_Covar)
++  HP_V(I_E_step)
++  HP_V(N_E_steps)
++  HP_V(N_E_values)
++  HP_V(I_E_iso)
++  HP_V(Bfilein)
++  HP_V(B_ENDF)
++  HP_V(B_Random_on)
++  HP_V(B_Error_On)
++  HP_V(I_Error)
++  HP_V(Fenhance)
++  HP_V(En_min)
++  HP_V(En_max)
++  ' --- system and step excitation
++  HP_V(P_Z_CN)
++  HP_V(P_A_CN)
++  HP_V(P_E_exc)
++  HP_V(P_I_rms_CN)
++  HP_V(P_Z_CN_Double)
++  HP_V(P_A_CN_Double)
++  HP_V(P_E_exc_Double)
++  HP_V(E_EXC_ISO)
++  HP_V(E_EXC_TRUE)
++  HP_V(Spin_CN)
++  HP_V(Spin_target)
++  HP_V(Eabsgs)
++  HP_V(Bprot)
++  HP_V(Balpha)
++  ' --- names
++  HP_V(Csystem)
++  HP_V(Cfileout)
++  HP_V(Cfileout_single)
++  HP_V(Cfileout_full)
++  HP_V(Cfileoutlmd_full)
++  HP_V(C_Espectrum)
++  ' --- E* spectrum of the entrance channel (ES / EM)
++  HP_V(Ichannel)
++  HP_V(W_spectrum_max)
++  HP_A1(Energy_Table)
++  HP_A1(Spin_Table)
++  HP_A1(E_spectrum)
++  HP_A1(L_spectrum)
++  HP_A1(W_spectrum)
++  HP_A1(NE_all)
++  HP_A1(NE_fis)
++  ' --- stale globals read later
++  HP_V(Z)
++  HP_V(T)
++  ' --- nominal parameters in force for this system
++  HP_V(Emax_valid)
++  HP_V(Eexc_min_multi)
++  HP_V(_Delta_S0)
++  HP_V(EOscale)
++  HP_V(Emode)
++  HP_V(D_Par_Fac)
++  HP_V(Chisqr_Fit_min)
++  HP_V(_P_DZ_Mean_S1)
++  HP_V(_P_corr_S1)
++  HP_V(_P_DZ_Mean_S2)
++  HP_V(_P_DZ_Mean_S3)
++  HP_V(_P_DZ_Mean_S4)
++  HP_V(_P_DZ_Mean_SL5)
++  HP_V(_P_DZ_Mean_S5)
++  HP_V(ZC_Mode_SL5)
++  HP_V(_P_Z_Curv_S1)
++  HP_V(P_Z_Curvmod_S1)
++  HP_V(_P_Z_CurV_S2)
++  HP_V(_S2leftmod)
++  HP_V(P_Z_Curvmod_S2)
++  HP_V(_P_A_Width_S2)
++  HP_V(P_Cut_S2)
++  HP_V(Fmod_slope_S2)
++  HP_V(_P_Z_Curv_S3)
++  HP_V(P_Z_Curvmod_S3)
++  HP_V(_P_Z_Curv_S4)
++  HP_V(_P_Z_Curv_SL5)
++  HP_V(_P_Z_Curv_S5)
++  HP_V(P_Z_Curvmod_S4)
++  HP_V(P_Z_Curvmod_S5)
++  HP_V(_P_Shell_S1)
++  HP_V(_P_Shell_S2)
++  HP_V(_P_Shell_S3)
++  HP_V(_P_Shell_S4)
++  HP_V(_P_Shell_SL5)
++  HP_V(_P_Shell_S5)
++  HP_V(P_S5_mod)
++  HP_V(_PZ_S3_olap_pos)
++  HP_V(_PZ_S3_olap_curv)
++  HP_V(ETHRESHSUPPS1)
++  HP_V(ESIGSUPPS1)
++  HP_V(Level_S11)
++  HP_V(Shell_fading)
++  HP_V(_T_low_S1)
++  HP_V(_T_low_S2)
++  HP_V(_T_low_S3)
++  HP_V(_T_low_S4)
++  HP_V(_T_low_S5)
++  HP_V(_T_low_SL)
++  HP_V(T_low_S11)
++  HP_V(T_low_S22)
++  HP_V(_P_att_pol)
++  HP_V(P_att_pol2)
++  HP_V(P_att_pol3)
++  HP_V(_P_att_rel)
++  HP_V(_dE_Defo_S1)
++  HP_V(_dE_Defo_S2)
++  HP_V(_dE_Defo_S3)
++  HP_V(_dE_Defo_S4)
++  HP_V(_dE_Defo_S5)
++  HP_V(_betaL0)
++  HP_V(_betaL1)
++  HP_V(_betaH0)
++  HP_V(_betaH1)
++  HP_V(_dbeta_S3)
++  HP_V(kappa)
++  HP_V(kappa4)
++  HP_V(BFC)
++  HP_V(TCOLLFRAC)
++  HP_V(_ECOLLFRAC)
++  HP_V(TFCOLL)
++  HP_V(TCOLLMIN)
++  HP_V(ESHIFTSASCI_intr)
++  HP_V(ESHIFTSASCI_coll)
++  HP_V(_EDISSFRAC)
++  HP_V(Epot_shift)
++  HP_V(SIGDEFO)
++  HP_V(SIGDEFO_0)
++  HP_V(SIGDEFO_slope)
++  HP_V(SIGENECK)
++  HP_V(EexcSIGrel)
++  HP_V(DNECK)
++  HP_V(FTRUNC50)
++  HP_V(ZTRUNC50)
++  HP_V(FTRUNC28)
++  HP_V(ZTRUNC28)
++  HP_V(ZMAX_S2)
++  HP_V(NTRANSFEREO)
++  HP_V(NTRANSFERE)
++  HP_V(Csort)
++  HP_V(PZ_EO_symm)
++  HP_V(PN_EO_Symm)
++  HP_V(R_EO_THRESH)
++  HP_V(R_EO_SIGMA)
++  HP_V(R_EO_MAX)
++  HP_V(_POLARadd)
++  HP_V(POLARfac)
++  HP_V(T_POL_RED)
++  HP_V(_HOMPOL)
++  HP_V(ZPOL1)
++  HP_V(P_n_x)
++  HP_V(Tscale)
++  HP_V(Econd)
++  HP_V(Etrans)
++  HP_V(T_orbital)
++  HP_V(_Jscaling)
++  HP_V(Spin_odd)
++  HP_V(Esort_extend)
++  HP_V(Esort_slope)
++  HP_V(Esort_slope_S0)
++  HP_V(B_MyParameters)
++  ' --- perturbation widths in force (GEF.bas:2575-2622)
++  HP_V(Fred_par)
++  HP_V(Var_P_DZ_Mean_S1)
++  HP_V(Var_P_Corr_S1)
++  HP_V(Var_P_DZ_Mean_S2)
++  HP_V(Var_P_A_Width_S2)
++  HP_V(Var_P_DZ_Mean_S3)
++  HP_V(Var_P_DZ_Mean_S4)
++  HP_V(Var_P_DZ_Mean_SL5)
++  HP_V(Var_P_DZ_Mean_S5)
++  HP_V(Var_Delta_S0)
++  HP_V(Var_P_Shell_S1)
++  HP_V(Var_P_Shell_S2)
++  HP_V(Var_P_Shell_S3)
++  HP_V(Var_P_Shell_S4)
++  HP_V(Var_P_Shell_SL5)
++  HP_V(Var_P_Shell_S5)
++  HP_V(Var_P_Z_Curv_S1)
++  HP_V(Var_P_Z_Curv_S2)
++  HP_V(Var_S2leftmod)
++  HP_V(Var_P_Z_Curv_S3)
++  HP_V(Var_P_Z_Curv_S4)
++  HP_V(Var_P_Z_Curv_SL5)
++  HP_V(Var_P_Z_Curv_S5)
++  HP_V(Var_PZ_S3_olap_pos)
++  HP_V(Var_PZ_S3_olap_curv)
++  HP_V(Var_dE_Defo_S1)
++  HP_V(Var_dE_Defo_S2)
++  HP_V(Var_dE_Defo_S3)
++  HP_V(Var_dE_Defo_S4)
++  HP_V(Var_dE_Defo_S5)
++  HP_V(Var_betaL0)
++  HP_V(Var_betaL1)
++  HP_V(Var_betaH0)
++  HP_V(Var_betaH1)
++  HP_V(Var_dbeta_S3)
++  HP_V(Var_T_low_S1)
++  HP_V(Var_T_low_S2)
++  HP_V(Var_T_low_S3)
++  HP_V(Var_T_low_S4)
++  HP_V(Var_T_low_S5)
++  HP_V(Var_T_low_SL)
++  HP_V(Var_ECOLLFRAC)
++  HP_V(Var_EDISSFRAC)
++  HP_V(Var_P_att_pol)
++  HP_V(Var_HOMPOL)
++  HP_V(Var_POLARadd)
++  HP_V(Var_Jscaling)
++  HP_End()
++End If
++#endif ' GEF_PROBES
+--- /dev/null
++++ b/harness_probe_p2.bi
+@@ -0,0 +1,52 @@
++' SPDX-License-Identifier: GPL-3.0-or-later
++' Copyright (C) 2026 Aurora Jahan
++' Licensed under the GNU GPL v3 or later, WITHOUT ANY WARRANTY; see LICENSE.txt.
++' Harness patch "probes", probe P2: multi-chance pre-pass results (after GEF.bas:4800).
++' Written for energy steps selected by GEF_TRACE_STEPS. List: harness/PROBES.md.
++' Needs harness_probe_t0.bi (included earlier) for the writer procedures.
++
++#ifdef GEF_PROBES
++If Harness_StepSelected() Then
++  HP_Begin(2, "P2", Trim(Str(Harness_Step)), "-", "-")
++  ' --- pre-pass control and results
++  HP_V(Bmulti)
++  HP_V(Imulti)
++  HP_V(Inofirst)
++  HP_V(N_multi_sample)
++  HP_V(Eexc_min_multi)
++  HP_V(DUF)
++  HP_V(Emax_multi_chance)
++  HP_V(Nmax_multi_chance)
++  HP_V(Pmax_multi_chance)
++  HP_V(Eabsgs)
++  HP_V(Spin_CN)
++  HP_V(Z)
++  #ifdef GEF_RNDLOG
++  HP_V(Harness_Draws)
++  #endif
++  ' --- fission chances
++  HP_S3(E_multi_chance)
++  HP_A2(W_chances)
++  ' --- pre-saddle emission records
++  HP_A1(En_multi_1)
++  HP_A1(En_multi_2)
++  HP_A1(En_multi_3)
++  HP_A1(En_multi_4)
++  HP_A1(En_multi_5)
++  HP_A1(En_multi_6)
++  HP_A1(I_emit_1)
++  HP_A1(I_emit_2)
++  HP_A1(I_emit_3)
++  HP_A1(I_emit_4)
++  HP_A1(I_emit_5)
++  HP_A1(I_emit_6)
++  HP_A1(J_multi_last)
++  ' --- non-fission emission probabilities (normalised) and CN spectra
++  HP_A1(NNCNtot)
++  HP_A1(NPCNtot)
++  HP_S1(_ENCN)
++  HP_S1(_EPCN)
++  HP_S1(_EGammaCN)
++  HP_End()
++End If
++#endif ' GEF_PROBES
+--- /dev/null
++++ b/harness_probe_p3.bi
+@@ -0,0 +1,387 @@
++' SPDX-License-Identifier: GPL-3.0-or-later
++' Copyright (C) 2026 Aurora Jahan
++' Licensed under the GNU GPL v3 or later, WITHOUT ANY WARRANTY; see LICENSE.txt.
++' Harness patch "probes", probe P3: per-nucleus model tables of one bin (GEF.bas:7920).
++' Written for every bin of the energy steps and passes selected by GEF_TRACE_STEPS and
++' GEF_TRACE_PASSES. List: harness/PROBES.md.
++' Needs harness_probe_t0.bi (included earlier) for the writer procedures.
++
++#ifdef GEF_PROBES
++If Harness_Traced() Then
++  HP_Begin(3, "P3", Trim(Str(Harness_Step)), Trim(Str(Harness_Pass)), Trim(Str(I_E_Distr)) + ":" + Trim(Str(I_N_Multi)) + ":" + Trim(Str(I_Z_Multi)) + ":" + Trim(Str(I_E_Multi)))
++  ' --- bin loop counters and limits
++  HP_V(I_E_distr)
++  HP_V(I_N_Multi)
++  HP_V(I_Z_Multi)
++  HP_V(I_E_Multi)
++  HP_V(N_E_distr)
++  HP_V(N_N_Multi)
++  HP_V(N_Z_Multi)
++  HP_V(N_E_Multi)
++  HP_V(I_N_Multi_Max)
++  HP_V(I_Z_Multi_Max)
++  HP_V(I_A_Multi)
++  ' --- bin inputs
++  HP_V(I_E_iso)
++  HP_V(P_Z_CN)
++  HP_V(P_A_CN)
++  HP_V(P_E_exc)
++  HP_V(Emode)
++  HP_V(I_Z_CN)
++  HP_V(I_A_CN)
++  HP_V(I_N_CN)
++  HP_V(R_E_exc_used)
++  HP_V(R_NEVTspectrum)
++  HP_V(Eabsgs)
++  HP_V(Spin_CN)
++  HP_V(Spin_target)
++  HP_V(I_rigid_spher)
++  HP_V(I_eff_CN)
++  HP_V(E_rot_CN)
++  HP_V(NEVTtot)
++  HP_V(NEVTused)
++  HP_V(IEVTtot)
++  HP_V(Racc)
++  HP_V(Inofirst)
++  HP_V(Imulti)
++  HP_V(Escission_lim)
++  ' --- mode centres, mean Z, mean A and N of the modes 0-5
++  HP_V(ZC_Mode_0)
++  HP_V(ZC_Mode_1)
++  HP_V(ZC_Mode_2)
++  HP_V(ZC_Mode_3)
++  HP_V(ZC_Mode_4)
++  HP_V(ZC_Mode_5)
++  HP_V(ZC_Mode_3_shift)
++  HP_V(P_Z_Mean_S0)
++  HP_V(P_Z_Mean_S1)
++  HP_V(P_Z_Mean_S2)
++  HP_V(P_Z_Mean_S3)
++  HP_V(P_Z_Mean_S4)
++  HP_V(P_Z_Mean_S5)
++  HP_V(AC_Mode_0)
++  HP_V(AC_Mode_1)
++  HP_V(AC_Mode_2)
++  HP_V(AC_Mode_3)
++  HP_V(AC_Mode_4)
++  HP_V(AC_Mode_5)
++  HP_V(NC_Mode_0)
++  HP_V(NC_Mode_1)
++  HP_V(NC_Mode_2)
++  HP_V(NC_Mode_3)
++  HP_V(NC_Mode_4)
++  HP_V(NC_Mode_5)
++  HP_V(RZpol)
++  HP_V(RA)
++  HP_V(RZ)
++  HP_V(ZUCD)
++  ' --- curvatures, barriers, shell effects, energies above barrier, tunnelling
++  HP_V(R_Z_Curv_S0)
++  HP_V(R_Z_Curv1_S0)
++  HP_V(R_A_Curv1_S0)
++  HP_V(R_Z_Curv2_S0)
++  HP_V(R_A_Curv2_S0)
++  HP_V(R_E_exc_Eb)
++  HP_V(R_E_exc_GS)
++  HP_V(B_F)
++  HP_V(B_F_ld)
++  HP_V(E_B)
++  HP_V(E_B_ld)
++  HP_V(E_A)
++  HP_V(DE_AB)
++  HP_V(Delta_NZ_Pol)
++  HP_V(R_Shell_S1_eff)
++  HP_V(R_Shell_S2_eff)
++  HP_V(R_Shell_S3_eff)
++  HP_V(R_Shell_S4_eff)
++  HP_V(R_Shell_S5_eff)
++  HP_V(S1_enhance)
++  HP_V(S1_enhance_S2)
++  HP_V(E_LD_S1)
++  HP_V(E_LD_S2)
++  HP_V(E_LD_S3)
++  HP_V(E_LD_S4)
++  HP_V(E_LD_S5)
++  HP_V(DZ_asym)
++  HP_V(B_S1)
++  HP_V(B_S2)
++  HP_V(B_S3)
++  HP_V(B_S4)
++  HP_V(B_S5)
++  HP_V(B_S11)
++  HP_V(B_S22)
++  HP_V(DES11ZPM)
++  HP_V(E_exc_S0_prov)
++  HP_V(E_exc_S1_prov)
++  HP_V(E_exc_S2_prov)
++  HP_V(E_exc_S3_prov)
++  HP_V(E_exc_S4_prov)
++  HP_V(E_exc_S5_prov)
++  HP_V(E_exc_S11_prov)
++  HP_V(E_exc_S22_prov)
++  HP_V(E_Min_Barr)
++  HP_V(E_Exc_S0)
++  HP_V(E_Exc_S1)
++  HP_V(E_Exc_S2)
++  HP_V(E_Exc_S3)
++  HP_V(E_Exc_S4)
++  HP_V(E_Exc_S5)
++  HP_V(E_Exc_S11)
++  HP_V(E_Exc_S22)
++  HP_V(E_exc_Barr)
++  HP_V(E_tunn)
++  HP_V(E_tunn_S1)
++  HP_V(E_tunn_S2)
++  HP_V(E_tunn_S3)
++  HP_V(E_tunn_S4)
++  ' --- temperatures, stiffness, saddle-scission energies
++  HP_V(R_E_exc_eff)
++  HP_V(T_Rusanov)
++  HP_V(T_Coll_Mode_0)
++  HP_V(T_coll_Mode_1)
++  HP_V(T_coll_Mode_2)
++  HP_V(T_coll_Mode_3)
++  HP_V(T_coll_Mode_4)
++  HP_V(T_coll_Mode_5)
++  HP_V(T_Pol_Mode_0)
++  HP_V(T_Pol_Mode_1)
++  HP_V(T_Pol_Mode_2)
++  HP_V(T_Pol_Mode_3)
++  HP_V(T_Pol_Mode_4)
++  HP_V(T_Pol_Mode_5)
++  HP_V(T_asym_Mode_0)
++  HP_V(T_asym_Mode_1)
++  HP_V(T_asym_Mode_2)
++  HP_V(T_asym_Mode_3)
++  HP_V(T_asym_Mode_4)
++  HP_V(T_asym_Mode_5)
++  HP_V(T_low_S1_used)
++  HP_V(E_POT_SCISSION)
++  HP_V(E_diss_Scission)
++  HP_V(EINTR_SCISSION)
++  HP_V(R_Pol_Curv_S0)
++  HP_V(R_Pol_Curv_S1)
++  HP_V(R_Pol_Curv_S2)
++  HP_V(R_Pol_Curv_S3)
++  HP_V(R_Pol_Curv_S4)
++  HP_V(R_Pol_Curv_S5)
++  HP_V(P_POL_CURV_S0)
++  HP_V(R_E_intr_S1)
++  HP_V(R_E_intr_S2)
++  HP_V(R_E_intr_S3)
++  HP_V(R_E_intr_S4)
++  HP_V(R_E_intr_S5)
++  HP_A1(R_Att)
++  HP_A1(R_Att_Sad)
++  HP_A1(E_coll_saddle)
++  ' --- widths, scission energies, suppression
++  HP_V(SigZ_Mode_0)
++  HP_V(SigZ_Mode_1)
++  HP_V(SigZ_Mode_2)
++  HP_V(SigZ_Mode_3)
++  HP_V(SigZ_Mode_4)
++  HP_V(SigZ_Mode_5)
++  HP_V(SigZ_SL5)
++  HP_V(Sigpol_Mode_0)
++  HP_V(Sigpol_Mode_1)
++  HP_V(Sigpol_Mode_2)
++  HP_V(Sigpol_Mode_3)
++  HP_V(Sigpol_Mode_4)
++  HP_V(Sigpol_Mode_5)
++  HP_V(SigA_Mode_0)
++  HP_V(SigA_Mode_1)
++  HP_V(SigA_Mode_2)
++  HP_V(SigA_Mode_3)
++  HP_V(SigA_Mode_4)
++  HP_V(SigA_Mode_5)
++  HP_V(SigA_Mode_11)
++  HP_V(SigA_Mode_22)
++  HP_V(EsciS0)
++  HP_V(EsciS1)
++  HP_V(EsciS2)
++  HP_V(EsciS3)
++  HP_V(EsciS4)
++  HP_V(EsciS5)
++  HP_V(DEsupp)
++  HP_V(R_supp_S0)
++  HP_V(R_supp_S1)
++  HP_V(R_supp_S2)
++  HP_V(R_Supp_S3)
++  HP_V(R_slope_S2)
++  HP_V(B_supp)
++  HP_V(B_nopot)
++  ' --- mode yields
++  HP_V(Yield_Mode_0)
++  HP_V(Yield_Mode_1)
++  HP_V(Yield_Mode_2)
++  HP_V(Yield_Mode_3)
++  HP_V(Yield_Mode_4)
++  HP_V(Yield_Mode_5)
++  HP_V(Yield_Mode_11)
++  HP_V(Yield_Mode_22)
++  HP_V(Yield_Norm)
++  HP_V(P_selected)
++  HP_V(I_Mode_selected)
++  ' --- fragment temperatures and level-density energies
++  HP_V(DU0)
++  HP_V(DU1)
++  HP_V(DU2)
++  HP_V(DU3)
++  HP_V(DU4)
++  HP_V(DU5)
++  HP_V(T_intr_Mode_0)
++  HP_V(T_intr_Mode_1_heavy)
++  HP_V(T_intr_Mode_1_light)
++  HP_V(T_intr_Mode_2_heavy)
++  HP_V(T_intr_Mode_2_light)
++  HP_V(T_intr_Mode_3_heavy)
++  HP_V(T_intr_Mode_3_light)
++  HP_V(T_intr_Mode_4_heavy)
++  HP_V(T_intr_Mode_4_light)
++  HP_V(T_intr_Mode_5_heavy)
++  HP_V(T_intr_Mode_5_light)
++  ' --- stale temporaries left by the table builder
++  HP_V(beta1)
++  HP_V(beta2)
++  HP_V(rbeta)
++  HP_V(beta1_opt)
++  HP_V(beta2_opt)
++  HP_V(beta1_prev)
++  HP_V(beta2_prev)
++  HP_V(E_defo)
++  HP_V(Z1)
++  HP_V(Z2)
++  HP_V(A1)
++  HP_V(A2)
++  HP_V(IZ1)
++  HP_V(IN1)
++  HP_V(IZ2)
++  HP_V(IN2)
++  HP_V(IA1)
++  HP_V(IA2)
++  HP_V(Z)
++  HP_V(T)
++  ' --- persistent per-fragment tables (sparse)
++  HP_S3(beta)
++  HP_S3(Edefo)
++  HP_S3(Zmean)
++  HP_S3(Zshift)
++  HP_S3(Temp)
++  HP_S3(TempFF)
++  HP_S3(Eshell)
++  HP_S3(PEOZ)
++  HP_S3(PEON)
++  HP_S3(EPART)
++  HP_S4(SpinRMSNZ)
++  HP_S2(EMpot)
++  ' --- working parameter set (perturbed copies)
++  HP_V(P_DZ_Mean_S1)
++  HP_V(P_corr_S1)
++  HP_V(P_DZ_Mean_S2)
++  HP_V(P_DZ_Mean_S3)
++  HP_V(P_DZ_Mean_S4)
++  HP_V(P_DZ_Mean_SL5)
++  HP_V(P_DZ_Mean_S5)
++  HP_V(P_Z_Curv_S1)
++  HP_V(P_Z_Curv_S2)
++  HP_V(S2leftmod)
++  HP_V(P_A_Width_S2)
++  HP_V(P_Z_Curv_S3)
++  HP_V(P_Z_Curv_S4)
++  HP_V(P_Z_Curv_SL5)
++  HP_V(P_Z_Curv_S5)
++  HP_V(PZ_S3_olap_pos)
++  HP_V(PZ_S3_olap_curv)
++  HP_V(Delta_S0)
++  HP_V(P_Shell_S1)
++  HP_V(P_Shell_S2)
++  HP_V(P_Shell_S3)
++  HP_V(P_Shell_S4)
++  HP_V(P_Shell_SL5)
++  HP_V(P_Shell_S5)
++  HP_V(dE_Defo_S1)
++  HP_V(dE_Defo_S2)
++  HP_V(dE_Defo_S3)
++  HP_V(dE_Defo_S4)
++  HP_V(dE_Defo_S5)
++  HP_V(betaL0)
++  HP_V(betaL1)
++  HP_V(betaH0)
++  HP_V(betaH1)
++  HP_V(dbeta_S3)
++  HP_V(T_low_S1)
++  HP_V(T_low_S2)
++  HP_V(T_low_S3)
++  HP_V(T_low_S4)
++  HP_V(T_low_S5)
++  HP_V(T_low_SL)
++  HP_V(ECOLLFRAC)
++  HP_V(EDISSFRAC)
++  HP_V(P_att_pol)
++  HP_V(P_att_rel)
++  HP_V(HOMPOL)
++  HP_V(POLARadd)
++  HP_V(Jscaling)
++  ' --- non-perturbed parameters
++  HP_V(Emax_valid)
++  HP_V(EOscale)
++  HP_V(ZC_Mode_SL5)
++  HP_V(P_Z_Curvmod_S1)
++  HP_V(P_Z_Curvmod_S2)
++  HP_V(P_Cut_S2)
++  HP_V(Fmod_slope_S2)
++  HP_V(P_Z_Curvmod_S3)
++  HP_V(P_Z_Curvmod_S4)
++  HP_V(P_Z_Curvmod_S5)
++  HP_V(P_S5_mod)
++  HP_V(ETHRESHSUPPS1)
++  HP_V(ESIGSUPPS1)
++  HP_V(Level_S11)
++  HP_V(Shell_fading)
++  HP_V(T_low_S11)
++  HP_V(T_low_S22)
++  HP_V(P_att_pol2)
++  HP_V(P_att_pol3)
++  HP_V(kappa)
++  HP_V(kappa4)
++  HP_V(BFC)
++  HP_V(TCOLLFRAC)
++  HP_V(TFCOLL)
++  HP_V(TCOLLMIN)
++  HP_V(ESHIFTSASCI_intr)
++  HP_V(ESHIFTSASCI_coll)
++  HP_V(Epot_shift)
++  HP_V(SIGDEFO)
++  HP_V(SIGDEFO_0)
++  HP_V(SIGDEFO_slope)
++  HP_V(SIGENECK)
++  HP_V(EexcSIGrel)
++  HP_V(DNECK)
++  HP_V(FTRUNC50)
++  HP_V(ZTRUNC50)
++  HP_V(FTRUNC28)
++  HP_V(ZTRUNC28)
++  HP_V(ZMAX_S2)
++  HP_V(NTRANSFEREO)
++  HP_V(NTRANSFERE)
++  HP_V(Csort)
++  HP_V(PZ_EO_symm)
++  HP_V(PN_EO_Symm)
++  HP_V(R_EO_THRESH)
++  HP_V(R_EO_SIGMA)
++  HP_V(R_EO_MAX)
++  HP_V(POLARfac)
++  HP_V(T_POL_RED)
++  HP_V(ZPOL1)
++  HP_V(P_n_x)
++  HP_V(Tscale)
++  HP_V(Econd)
++  HP_V(Etrans)
++  HP_V(T_orbital)
++  HP_V(Spin_odd)
++  HP_V(Esort_extend)
++  HP_V(Esort_slope)
++  HP_V(Esort_slope_S0)
++  HP_End()
++End If
++#endif ' GEF_PROBES

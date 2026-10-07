@@ -8,7 +8,8 @@
 # Usage: scripts/ci.sh [--quick]
 #   (default)  toolchain check; configure, build and test dev-gcc, dev-clang
 #              and asan-ubsan; clang-tidy; clang-format; ruff lint and format
-#              check; basedpyright; pytest; validation-manifest verification.
+#              check; basedpyright; pytest; validation-manifest and
+#              reference-store verification.
 #   --quick    dev-gcc configure/build/test and the Python steps only.
 #
 # Every step runs even if an earlier one failed, except steps that need a
@@ -26,7 +27,7 @@ case "${1:-}" in
     "") ;;
     --quick) quick=1 ;;
     -h | --help)
-        sed -n '8,17p' "$0" | sed 's/^# \{0,1\}//'
+        sed -n '8,18p' "$0" | sed 's/^# \{0,1\}//'
         exit 0
         ;;
     *)
@@ -141,25 +142,32 @@ run_step ruff-format ruff format --check
 run_step basedpyright basedpyright
 run_step pytest python3 -m pytest
 
-# 8. Validation manifests.
-if [[ $quick -eq 0 ]]; then
-    printf '==> validation-manifests\n'
-    manifest_log="$log_dir/validation-manifests.log"
+# skippable_step NAME COMMAND...: like run_step, but exit 77 (validation/ absent) is a SKIP.
+skippable_step() {
+    local name="$1"
+    shift
+    local log="$log_dir/$name.log" start end status
+    printf '==> %s\n' "$name"
     start=$(date +%s)
-    # Exit 77 means validation/ is absent: the manifests cannot be checked here.
-    python3 -m tools.toolchain.manifest_validation verify >"$manifest_log" 2>&1
+    "$@" >"$log" 2>&1
     status=$?
     end=$(date +%s)
     if [[ $status -eq 0 ]]; then
-        summary+=("$(printf 'PASS  %-26s %4ss' validation-manifests "$((end - start))")")
+        summary+=("$(printf 'PASS  %-26s %4ss' "$name" "$((end - start))")")
     elif [[ $status -eq 77 ]]; then
-        echo "notice: validation/ is absent; manifest verification skipped"
-        skip_step validation-manifests "validation/ absent"
+        echo "notice: validation/ is absent; $name skipped"
+        skip_step "$name" "validation/ absent"
     else
-        summary+=("$(printf 'FAIL  %-26s %4ss  (exit %s, log: %s)' validation-manifests "$((end - start))" "$status" "$manifest_log")")
+        summary+=("$(printf 'FAIL  %-26s %4ss  (exit %s, log: %s)' "$name" "$((end - start))" "$status" "$log")")
         failed=1
-        tail -n 40 "$manifest_log"
+        tail -n 40 "$log"
     fi
+}
+
+# 8. Validation manifests and the M1 reference store.
+if [[ $quick -eq 0 ]]; then
+    skippable_step validation-manifests python3 -m tools.toolchain.manifest_validation verify
+    skippable_step reference-store python3 -m harness.store verify
 fi
 
 echo

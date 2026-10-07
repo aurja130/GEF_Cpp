@@ -1,0 +1,74 @@
+--- a/GEF.bas
++++ b/GEF.bas
+@@ -443,7 +443,7 @@
+     ' Declaration of Waitsynch_GUI
+   #endif
+   
+-
++#include "harness_rndlog.bi"
+   
+    ' Check and create subfolders for output of GEF
+   If CHDIR("ctl") Then
+--- /dev/null
++++ b/harness_rndlog.bi
+@@ -0,0 +1,60 @@
++' SPDX-License-Identifier: GPL-3.0-or-later
++' Copyright (C) 2026 Aurora Jahan
++' Licensed under the GNU GPL v3 or later, WITHOUT ANY WARRANTY; see LICENSE.txt.
++' Harness patch "rndlog": every Rnd in GEF goes through Harness_Rnd. It calls Rnd exactly
++' once, returns the value unchanged, counts the draw and, when Harness_Traced() is true,
++' appends "<counter> <file>:<line> <u32 hex>" to rnd.log in the working directory.
++' See harness/RNDLOG.md. Without -d GEF_RNDLOG this file is empty.
++
++#ifdef GEF_RNDLOG
++
++' C stdio is used instead of FreeBASIC file numbers so that GEF's own #n handles are never touched.
++Extern "C"
++  Declare Function Harness_fopen Alias "fopen" (ByVal Cpath As ZString Ptr, ByVal Cmode As ZString Ptr) As Any Ptr
++  Declare Function Harness_fclose Alias "fclose" (ByVal Pfile As Any Ptr) As Long
++  Declare Function Harness_setvbuf Alias "setvbuf" (ByVal Pfile As Any Ptr, ByVal Pbuf As Any Ptr, ByVal Imode As Long, ByVal Isize As UInteger) As Long
++  Declare Function Harness_fprintf Alias "fprintf" (ByVal Pfile As Any Ptr, ByVal Cfmt As ZString Ptr, ...) As Long
++End Extern
++
++Dim Shared As ULongInt Harness_Draws       ' every Rnd draw of the program, 1-based
++Dim Shared As Any Ptr Harness_RndFile      ' rnd.log, opened at the first traced draw
++Dim Shared As Long Harness_RndFailed       ' rnd.log could not be opened
++
++Private Sub Harness_RndOpen()
++  Harness_RndFile = Harness_fopen("rnd.log", "ab")
++  If Harness_RndFile = 0 Then
++    Harness_RndFailed = 1
++    Print "<harness> cannot open rnd.log for appending."
++    End 2
++  End If
++  Harness_setvbuf(Harness_RndFile, 0, 0, 1048576)  ' fully buffered, 1 MiB
++End Sub
++
++Private Sub Harness_RndClose() Destructor
++  If Harness_RndFile <> 0 Then
++    Harness_fclose(Harness_RndFile)
++    Harness_RndFile = 0
++  End If
++End Sub
++
++' Cfile and Iline are the call site (__FILE__, __LINE__ of the Rnd in the BASIC source).
++Private Function Harness_Rnd(ByVal Cfile As ZString Ptr, ByVal Iline As Long) As Double
++  Dim As Double Rvalue = Rnd
++  Harness_Draws += 1
++  If Harness_Traced() Then
++    If Harness_RndFile = 0 Then Harness_RndOpen()
++    Dim As Long Ibase = 0, Ic = 0
++    While Cfile[Ic] <> 0            ' log the file name without its directory
++      If Cfile[Ic] = 47 Or Cfile[Ic] = 92 Then Ibase = Ic + 1
++      Ic += 1
++    Wend
++    ' Rnd returns u32 / 2^32 exactly, so the multiplication recovers the integer.
++    Harness_fprintf(Harness_RndFile, !"%llu %s:%d %08x\n", Harness_Draws, Cfile + Ibase, Iline, CULng(Rvalue * 4294967296.0))
++  End If
++  Return Rvalue
++End Function
++
++#undef Rnd
++#define Rnd Harness_Rnd(__FILE__, __LINE__)
++
++#endif

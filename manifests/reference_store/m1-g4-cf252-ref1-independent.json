@@ -1,0 +1,80 @@
+{
+  "created_utc": "2026-10-07T10:40:29Z",
+  "file_count": 43,
+  "files": {
+    "run.json": "a615a4100119cf6fc199f72d93fd16da4309e25d24af78c1045ed297f15a0ae4",
+    "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout.log": "67f8ff149445b4b0cd0f222d8e0e8931cd5a4ec939c176a0e5ccbe27c58a9205",
+    "work/ENDF/GEFY_98_252_s.dat": "66fbb0ffce2f2a43a85cd63d69221f373a37b15db8d05bd49dace29fce03d4eb",
+    "work/ctl/IMATmax.ctl": "10506235b52885311725a2084ef67018ddb562d495b78e8d3d6a9a8079211cd7",
+    "work/ctl/done.ctl": "ab436efb40836efbc332caef8364900e93b966deb044ac38bf48f6650f371c6d",
+    "work/ctl/sync.ctl": "082f1b30dfd690d2eb56f15099a07810daa4555b553e0f0a8f7cb61e5f0aff94",
+    "work/ctl/thread.ctl": "e6feff90850f07de75941c9838a57fe12bf7cbce5ac88c1042f39df6ccec2aaa",
+    "work/dmp/Z98_A252_sf_E0MeV/Apost.dmp": "0fef9e10b96636bc6730d63290c228390b926c23618eb4a928b11270c2dd83e4",
+    "work/dmp/Z98_A252_sf_E0MeV/Apre.dmp": "21345b9330bc855ca6fc56b73ea3a825b417b37708f4d32f0c6a4a72d21b32c5",
+    "work/dmp/Z98_A252_sf_E0MeV/Aprov.dmp": "de744bce91665403bf97b280eb0aec16603d9073cd8a557f519824cbbb3154f9",
+    "work/dmp/Z98_A252_sf_E0MeV/DNlocal.dmp": "722de6eacc5961f437655597c03452a64eabde73bec1b6436746e1b7222f0f6d",
+    "work/dmp/Z98_A252_sf_E0MeV/DPlocal.dmp": "50d63980990ab5fabc497433046298488a06c2694b585a14c273cc527ebdfc6d",
+    "work/dmp/Z98_A252_sf_E0MeV/Decay.dmp": "1cbf5f39a343748b282afd0eeca300296494be88b0fc661eb91aaddb78a3cc94",
+    "work/dmp/Z98_A252_sf_E0MeV/EMpot.dmp": "e5f34485be2f5f557e9dba6aba9dd5eefe3e6ed9b87e1c58f7c76dd37258aab8",
+    "work/dmp/Z98_A252_sf_E0MeV/EN.dmp": "24251a9db41ef75e0bcb02bd4583a036c83423c4d568eeeba9e05ed8c3e37998",
+    "work/dmp/Z98_A252_sf_E0MeV/Eexc.dmp": "3efe00f6e310370fd08ff13e97daf9e375d31396e8437f64f8c9ad081db3213c",
+    "work/dmp/Z98_A252_sf_E0MeV/Egamma.dmp": "823e32607535686325ebc7979fd8e63c544f7f9752dd664469b432aa9df684c7",
+    "work/dmp/Z98_A252_sf_E0MeV/Ekin.dmp": "4ae416c51083e5dc2bf2a49cb264aee6076792fffaa8bcde7727adcce0320f9c",
+    "work/dmp/Z98_A252_sf_E0MeV/Multichance.dmp": "6ed8d3d9830040bc3c13183ddcba20ef253b06888163062ba9ce1024501a850b",
+    "work/dmp/Z98_A252_sf_E0MeV/NA.dmp": "fe3371952b54b74c8e0ad3bf868a2c88d538871d6c5dc7aca080f456bc764c0a",
+    "work/dmp/Z98_A252_sf_E0MeV/NN.dmp": "46bc3a0c39f0024fc5b2b67bb7b11e7a1cc0a5fa733ccc3ac6cf67299fb35095",
+    "work/dmp/Z98_A252_sf_E0MeV/NP.dmp": "513f53e1c1c579dcfe951691119dcd29fdb22c2c0b0c456f92f86f0c2b5f2e54",
+    "work/dmp/Z98_A252_sf_E0MeV/Ngammatot.dmp": "3082913ecc43503555523a63914f937688c19faefffb590bd3123f9483ab0556",
+    "work/dmp/Z98_A252_sf_E0MeV/Npost.dmp": "1b86f99a320a03c512fa249606b1925f0a197f597301f87b1b423f0d403c1605",
+    "work/dmp/Z98_A252_sf_E0MeV/Npre.dmp": "3b802fef569c6fbba43a8c9e2136c4b187245f8ec50848c329fde5f4ec3fefe3",
+    "work/dmp/Z98_A252_sf_E0MeV/Qvalues.dmp": "b92573276b9ebe525a65010fc34e46b71bfb596e90f1229502aa737512f123e5",
+    "work/dmp/Z98_A252_sf_E0MeV/SigmaZpost.dmp": "6d63230e19d5dddc765ef3ea91417f0e321b4ca82c6b8cdf8fb3763088a048b2",
+    "work/dmp/Z98_A252_sf_E0MeV/SigmaZpre.dmp": "68888d2f2f9aea021d8c4ed31f709f268424c4991aafa5cec9fda517eac8b301",
+    "work/dmp/Z98_A252_sf_E0MeV/XE.dmp": "ed48d5f11c757c204723e167c13582a7139b52fe37de93bc011b3d95ba49c016",
+    "work/dmp/Z98_A252_sf_E0MeV/ZApost.dmp": "92fd5f45d3fb9c75167e50987d2aa053c03cbedefd05bcd10f6d70a676aba55f",
+    "work/dmp/Z98_A252_sf_E0MeV/ZApre.dmp": "b8a810119af886d5cf1311a8c66b19e598acc8e0f44b82dc6cb0f4023e76b0ea",
+    "work/dmp/Z98_A252_sf_E0MeV/ZPolarpost.dmp": "ee1a5721aed724bd370544b79ae03f9bef31bff0752f0fc882e27f87215a16c4",
+    "work/dmp/Z98_A252_sf_E0MeV/ZPolarpre.dmp": "55ef01ff2f094eddef0ec574fd74311acf66638a60d5efc80ed20fa44af9c89c",
+    "work/dmp/Z98_A252_sf_E0MeV/Zpost.dmp": "09ba8519119a79e0b97e900535f7be6c1ed63b8bd64ddfe525864b46fe810236",
+    "work/file.in": "2557da627a17a5acf138a14d34ffe7a4a92d5c70c2835a84f6cc11fcd44f11e8",
+    "work/in/m1_cf252_gs.in": "848a5b72a88654130261b4ec23be123cd9e6a968c0e4505d797bc6fb1591a458",
+    "work/out/GEF_98_252_sf.dat": "83d8dfe16c4484b659581fed419380f277926ac94fcd9bdfc3f36a6df6341966",
+    "work/tmp/CUMU1.dat": "7721f1248179b6c2afa72b350205a1947845a8f45bb8b11c5bb77c24803f5f3b",
+    "work/tmp/GEF_98_252_sf.par": "81e04cac984620bc626309330b1ffa771bb49c152d0caf73c9531e9bd402da56",
+    "work/tmp/ParameterUpdate.dat": "be0aa18601e353b75a56d67b59a9b936f0ca80d0e39a68c12972910ed697808c",
+    "work/tmp/Z98_A252_sf_E0MeV.ptb": "78d77a9dc7b7026407ef2419dbee224f3afd050b01d48f397b043dc7d6ea54ea",
+    "work/tmp/Z98_A252_sf_E0MeV_Single.mvd": "ba6baa9c6f865b0753ccdd107a0b7ae8c2e1e122f3ffef6b37d04d3a27feac58"
+  },
+  "id": "m1-g4-cf252-ref1-independent",
+  "kind": "run",
+  "note": "M1 G4: independent ref-1 run (seed 20261008), third tape T for the Cf-252 three-way check",
+  "run_json": {
+    "binary": {
+      "build_id": "seed-5d9886c955fa",
+      "path": "/home/aurja/Programming/GEF_Cpp/build/harness/seed-5d9886c955fa/GEF",
+      "sha256": "8f0f2ff8dccd68a7fc79c74af17d404c7dc6afa8d6e7779bdb9661f9e69c6043"
+    },
+    "command": [
+      "/home/aurja/Programming/GEF_Cpp/build/harness/seed-5d9886c955fa/GEF"
+    ],
+    "cwd": "/home/aurja/Programming/GEF_Cpp/build/m1_gates/g4/cf252_t/work",
+    "end_utc": "2026-10-07T10:26:09+00:00",
+    "env_set": {
+      "GEF_SEED": "20261008"
+    },
+    "exit_code": 0,
+    "input": {
+      "name": "m1_cf252_gs.in",
+      "sha256": "848a5b72a88654130261b4ec23be123cd9e6a968c0e4505d797bc6fb1591a458"
+    },
+    "mode": "normal",
+    "reseed": false,
+    "schema": 1,
+    "seed": 20261008,
+    "start_utc": "2026-10-07T10:08:29+00:00",
+    "wall_time_s": 1059.443
+  },
+  "schema": 1,
+  "total_bytes": 15299050
+}

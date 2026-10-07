@@ -1,0 +1,41 @@
+--- a/GEF.bas
++++ b/GEF.bas
+@@ -1550,8 +1550,8 @@
+   Dim Shared As Single Sigpol_Mode_0 = 0    /' Width of isobaric Z distribution '/
+ /'>'/
+ 
+-  Randomize,3   ' Random initialisation of the random generator
+-
++  #Include Once "harness_seed.bi"
++  Randomize Harness_Seed(),3   ' Seed from GEF_SEED (harness patch)
+ 
+                                
+ /'<'/
+--- /dev/null
++++ b/harness_seed.bi
+@@ -0,0 +1,25 @@
++' SPDX-License-Identifier: GPL-3.0-or-later
++' Copyright (C) 2026 Aurora Jahan
++' Licensed under the GNU GPL v3 or later, WITHOUT ANY WARRANTY; see LICENSE.txt.
++' Harness patch "seed": the random seed comes from the environment variable GEF_SEED
++' (decimal integer 0 .. 4294967295) instead of the clock. Without a valid value the program
++' stops with exit code 2 before any computation.
++
++Function Harness_Seed() As Double
++  Dim As String Cseed = Environ("GEF_SEED")
++  Dim As Long Bok = (Len(Cseed) > 0) And (Len(Cseed) <= 10)
++  Dim As Long Iseed
++  If Bok Then
++    For Iseed = 1 To Len(Cseed)
++      If Cseed[Iseed - 1] < 48 Or Cseed[Iseed - 1] > 57 Then Bok = 0
++    Next
++  End If
++  If Bok Then
++    If Valulng(Cseed) > 4294967295ULL Then Bok = 0
++  End If
++  If Bok = 0 Then
++    Print "<harness> GEF_SEED must be a decimal integer from 0 to 4294967295, got '";Cseed;"'."
++    End 2
++  End If
++  Return CDbl(Valulng(Cseed))
++End Function

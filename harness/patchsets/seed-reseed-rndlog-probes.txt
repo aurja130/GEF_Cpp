@@ -1,0 +1,7 @@
+# Patch set "seed-reseed-rndlog-probes": every harness patch (build with -d GEF_RNDLOG -d GEF_PROBES;
+# per-event reseeding is active only with GEF_RESEED=1).
+seed
+scope
+reseed
+rndlog
+probes

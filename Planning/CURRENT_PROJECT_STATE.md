@@ -1,7 +1,7 @@
 # GEF in C++: Current Project State
 
 **As of:** 2026-10-07
-**Phase:** M0 (Foundations) complete. M1 (reference harness) planned in `Planning/MILESTONE_1_PLAN.md`, not started. M3 (FreeBASIC runtime emulation) can start in parallel. No GEF physics has been ported yet.
+**Phase:** M0 (Foundations) and M1 (Reference harness) complete. M2 (comparison toolkit) planned in `Planning/MILESTONE_2_PLAN.md`, not started. M3 (FreeBASIC runtime emulation) has no plan yet and can run in parallel. No GEF physics has been ported yet.
 
 ## 1. Summary
 
@@ -9,17 +9,17 @@
 |---|---|
 | Vision | Written: `Planning/GEF_CPP_VISION.md` |
 | Implementation strategy | Written: `Planning/IMPLEMENTATION_STRATEGY.md`, 19 milestones (M0–M18) |
-| Milestone plan files (`Planning/MILESTONE_<n>_PLAN.md`) | M0 complete; M1 written (not started); M2–M18 not written |
+| Milestone plan files (`Planning/MILESTONE_<n>_PLAN.md`) | M0 and M1 complete; M2 written (not started); M3–M18 not written |
 | C++ implementation (`Cpp_implementation/`) | Build skeleton: `gef_fbrt` library (floating-point environment self-check) and `gef` CLI (`--version`); Catch2 tests; four CMake presets |
 | Python tooling (`tools/`) | Toolchain check and fbc pin, validation-data manifests, BASIC-source tools (`emit_c`, `fbline`, `fbdef`) |
 | Local CI | `scripts/ci.sh` (full) and `scripts/ci.sh --quick` |
-| Reference harness (`harness/`) | Not started (M1) |
+| Reference harness (`harness/`) | Complete (M1). Reference binary `ref-1` (seed patch only), proven byte-identical to `gef_reference` for captured seeds; per-event reseed mode; Rnd draw logs; probes T0/P1/P2/P3; function drivers; clean-run runner; immutable reference store (18 entries). See §3.4 |
 | Comparison toolkit (`compare/`) | Not started (M2); one ad-hoc analysis done (§4) |
 | Quirk register | `Planning/QUIRKS.md`: 29 quirks (Q-001–Q-029) and 4 build notes (B-001–B-004) |
 | Coverage matrix | `Planning/COVERAGE_MATRIX.md`: 114 rows × T0–T5; no cell covered yet; one cell deferred (approved 2026-10-07) |
 | Coding standards | `Planning/CODING_STANDARDS.md` |
 | Code maps | `Planning/code_maps/`: the six planning-session reports, with a README listing corrected claims |
-| Version control | `.omp/` and `validation/` are gitignored; everything else of M0 is committed |
+| Version control | `.omp/` and `validation/` (including `validation/reference_store/`) are gitignored; manifests of stored data are committed under `manifests/` |
 
 ## 2. Repository inventory
 
@@ -74,7 +74,7 @@ Recorded in `manifests/toolchain.txt`; checked by `python3 -m tools.toolchain.ch
 
 **fbc backend (captured with `fbc -v`):** `gcc -m64 -march=x86-64 -S -nostdlib -nostdinc -Wall -Wno-unused -Wno-main -Werror-implicit-function-declaration -O0 -fno-strict-aliasing -frounding-math -fno-math-errno -fwrapv -fno-exceptions -fno-asynchronous-unwind-tables -funwind-tables -Wno-format -masm=intel`, then GNU `as` and `ld` with `-lfb -ltinfo -lm -ldl -lpthread -lgcc -lgcc_eh -lc`.
 
-## 3. What exists after M0
+## 3. What exists after M0 and M1
 
 ### 3.1 C++ build
 
@@ -103,11 +103,33 @@ Recorded in `manifests/toolchain.txt`; checked by `python3 -m tools.toolchain.ch
 | `python3 -m tools.fbsrc.fbline <file>:<line>[-<line>] [--context N] [--raw] [--symbols]` | BASIC line(s) and the C generated from them; works for included files |
 | `python3 -m tools.fbsrc.fbdef <name> [--refs]` | Case-insensitive definition lookup (ctags index corrected for `Static`, `ReDim`, `#Define`) and whole-word references outside comments |
 
-Configuration: `pyproject.toml` (ruff, basedpyright strict, pytest markers `fbc` and `slow`). Details: `tools/fbsrc/README.md`, `Planning/CODING_STANDARDS.md` §3.
+Configuration: `pyproject.toml` (ruff, basedpyright strict over `tools/` and `harness/`, pytest markers `fbc`, `slow`, `gdb`, `validation`). Details: `tools/fbsrc/README.md`, `Planning/CODING_STANDARDS.md` §3.
 
 ### 3.3 Local CI
 
-`scripts/ci.sh` runs the toolchain check; configure, build and test for `dev-gcc`, `dev-clang`, `asan-ubsan`; clang-tidy; clang-format; ruff lint and format; basedpyright; pytest; validation-manifest verification (skipped with a notice without `validation/`). One summary line per step, logs in `build/ci/`, non-zero exit on any failure. `--quick` runs the `dev-gcc` pipeline and the Python steps. A full run from an empty `build/` took 89 s (pytest 49 s, most of it the first `GEF.c` emission; the three C++ builds 10–13 s each); a warm run about 25 s.
+`scripts/ci.sh` runs the toolchain check; configure, build and test for `dev-gcc`, `dev-clang`, `asan-ubsan`; clang-tidy; clang-format; ruff lint and format; basedpyright; pytest; validation-manifest and reference-store verification (both skipped with a notice without `validation/`). One summary line per step, logs in `build/ci/`, non-zero exit on any failure. `--quick` runs the `dev-gcc` pipeline and the Python steps. The long M1 gates are run on demand with `harness/gates.sh <g1|g23|g4|all>`.
+
+### 3.4 Reference harness (M1, `harness/`, see `harness/README.md`)
+
+- **Reference binary `ref-1`:** the `seed` patch set, i.e. the original source with `Randomize,3` replaced by `Randomize <GEF_SEED>,3`. With the seeds captured under gdb from `gef_reference` runs (1776849192 for the Rn-215 input, 1776917293 for Cf-252), it reproduced every output file byte for byte, with only timestamps masked. Provenance: `manifests/reference_binary.json`.
+- **Patches**, in the canonical order `seed → scope → reseed → rndlog → probes`, none of which changes `GEF.bas` line numbering:
+  - `scope` tracks the energy step, pass and event, and parses the `GEF_TRACE_*` selectors;
+  - `reseed` is the per-event reseed mode (`GEF_RESEED=1`, spec in `harness/RESEED_SPEC.md`, Python reference `harness/reseed.py`);
+  - `rndlog` logs every traced `Rnd` draw (`-d GEF_RNDLOG`);
+  - `probes` writes hex dumps of state at T0, P1, P2 and P3 (`-d GEF_PROBES`, variable lists in `harness/PROBES.md`).
+
+  All are proven neutral: same seed gives byte-identical output.
+- **Tools:**
+  - `harness.build`: reproducible patched builds;
+  - `harness.run`: clean-run runner;
+  - `harness.compare_runs`: byte comparison with the 12 masks in `harness/masks.toml`;
+  - `harness.capture_seed`;
+  - `harness.store`: immutable store in `validation/reference_store/`, manifests in `manifests/reference_store/`;
+  - `harness.driver`: FreeBASIC function drivers;
+  - `harness.rndlog` and `harness.probes`: readers;
+  - `harness.minicheck`: provisional statistics;
+  - `harness.fbmt`: Python reference of fbc's `Randomize s,3` + `Rnd`.
+- **Stored references:** the G1–G5 gate runs and the golden random stream `m1-golden-rnd-stream-42` (seed 42, 10⁶ values), which M3's `FbMtRng` must reproduce.
 
 ## 4. Established findings
 
@@ -125,7 +147,7 @@ Configuration: `pyproject.toml` (ruff, basedpyright strict, pytest markers `fbc`
 | Outlier | 18.5 MeV: z_rms 1.43; Mo-105 at z = 6.7 |
 
 **Caveats on these numbers:**
-- The 18.5 MeV outlier is probably noise from the multi-chance pre-pass, which is shared by all passes of an energy step. This is an inference, not verified.
+- The 18.5 MeV outlier comes from the multi-chance pre-pass, which is shared by all passes of an energy step. At this energy the pre-pass sees only 15–17 fissions, so the second-chance share is k/15 or k/17: 1 of 17 in `test_run`, 0 of 15 in the M1 `ref-1` run (100 % first chance). The `ref-1` run deviates from the library there at independent z_rms 2.47 (M1 plan, G4 exception). This is established for these two runs; the full spread is for M2's null calibration.
 - Comparing against the ENDF dY itself is useless for code validation: it gives z_rms ≈ 0.16, because dY is mostly model-parameter spread.
 - Cumulative mass-chain z_rms is about 1.8. That reflects correlation along the chain, not a discrepancy.
 
@@ -152,13 +174,12 @@ The six planning-session reports are saved in `Planning/code_maps/` (M0.1). Thei
 1. **Optimisation level vs fbc's `-O0`** (`QUIRKS.md` B-001): measured by M3/M5 T1 tests; fallback `-O0` per translation unit.
 2. **fbc expression reordering** (B-004): the extent of fbc's constant folding and reassociation is not characterised yet. M3 drivers must establish the rules.
 3. **`-fwrapv` in the fbc backend** (B-002): BASIC integer overflow wraps; C++ helpers must make it explicit (M3).
-4. **Reference rebuild reproducibility** (B-003): M1 must build with `SOURCE_DATE_EPOCH` or mask the `compiled on` line.
+4. **Step-common pre-pass noise** (M1 G4 exception): at energies where the pre-pass sees few fissions (Rn-215 at 18.5 MeV: about 15), the chance split is quantised (k/15) and shifts every yield of the step. `ref-1` failed the minimal statistical check there although it is byte-identical to `gef_reference`. M2's null calibration must cover such energies with seed ensembles (strategy M2).
 5. **Deferred coverage cell:** the `Static Ntimes` negative-TKE guard at T4 cannot be checked statistically. Deferral approved by the user on 2026-10-07, to be revisited later (`COVERAGE_MATRIX.md`). The guard is still ported faithfully in M10 and checked at T2 (M10) and T3 (M15).
 6. **Unregistered quirk candidates** seen in the code maps but not yet verified, to be registered by their owning milestones: `d_ZISOPOST` reader checks `_ZISOPOST` bounds (`Spectra.bas:1779–1787`); two-system covariance issues (`GEF.bas:11651–11652, 11905`); 1st-isomer β⁻2n line prints `Radd` instead of `2*Radd` (`Branchings.bas:578`); `TKEmin` exponents 0.33333/0.3333 (`GEF.bas:8254`); `DEFOtab(A_post - Z_sci, Z_sci)` (`GEF.bas:9313/9433`); `EexcA2d` registered as `Eexc2dlight` (`Spectra.bas:512–514`); `#If EgammaA` missing its `B_` prefix (`GEF.bas:9418`).
 7. **`FetchContent` needs network** on the first configure of each build tree. Offline fallback: `catch2-devel` via dnf and `find_package`.
 
 ## 6. Next steps
 
-1. Run M1 per `Planning/MILESTONE_1_PLAN.md`. Its key decision: the seed-patched build becomes the reference binary once it reproduces `gef_reference` byte for byte with the seed captured (via gdb) from a `gef_reference` run. While planning it was shown that rebuilding the unpatched source reproduces `gef_reference`'s loaded sections byte for byte (M1 plan §3).
-2. Write `MILESTONE_2_PLAN.md` (comparison toolkit); it replaces M1's minimal statistical check.
-3. Write `MILESTONE_3_PLAN.md` (FreeBASIC runtime emulation); it can run in parallel with M1/M2 and should start by characterising fbc's expression reordering (B-004).
+1. Run M2 per `Planning/MILESTONE_2_PLAN.md`. The user decided: K = 20 `ref-1` ensembles on the two M1 inputs and the full 59-energy Rn-215 input; empirical acceptance bands; Holm with family-wise error ≤ 1 %; round-trip parsers (except `out/`, field coverage); package `compare/`. It replaces M1's `minicheck` and must accept the 18.5 MeV pre-pass-noise case.
+2. Write `MILESTONE_3_PLAN.md` (FreeBASIC runtime emulation). It can run in parallel with M2. It starts from the M1 references (`m1-golden-rnd-stream-42`, `harness/fbmt.py`, `harness/reseed.py` test vectors) and should characterise fbc's expression reordering (B-004).

@@ -29,7 +29,7 @@ dev = [
 line-length = 100
 target-version = "py314"
 src = ["."]
-include = ["tools/**/*.py"]
+include = ["tools/**/*.py", "harness/**/*.py"]
 
 [tool.ruff.lint]
 select = [
@@ -49,16 +49,18 @@ select = [
 quote-style = "double"
 
 [tool.basedpyright]
-include = ["tools"]
+include = ["tools", "harness"]
 pythonVersion = "3.14"
 typeCheckingMode = "strict"
 reportMissingModuleSource = false
 
 [tool.pytest.ini_options]
-testpaths = ["tools"]
+testpaths = ["tools", "harness"]
 pythonpath = ["."]
 addopts = ["--import-mode=importlib", "-ra", "--strict-markers"]
 markers = [
     "fbc: needs the pinned FreeBASIC compiler (GEF_FBC or the default path)",
     "slow: takes more than 10 s",
+    "gdb: needs gdb (seed capture from the original reference binary)",
+    "validation: needs the gitignored validation/ data",
 ]

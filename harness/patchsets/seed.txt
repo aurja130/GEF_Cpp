@@ -1,0 +1,2 @@
+# Patch set "seed": GEF_SEED replaces the clock seed (M1.4).
+seed

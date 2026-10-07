@@ -1,0 +1,48 @@
+{
+  "created_utc": "2026-10-07T10:40:43Z",
+  "kind": "binary",
+  "note": "ref-1: M1 reference binary (seed patch set)",
+  "provenance": {
+    "binary_sha256": "8f0f2ff8dccd68a7fc79c74af17d404c7dc6afa8d6e7779bdb9661f9e69c6043",
+    "build_command": [
+      "/home/aurja/Downloads/FreeBASIC-1.10.1-linux-x86_64/bin/fbc",
+      "GEF.bas"
+    ],
+    "build_id": "seed-5d9886c955fa",
+    "equivalence": {
+      "captures": [
+        {
+          "captured_seed": 1776849192,
+          "gef_reference_capture": "m1-g1-rn215-gefref",
+          "input": "harness/inputs/m1_rn215_short.in",
+          "ref1_capture": "m1-g1-rn215-ref1",
+          "result": "IDENTICAL, 244 files, masked"
+        },
+        {
+          "captured_seed": 1776917293,
+          "gef_reference_capture": "m1-g1-cf252-gefref",
+          "input": "harness/inputs/m1_cf252_gs.in",
+          "ref1_capture": "m1-g1-cf252-ref1",
+          "result": "IDENTICAL, 42 files, masked"
+        }
+      ],
+      "gate": "M1 G1",
+      "reference_binary": "validation/test_run/gef_reference"
+    },
+    "fbc_version": "1.10.1",
+    "name": "ref-1",
+    "patch_set": "seed",
+    "patches": [
+      {
+        "name": "seed",
+        "sha256": "82769ce0189e8d4425e0c1249651d677636864788b7da4ffa87f63aa9a20ed41"
+      }
+    ],
+    "promoted": "2026-10-07",
+    "source_date_epoch": 1752832402,
+    "submodule_commit": "ba9f0aa7344663d3e215f62b679aea4547e7c302"
+  },
+  "schema": 1,
+  "sha256": "8f0f2ff8dccd68a7fc79c74af17d404c7dc6afa8d6e7779bdb9661f9e69c6043",
+  "size": 5074848
+}

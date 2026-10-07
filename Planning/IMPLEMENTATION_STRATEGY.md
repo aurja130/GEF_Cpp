@@ -344,8 +344,10 @@ Two tracks run in parallel after M5 and meet at M14:
 
 **Goal:** make the BASIC program a controllable, observable test oracle (§2.6).
 
+**Status:** complete (2026-10-07), see `Planning/MILESTONE_1_PLAN.md`.
+
 **Scope:**
-- Build the reference binary from a patched copy of the source with the fbc pinned in M0. Show that it is equivalent to `validation/test_run/gef_reference` (statistically, because that binary is clock-seeded). Emit the patched C with the M0 tooling.
+- Build the reference binary from a patched copy of the source with the fbc pinned in M0. Show that it is equivalent to `validation/test_run/gef_reference` **byte for byte**: capture the seed `gef_reference` derives from the clock (gdb), replay it with the seed-patched build, compare all outputs with timestamps masked. The seed-patched build then becomes the reference binary `ref-1`. Emit the patched C with the M0 tooling.
 - The patch framework.
 - Seed control and per-event reseed mode.
 - The `Rnd` logging wrapper.
@@ -355,10 +357,11 @@ Two tracks run in parallel after M5 and meet at M14:
 - The reference store with manifests.
 
 **Proven by:**
-1. Two seeded runs are byte-identical (timestamps masked).
-2. Probe and logging neutrality: probed seeded runs are byte-identical to unprobed seeded runs.
-3. An unprobed harness build agrees statistically with `validation/reference/` on the Rn-215 case. This reproduces the briefing result (z_rms ≈ 1 against Poisson noise).
-4. A trivial driver (`Randomize 42,3` with 10⁶ `Rnd` values) runs and is stored as the first golden file.
+1. The seed-patched build reproduces `gef_reference` byte for byte (timestamps masked) for captured seeds, on an `EN` and a `GS` input.
+2. Two seeded runs are byte-identical (timestamps masked), in normal and per-event reseed mode.
+3. Probe and logging neutrality: probed seeded runs are byte-identical to unprobed seeded runs.
+4. An unprobed harness build agrees statistically with `validation/reference/`, using production `Fenhance` and a shortened energy list. The check is minimal and provisional (three-way rule against the library and an independent BASIC run); M2 replaces it with the null-calibrated comparison.
+5. A trivial driver (`Randomize 42,3` with 10⁶ `Rnd` values) runs and is stored as the first golden file.
 
 **Exit:** any BASIC quantity named in later milestones can be captured on demand, exactly and repeatably.
 
@@ -380,6 +383,7 @@ Two tracks run in parallel after M5 and meet at M14:
 - The parsers round-trip every file in `validation/test_run/` and `validation/reference/`.
 - BASIC-against-BASIC runs on the Rn-215 case pass at the designed false-alarm rate.
 - Synthetic perturbations of BASIC output are detected, e.g. a yield scaled by 2%, a shifted mass bin, a dropped isomer.
+- The M1 G4 exception is explained by the calibration: at Rn-215 18.5 MeV the pre-pass decides the chance split from about 15 fissions, so ref-1 (0 of 15 second-chance) deviates from the library at independent z_rms 2.47 (capture `m1-g1-rn215-ref1`). The null calibration must cover such energies with seed ensembles and accept this run.
 
 **Exit:** T4/T5 verdicts can be produced for any pair of output directories.
 
