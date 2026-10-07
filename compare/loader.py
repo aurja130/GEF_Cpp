@@ -31,7 +31,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from types import ModuleType
 
-from compare.model import ObservableTable
+from compare.model import Key, ObservableTable, Value
 from compare.parsers.probe import UNPARSED_BY_DESIGN
 
 __all__ = [
@@ -42,6 +42,7 @@ __all__ = [
     "load_run",
     "load_run_with_stats",
     "run_files",
+    "stream_file",
 ]
 
 PARSER_NAMES: tuple[str, ...] = ("endf", "mvd", "par", "out", "dmp", "probe", "text")
@@ -97,6 +98,23 @@ def run_files(run_dir: Path) -> dict[str, Path]:
 def _is_binary(path: Path) -> bool:
     with path.open("rb") as handle:
         return b"\0" in handle.read(8192)
+
+
+def stream_file(
+    path: Path, rel: str, modules: list[tuple[str, ModuleType]]
+) -> Iterator[tuple[Key, Value]] | None:
+    """The ``(Key, Value)`` pairs of one file as a lazy stream, or ``None`` if unparsed.
+
+    A file is unparsed when it is listed in ``UNPARSED_BY_DESIGN``, is binary, or matches no
+    parser. Unlike ``load_file`` nothing is collected: callers that pack observables into arrays
+    never hold the file as a dict.
+    """
+    if rel in UNPARSED_BY_DESIGN or _is_binary(path):
+        return None
+    found = _select(rel, modules)
+    if found is None:
+        return None
+    return found[1].observables(path, rel)
 
 
 def load_file(
