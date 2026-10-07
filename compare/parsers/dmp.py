@@ -33,19 +33,33 @@ Observables (``Key.file`` = run-relative path)
 ----------------------------------------------
 ``block``
     The analyzer name as written inside ``S: ANALYZER(...)``, e.g. ``APOST``, ``AMPOST(0)``,
-    ``Zpre(61)``, ``Emultichance(1,0)``. Pre lines at the end of a file use ``(trailer)``.
+    ``Zpre(61)``, ``Emultichance(1,0)``.
 ``group``
     ``#k``: occurrence counter of that analyzer name in the file (1-based). It is always
     present, so a file with an appended second block has keys ``#1`` and ``#2``.
-``label`` / ``index`` (all values ``str`` unless noted)
-    ``pre`` (k,): the k-th (0-based, blank lines skipped) pre line of the segment, as written;
-    time-stamp lines of ``harness/masks.toml`` (``dmp_written``) are not emitted.
-    ``chance_probability`` (I, J): ``float`` from the ``Multichance`` pre line; the line itself
-    is then not emitted as text.
+``label`` / ``index`` (``str`` unless noted)
+    ``(file)`` / ``version`` (k,): the distinct texts after ``C: Calculation performed with
+    GEF`` in order of first appearance (written before every analyzer, so not attached to one).
+    ``chance_probability`` (I, J): ``float`` from the ``C: Relative probability for fission
+    after the emission of I neutrons and J protons`` line that precedes an ``Emultichance`` block.
+    The time-stamp line (``dmp_written`` of ``harness/masks.toml``) is parsed, not emitted.
+    Every other line before a block (and a file's trailing lines) is a *section remark*: the
+    file title ``GEF analyzer dump: ...``, ``C: Z distributions for fixed Ap$r$e$``, ``C: Only
+    first-chance fission occured.``. It is a presence marker ``Key(file, "(pre)", "#k", <line
+    text>) = 1``, with ``k`` the occurrence counter of that exact text in the file. The remark is
+    not attached to the block that follows it, because that block (the first Z or A with data)
+    varies between runs.
     ``title``, ``xaxis``, ``yaxis``: payload of ``S: TITLE``, ``X:``, ``Y:``.
-    ``comment`` (k,): the k-th ``S: COMMENT``; ``note`` (k,): the k-th ``C:`` line in the block.
-    ``range``: the text of the ``A:`` line after ``A: `` (limits, step and line symbols; a
-    changed range is visible even where bins keep their keys).
+    ``comment`` (k,): the k-th ``S: COMMENT``. The event count of a ``N fission events`` phrase
+    is stochastic (it carries the pre-pass statistics), so it is replaced by ``#`` in the text and
+    emitted as ``int`` ``events`` (k,). ``note`` (k,): the k-th ``C:`` line in the block.
+    ``range``: text of the ``A:`` line. For a 1-D block only the deterministic part
+    ``BY <step> Y,<line symbols>`` (a changed step or symbol set is visible); the limits are
+    separate ``float`` observables ``lo`` and ``hi``. GEF trims leading and trailing zero bins
+    before writing (``GEF.bas:15716-15737``), so ``lo``, ``hi`` and the set of ``y`` keys of an
+    analyzer vary between runs of the same input; **a bin that is absent from one run and present
+    in another is zero in the former**. Comparators must zero-fill within a family. The same
+    holds for row blocks (zero rows are not written).
     ``y`` (bin,): ``float`` data value. ``bin`` is the array bin ``lo/step + i`` of a 1-D
     block (equal to the X value for the usual unit step) and the ``X`` integer of a row.
     If ``lo/step`` is not an integer, the 0-based ordinal is used instead.
@@ -68,7 +82,9 @@ from compare.parsers import ParseError
 from harness.compare_runs import load_masks
 
 __all__ = [
+    "FILE_BLOCK",
     "PATTERNS",
+    "PRE_BLOCK",
     "Block",
     "DmpFile",
     "RowData",
@@ -83,7 +99,8 @@ __all__ = [
 
 PATTERNS: tuple[str, ...] = ("work/dmp/*/*.dmp",)
 
-TRAILER = "(trailer)"
+PRE_BLOCK = "(pre)"
+FILE_BLOCK = "(file)"
 
 _ANALYZER = re.compile(r"S: ANALYZER\((.*)\)", re.IGNORECASE)
 _TITLE = re.compile(r"S: TITLE\((.*)\)")
@@ -96,6 +113,8 @@ _CHANCE = re.compile(
     r"C: Relative probability for fission after the emission of +(\d+) neutrons"
     r" and +(\d+) protons: +(\S+)"
 )
+_VERSION = re.compile(r"C: Calculation performed with GEF(.*)")
+_EVENTS = re.compile(r"(?<![\w.])(\d+)( fission events)")
 _ID_DMP_WRITTEN = "dmp_written"
 
 
@@ -331,33 +350,40 @@ def observables(path: Path, rel: str) -> Iterator[tuple[Key, Value]]:
     dmp = read(path)
     stamp = _stamp_pattern()
     seen: dict[str, int] = {}
+    text_seen: dict[str, int] = {}
+    versions: list[str] = []
     for seg in dmp.segments:
         block = seg.block
-        name = TRAILER if block is None else block.name
-        seen[name] = seen.get(name, 0) + 1
-        group = f"#{seen[name]}"
+        name = PRE_BLOCK if block is None else block.name
+        if block is not None:
+            seen[name] = seen.get(name, 0) + 1
+        group = f"#{seen.get(name, 0)}"
 
         def key(
             label: str, index: tuple[int, ...] = (), name: str = name, group: str = group
         ) -> Key:
             return Key(rel, name, group, label, index)
 
-        k = 0
         for line in seg.pre:
-            if not line.strip():
+            if not line.strip() or stamp.search(line) is not None:
                 continue
-            ordinal = k
-            k += 1
-            if stamp.search(line) is not None:
+            version = _VERSION.fullmatch(line)
+            if version is not None:
+                if version.group(1) not in versions:
+                    versions.append(version.group(1))
+                    yield Key(rel, FILE_BLOCK, "", "version", (len(versions) - 1,)), versions[-1]
                 continue
-            chance = _CHANCE.fullmatch(line)
-            if chance is not None:
-                yield (
-                    key("chance_probability", (int(chance.group(1)), int(chance.group(2)))),
-                    _float(chance.group(3), rel, 0),
-                )
-                continue
-            yield key("pre", (ordinal,)), line
+            if block is not None:
+                chance = _CHANCE.fullmatch(line)
+                if chance is not None:
+                    yield (
+                        key("chance_probability", (int(chance.group(1)), int(chance.group(2)))),
+                        _float(chance.group(3), rel, 0),
+                    )
+                    continue
+            repeat = text_seen.get(line, 0) + 1
+            text_seen[line] = repeat
+            yield Key(rel, PRE_BLOCK, f"#{repeat}", line), 1
         if block is None:
             continue
         comments = 0
@@ -375,9 +401,20 @@ def observables(path: Path, rel: str) -> Iterator[tuple[Key, Value]]:
             elif (m := _TITLE.fullmatch(line)) is not None:
                 yield key("title"), m.group(1)
             elif (m := _COMMENT.fullmatch(line)) is not None:
-                yield key("comment", (comments,)), m.group(1)
+                text = m.group(1)
+                events = _EVENTS.search(text)
+                if events is not None:
+                    yield key("events", (comments,)), int(events.group(1))
+                    text = text[: events.start(1)] + "#" + text[events.end(1) :]
+                yield key("comment", (comments,)), text
                 comments += 1
-        yield key("range"), _payload(block.a_line, "A:")
+        series = _A_SERIES.fullmatch(block.a_line)
+        if series is None:
+            yield key("range"), _payload(block.a_line, "A:")
+        else:
+            yield key("range"), f"BY {series.group(3)} Y,{series.group(4)}"
+            yield key("lo"), float(series.group(1))
+            yield key("hi"), float(series.group(2))
         data = block.data
         if isinstance(data, SeriesData):
             offset = _bin_offset(float(data.lo), float(data.step))

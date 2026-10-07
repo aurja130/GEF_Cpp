@@ -1,0 +1,79 @@
+{
+  "created_utc": "2026-10-07T12:20:19Z",
+  "file_count": 43,
+  "files": {
+    "run.json": "8ae8a18418e6805ecf2297a60e048044bb090499fdb540be5e7fbf40787eea28",
+    "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout.log": "2a1646e80a8359d8b26d54384000721ae9c672743f91ed2b6267c60a6c8e2b49",
+    "work/ENDF/GEFY_98_252_s.dat": "03a7c0e384750bb1cbad501816b46932e7b92a9d4c06a1e08196299f83a8427b",
+    "work/ctl/IMATmax.ctl": "7f0ec6877672ca9ba8f7102bb35102ca9691d492b7d89a7a95f694edf553584e",
+    "work/ctl/done.ctl": "ab436efb40836efbc332caef8364900e93b966deb044ac38bf48f6650f371c6d",
+    "work/ctl/sync.ctl": "082f1b30dfd690d2eb56f15099a07810daa4555b553e0f0a8f7cb61e5f0aff94",
+    "work/ctl/thread.ctl": "d043061874c9309f095f7b511d5bff09e4df7d1e5cac581bc80978a2b2b38b95",
+    "work/dmp/Z98_A252_sf_E0MeV/Apost.dmp": "922b2da306a692df0dbab3b74409dadc633bbc6535cc158d808e91745aecfe53",
+    "work/dmp/Z98_A252_sf_E0MeV/Apre.dmp": "1cb03d834d73e6fe3135698786dc3a7a277ada09de4060d389a0d90aa6b42ae8",
+    "work/dmp/Z98_A252_sf_E0MeV/Aprov.dmp": "dc083577628d4d9c8b5212393fefecf88db05094648d1a3301634185a9fbe8b0",
+    "work/dmp/Z98_A252_sf_E0MeV/DNlocal.dmp": "8b646924711a6e4dd6e5b9c032addab316742e837e29df4a14cecfc620a5d16d",
+    "work/dmp/Z98_A252_sf_E0MeV/DPlocal.dmp": "f97a036d5270b27a1f21059c436c2832dde98a787dc6119bf2b12f35874897bd",
+    "work/dmp/Z98_A252_sf_E0MeV/Decay.dmp": "fa8053057595dd9a2db934f234269d555a93ed8dd97c736ad761e92149e187ce",
+    "work/dmp/Z98_A252_sf_E0MeV/EMpot.dmp": "c180b43b9d4d98756b504a5fa08f8dbda30d07392751ce6ee8c75e8e21c1ece5",
+    "work/dmp/Z98_A252_sf_E0MeV/EN.dmp": "d4948442c99ae8b0e7bcaabe3b9b656374a292fcd36fc3b1bc2df1b2e1add2a8",
+    "work/dmp/Z98_A252_sf_E0MeV/Eexc.dmp": "dd47f6549412dc2c8c30d496d2da4c6161800673b0cc3efa1320a22f7bc6db47",
+    "work/dmp/Z98_A252_sf_E0MeV/Egamma.dmp": "51862d81888a9165e2fd0f8eaae6e54f9d8ee5dbb833283936a80c08bb0612f9",
+    "work/dmp/Z98_A252_sf_E0MeV/Ekin.dmp": "e30dac0cde4683ec77e7b633baec96a4fee53cd2027e101c5953cd9518c32138",
+    "work/dmp/Z98_A252_sf_E0MeV/Multichance.dmp": "6ed8d3d9830040bc3c13183ddcba20ef253b06888163062ba9ce1024501a850b",
+    "work/dmp/Z98_A252_sf_E0MeV/NA.dmp": "a45570600908d7dd2cbd1d6f46c89979d48c2edd677e2bb79a1dbfa0c17f53c2",
+    "work/dmp/Z98_A252_sf_E0MeV/NN.dmp": "c27fb666d7adea8f9d3439e6d54d825aef7abf7b584c5248752c8a636dbefdc7",
+    "work/dmp/Z98_A252_sf_E0MeV/NP.dmp": "5b63eedfec4ceadde5940155cb254cf489103c7822d6f2a8aa109c03da7010af",
+    "work/dmp/Z98_A252_sf_E0MeV/Ngammatot.dmp": "e9e92d96bd91d13b6bbfdded13207d9831eec8baf79a90d467854802898bfdf7",
+    "work/dmp/Z98_A252_sf_E0MeV/Npost.dmp": "abeccde64eccda4fa20e54e4ff98647300ebe89bbe8357ada512c71b1222cafa",
+    "work/dmp/Z98_A252_sf_E0MeV/Npre.dmp": "748e6795223c8f56f7040debcac09d24a3575a7d2c1306f9ab4feb6876f7bba5",
+    "work/dmp/Z98_A252_sf_E0MeV/Qvalues.dmp": "54be3d0c2e1868c4ded49ae1b05cfe444ffead8d49ca95621e1181614ffcb21e",
+    "work/dmp/Z98_A252_sf_E0MeV/SigmaZpost.dmp": "ba66ec662ad719d6d5602a39b5e1c0b3bd45694e2f50a84aea5e46d60edb2df0",
+    "work/dmp/Z98_A252_sf_E0MeV/SigmaZpre.dmp": "775d4a25063b594006554866bdc234fb4cd6648e65660bba176798d45795b5a1",
+    "work/dmp/Z98_A252_sf_E0MeV/XE.dmp": "17ea502f7e299a9c34a18efb80f1e0b49a913e44d60c487fb94f913ff24bdd36",
+    "work/dmp/Z98_A252_sf_E0MeV/ZApost.dmp": "861583170567a7eec43d370bc52e91d44ba897d2867cd3a163722f973d009759",
+    "work/dmp/Z98_A252_sf_E0MeV/ZApre.dmp": "5ababf6a9c091399b4b0f41f1f1253fef19759576d243abe443f13437f362412",
+    "work/dmp/Z98_A252_sf_E0MeV/ZPolarpost.dmp": "bed44baf700ce2b0fd9c208869541bb6cdb29e816cfb5af092f14e206a512c89",
+    "work/dmp/Z98_A252_sf_E0MeV/ZPolarpre.dmp": "d7a130b80d28d4dc7daea59b428ecd0cb1ef092b2cfc3fa44d687aa5f680fc88",
+    "work/dmp/Z98_A252_sf_E0MeV/Zpost.dmp": "25a72beb99a3b99d7318bd074e5ef810b3788cc2e32b0dfe10cd75e7307c8321",
+    "work/file.in": "2557da627a17a5acf138a14d34ffe7a4a92d5c70c2835a84f6cc11fcd44f11e8",
+    "work/in/m1_cf252_gs.in": "848a5b72a88654130261b4ec23be123cd9e6a968c0e4505d797bc6fb1591a458",
+    "work/out/GEF_98_252_sf.dat": "205fb738b989374552d0a72c4ef846adb1060c27b04a7af521a8523cec35d722",
+    "work/tmp/CUMU1.dat": "7721f1248179b6c2afa72b350205a1947845a8f45bb8b11c5bb77c24803f5f3b",
+    "work/tmp/GEF_98_252_sf.par": "d23ee4326f3261314f0a11eeaf8649e19c4d42927d99c0ac33643d4aa2c16ef7",
+    "work/tmp/ParameterUpdate.dat": "3b8007cf7e7ba1aaf6099dd00d2848c1f4e7181dec83ad0be684e5cce3b170bf",
+    "work/tmp/Z98_A252_sf_E0MeV.ptb": "8ef49b888cda3d4f31cb6f30024b010b9d08a1b79d7d1907e4c55a7d0eb41bc8",
+    "work/tmp/Z98_A252_sf_E0MeV_Single.mvd": "ddc4f2495f0bb75d76e55ed217b97c5bdbdc215bdc5da62d0d61ccba09b7c89a"
+  },
+  "id": "m2-ens-m1-cf252-gs-s2006",
+  "kind": "run",
+  "note": "M2 null-calibration ensemble member: ref-1, input m1_cf252_gs, seed 2006",
+  "run_json": {
+    "binary": {
+      "path": "/home/aurja/Programming/GEF_Cpp/validation/reference_store/binaries/8f0f2ff8dccd68a7fc79c74af17d404c7dc6afa8d6e7779bdb9661f9e69c6043/GEF",
+      "sha256": "8f0f2ff8dccd68a7fc79c74af17d404c7dc6afa8d6e7779bdb9661f9e69c6043"
+    },
+    "command": [
+      "/home/aurja/Programming/GEF_Cpp/validation/reference_store/binaries/8f0f2ff8dccd68a7fc79c74af17d404c7dc6afa8d6e7779bdb9661f9e69c6043/GEF"
+    ],
+    "cwd": "/home/aurja/Programming/GEF_Cpp/build/compare/ensemble/m2-ens-m1-cf252-gs-s2006/work",
+    "end_utc": "2026-10-07T12:20:19+00:00",
+    "env_set": {
+      "GEF_SEED": "2006"
+    },
+    "exit_code": 0,
+    "input": {
+      "name": "m1_cf252_gs.in",
+      "sha256": "848a5b72a88654130261b4ec23be123cd9e6a968c0e4505d797bc6fb1591a458"
+    },
+    "mode": "normal",
+    "reseed": false,
+    "schema": 1,
+    "seed": 2006,
+    "start_utc": "2026-10-07T11:39:57+00:00",
+    "wall_time_s": 2422.05
+  },
+  "schema": 1,
+  "total_bytes": 15317114
+}
