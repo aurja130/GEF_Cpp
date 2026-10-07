@@ -1,7 +1,7 @@
 # GEF in C++: Current Project State
 
 **As of:** 2026-10-07
-**Phase:** M0 (Foundations) complete (`Planning/MILESTONE_0_PLAN.md`). Next: plans for M1 (reference harness) and M2 (comparison toolkit); M3 (FreeBASIC runtime emulation) can start in parallel. No GEF physics has been ported yet.
+**Phase:** M0 (Foundations) complete. M1 (reference harness) planned in `Planning/MILESTONE_1_PLAN.md`, not started. M3 (FreeBASIC runtime emulation) can start in parallel. No GEF physics has been ported yet.
 
 ## 1. Summary
 
@@ -9,7 +9,7 @@
 |---|---|
 | Vision | Written: `Planning/GEF_CPP_VISION.md` |
 | Implementation strategy | Written: `Planning/IMPLEMENTATION_STRATEGY.md`, 19 milestones (M0–M18) |
-| Milestone plan files (`Planning/MILESTONE_<n>_PLAN.md`) | M0 written and complete; M1–M18 not started |
+| Milestone plan files (`Planning/MILESTONE_<n>_PLAN.md`) | M0 complete; M1 written (not started); M2–M18 not written |
 | C++ implementation (`Cpp_implementation/`) | Build skeleton: `gef_fbrt` library (floating-point environment self-check) and `gef` CLI (`--version`); Catch2 tests; four CMake presets |
 | Python tooling (`tools/`) | Toolchain check and fbc pin, validation-data manifests, BASIC-source tools (`emit_c`, `fbline`, `fbdef`) |
 | Local CI | `scripts/ci.sh` (full) and `scripts/ci.sh --quick` |
@@ -159,5 +159,6 @@ The six planning-session reports are saved in `Planning/code_maps/` (M0.1). Thei
 
 ## 6. Next steps
 
-1. Write `MILESTONE_1_PLAN.md` (reference harness) and `MILESTONE_2_PLAN.md` (comparison toolkit). M1 builds the patched reference binary with `tools/fbsrc` patch directories and the pinned fbc.
-2. Write `MILESTONE_3_PLAN.md` (FreeBASIC runtime emulation); it can run in parallel with M1/M2 and should start by characterising fbc's expression reordering (B-004).
+1. Run M1 per `Planning/MILESTONE_1_PLAN.md`. Its key decision: the seed-patched build becomes the reference binary once it reproduces `gef_reference` byte for byte with the seed captured (via gdb) from a `gef_reference` run. While planning it was shown that rebuilding the unpatched source reproduces `gef_reference`'s loaded sections byte for byte (M1 plan §3).
+2. Write `MILESTONE_2_PLAN.md` (comparison toolkit); it replaces M1's minimal statistical check.
+3. Write `MILESTONE_3_PLAN.md` (FreeBASIC runtime emulation); it can run in parallel with M1/M2 and should start by characterising fbc's expression reordering (B-004).
