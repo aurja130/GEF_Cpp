@@ -13,7 +13,8 @@ values are ``float``, ``I`` are ``int``, ``Z`` are ``str``. Only elements presen
 are emitted; omitted elements of a sparse array are zero by definition and are not keys, but
 the bounds of every array are emitted as ``<NAME>.bounds`` strings so extent changes show.
 
-``work/probes/rnd.log`` (draw log) is not parsed: it is compared byte-exact elsewhere.
+``work/rnd.log`` (draw log, up to hundreds of MB) is not parsed: it is compared byte-exact
+elsewhere.
 """
 
 from __future__ import annotations
@@ -29,7 +30,7 @@ from harness.probes import ProbeFormatError, read_probe_file
 __all__ = ["PATTERNS", "UNPARSED_BY_DESIGN", "Single", "observables"]
 
 PATTERNS: tuple[str, ...] = ("work/probes/*.txt",)
-UNPARSED_BY_DESIGN: tuple[str, ...] = ("work/probes/rnd.log",)
+UNPARSED_BY_DESIGN: tuple[str, ...] = ("work/rnd.log",)
 
 
 class Single(float):

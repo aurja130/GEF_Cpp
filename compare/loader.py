@@ -10,6 +10,11 @@ Two layouts are accepted:
 * **plain GEF working directory** (e.g. ``validation/test_run``): ``run.log`` is read as
   ``stdout.log`` and every other file as ``work/<path>``.
 
+Memory: an ``ObservableTable`` holds every key of the run in one dict (a dmp file alone gives
+about 10 000 observables, a whole BASIC run tens of millions: gigabytes). ``iter_observables``
+streams file by file for callers that process per family or per file; ``load_file`` loads one
+file. Draw logs (``work/rnd.log``, hundreds of MB) are never read.
+
 Each file goes to the first parser whose ``PATTERNS`` match its run-relative path, in the order
 of ``PARSER_NAMES`` (``text`` matches everything and is last). Binary files and files listed in
 ``probe.UNPARSED_BY_DESIGN`` are reported in ``ObservableTable.unparsed``.
@@ -21,6 +26,7 @@ import fnmatch
 import importlib
 import time
 from collections import Counter
+from collections.abc import Iterator
 from dataclasses import dataclass, field
 from pathlib import Path
 from types import ModuleType
@@ -28,7 +34,15 @@ from types import ModuleType
 from compare.model import ObservableTable
 from compare.parsers.probe import UNPARSED_BY_DESIGN
 
-__all__ = ["PARSER_NAMES", "LoadStats", "load_file", "load_run", "load_run_with_stats", "run_files"]
+__all__ = [
+    "PARSER_NAMES",
+    "LoadStats",
+    "iter_observables",
+    "load_file",
+    "load_run",
+    "load_run_with_stats",
+    "run_files",
+]
 
 PARSER_NAMES: tuple[str, ...] = ("endf", "mvd", "par", "out", "dmp", "probe", "text")
 
@@ -96,6 +110,20 @@ def load_file(
         return table
     table.extend(found[1].observables(path, rel))
     return table
+
+
+def iter_observables(
+    run_dir: Path, modules: list[tuple[str, ModuleType]] | None = None
+) -> Iterator[tuple[str, ObservableTable]]:
+    """Stream ``(rel, ObservableTable)`` per file of the run; only one file is held at a time."""
+    mods = modules if modules is not None else parser_modules()
+    for rel, path in run_files(run_dir).items():
+        if rel in UNPARSED_BY_DESIGN or _is_binary(path) or _select(rel, mods) is None:
+            table = ObservableTable()
+            table.unparsed.append(rel)
+            yield rel, table
+        else:
+            yield rel, load_file(path, rel, mods)
 
 
 def load_run_with_stats(
