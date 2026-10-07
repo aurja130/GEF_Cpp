@@ -24,7 +24,7 @@ ZAS = [54140, 55143, 56144, 57147, 58150]
 K = 20
 
 
-def _run(rng: np.random.Generator) -> dict[str, dict[Key, Value]]:
+def synthetic_run(rng: np.random.Generator) -> dict[str, dict[Key, Value]]:
     endf: dict[Key, Value] = {}
     for e, energy in enumerate(ENERGIES):
         block, group = "MF8/MT454", f"tape1/E={energy}#1"
@@ -49,10 +49,11 @@ def setup(tmp_path_factory: pytest.TempPathFactory) -> tuple[Calibration, Path, 
     root = tmp_path_factory.mktemp("inj")
     rng = np.random.default_rng(321)
     members = [
-        str(write_extract(root / f"s{i}", _run(rng), root / "pool", seed=i)) for i in range(K)
+        str(write_extract(root / f"s{i}", synthetic_run(rng), root / "pool", seed=i))
+        for i in range(K)
     ]
     calibrate(members, root / "cal", jobs=1, mde=[], input_sha256=SHA)
-    base = write_extract(root / "base", _run(rng), root / "pool")
+    base = write_extract(root / "base", synthetic_run(rng), root / "pool")
     return Calibration.open(root / "cal"), base, root
 
 

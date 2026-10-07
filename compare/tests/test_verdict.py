@@ -508,3 +508,39 @@ def test_cli_end_to_end(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> N
         )
         == 2
     )
+
+
+# ---- constants by chance and Bernoulli families ----
+
+
+def _edge_run(
+    rng: np.random.Generator, extra_block: bool, edge: float = 0.5
+) -> dict[str, dict[Key, float | int | str]]:
+    table: dict[Key, float | int | str] = {Key(DMP, "T", "#1", "y", (0,)): edge}
+    for b in range(1, 40):
+        table[Key(DMP, "T", "#1", "y", (b,))] = float(rng.poisson(30.0 + b)) * 0.01
+    table[Key(DMP, "T", "#1", "events", ())] = 1000
+    if extra_block:
+        table[Key(DMP, "R(7)", "#1", "y", (3,))] = 0.5
+    return {DMP: table}
+
+
+def test_constant_in_a_stochastic_column_is_not_exact(tmp_path: Path) -> None:
+    rng = np.random.default_rng(3)
+    members = [
+        str(write_extract(tmp_path / f"m{i}", _edge_run(rng, i % 2 == 0), tmp_path / "p"))
+        for i in range(10)
+    ]
+    calibrate(members, tmp_path / "c", jobs=1, mde=[])
+    cal = Calibration.open(tmp_path / "c")
+    # the edge bin y[0] is 0.5 in every run, but its column varies: an empty bin is not a failure
+    emptied = _edge_run(rng, True, edge=0.0)
+    result = verdict.judge(cal, [MemoryExtract(emptied)])
+    assert not [f for f in result.families if f.failed_exactly]  # judged statistically (p > 0)
+    assert result.families == [] or result.families[0].p > 0.0
+    # a family present in every run of a file whose family set varies may be absent
+    assert verdict.judge(cal, [MemoryExtract(_edge_run(rng, False))]).passed
+    # the column-free constant (events) is still exact
+    bad = _edge_run(rng, True)
+    bad[DMP][Key(DMP, "T", "#1", "events", ())] = 1001
+    assert not verdict.judge(cal, [MemoryExtract(bad)]).passed

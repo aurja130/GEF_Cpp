@@ -39,6 +39,7 @@ __all__ = [
     "DERIVED_LABELS",
     "DISPERSION_LIMIT",
     "FLOOR_QUANTILE",
+    "UNTESTED_KINDS",
     "FamilyFit",
     "Judgement",
     "LocalNull",
@@ -70,6 +71,9 @@ _CHUNK = 2000  # fields per leave-one-out gather
 # them by a whole bin range), and are not tested.
 DERIVED_LABELS: dict[str, frozenset[str]] = {"dmp": frozenset({"lo", "hi"})}
 SPARSE_RUNS = 5  # a field of a non-count group nonzero in fewer runs has at least the group floor
+# File kinds whose varying numbers are log lines (counts of messages, timings, nuclide lists whose
+# length depends on the run): not tested. Their constants are still exact.
+UNTESTED_KINDS = frozenset({"text"})
 ZERO_INFLATED_FRACTION = 0.0  # share of zero entries above which a non-count group is zero-inflated
 
 CLS_DET = 0  # identical in all K runs: must match exactly
@@ -378,16 +382,19 @@ def fit_family(
     gid: NDArray[np.int64],
     n_groups: int,
     ignore: BoolArray | None = None,
+    untested: bool = False,
 ) -> FamilyFit:
     """Classify, fit the variance model and the leave-one-out null of one family.
 
     ``gid`` is the variance-group (label) id of each of the ``U`` fields; ``ignore`` marks
-    derived fields that are not tested.
+    derived fields that are not tested; ``untested`` turns every varying field into an ignored one.
     """
     runs, u = int(vals.shape[0]), int(vals.shape[1])
     if runs < 4:
         raise ValueError(f"calibration needs at least 4 ensemble runs, got {runs}")
     cls, count_like_g, inflated_g = classify_fields(vals, present, gid, n_groups, ignore)
+    if untested:
+        cls[(cls == CLS_STOCH) | (cls == CLS_ZERO)] = CLS_IGN
     stoch = cls == CLS_STOCH
     n_stoch = int(stoch.sum())
     mean = np.where(cls == CLS_ZERO, 0.0, vals[0])

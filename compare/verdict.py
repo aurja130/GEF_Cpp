@@ -73,6 +73,7 @@ from compare.stats import (
     CLS_STOCH,
     CLS_ZERO,
     DERIVED_LABELS,
+    UNTESTED_KINDS,
     NullParams,
     file_kind,
     holm,
@@ -89,6 +90,7 @@ __all__ = [
     "judge",
     "main",
     "remap_groups",
+    "sha256_file",
 ]
 
 DETAIL_P = 0.05  # families at or below this p keep their top bins for the report
@@ -205,6 +207,8 @@ def _judge_text(
             continue
         for cmap in cand_maps:
             got = cmap.get(key)
+            if got is None and file_kind(fam.rel) in UNTESTED_KINDS:
+                continue  # a log line that did not occur
             if got != value:
                 total += 1
                 if len(out) < MAX_MISMATCHES:
@@ -212,7 +216,8 @@ def _judge_text(
                         DetMismatch(_text_key(key), value, "<absent>" if got is None else got)
                     )
                 break
-    if not allow_extra:
+    if not allow_extra and file_kind(fam.rel) not in UNTESTED_KINDS:
+        # log lines (text files) come and go between runs: unknown ones are normal there
         for cmap in cand_maps:
             for key, got in cmap.items():
                 if key not in cal:
@@ -293,8 +298,9 @@ def judge_family(
     # parameters) the match is exact.
     det = fam.cls == CLS_DET
     moved_idx = np.zeros(0, dtype=np.int64)
+    pinned = np.zeros(n_cal, dtype=bool)
     if det.any():
-        if fam.null.n_stoch == 0:
+        if fam.null.n_stoch == 0 and kind not in UNTESTED_KINDS:
             expected = fam.mean.view(np.uint64)
             equal = np.all(got.view(np.uint64) == expected[None, :], axis=0)
             # absent means zero (dmp trims zero bins): only a nonzero value must be present
@@ -305,6 +311,13 @@ def judge_family(
             tol = np.where(quantum < 1.0, quantum, 0.0) * (1.0 + 1e-9)
             within = ~got_present | (np.abs(got - fam.mean[None, :]) <= tol[None, :])
             bad = det & ~within.all(axis=0)
+        if fam.null.n_stoch:
+            # a constant in a column that has stochastic fields is table content that happened to
+            # be identical in K runs (an edge bin, a conditional mean): judged statistically
+            has_stoch = np.zeros(len(fam.labels), dtype=bool)
+            has_stoch[fam.kmat[fam.cls == CLS_STOCH, 0]] = True
+            pinned = det & has_stoch[fam.kmat[:, 0]]
+            bad &= ~pinned
         # a zero that became nonzero is a bin that received an event: judged like a new key
         moved = bad & (fam.mean == 0.0) & np.isfinite(cm) & (cm != 0.0)
         bad &= ~moved
@@ -330,8 +343,12 @@ def judge_family(
             if not own > 0.0:
                 own = float(cm[i] ** 2 / k)
             v_eff[i] = own
+    for i in np.flatnonzero(pinned).tolist():
+        lid = int(fam.kmat[i, 0])
+        own = float(fam.label_floor[lid]) if lid < len(fam.label_floor) else float("nan")
+        v_eff[i] = own if own > 0.0 else cal.label_floor_pool(kind, fam.labels[lid])
     usable_v = np.isfinite(v_eff) & (v_eff > 0.0)
-    stat_fields = ((fam.cls == CLS_STOCH) | (fam.cls == CLS_ZERO)) & usable_v
+    stat_fields = ((fam.cls == CLS_STOCH) | (fam.cls == CLS_ZERO) | pinned) & usable_v
     exact_zero = (fam.cls == CLS_ZERO) & ~usable_v
     bad = exact_zero & np.any(got != 0.0, axis=0)
     nonfinite = stat_fields & ~np.isfinite(cm)
@@ -344,13 +361,14 @@ def judge_family(
     # floor in the calibration, else one occupancy event of the observed size per K runs (only in
     # a family with stochastic fields; elsewhere there is no evidence of the scale: exact failure).
     derived = DERIVED_LABELS.get(kind, frozenset())
+    untested = kind in UNTESTED_KINDS
     cal_lid = {name: i for i, name in enumerate(fam.labels)}
     entries: list[tuple[str, float, str]] = []
     new_rows = np.flatnonzero(~matched)
     changed_rows: list[int] = new_rows[cmean_c[new_rows] != 0.0].tolist() if len(new_rows) else []
     for r in changed_rows:
         label = labels_c[int(kmat_c[r, 0])]
-        if label not in derived:
+        if label not in derived and not untested:
             entries.append((_row_key(labels_c, kmat_c[r].tolist()), float(cmean_c[r]), label))
     for i in moved_idx.tolist():
         entries.append((key_of(i), float(cm[i]), fam.labels[int(fam.kmat[i, 0])]))
@@ -379,7 +397,7 @@ def judge_family(
         res.n_stoch = fam.null.n_stoch
         scale = np.sqrt(np.where(stat_fields, v_eff, 1.0) * (1.0 / runs_c + 1.0 / k))
         z_field = np.where(stat_fields, (cm - fam.mean) / scale, 0.0)
-        zero_nonzero = stat_fields & (fam.cls == CLS_ZERO) & (cm != 0.0)
+        zero_nonzero = stat_fields & ((fam.cls == CLS_ZERO) | pinned) & (cm != fam.mean)
         test = ((fam.cls == CLS_STOCH) & stat_fields) | zero_nonzero
         z_test = np.concatenate([z_field[test], z_new])
         n_extra = int(zero_nonzero.sum()) + len(z_new)
@@ -398,7 +416,10 @@ def judge_family(
                 else:
                     n = int(o) - len(idx_test)
                     res.top.append(TopBin(new_keys[n], float(new_mean[n]), 0.0, float(z_test[o])))
-    text_bad, text_total = _judge_text(fam, fds, allow_extra)
+    # a family the candidate lacks entirely (Bernoulli presence) says nothing about its text
+    text_bad, text_total = (
+        _judge_text(fam, fds, allow_extra) if any(f is not None for f in fds) else ([], 0)
+    )
     res.n_mismatch += text_total
     mism.extend(text_bad[: max(0, MAX_MISMATCHES - len(mism))])
     res.mismatches = mism
@@ -487,6 +508,9 @@ def judge(
         cds = [ex.file(rel) for ex in candidates]
         maps = [remap_groups(d, gmap) if d is not None else {} for d in cds]
         cand_keys = {key for m in maps for key in m}
+        # a file whose set of families differs between ensemble runs (data-dependent analyzers
+        # such as Zpre(A)) has Bernoulli family presence: a missing family is not evidence
+        variable_file = cf is not None and bool(np.any(cf.extra["nruns"] < cal.runs))
         cal_keys: set[tuple[str, str]] = set(cf.families) if cf is not None else set()
         for block, group in sorted(cal_keys | cand_keys):
             if (block, group) not in cal_keys:
@@ -503,7 +527,7 @@ def judge(
             for d, m in zip(cds, maps, strict=True):
                 i = m.get((block, group))
                 fds.append(d.family_at(i) if d is not None and i is not None else None)
-            if all(f is None for f in fds) and fam.n_runs == cal.runs:
+            if all(f is None for f in fds) and fam.n_runs == cal.runs and not variable_file:
                 ks["missing"] += 1
                 results.append(FamilyResult(rel, block, group, "missing"))
                 continue
@@ -583,7 +607,7 @@ def _energy_summary(
 # --------------------------------------------------------------------------------------------
 
 
-def _sha256_file(path: Path) -> str:
+def sha256_file(path: Path) -> str:
     h = hashlib.sha256()
     with path.open("rb") as handle:
         for block in iter(lambda: handle.read(1 << 20), b""):
@@ -640,7 +664,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         cal = Calibration.open(args.calibration)
         specs = [*args.candidate, *map(str, args.candidate_extract)]
         candidates = [load_extract(s, args.cache) for s in specs]
-        override = args.input_sha256 or (_sha256_file(args.input) if args.input else None)
+        override = args.input_sha256 or (sha256_file(args.input) if args.input else None)
         check_inputs(cal, candidates, override)
         result = judge(
             cal,

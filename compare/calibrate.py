@@ -80,6 +80,7 @@ from compare.stats import (
     CLS_ZERO,
     COUNT_LIKE_MIN_FIELDS,
     DERIVED_LABELS,
+    UNTESTED_KINDS,
     LocalNull,
     NullParams,
     critical_z,
@@ -445,6 +446,7 @@ def _calibrate_file(job: tuple[str, int, list[str], str]) -> FileResult:
             aligned.kmat[:, 0].copy(),
             len(aligned.labels),
             derived[aligned.kmat[:, 0]],
+            untested=file_kind(rel) in UNTESTED_KINDS,
         )
         tlabels, tkmat, tcls, tv = _fit_text(fds)
         tdet = int((tcls == 0).sum())
