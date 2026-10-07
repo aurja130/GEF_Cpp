@@ -29,7 +29,7 @@ dev = [
 line-length = 100
 target-version = "py314"
 src = ["."]
-include = ["tools/**/*.py", "harness/**/*.py"]
+include = ["tools/**/*.py", "harness/**/*.py", "compare/**/*.py"]
 
 [tool.ruff.lint]
 select = [
@@ -49,13 +49,13 @@ select = [
 quote-style = "double"
 
 [tool.basedpyright]
-include = ["tools", "harness"]
+include = ["tools", "harness", "compare"]
 pythonVersion = "3.14"
 typeCheckingMode = "strict"
 reportMissingModuleSource = false
 
 [tool.pytest.ini_options]
-testpaths = ["tools", "harness"]
+testpaths = ["tools", "harness", "compare"]
 pythonpath = ["."]
 addopts = ["--import-mode=importlib", "-ra", "--strict-markers"]
 markers = [

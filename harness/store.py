@@ -9,7 +9,8 @@ read-only files).  Their committed manifests live in ``manifests/reference_store
 
 Usage::
 
-    python3 -m harness.store add <run-dir> --id <capture-id> --kind run|capture|driver [--note TEXT]
+    python3 -m harness.store add <run-dir> --id <capture-id> --kind run|capture|driver|calibration
+                             [--note TEXT]
     python3 -m harness.store add-binary <path> [--note TEXT] [--provenance-json FILE]
     python3 -m harness.store verify [ID ...]     # capture ids and/or binary-<sha256[:12]>
     python3 -m harness.store list
@@ -63,7 +64,7 @@ SCHEMA_VERSION = 1
 EXIT_OK = 0
 EXIT_FAILED = 1
 EXIT_SKIPPED = 77
-KINDS = ("run", "capture", "driver")
+KINDS = ("run", "capture", "driver", "calibration")
 _ID_RE = re.compile(r"^[a-z0-9][a-z0-9._-]*$")
 _BINARY_PREFIX = "binary-"
 _BINARY_NAME = "GEF"

@@ -58,7 +58,7 @@ Inputs used by the M1 gates: `inputs/m1_rn215_short.in` (Rn-215 compound nucleus
 ## Reference store
 
 ```sh
-python3 -m harness.store add <run-dir> --id <capture-id> --kind run|capture|driver --note "..."
+python3 -m harness.store add <run-dir> --id <capture-id> --kind run|capture|driver|calibration --note "..."
 python3 -m harness.store add-binary <path> --note "..." --provenance-json <file>
 python3 -m harness.store verify            # every capture and binary against its manifest
 python3 -m harness.store list
