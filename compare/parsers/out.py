@@ -34,8 +34,10 @@ Every line is exactly one of:
   0.1 MeV bins -> ``E*10``). Each value column is a ``float`` (counts too, so a key never
   changes type between runs) labelled with its header name. A trailing vector (``J``
   distribution, ``nu`` distribution, ...) gets the vector position as last index. A repeated
-  key within one table gets its occurrence number ``(n,)`` appended (``Isomeric_yields``,
-  ``dn_emitters`` and ``anti_neutrinos`` always do).
+  key within one table gets its occurrence number ``(n,)`` appended. Rows are keyed by their
+  content, never by row order: ``Isomeric_yields`` appends the state's ``E*`` in micro-units
+  (eV), and ``dn_emitters`` and ``anti_neutrinos`` count repeats per decay name and nuclide,
+  so an extra row of one decay kind does not shift the keys of the others.
 * **dense array** (``A_Ekin``, ``A_TKE``): label ``array(A,E) (pre|post)``, index = the
   coordinates, in the loop order of the header.
 * **scalar line** (a line with free numbers: ``Mean value: TXE = 23.2 MeV``,
@@ -79,13 +81,13 @@ Section                       Layout -> observables
                               table: upper limit and counts [lower edge in micro-eV]
 ``Neutrons/Enmean``           scalar lines
 ``FF_spin/A_Z_spin``          ``Jmean`` [A, Z] and ``J distribution`` [A, Z, J] (Apre, Apost)
-``FF_spin/Isomeric_yields``   ``J``, ``E*``, ``Yield (%)``, ``Events``, ``Upper limit`` [A, Z, k]
+``FF_spin/Isomeric_yields``   ``J``, ``E*``, ``Yield (%)``, ``Events``, ``Upper limit`` [A, Z, eV]
 ``Q_value``, ``TKE``, ``TXE``  counts [bin] + scalar means ``Mean value: Q-bar = #``
 ``A_Ekin``, ``A_TKE``         dense arrays [A, E] (pre, post)
 ``Control`` (top level)       scalar ``name = #``
-``Delayed/dn_emitters``       ``Pn[<decay>]`` [Z, A, k]
+``Delayed/dn_emitters``       ``Pn[<decay>]`` [Z, A, n] (n counts repeats of the same decay)
 ``Delayed/nu_delayed``        scalar
-``Delayed/anti_neutrinos``    ``Number[<decay>]``, ``Q value[<decay>]`` [Z, A, N, k]
+``Delayed/anti_neutrinos``    ``Number[<decay>]``, ``Q value[<decay>]`` [Z, A, N, n]
 ``Delayed/Cumu/Yields``       ``Yield`` (+ ``Uncertainty``) [A, Z, isomer]
 ``CHI_square``, ``Comments``  scalar and text lines
 ============================  ================================================================
@@ -188,6 +190,9 @@ class _Spec:
     percent: bool = False  # drop standalone '%' tokens
     always_count: bool = False  # always append the repeat counter to the key
     tail: str = ""  # '' | 'dn' | 'anti': numbers followed by a free-text decay name
+    # Index of a label column whose value identifies the row (e.g. the E* of an isomeric
+    # state); appended to the key as an integer in micro-units instead of a row counter.
+    state_key: int = -1
 
 
 type _Builder = Callable[[re.Match[str], str], _Spec]
@@ -200,8 +205,9 @@ def _spec(
     rest: str = "",
     percent: bool = False,
     always_count: bool = False,
+    state_key: int = -1,
 ) -> _Spec:
-    return _Spec(labels, keys, rest, percent, always_count)
+    return _Spec(labels, keys, rest, percent, always_count, state_key=state_key)
 
 
 def _fixed(spec: _Spec) -> _Builder:
@@ -330,7 +336,7 @@ _HEADERS: tuple[tuple[re.Pattern[str], _Builder], ...] = tuple(
                     ("J", "E*", "Yield (%)", "Events", "Upper limit"),
                     keys=(None, None),
                     percent=True,
-                    always_count=True,
+                    state_key=1,
                 )
             ),
         ),
@@ -481,6 +487,7 @@ class _Ctx:
         "dense",
         "dups",
         "fallback_k",
+        "label_dups",
         "rows",
         "seen",
         "table",
@@ -496,6 +503,7 @@ class _Ctx:
         self.rows = 0
         self.seen: set[tuple[int, ...]] = set()
         self.dups: Counter[tuple[int, ...]] = Counter()
+        self.label_dups: Counter[tuple[str, tuple[int, ...]]] = Counter()
         self.banner = ""
         self.dense: _Dense | None = None
 
@@ -504,6 +512,7 @@ class _Ctx:
         self.rows = 0
         self.seen = set()
         self.dups = Counter()
+        self.label_dups = Counter()
 
 
 class _Dense:
@@ -760,6 +769,14 @@ class _Engine:
                 if key is None:
                     raise self.fail(lineno, f"key {tok!r} is not a multiple of 10^-{kind}")
                 idx.append(key)
+        if spec.state_key >= 0:
+            if len(toks) <= nk + spec.state_key:
+                return -1
+            try:
+                state = round(float(toks[nk + spec.state_key]) * 1e6)
+            except ValueError:
+                return -1
+            idx.append(state)
         index = self._unique(ctx, spec, tuple(idx))
         labels = spec.labels
         nl = len(labels)
@@ -787,6 +804,16 @@ class _Engine:
         ctx.seen.add(key)
         return key
 
+    @staticmethod
+    def _counted(ctx: _Ctx, label: str, key: tuple[int, ...]) -> tuple[int, ...]:
+        """Key plus a repeat counter that counts rows with the same label and key only.
+
+        Rows of one nuclide with different decay names (``gs, beta``, ``1st isomer, beta``,
+        ...) are distinct quantities; an extra row of one kind must not shift the others.
+        """
+        ctx.label_dups[label, key] += 1
+        return (*key, ctx.label_dups[label, key])
+
     def _tail_row(self, ctx: _Ctx, spec: _Spec, s: str, lineno: int) -> int:
         buf = self.buf
         if spec.tail == "dn":
@@ -794,7 +821,7 @@ class _Engine:
             if m is None or not _NUM.fullmatch(m.group(1)):
                 return -1
             pn, z, a, decay = m.groups()
-            index = self._unique(ctx, spec, (int(z), int(a)))
+            index = self._counted(ctx, decay, (int(z), int(a)))
             buf.append((f"Pn[{decay}]", index, float(pn)))
             nd = len(_DIGITS.findall(decay))
             self.n_key += 2
@@ -805,7 +832,7 @@ class _Engine:
         if m is None or not (_NUM.fullmatch(m.group(4)) and _NUM.fullmatch(m.group(5))):
             return -1
         z, a, n, number, q, decay = m.groups()
-        index = self._unique(ctx, spec, (int(z), int(a), int(n)))
+        index = self._counted(ctx, decay, (int(z), int(a), int(n)))
         buf.append((f"Number[{decay}]", index, float(number)))
         buf.append((f"Q value[{decay}]", index, float(q)))
         nd = len(_DIGITS.findall(decay))

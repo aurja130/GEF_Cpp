@@ -14,7 +14,9 @@ judges each held-out run (``RUN@run2=run1,tape2=tape1`` applies a group map, as 
 ``run.json``). It writes ``summary.json`` and ``summary.txt``: failed suites against the number
 a 1 % family-wise rate allows, the top rejected families per run, the pooled p-values with a
 Kolmogorov-Smirnov test of uniformity (``p < 1`` values: families without anything testable have
-p = 1 exactly) and failures per file kind. Every judgement is written to
+p = 1 exactly, and discrete p-values are conservative, so KS is reported as is) and a validity
+table, ``P(p <= t)`` against ``t`` for t = 1e-4 ... 0.1 with a one-sided binomial test, and
+failures per file kind. Every judgement is written to
 ``DIR/results/<name>.json`` as soon as it is done and skipped on a rerun, so an interrupted run
 resumes. The leave-one-out calibrations are deleted after use (``--keep-calibrations`` keeps them).
 
@@ -48,7 +50,7 @@ from numpy.typing import NDArray
 from compare import inject
 from compare.calibrate import Calibration, calibrate, resolve_ensemble
 from compare.extract import DEFAULT_CACHE, load_extract
-from compare.stats import file_kind
+from compare.stats import binom_sf, file_kind
 from compare.verdict import VerdictResult, check_inputs, family_energy, judge, sha256_file
 
 __all__ = [
@@ -91,6 +93,29 @@ def ks_uniform(p: Sequence[float] | NDArray[np.float64]) -> float:
     if not len(p):
         return float("nan")
     return float(_stats.kstest(np.asarray(p, dtype=np.float64), "uniform").pvalue)  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType]
+
+
+def validity_table(pooled: NDArray[np.float64]) -> list[dict[str, Any]]:
+    """Per threshold t: observed ``P(p <= t)`` and the one-sided binomial test of ``<= t``.
+
+    A valid test has ``P(p <= t) <= t`` (discrete p-values are conservative, so smaller is fine).
+    ``binom_p`` is ``P(X >= observed)`` for ``X ~ Binomial(N, t)``; the family p-values of one
+    suite are correlated, so it is a guide, not an exact test.
+    """
+    n = len(pooled)
+    rows: list[dict[str, Any]] = []
+    for t in (1e-4, 1e-3, 1e-2, 1e-1):
+        k = int(np.sum(pooled <= t))
+        tail = (
+            float(binom_sf(np.array([k - 1.0]), np.array([float(n)]), t)[0]) if n else float("nan")
+        )
+        rows.append(
+            {
+                "t": t, "observed": k, "fraction": k / n if n else float("nan"),
+                "expected": n * t, "binom_p": tail, "ok": bool(n) and tail >= 0.01,
+            }
+        )  # fmt: skip
+    return rows
 
 
 def summarize(result: VerdictResult, name: str) -> dict[str, Any]:
@@ -152,6 +177,7 @@ def aggregate_null(
             f"{t:g}": float(np.mean(pooled < t)) if len(pooled) else float("nan")
             for t in (1e-4, 1e-3, 1e-2, 1e-1)
         },
+        "validity": validity_table(pooled),
         "failures_per_file_kind": dict(sorted(kinds.items())),
         "runs": [
             {
@@ -266,6 +292,12 @@ def _write_summary(out: Path, summary: dict[str, Any]) -> None:
         f" KS p (all) {summary['ks_p_all']:.3g}, KS p (p < 1) {summary['ks_p_informative']:.3g}",
         "fraction of p below: "
         + ", ".join(f"{k}: {v:.4g}" for k, v in summary["fraction_below"].items()),
+        "validity P(p <= t): "
+        + "; ".join(
+            f"t={v['t']:g}: {v['observed']} (exp {v['expected']:.1f}, binom p {v['binom_p']:.2g})"
+            f"{'' if v['ok'] else ' !'}"
+            for v in summary["validity"]
+        ),
         f"rejected families per file kind: {summary['failures_per_file_kind']}",
         "",
     ]

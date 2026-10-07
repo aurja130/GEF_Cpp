@@ -62,6 +62,8 @@ For each ensemble member j: compute D_j and M_j treating run j as the candidate 
 
 The leave-one-out draws come from K − 1 runs while the real verdict uses K. The (1/m + 1/K) term in z_i accounts for the difference in the mean's uncertainty; G3 measures whether the remaining approximation holds.
 
+**Low counts [refined]**: a count-like column whose nonzero values are whole multiples of a quantum q (the smallest positive value; ≥ 99.5 % within 0.02 quanta; q = 1/events for the `dmp` histograms) and whose Fano factor φ/q ≤ 3 is a *discrete* column. A field of it with an ensemble mean ≤ 20 counts per run is not judged by z. Given Poisson rates, the candidate's count c (over m runs) and the ensemble's total E (over K runs) are conditionally binomial, c | c+E ~ Binomial(c+E, m/(m+K)); this also carries the uncertainty of a rate known from a few events. The p-value is min(1, 2·min(P(X ≥ c), P(X ≤ c))), raised to 1/Fano if Fano > 1 (conservative: discrete), and the field's score in D, M and the leave-one-out draws is its normal equivalent Φ⁻¹(1 − p/2). A bin the ensemble never filled (zero field, new key of a known discrete column) is the case E = 0: one event is p = 2/(K+1), three events 2/(K+1)³ (the Gaussian treatment gave about 4σ for one event and p ~ 10⁻⁸ for three). The local test combines two parts: the fields judged by the fitted t law (κ², ν from the well-populated fields only) and the low-count fields judged by the largest normal-equivalent score with an exact Šidák term; the family's local p is the Šidák combination of the two.
+
 ## 5. Suite verdict (D3)
 
 Holm step-down at α over all statistically tested families: the family of rank r (1-based, by p_F) out of F rejects if p_F ≤ α / (F − r + 1) and every lower rank rejected. **F [refined] is the number of families judged that have numeric fields** (every such family gets a p-value, 1 when nothing in it is testable), not the number with p < 1; with the smaller F the thresholds would be too lax. `--holm-total calibration` uses the calibration's family count when only some files are judged. Deterministic failures (`missing` families, mismatching deterministic fields or text) always reject. The suite **passes** if nothing rejects.
@@ -92,8 +94,10 @@ Reasons, in the order they were met on real data (`m1_cf252_gs` ensemble, held-o
 
 Rare analyzers and chance constants (Rn-215 short, K = 12): the exact failures `Zpre(157)`, `Zpre(58)`, `Zpost(63)`, `Zpre(152)`, `Zpre(63)` (`ZApre.dmp`/`ZApost.dmp` hold one block per fragment mass A that received events; the edge masses appear in some runs only, here in all 12 by chance), `EcollA y[58]`, `y[157]` (XE.dmp: mean collective energy 0.5 in the bins with a single event) and `Z_mean (post)[151]` (out file: 60 in all runs, 59 in the candidate) were all constants of K runs. They are now variable-file and pinned cases (see §1). Before: `m1-g23-rn215-n-a` 7 exact failures, `m1-g1-rn215-ref1` 1; after: 0 exact failures in both.
 
+Single-event bins (Cf-252, `m1_cf252_gs`, K = 17–19): the three leave-one-out failures of the first dry run (`EexcL2dheavy(189)`, `(308)`, `(280)`, `(175)` in `Eexc.dmp`) were all bins with one or two events in the ensemble and three in the candidate, scored z ≈ 6 and p ~ 10⁻⁷ to 10⁻⁸ under the Gaussian law; the conditional binomial gives p ≈ 2·10⁻³ for that bin. `test_discrete.py` checks `P(p ≤ t) ≤ t` for t = 10⁻⁴ … 0.1 on sparse Poisson histograms (expected counts 0.005 … 1500) and detection of six events in a bin of 0.1 expected.
+
 Known weak spots, to be measured by G3 with K = 20:
 
 - every tail p-value (10⁻⁶ and below) is an extrapolation from K = 20 draws; the variance safety margin and the t tail make it conservative but not exact;
 - columns of conditional means have a very low sensitivity (occupancy variance), the conditional means are covered through the yields in other files;
-- discrete low-count families (single events in a bin) are judged at about √K ≈ 4σ per event.
+- low-count fields assume Poisson counts (Fano ≤ 3); a column more overdispersed than that stays on the Gaussian path with its sparse-variance floor.

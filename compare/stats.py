@@ -25,6 +25,7 @@ from numpy.typing import NDArray
 from scipy.special import gammaincc as _gammaincc  # pyright: ignore[reportMissingTypeStubs]
 from scipy.special import ndtr as _ndtr  # pyright: ignore[reportMissingTypeStubs]
 from scipy.special import ndtri as _ndtri  # pyright: ignore[reportMissingTypeStubs]
+from scipy.stats import binom as _binom  # pyright: ignore[reportMissingTypeStubs]
 from scipy.stats import t as _student_t  # pyright: ignore[reportMissingTypeStubs]
 
 from compare.loader import PARSER_NAMES, parser_modules
@@ -39,21 +40,27 @@ __all__ = [
     "DERIVED_LABELS",
     "DISPERSION_LIMIT",
     "FLOOR_QUANTILE",
+    "INTEGRAL_TOL",
+    "SPARSE_MEAN",
     "UNTESTED_KINDS",
     "FamilyFit",
     "Judgement",
     "LocalNull",
     "NullParams",
     "VarianceModel",
+    "apply_quantum_hint",
     "classify_fields",
     "critical_z",
+    "discrete_z",
     "file_kind",
     "fit_family",
+    "group_quantum",
     "holm",
     "judge_values",
     "local_null",
     "mde_values",
     "print_quantum",
+    "run_scale",
     "variance_model",
 ]
 
@@ -62,6 +69,10 @@ COUNT_LIKE_MIN_FIELDS = 5
 FLOOR_QUANTILE = 0.1  # variance floor of count-like groups: this quantile of the positive v
 DISPERSION_LIMIT = 10.0  # a count-like group's largest var/mean over their median at most
 VAR_SAFETY = 2.0  # standard errors added to the variance of the leave-one-out D
+SPARSE_MEAN = 20.0  # expected counts per run below which a count field uses its exact discrete p
+MAX_FANO = 3.0  # a count-like group more overdispersed than this is not treated as counts
+MAX_CHECKED = 1000.0  # ratios above this (in quanta) are not used to test for whole numbers
+INTEGRAL_TOL = 0.02  # a value is a whole number of quanta within this (plus 1e-4 relative)
 MIN_GLOBAL_FIELDS = 30  # fewer stochastic fields: the family has no global test
 MIN_LOO_DRAWS = 3  # fewer valid leave-one-out draws than this: only the local test is used
 _CHUNK = 2000  # fields per leave-one-out gather
@@ -102,6 +113,21 @@ def ndtr(x: float) -> float:
 def ndtri(q: float) -> float:
     """Standard normal quantile."""
     return float(_ndtri(q))  # pyright: ignore[reportUnknownArgumentType]
+
+
+def binom_sf(k: FloatArray, n: FloatArray, p: float | FloatArray) -> FloatArray:
+    """``P(X > k)`` for ``X ~ Binomial(n, p)``, elementwise."""
+    return np.asarray(_binom.sf(k, n, p), dtype=np.float64)  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType]
+
+
+def binom_cdf(k: FloatArray, n: FloatArray, p: float | FloatArray) -> FloatArray:
+    """``P(X <= k)`` for ``X ~ Binomial(n, p)``, elementwise."""
+    return np.asarray(_binom.cdf(k, n, p), dtype=np.float64)  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType]
+
+
+def ndtri_array(q: FloatArray) -> FloatArray:
+    """Standard normal quantile, elementwise."""
+    return np.asarray(_ndtri(q), dtype=np.float64)  # pyright: ignore[reportUnknownArgumentType]
 
 
 def student_sf(x: float, nu: float) -> float:
@@ -308,6 +334,106 @@ def variance_model(
 # --------------------------------------------------------------------------------------------
 
 
+def _whole_multiples(ratio: FloatArray, minimum: int = 5) -> bool:
+    """At least 99.5 % of the small ratios (at most ``MAX_CHECKED`` quanta, at least ``minimum``
+    of them) are whole numbers: counts times a quantum. Large ratios cannot be told from whole
+    numbers by printed digits and are not used."""
+    small = ratio[ratio <= MAX_CHECKED]
+    if len(small) < max(minimum, 1):
+        return minimum == 0
+    whole = np.abs(small - np.rint(small)) <= INTEGRAL_TOL + 1e-5 * small
+    return float(np.count_nonzero(whole)) / len(small) >= 0.995
+
+
+def group_quantum(
+    sv: FloatArray, gs: NDArray[np.int64], count_like: BoolArray, phi: FloatArray
+) -> tuple[FloatArray, FloatArray]:
+    """Event quantum and Fano factor per count-like variance group, NaN elsewhere.
+
+    The quantum ``q`` is the smallest positive value of the group; the group is *discrete* if
+    at least 99.5 % of its nonzero values are whole multiples of ``q`` (counts times a
+    normalization, such as 1 / events). The Fano factor ``phi / q`` is 1 for Poisson counts; a
+    group more overdispersed than ``MAX_FANO`` is not treated as counts.
+    """
+    groups = len(count_like)
+    quantum = np.full(groups, np.nan)
+    fano = np.full(groups, np.nan)
+    for g in np.flatnonzero(count_like):
+        cols = sv[:, gs == g]
+        positive = cols[cols > 0.0]
+        if not len(positive):
+            continue
+        q = float(positive.min())
+        f = max(1.0, float(phi[g]) / q) if np.isfinite(phi[g]) else float("nan")
+        if _whole_multiples(positive / q) and f <= MAX_FANO:
+            quantum[g], fano[g] = q, f
+    return quantum, fano
+
+
+def apply_quantum_hint(
+    quantum: FloatArray,
+    fano: FloatArray,
+    vals: FloatArray,
+    gid: NDArray[np.int64],
+    hint: FloatArray,
+) -> None:
+    """Give small groups the quantum of the same label in larger families of the file.
+
+    A histogram column with a handful of stochastic fields cannot show its own quantum, but
+    the events normalization is the same for every analyzer of a file. The hint is accepted if
+    the group's positive values are whole multiples of it (or it has none), with Fano factor 1.
+    """
+    for g in np.flatnonzero(np.isfinite(hint) & ~np.isfinite(quantum)):
+        cols = vals[:, gid == g]
+        positive = cols[cols > 0.0]
+        if len(positive) and not _whole_multiples(positive / hint[g], minimum=0):
+            continue
+        quantum[g], fano[g] = hint[g], 1.0
+
+
+def run_scale(sv: FloatArray, quantum: FloatArray) -> FloatArray:
+    """Size of each run's histogram against the mean of the other runs (leave-one-out).
+
+    ``sv`` is ``(K, n)``; only the fields with a finite ``quantum`` count (events summed over the
+    discrete columns). Clipped to [0.2, 5].
+    """
+    cols = np.isfinite(quantum)
+    if not cols.any():
+        return np.ones(int(sv.shape[0]), dtype=np.float64)
+    total: FloatArray = np.sum(sv[:, cols] / quantum[cols], axis=1)
+    others = (total.sum() - total) / (len(total) - 1)
+    ratio = np.where(others > 0.0, total / np.where(others > 0.0, others, 1.0), 1.0)
+    return np.asarray(np.clip(ratio, 0.2, 5.0), dtype=np.float64)
+
+
+def discrete_z(
+    counts: FloatArray,
+    ensemble: FloatArray,
+    cand_runs: float | FloatArray,
+    ens_runs: float,
+    fano: FloatArray,
+) -> FloatArray:
+    """Normal-equivalent score of the exact discrete two-sided p of a low-count field.
+
+    Given Poisson rates, the candidate's ``counts`` (summed over ``cand_runs`` runs) and the
+    ensemble's ``ensemble`` total (over ``ens_runs`` runs) are conditionally binomial: the
+    candidate share of ``counts + ensemble`` is ``Binomial(n, cand_runs / (cand_runs + ens_runs))``.
+    The p-value ``min(1, 2 min(P(X >= c), P(X <= c)))`` is conservative (discrete), so the score
+    ``Phi^-1(1 - p / 2)`` is no larger than a true normal one; this also accounts for the
+    uncertainty of a rate known from a few events. An overdispersed group (Fano > 1) gets
+    ``p ** (1 / fano)``.
+    """
+    c = np.rint(counts)
+    n = c + np.rint(ensemble)
+    prob = cand_runs / (cand_runs + ens_runs)
+    p_hi = binom_sf(c - 1.0, n, prob)
+    p_lo = binom_cdf(c, n, prob)
+    p = np.clip(2.0 * np.minimum(p_hi, p_lo), 0.0, 1.0)
+    p = np.where(n > 0.0, p, 1.0) ** (1.0 / fano)
+    z = -ndtri_array(np.maximum(p / 2.0, 1e-300))
+    return np.where(c >= n * prob, z, -z)
+
+
 @dataclass
 class NullParams:
     """Fitted null distribution of one family's statistics."""
@@ -328,6 +454,9 @@ class NullParams:
     z4_sum: float  # tail over a file kind
     z2_count: int
     n_empirical: int  # stochastic fields whose variance is the sample variance (not Poisson-shaped)
+    n_sparse: int  # stochastic fields judged by their exact discrete p (low counts)
+    od_num: float  # sum of squared deviations of the low-count fields from their ensemble mean
+    od_den: float  # and its Poisson expectation: their ratio is the clustering of events
     mode_var: float  # variance of the leading common mode of z (a chi2_1 part of D)
 
 
@@ -339,6 +468,8 @@ class FamilyFit:
     mean: FloatArray  # ensemble mean; the value for deterministic fields
     v: FloatArray  # variance model (stochastic and zero fields), 0 elsewhere
     label_floor: FloatArray  # (G,) variance floor per label, used for fields new in a candidate
+    label_quantum: FloatArray  # (G,) event quantum of discrete count groups, else NaN
+    label_fano: FloatArray  # (G,) Fano factor of those groups
     null: NullParams
     loo_d: FloatArray  # (K,) NaN for invalid draws
     loo_m: FloatArray
@@ -383,6 +514,7 @@ def fit_family(
     n_groups: int,
     ignore: BoolArray | None = None,
     untested: bool = False,
+    quantum_hint: FloatArray | None = None,
 ) -> FamilyFit:
     """Classify, fit the variance model and the leave-one-out null of one family.
 
@@ -400,11 +532,15 @@ def fit_family(
     mean = np.where(cls == CLS_ZERO, 0.0, vals[0])
     v_full = np.zeros(u)
     label_floor = np.full(n_groups, np.nan)
+    quantum_g = np.full(n_groups, np.nan)
+    fano_g = np.full(n_groups, np.nan)
     phi = vfloor = float("nan")
     loo_d = np.full(runs, np.nan)
     loo_m = np.full(runs, np.nan)
     z2_sum = z4_sum = 0.0
     z2_count = 0
+    n_sparse = 0
+    od_num = od_den = 0.0
     proj2 = np.zeros(runs)  # squared projection of each leave-one-out z on the leading mode
     if n_stoch:
         sv = vals[:, stoch]
@@ -431,6 +567,8 @@ def fit_family(
         v_full[zero] = model.group_floor[0][gid[zero]]
         has_stoch = np.bincount(gs, minlength=n_groups) > 0
         label_floor = np.where(has_stoch, model.group_floor[0], np.nan)
+        zero_floor = np.where(np.isfinite(label_floor), label_floor, model.group_floor[0])
+        v_full[zero] = zero_floor[gid[zero]]
         big = np.flatnonzero(count_like_g)
         if len(big):
             sizes = np.bincount(gs, minlength=n_groups)
@@ -450,18 +588,51 @@ def fit_family(
             s2_full,
         ).v
         z = (sv - m_loo) / np.sqrt(v_loo * (1.0 + 1.0 / (runs - 1)))
+        quantum_g, fano_g = group_quantum(sv, gs, count_like_g, model.phi[0])
+        if quantum_hint is not None:
+            apply_quantum_hint(quantum_g, fano_g, vals, gid, quantum_hint)
+        # a column that is not counts has no one-event scale: an unseen field can be as large as
+        # the largest field of the column (deterministic ones included), once in K runs
+        peak_group = np.zeros(n_groups)
+        np.maximum.at(peak_group, gid, np.abs(vals).max(axis=0))
+        label_floor = np.where(
+            has_stoch & ~np.isfinite(quantum_g),
+            np.fmax(label_floor, peak_group**2 / runs),
+            label_floor,
+        )
+        zero_floor = np.where(np.isfinite(label_floor), label_floor, model.group_floor[0])
+        v_full[zero] = zero_floor[gid[zero]]
+        q_f = quantum_g[gs]
+        sparse = np.isfinite(q_f) & (m_full <= SPARSE_MEAN * np.where(np.isfinite(q_f), q_f, 1.0))
+        if sparse.any():  # exact discrete p for low counts, as a normal-equivalent score
+            counts = np.rint(sv[:, sparse] / q_f[sparse])
+            rest = counts.sum(axis=0)[None, :] - counts
+            # the whole histogram is larger or smaller in a run (shared normalization): the
+            # share of one run in a bin is scaled by that run's size against the others
+            scale = run_scale(sv, q_f)
+            z[:, sparse] = discrete_z(counts, rest, scale[:, None], runs - 1.0, fano_g[gs][sparse])
         valid = np.all(np.isfinite(z), axis=1)
         z2 = z * z
         loo_d[valid] = z2[valid].sum(axis=1)
-        loo_m[valid] = np.abs(z[valid]).max(axis=1)
-        z2_sum = float(z2[valid].sum())
-        z4_sum = float((z2[valid] ** 2).sum())
-        z2_count = int(valid.sum()) * n_stoch
+        n_sparse = int(sparse.sum())
         if n_stoch >= MIN_GLOBAL_FIELDS and int(valid.sum()) > MIN_LOO_DRAWS:
             # the leading mode of the draws (the shared pre-pass shifts every field together)
             zv = z[valid]
             top = np.linalg.svd(zv, full_matrices=False)[2][0]
             proj2[valid] = (zv @ top) ** 2
+        # the local null is that of the well-populated fields; low counts carry their exact p
+        zd2 = z2[:, ~sparse]
+        if zd2.shape[1]:
+            loo_m[valid] = np.sqrt(zd2[valid].max(axis=1))
+        else:
+            loo_m[valid] = 0.0
+        z2_sum = float(zd2[valid].sum())
+        z4_sum = float((zd2[valid] ** 2).sum())
+        z2_count = int(valid.sum()) * int(zd2.shape[1])
+        if sparse.any():
+            low = np.rint(sv[:, sparse] / q_f[sparse])
+            od_num = float(((low - low.mean(axis=0)) ** 2).sum())
+            od_den = float(low.mean(axis=0).sum()) * (runs - 1)
     ok = np.isfinite(loo_d)
     draws = int(ok.sum())
     d_mean = float(loo_d[ok].mean()) if draws else float("nan")
@@ -489,9 +660,12 @@ def fit_family(
     nu_local = own.nu if z2_count and not degenerate else float("nan")
     null = NullParams(
         n_stoch, bool(count_like_g.any()), phi, vfloor, draws, d_mean, d_var, a, nu,
-        kappa2, nu_local, degenerate, z2_sum, z4_sum, z2_count, n_empirical, mode_var,
+        kappa2, nu_local, degenerate, z2_sum, z4_sum, z2_count, n_empirical, n_sparse,
+        od_num, od_den, mode_var,
     )  # fmt: skip
-    return FamilyFit(cls, mean, v_full, label_floor, null, loo_d, loo_m)
+    if quantum_hint is not None and not n_stoch:
+        apply_quantum_hint(quantum_g, fano_g, vals, gid, quantum_hint)
+    return FamilyFit(cls, mean, v_full, label_floor, quantum_g, fano_g, null, loo_d, loo_m)
 
 
 # --------------------------------------------------------------------------------------------
@@ -606,19 +780,46 @@ def global_sf(d: float, mode_var: float, a: float, nu: float) -> float:
 
 
 def judge_values(
-    null: NullParams, z: FloatArray, pool: LocalNull, *, n_extra: int = 0
+    null: NullParams,
+    z: FloatArray,
+    pool: LocalNull,
+    *,
+    n_extra: int = 0,
+    sparse: BoolArray | None = None,
+    n_extra_sparse: int = 0,
+    clustering: float = 1.0,
 ) -> Judgement:
     """Statistics and the family p-value for the z-scores of the tested fields (§3, §4).
 
     ``z`` holds every tested field: the stochastic ones, plus zero and new fields where the
     candidate is nonzero; ``n_extra`` is the number of the latter (they widen the Šidák
-    multiplicity beyond the ``n_stoch`` fields of the null fit).
+    multiplicity beyond the ``n_stoch`` fields of the null fit). ``sparse`` flags the entries
+    that are normal-equivalent scores of exact discrete p-values (low counts); ``n_extra_sparse``
+    of the extras are such. Their maximum is judged by its own Šidák term, the others by the
+    fitted local law, and the two are combined as independent tests.
     """
     d = float(np.sum(z * z))
     m = float(np.max(np.abs(z))) if len(z) else 0.0
     n_test = null.n_stoch + n_extra
     local = pool if null.degenerate else LocalNull(null.kappa2, null.nu_local)
-    p_local = sidak_p(m, local, n_test)
+    flags = np.zeros(len(z), dtype=bool) if sparse is None else sparse
+    n_sparse = null.n_sparse + n_extra_sparse
+    n_dense = n_test - n_sparse
+    z_dense = z[~flags]
+    z_sparse = z[flags]
+    m_dense = float(np.max(np.abs(z_dense))) if len(z_dense) else 0.0
+    m_sparse = float(np.max(np.abs(z_sparse))) if len(z_sparse) else 0.0
+    p_dense = sidak_p(m_dense, local, n_dense) if len(z_dense) else 1.0
+    p_sparse = 1.0
+    if len(z_sparse):
+        # events that come in clusters make low counts more dispersed than Poisson (``clustering``,
+        # measured on the ensemble): the exact p is raised to 1 / clustering
+        exact = sidak_p(m_sparse, LocalNull(1.0, float("inf")), n_sparse)
+        p_sparse = exact ** (1.0 / max(clustering, 1.0))
+    both = len(z_dense) > 0 and len(z_sparse) > 0  # two tests: Sidak over the smaller p
+    p_local = 1.0 - (1.0 - min(p_dense, p_sparse)) ** (2 if both else 1)
+    if len(z) == 0:
+        p_local = 1.0
     if null.degenerate:
         return Judgement(d, m, n_test, float("nan"), p_local, p_local, local, z)
     p_global = global_sf(d, null.mode_var, null.a, null.nu)

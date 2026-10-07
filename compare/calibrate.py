@@ -26,7 +26,8 @@ Artifact layout (a directory, storable with ``harness.store add DIR --id ID --ki
 ``files/<idx>.npz``
     One per source file: the union key layout (``extract.write_layout_npz``) and, per numeric field,
     ``cls`` / ``mean`` / ``v`` (class, ensemble mean or deterministic value, variance model),
-    per label ``lfloor`` (variance floor of fields not seen nonzero),
+    per label ``lfloor`` (variance floor of fields not seen nonzero), ``lquantum`` / ``lfano``
+    (event quantum and Fano factor of discrete count columns, NaN elsewhere),
     per text key ``tcls`` (0 deterministic, 1 stochastic) and ``tvals`` (JSON list, the value of
     deterministic text), per family ``fparams`` (columns ``PARAM_COLS``), ``nruns`` (runs that
     had the family) and the K leave-one-out draws ``loo_d`` / ``loo_m``.
@@ -111,7 +112,7 @@ MIN_POOL_DRAWS = 500  # z values needed to pool the families without a global te
 PARAM_COLS: tuple[str, ...] = (
     "n_stoch", "count_like", "phi", "vfloor", "n_draws", "d_mean", "d_var", "a", "nu",
     "kappa2", "nu_local", "degenerate", "z2_sum", "z4_sum", "z2_count", "n_empirical",
-    "mode_var",
+    "mode_var", "n_sparse", "od_num", "od_den",
     "n_zero", "n_det", "n_ign", "n_tdet", "n_tstoch", "n_numeric",
 )  # fmt: skip
 _COL = {name: i for i, name in enumerate(PARAM_COLS)}
@@ -140,6 +141,9 @@ def null_from_row(row: FloatArray) -> NullParams:
         z2_count=int(row[_COL["z2_count"]]),
         n_empirical=int(row[_COL["n_empirical"]]),
         mode_var=float(row[_COL["mode_var"]]),
+        n_sparse=int(row[_COL["n_sparse"]]),
+        od_num=float(row[_COL["od_num"]]),
+        od_den=float(row[_COL["od_den"]]),
     )
 
 
@@ -161,6 +165,8 @@ class CalFamily:
     mean: FloatArray
     v: FloatArray
     label_floor: FloatArray
+    label_quantum: FloatArray
+    label_fano: FloatArray
     tlabels: tuple[str, ...]
     tkmat: NDArray[np.int64]
     tcls: NDArray[np.int8]
@@ -206,6 +212,8 @@ class CalFile:
             e["mean"][n0:n1],
             e["v"][n0:n1],
             e["lfloor"][l0:l1],
+            e["lquantum"][l0:l1],
+            e["lfano"][l0:l1],
             f.tlabels,
             self.layout.tkmat[f.tkpos : f.tkpos + f.nt * (1 + f.twidth)].reshape(
                 f.nt, 1 + f.twidth
@@ -264,6 +272,11 @@ class Calibration:
         entry = pool.get(kind, pool["*"])
         nu = entry["nu"]
         return LocalNull(float(entry["kappa2"] or 1.0), float("inf") if nu is None else float(nu))
+
+    def clustering(self, kind: str) -> float:
+        """Clustering of low-count events in a file kind (1: Poisson), from the ensemble."""
+        pool: dict[str, float] = self.manifest.get("clustering", {})
+        return float(pool.get(kind, pool.get("*", 1.0)))
 
     def label_floor_pool(self, kind: str, label: str) -> float:
         """Typical variance floor of a label over the calibration (NaN if unknown)."""
@@ -423,6 +436,8 @@ def _calibrate_file(job: tuple[str, int, list[str], str]) -> FileResult:
     mean_parts: list[FloatArray] = []
     v_parts: list[FloatArray] = []
     lfloor_parts: list[FloatArray] = []
+    lquantum_parts: list[FloatArray] = []
+    lfano_parts: list[FloatArray] = []
     tcls_parts: list[NDArray[np.int8]] = []
     tvals: list[str] = []
     rows: list[FloatArray] = []
@@ -430,7 +445,17 @@ def _calibrate_file(job: tuple[str, int, list[str], str]) -> FileResult:
     loo_d: list[FloatArray] = []
     loo_m: list[FloatArray] = []
     floors: dict[str, list[float]] = {}
-    for block, group in keys:
+    hints: dict[str, list[float]] = {}  # label -> quanta of the families done so far
+    done: dict[tuple[str, str], tuple[Any, ...]] = {}
+
+    def size(key: tuple[str, str]) -> int:
+        return max(
+            d.layout.families[d.layout.index[key]].n
+            for d in datas
+            if d is not None and key in d.layout.index
+        )
+
+    for block, group in sorted(keys, key=lambda k: (-size(k), k)):  # big families first
         fds = [d.get(block, group) if d is not None else None for d in datas]
         parts = [
             (f.labels, f.kmat, f.vals)
@@ -447,8 +472,19 @@ def _calibrate_file(job: tuple[str, int, list[str], str]) -> FileResult:
             len(aligned.labels),
             derived[aligned.kmat[:, 0]],
             untested=file_kind(rel) in UNTESTED_KINDS,
+            quantum_hint=np.array(
+                [
+                    float(np.median(hints[name])) if name in hints else np.nan
+                    for name in aligned.labels
+                ]
+            ),
         )
+        for g in np.flatnonzero(np.isfinite(fit.label_quantum)).tolist():
+            hints.setdefault(aligned.labels[g], []).append(float(fit.label_quantum[g]))
         tlabels, tkmat, tcls, tv = _fit_text(fds)
+        done[block, group] = (aligned, fit, tlabels, tkmat, tcls, tv, fds)
+    for block, group in keys:
+        aligned, fit, tlabels, tkmat, tcls, tv, fds = done[block, group]
         tdet = int((tcls == 0).sum())
         cls = fit.cls
         nu = fit.null
@@ -462,6 +498,8 @@ def _calibrate_file(job: tuple[str, int, list[str], str]) -> FileResult:
         mean_parts.append(fit.mean)
         v_parts.append(fit.v)
         lfloor_parts.append(fit.label_floor)
+        lquantum_parts.append(fit.label_quantum)
+        lfano_parts.append(fit.label_fano)
         for g in map(int, np.unique(aligned.kmat[cls == CLS_STOCH, 0]).tolist()):
             if np.isfinite(fit.label_floor[g]):
                 floors.setdefault(aligned.labels[g], []).append(float(fit.label_floor[g]))
@@ -478,6 +516,8 @@ def _calibrate_file(job: tuple[str, int, list[str], str]) -> FileResult:
         "mean": _cat(mean_parts, np.float64),
         "v": _cat(v_parts, np.float64),
         "lfloor": _cat(lfloor_parts, np.float64),
+        "lquantum": _cat(lquantum_parts, np.float64),
+        "lfano": _cat(lfano_parts, np.float64),
         "tcls": _cat(tcls_parts, np.int8),
         "tvals": np.array(json.dumps(tvals)),
         "fparams": fparams,
@@ -742,12 +782,24 @@ def _finish(
         },
         "kappa2_pool": pool,
         "local_pool": local_pool,
+        "clustering": _clustering(results),
         "timing_s": {k: round(v, 2) for k, v in timing.items()},
         "label_floor_pool": _pool_floors(results),
         "files": {rel: {"idx": idx, "families": len(keys)} for rel, idx, _, keys, _ in results},
     }
     _write_json(out / "manifest.json", manifest)
     return manifest
+
+
+def _clustering(results: list[FileResult]) -> dict[str, float]:
+    """Per file kind: squared deviations of the low-count fields over their Poisson expectation."""
+    sums: dict[str, list[float]] = {}
+    for rel, _, fp, _, _ in results:
+        for key in (file_kind(rel), "*"):
+            acc = sums.setdefault(key, [0.0, 0.0])
+            acc[0] += float(fp[:, _COL["od_num"]].sum())
+            acc[1] += float(fp[:, _COL["od_den"]].sum())
+    return {k: max(1.0, num / den) for k, (num, den) in sums.items() if den > 0.0}
 
 
 def _pool_floors(results: list[FileResult]) -> dict[str, dict[str, float]]:

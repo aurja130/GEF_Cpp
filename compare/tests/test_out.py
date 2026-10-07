@@ -139,9 +139,30 @@ def test_repeated_key_and_isomer_rows(tmp_path: Path) -> None:
         "      </Isomeric_yields>\n    </FF_spin>\n  </Prompt_results>\n"
     )
     iso = select(parse(tmp_path, block(body)), "Prompt_results/FF_spin/Isomeric_yields")
-    assert iso[("Yield (%)", (68, 27, 1))] == 100.0
-    assert iso[("Yield (%)", (68, 27, 2))] == 85.7
-    assert iso[("Events", (68, 27, 2))] == 6.0
+    # Rows are keyed by the state's E* in eV, not by row order.
+    assert iso[("Yield (%)", (68, 27, 150000))] == 100.0
+    assert iso[("Yield (%)", (68, 27, 0))] == 85.7
+    assert iso[("Events", (68, 27, 0))] == 6.0
+
+
+def test_extra_decay_row_does_not_shift_other_rows(tmp_path: Path) -> None:
+    rows = (
+        "39 97 58       0.002505467    6.03894        1st isomer, beta\n"
+        "39 97 58       0.008621801    6.03894        gs, beta\n"
+    )
+    extra = "39 97 58       1.392843e-09   6.03894        2nd isomer, beta\n"
+    head = (
+        "  <Delayed>\n    <anti_neutrinos>\n"
+        " Z  A   N       Number          Q value       Decay\n \n"
+    )
+    tail = "    </anti_neutrinos>\n  </Delayed>\n"
+    plain = select(parse(tmp_path, block(head + rows + tail)), "Delayed/anti_neutrinos")
+    (tmp_path / "x").mkdir()
+    shifted = select(
+        parse(tmp_path / "x", block(head + extra + rows + tail)), "Delayed/anti_neutrinos"
+    )
+    for label in ("Number[1st isomer, beta]", "Number[gs, beta]"):
+        assert plain[(label, (39, 97, 58, 1))] == shifted[(label, (39, 97, 58, 1))]
 
 
 def test_decay_text_tables(tmp_path: Path) -> None:

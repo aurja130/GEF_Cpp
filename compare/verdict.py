@@ -73,8 +73,11 @@ from compare.stats import (
     CLS_STOCH,
     CLS_ZERO,
     DERIVED_LABELS,
+    INTEGRAL_TOL,
+    SPARSE_MEAN,
     UNTESTED_KINDS,
     NullParams,
+    discrete_z,
     file_kind,
     holm,
     judge_values,
@@ -354,6 +357,17 @@ def judge_family(
     nonfinite = stat_fields & ~np.isfinite(cm)
     bad |= nonfinite
     stat_fields &= ~nonfinite
+    # the candidate's histogram may be larger or smaller than the ensemble's (shared normalization)
+    weight = float(runs_c)
+    if len(fam.label_quantum):
+        nlab0 = len(fam.label_quantum)
+        q0 = fam.label_quantum[np.minimum(fam.kmat[:, 0], nlab0 - 1)]
+        known = np.isfinite(q0) & stat_fields
+        total_e = float(np.sum(fam.mean[known] / q0[known]))
+        if total_e > 0.0:
+            weight = runs_c * float(
+                np.clip(float(np.sum(cm[known] / q0[known])) / total_e, 0.2, 5.0)
+            )
     for i in np.flatnonzero(bad).tolist():
         _mismatch(res, mism, key_of(i), _fmt(fam.mean[i]), _fmt(cm[i]))
     # never-seen fields with a nonzero value: keys new in the candidate, and deterministic zeros
@@ -372,6 +386,7 @@ def judge_family(
             entries.append((_row_key(labels_c, kmat_c[r].tolist()), float(cmean_c[r]), label))
     for i in moved_idx.tolist():
         entries.append((key_of(i), float(cm[i]), fam.labels[int(fam.kmat[i, 0])]))
+    new_sparse: list[bool] = []
     z_new: FloatArray = np.zeros(0)
     new_mean: FloatArray = np.zeros(0)
     new_keys: list[str] = []
@@ -379,6 +394,20 @@ def judge_family(
         zs: list[float] = []
         for key, value, label in entries:
             lid = cal_lid.get(label, -1)
+            quantum = float(fam.label_quantum[lid]) if 0 <= lid < len(fam.label_quantum) else 0.0
+            if quantum > 0.0 and np.isfinite(value):
+                ratio = value / quantum
+                if abs(ratio - np.rint(ratio)) <= INTEGRAL_TOL + 1e-5 * abs(ratio):
+                    # a whole number of events in a count column: exact discrete p, no events seen
+                    z_one = discrete_z(
+                        np.array([runs_c * ratio]), np.zeros(1), weight, k,
+                        fam.label_fano[lid : lid + 1],
+                    )  # fmt: skip
+                    zs.append(float(z_one[0]))
+                    new_sparse.append(True)
+                    new_mean = np.append(new_mean, value)
+                    new_keys.append(key)
+                    continue
             floor = float(fam.label_floor[lid]) if 0 <= lid < len(fam.label_floor) else float("nan")
             if not floor > 0.0:
                 floor = cal.label_floor_pool(kind, label)
@@ -386,6 +415,7 @@ def judge_family(
                 floor = value * value / k
             if np.isfinite(value) and floor > 0.0:
                 zs.append(value / float(np.sqrt(floor * (1.0 / runs_c + 1.0 / k))))
+                new_sparse.append(False)
                 new_mean = np.append(new_mean, value)
                 new_keys.append(key)
             else:
@@ -397,11 +427,31 @@ def judge_family(
         res.n_stoch = fam.null.n_stoch
         scale = np.sqrt(np.where(stat_fields, v_eff, 1.0) * (1.0 / runs_c + 1.0 / k))
         z_field = np.where(stat_fields, (cm - fam.mean) / scale, 0.0)
+        disc = np.zeros(n_cal, dtype=bool)
+        nlab = len(fam.label_quantum)
+        if nlab:  # low counts of a discrete column: exact discrete p as a normal-equivalent score
+            qf = fam.label_quantum[np.minimum(fam.kmat[:, 0], nlab - 1)]
+            ff = fam.label_fano[np.minimum(fam.kmat[:, 0], nlab - 1)]
+            disc = (
+                stat_fields
+                & np.isfinite(qf)
+                & (fam.mean <= SPARSE_MEAN * np.where(np.isfinite(qf), qf, 1.0))
+            )
+            if disc.any():
+                z_field[disc] = discrete_z(
+                    runs_c * cm[disc] / qf[disc], k * fam.mean[disc] / qf[disc], weight, k, ff[disc]
+                )
         zero_nonzero = stat_fields & ((fam.cls == CLS_ZERO) | pinned) & (cm != fam.mean)
         test = ((fam.cls == CLS_STOCH) & stat_fields) | zero_nonzero
         z_test = np.concatenate([z_field[test], z_new])
+        flags = np.concatenate([disc[test], np.array(new_sparse, dtype=bool)])
         n_extra = int(zero_nonzero.sum()) + len(z_new)
-        j = judge_values(fam.null, z_test, cal.local_pool(kind), n_extra=n_extra)
+        n_extra_sparse = int((zero_nonzero & disc).sum()) + int(sum(new_sparse))
+        j = judge_values(
+            fam.null, z_test, cal.local_pool(kind), n_extra=n_extra, sparse=flags,
+            n_extra_sparse=n_extra_sparse,
+            clustering=cal.clustering(kind),
+        )  # fmt: skip
         res.d, res.m, res.n_test = j.d, j.m, j.n_test
         res.p_global, res.p_local, res.p = j.p_global, j.p_local, j.p
         if j.p <= detail_p:
@@ -451,10 +501,11 @@ def _unseen_family(rel: str, block: str, group: str) -> CalFamily:
     empty_i = np.zeros((0, 1), dtype=np.int64)
     null = NullParams(
         0, False, float("nan"), float("nan"), 0, float("nan"), float("nan"), float("nan"),
-        float("nan"), float("nan"), float("nan"), True, 0.0, 0.0, 0, 0, 0.0,
+        float("nan"), float("nan"), float("nan"), True, 0.0, 0.0, 0, 0, 0, 0.0, 0.0, 0.0,
     )  # fmt: skip
     return CalFamily(
         rel, block, group, (), empty_i, np.zeros(0, np.int8), np.zeros(0), np.zeros(0), np.zeros(0),
+        np.zeros(0), np.zeros(0),
         (), empty_i, np.zeros(0, np.int8), [], null, 0, np.zeros(0), np.zeros(0),
     )  # fmt: skip
 

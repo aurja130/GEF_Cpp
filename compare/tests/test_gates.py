@@ -51,6 +51,11 @@ def test_aggregate_null() -> None:
     assert s["failures_per_file_kind"] == {"dmp": 2, "out": 1}
     assert s["pooled_p_values"] == 7 and s["informative_p_values"] == 5
     assert s["fraction_below"]["0.1"] == pytest.approx(1 / 7)
+    table = {v["t"]: v for v in s["validity"]}
+    assert (
+        table[1e-1]["observed"] == 1 and table[1e-2]["observed"] == 1
+    )  # 7 values: 0.01, 0.2, 0.5...
+    assert all(v["ok"] for v in s["validity"] if v["t"] <= 1e-3)
     many = [_record(f"loo-{i}", "loo", i > 4, {}) for i in range(65)]
     assert not gates.aggregate_null(many, [])["g3_failures_ok"]
 

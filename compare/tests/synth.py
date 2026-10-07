@@ -100,7 +100,14 @@ def write_extract(
 
 def binom_interval(n: int, p: float, tail: float = 0.005) -> tuple[int, int]:
     """Interval ``[lo, hi]`` of Binomial(n, p) with at most ``tail`` mass beyond each end."""
-    pmf = [math.comb(n, k) * p**k * (1 - p) ** (n - k) for k in range(n + 1)]
+    log = math.log
+    pmf = [
+        math.exp(
+            math.lgamma(n + 1) - math.lgamma(k + 1) - math.lgamma(n - k + 1)
+            + k * log(p) + (n - k) * log(1 - p)
+        )
+        for k in range(n + 1)
+    ]  # fmt: skip
     lo = 0
     acc = 0.0
     while lo <= n and acc + pmf[lo] <= tail:
