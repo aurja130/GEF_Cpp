@@ -75,6 +75,7 @@ from compare.stats import (
     DERIVED_LABELS,
     INTEGRAL_TOL,
     SPARSE_MEAN,
+    STRUCTURAL_TEXT,
     UNTESTED_KINDS,
     NullParams,
     discrete_z,
@@ -83,6 +84,7 @@ from compare.stats import (
     holm,
     judge_values,
     print_quantum,
+    t_equivalent,
 )
 
 __all__ = [
@@ -121,6 +123,7 @@ class DetMismatch:
     key: str
     expected: str
     got: str
+    soft: bool = True  # a constant of the ensemble (rule of succession), not a structural one
 
 
 @dataclass
@@ -138,7 +141,8 @@ class FamilyResult:
     p_global: float = float("nan")
     p_local: float = float("nan")
     p: float = float("nan")
-    n_mismatch: int = 0
+    n_mismatch: int = 0  # hard (structural) mismatches
+    n_events: int = 0  # deviating constants of the ensemble, judged with p = 1 / (K + 1)
     mismatches: list[DetMismatch] = field(default_factory=lambda: [])
     listed_text: int = 0  # stochastic text keys of the family (not tested)
     top: list[TopBin] = field(default_factory=lambda: [])
@@ -196,39 +200,52 @@ def _row_key(labels: tuple[str, ...], row: Sequence[int]) -> str:
     return f"{label}[{','.join(map(str, index))}]" if index else label
 
 
+def _is_structural(kind: str, label: str) -> bool:
+    return label in STRUCTURAL_TEXT.get(kind, frozenset())
+
+
 def _judge_text(
     fam: CalFamily, fds: Sequence[FamilyData | None], allow_extra: bool
-) -> tuple[list[DetMismatch], int]:
-    """Deterministic text keys must match; unknown text keys fail unless ``allow_extra``."""
+) -> tuple[list[DetMismatch], int, int]:
+    """Constant text keys of the ensemble against the candidate: ``(mismatches, hard, soft)``.
+
+    A mismatch of a key whose label is structural (``STRUCTURAL_TEXT``: analyzer titles, axis
+    names, the version, the range line) is hard; any other constant text (values printed as text,
+    ``Control`` lines) is a soft event. Unknown keys are soft, hard if structural.
+    """
+    kind = file_kind(fam.rel)
     cal: dict[tuple[str, tuple[int, ...]], tuple[int, str]] = {}
     for row, cls, value in zip(fam.tkmat.tolist(), fam.tcls.tolist(), fam.tvals, strict=True):
         cal[fam.tlabels[row[0]], tuple(i for i in row[1:] if i != PAD)] = (cls, value)
     out: list[DetMismatch] = []
-    total = 0
+    hard = soft = 0
     cand_maps = [text_map(f.tlabels, f.tkmat, f.tvals) if f is not None else {} for f in fds]
+
+    def add(key: tuple[str, tuple[int, ...]], expected: str, got: str) -> None:
+        nonlocal hard, soft
+        structural = _is_structural(kind, key[0])
+        hard += structural
+        soft += not structural
+        if len(out) < MAX_MISMATCHES:
+            out.append(DetMismatch(_text_key(key), expected, got, not structural))
+
     for key, (cls, value) in cal.items():
         if cls != 0:
             continue
         for cmap in cand_maps:
             got = cmap.get(key)
-            if got is None and file_kind(fam.rel) in UNTESTED_KINDS:
+            if got is None and kind in UNTESTED_KINDS:
                 continue  # a log line that did not occur
             if got != value:
-                total += 1
-                if len(out) < MAX_MISMATCHES:
-                    out.append(
-                        DetMismatch(_text_key(key), value, "<absent>" if got is None else got)
-                    )
+                add(key, value, "<absent>" if got is None else got)
                 break
-    if not allow_extra and file_kind(fam.rel) not in UNTESTED_KINDS:
+    if not allow_extra and kind not in UNTESTED_KINDS:
         # log lines (text files) come and go between runs: unknown ones are normal there
         for cmap in cand_maps:
             for key, got in cmap.items():
                 if key not in cal:
-                    total += 1
-                    if len(out) < MAX_MISMATCHES:
-                        out.append(DetMismatch(_text_key(key), "<unknown key>", got))
-    return out, total
+                    add(key, "<unknown key>", got)
+    return out, hard, soft
 
 
 def _text_key(key: tuple[str, tuple[int, ...]]) -> str:
@@ -254,11 +271,22 @@ def _positions(
 
 
 def _mismatch(
-    res: FamilyResult, mism: list[DetMismatch], key: str, expected: str, got: str
+    res: FamilyResult,
+    mism: list[DetMismatch],
+    key: str,
+    expected: str,
+    got: str,
+    *,
+    soft: bool = True,
 ) -> None:
-    res.n_mismatch += 1
+    """Record a deviating constant. Soft ones (the default) are one event of the family with
+    p = 1 / (K + 1); hard ones are structural and fail the family outright."""
+    if soft:
+        res.n_events += 1
+    else:
+        res.n_mismatch += 1
     if len(mism) < MAX_MISMATCHES:
-        mism.append(DetMismatch(key, expected, got))
+        mism.append(DetMismatch(key, expected, got, soft))
 
 
 def judge_family(
@@ -432,6 +460,10 @@ def judge_family(
         res.n_stoch = fam.null.n_stoch
         scale = np.sqrt(np.where(stat_fields, v_eff, 1.0) * (1.0 / runs_c + 1.0 / k))
         z_field = np.where(stat_fields, (cm - fam.mean) / scale, 0.0)
+        own = stat_fields & (fam.s2 > 0.0)
+        if own.any():  # judged by the field's own spread: t law with K - 1 degrees of freedom
+            z_own = (cm[own] - fam.mean[own]) / np.sqrt(fam.s2[own] * (1.0 / runs_c + 1.0 / k))
+            z_field[own] = t_equivalent(z_own, k - 1.0)
         disc = np.zeros(n_cal, dtype=bool)
         nlab = len(fam.label_quantum)
         if nlab:  # low counts of a discrete column: exact discrete p as a normal-equivalent score
@@ -442,6 +474,7 @@ def judge_family(
                 stat_fields
                 & np.isfinite(qf)
                 & (fam.mean <= SPARSE_MEAN * np.where(np.isfinite(qf), qf, 1.0))
+                & ~(fam.s2 > 0.0)
             )
             if disc.any():
                 z_field[disc] = discrete_z(
@@ -449,7 +482,10 @@ def judge_family(
                     k * fam.mean[disc] / qf[disc],
                     weight,
                     k,
-                    field_fano(ff_raw[disc], pp[disc], fam.mean[disc] / qf[disc]),
+                    np.maximum(
+                        field_fano(ff_raw[disc], pp[disc], fam.mean[disc] / qf[disc]),
+                        fam.fcell[disc],
+                    ),
                 )
         zero_nonzero = stat_fields & ((fam.cls == CLS_ZERO) | pinned) & (cm != fam.mean)
         test = ((fam.cls == CLS_STOCH) & stat_fields) | zero_nonzero
@@ -478,11 +514,17 @@ def judge_family(
                     n = int(o) - len(idx_test)
                     res.top.append(TopBin(new_keys[n], float(new_mean[n]), 0.0, float(z_test[o])))
     # a family the candidate lacks entirely (Bernoulli presence) says nothing about its text
-    text_bad, text_total = (
-        _judge_text(fam, fds, allow_extra) if any(f is not None for f in fds) else ([], 0)
+    text_bad, text_hard, text_soft = (
+        _judge_text(fam, fds, allow_extra) if any(f is not None for f in fds) else ([], 0, 0)
     )
-    res.n_mismatch += text_total
+    res.n_mismatch += text_hard
+    res.n_events += text_soft
     mism.extend(text_bad[: max(0, MAX_MISMATCHES - len(mism))])
+    if res.n_events:
+        # constants of the ensemble that deviate: one event of the family, however many fields
+        # (they co-vary in a rare regime); the rule of succession gives it p = 1 / (K + 1)
+        res.status = "tested"
+        res.p = min(1.0, res.p, 1.0 / (k + 1.0)) if not np.isnan(res.p) else 1.0 / (k + 1.0)
     res.mismatches = mism
     res.listed_text = int((fam.tcls == 1).sum())
     return res, res.p
@@ -516,7 +558,7 @@ def _unseen_family(rel: str, block: str, group: str) -> CalFamily:
     )  # fmt: skip
     return CalFamily(
         rel, block, group, (), empty_i, np.zeros(0, np.int8), np.zeros(0), np.zeros(0), np.zeros(0),
-        np.zeros(0), np.zeros(0), np.zeros(0), np.zeros(0),
+        np.zeros(0), np.zeros(0), np.zeros(0), np.zeros(0), np.zeros(0), np.zeros(0),
         (), empty_i, np.zeros(0, np.int8), [], null, 0, np.zeros(0), np.zeros(0),
     )  # fmt: skip
 
@@ -553,7 +595,9 @@ def judge(
 ) -> VerdictResult:
     """Judge a candidate set against a calibration; see the module docstring."""
     a = cal.alpha if alpha is None else alpha
-    detail_p = max(DETAIL_P, a)
+    detail_p = max(
+        DETAIL_P, a, 1.01 / (cal.runs + 1.0)
+    )  # keeps the families with a deviating constant
     gmap = group_map or {}
     rels = sorted(set(cal.rels) | {r for ex in candidates for r in ex.rels})
     results: list[FamilyResult] = []

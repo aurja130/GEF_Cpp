@@ -42,7 +42,9 @@ __all__ = [
     "FLOOR_QUANTILE",
     "INTEGRAL_TOL",
     "PSI_MIN_FIELDS",
+    "SAMPLE_C",
     "SPARSE_MEAN",
+    "STRUCTURAL_TEXT",
     "UNTESTED_KINDS",
     "FamilyFit",
     "Judgement",
@@ -64,6 +66,7 @@ __all__ = [
     "mde_values",
     "print_quantum",
     "run_scale",
+    "t_equivalent",
     "variance_model",
 ]
 
@@ -72,11 +75,13 @@ COUNT_LIKE_MIN_FIELDS = 5
 FLOOR_QUANTILE = 0.1  # variance floor of count-like groups: this quantile of the positive v
 DISPERSION_LIMIT = 10.0  # a count-like group's largest var/mean over their median at most
 VAR_SAFETY = 2.0  # standard errors added to the variance of the leave-one-out D
+SAMPLE_C = 1.0  # a count-like field whose c * sample variance exceeds the model takes the t law
 SPARSE_MEAN = 20.0  # expected counts per run below which a count field uses its exact discrete p
 MAX_FANO = 3.0  # a count-like group more overdispersed than this is not treated as counts
 MAX_CHECKED = 1000.0  # ratios above this (in quanta) are not used to test for whole numbers
 INTEGRAL_TOL = 0.02  # a value is a whole number of quanta within this (plus 1e-4 relative)
 PSI_MIN_FIELDS = 20  # dense fields needed to fit the quadratic variance term
+MODE_MIN_RESIDUAL = 1e-3  # mean z^2 per dense field that must be left after the mode
 MODE_SPREAD = 0.25  # participation ratio / fields needed to treat the leading mode as common
 MIN_GLOBAL_FIELDS = 30  # fewer stochastic fields: the family has no global test
 MIN_LOO_DRAWS = 3  # fewer valid leave-one-out draws than this: only the local test is used
@@ -90,6 +95,12 @@ SPARSE_RUNS = 5  # a field of a non-count group nonzero in fewer runs has at lea
 # File kinds whose varying numbers are log lines (counts of messages, timings, nuclide lists whose
 # length depends on the run): not tested. Their constants are still exact.
 UNTESTED_KINDS = frozenset({"text"})
+# Text labels whose constant value is structure, not data: a candidate that differs there is not
+# a stochastic outcome (an analyzer title, an axis name, the file version, the range line). Every
+# other constant of the ensemble, numeric or text, is judged with the rule of succession.
+STRUCTURAL_TEXT: dict[str, frozenset[str]] = {
+    "dmp": frozenset({"title", "xaxis", "yaxis", "version", "range"})
+}
 ZERO_INFLATED_FRACTION = 0.0  # share of zero entries above which a non-count group is zero-inflated
 
 CLS_DET = 0  # identical in all K runs: must match exactly
@@ -138,6 +149,11 @@ def ndtri_array(q: FloatArray) -> FloatArray:
 def student_pdf(x: FloatArray, nu: float) -> FloatArray:
     """Density of Student's t with ``nu`` degrees of freedom, elementwise."""
     return np.asarray(_student_t.pdf(x, nu), dtype=np.float64)  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType]
+
+
+def student_sf_array(x: FloatArray, nu: float) -> FloatArray:
+    """Survival function of Student's t with ``nu`` degrees of freedom, elementwise."""
+    return np.asarray(_student_t.sf(x, nu), dtype=np.float64)  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType]
 
 
 def student_sf(x: float, nu: float) -> float:
@@ -249,6 +265,7 @@ class VarianceModel:
     psi: FloatArray  # (R, G): quadratic (run-to-run scale) term of count-like groups
     group_floor: FloatArray  # (R, G): smallest positive v of the group, else the family floor
     floor: FloatArray  # (R,): smallest positive v of the family, NaN if none
+    sample: BoolArray  # (R, n): the field's own sample variance rules (t law, see t_equivalent)
 
 
 def fit_phi_psi(
@@ -333,7 +350,10 @@ def variance_model(
     group_floor = np.full((rows, groups), np.nan)
     v = var.copy()
     if n == 0:
-        return VarianceModel(v, phi, psi, group_floor, np.full(rows, np.nan, dtype=np.float64))
+        return VarianceModel(
+            v, phi, psi, group_floor, np.full(rows, np.nan, dtype=np.float64),
+            np.zeros((rows, 0), dtype=bool),
+        )  # fmt: skip
     if fallback_var is not None:
         plain = ~count_like[gid]
         v[:, plain] = np.where(v[:, plain] == 0.0, fallback_var[plain][None, :], v[:, plain])
@@ -377,12 +397,23 @@ def variance_model(
             v[:, inflated] = np.maximum(v[:, inflated], seen)
         sparse = occupied < SPARSE_RUNS
         v = np.where(sparse, np.maximum(v, group_floor[:, gid]), v)
+    # never let the column model under-state a cell's own spread (heavy per-cell dispersion:
+    # perturbed parameters acting on single bins): v = max(model, c * s^2) for count-like fields,
+    # and the field is judged by its own sample variance with a t law. The fields of a column that
+    # is not made of counts already have v = s^2 and take the t law whenever nothing raised v.
+    dense = occupied >= SPARSE_RUNS
+    count_cols = count_like[gid][None, :]
+    with np.errstate(invalid="ignore"):
+        sample = (
+            dense & (var > 0.0) & np.where(count_cols, SAMPLE_C * var > v, v <= var * (1 + 1e-9))
+        )
+        v = np.where(sample & count_cols, np.maximum(v, SAMPLE_C * var), v)
     # a variance is never zero: estimates of 0 (a column constant in a leave-one-out ensemble, a
     # phi of 0) take the floor of their group; without any floor the field is not testable (NaN)
     v = np.where(v > 0.0, v, group_floor[:, gid])
     v = np.where(v > 0.0, v, np.nan)
     v = np.where(np.isnan(floor)[:, None], np.nan, v)
-    return VarianceModel(v, phi, psi, group_floor, floor)
+    return VarianceModel(v, phi, psi, group_floor, floor, sample & ~np.isnan(v))
 
 
 # --------------------------------------------------------------------------------------------
@@ -475,6 +506,17 @@ def run_scale(sv: FloatArray, quantum: FloatArray) -> FloatArray:
     return np.asarray(np.clip(ratio, 0.2, 5.0), dtype=np.float64)
 
 
+def t_equivalent(z: FloatArray, dof: float) -> FloatArray:
+    """Normal-equivalent score of a Student t statistic: ``sign(z) * Phi^-1(1 - P(|t| > |z|) / 2)``.
+
+    ``z`` is a deviation in units of the field's *sample* standard deviation (with the 1/m + 1/K
+    factor), a t variable with ``dof`` degrees of freedom under the null. The score is bounded by
+    about 37 (probabilities below 1e-300 are not distinguished).
+    """
+    p = 2.0 * student_sf_array(np.abs(z), dof)
+    return np.sign(z) * -ndtri_array(np.maximum(p / 2.0, 1e-300))
+
+
 def field_fano(fano: FloatArray, psi: FloatArray, counts: FloatArray) -> FloatArray:
     """Dispersion of a field of ``counts`` expected events: ``max(1, phi / q + psi * counts)``."""
     return np.maximum(1.0, fano + psi * counts)
@@ -548,6 +590,8 @@ class FamilyFit:
     label_fano: FloatArray  # (G,) phi / q of those groups (the Fano factor of one event)
     label_psi: FloatArray  # (G,) quadratic dispersion of those groups (counts^2 term)
     mode: FloatArray  # (U,) unit loadings of the leading common mode of the dense fields
+    s2: FloatArray  # (U,) sample variance of the fields judged by it (t law), 0 elsewhere
+    fcell: FloatArray  # (U,) empirical Fano factor s^2 / (m q) of the low-count fields, 0 elsewhere
     null: NullParams
     loo_d: FloatArray  # (K,) NaN for invalid draws
     loo_m: FloatArray
@@ -622,6 +666,8 @@ def fit_family(
     z2_count = 0
     n_sparse = 0
     od_num = od_den = 0.0
+    s2_cell = np.zeros(u)
+    fcell = np.zeros(u)
     mode = np.zeros(u)  # loadings of the leading common mode of the dense fields
     proj2 = np.zeros(runs)  # squared projection of each leave-one-out z on the leading mode
     if n_stoch:
@@ -644,6 +690,7 @@ def fit_family(
         )
         mean[stoch] = m_full
         v_full[stoch] = model.v[0]
+        s2_cell[stoch] = np.where(model.sample[0], s2_full, 0.0)
         vfloor = float(model.floor[0])
         zero = cls == CLS_ZERO
         v_full[zero] = model.group_floor[0][gid[zero]]
@@ -671,8 +718,17 @@ def fit_family(
             inflated_g,
             runs - 1,
             s2_full,
-        ).v
-        z = (sv - m_loo) / np.sqrt(v_loo * (1.0 + 1.0 / (runs - 1)))
+        )
+        z = (sv - m_loo) / np.sqrt(v_loo.v * (1.0 + 1.0 / (runs - 1)))
+        # fields judged by their own spread (t law of K - 2 dof), also in a draw whose own
+        # estimate is not larger than the model: the full ensemble decides which fields they are
+        own_t = v_loo.sample | (model.sample[0][None, :] & (s2_loo > 0.0))
+        if own_t.any():
+            with np.errstate(invalid="ignore", divide="ignore"):
+                z_t = (sv - m_loo) / np.sqrt(
+                    np.where(own_t, s2_loo, 1.0) * (1.0 + 1.0 / (runs - 1))
+                )
+            z = np.where(own_t, t_equivalent(z_t, runs - 2.0), z)
         psi_g = np.where(np.isfinite(model.psi[0]), model.psi[0], 0.0)
         quantum_g, fano_g = group_quantum(sv, gs, count_like_g, model.phi[0], psi_g)
         if quantum_hint is not None:
@@ -689,7 +745,13 @@ def fit_family(
         zero_floor = np.where(np.isfinite(label_floor), label_floor, model.group_floor[0])
         v_full[zero] = zero_floor[gid[zero]]
         q_f = quantum_g[gs]
-        sparse = np.isfinite(q_f) & (m_full <= SPARSE_MEAN * np.where(np.isfinite(q_f), q_f, 1.0))
+        # low counts get their exact discrete p unless the cell's own spread says it is not Poisson
+        # (a cell of 20 expected counts with a variance/mean of 12 is judged by the t law above)
+        sparse = (
+            np.isfinite(q_f)
+            & (m_full <= SPARSE_MEAN * np.where(np.isfinite(q_f), q_f, 1.0))
+            & ~model.sample[0]
+        )
         if sparse.any():  # exact discrete p for low counts, as a normal-equivalent score
             counts = np.rint(sv[:, sparse] / q_f[sparse])
             rest = counts.sum(axis=0)[None, :] - counts
@@ -697,7 +759,19 @@ def fit_family(
             # share of one run in a bin is scaled by that run's size against the others
             scale = run_scale(sv, q_f)
             fano_f = field_fano(fano_g[gs][sparse], psi_g[gs][sparse], m_full[sparse] / q_f[sparse])
-            z[:, sparse] = discrete_z(counts, rest, scale[:, None], runs - 1.0, fano_f)
+            # a cell that spikes in a few runs (a cluster of events: 183 and 194 counts in 2 of 20
+            # runs, 0 elsewhere) is overdispersed by its own account: Fano = s^2 / (m q), from the
+            # runs the draw is compared with
+            qs = q_f[sparse]
+            m_o = m_loo[:, sparse] / qs
+            s2_o = s2_loo[:, sparse] / (qs * qs)
+            own_fano = np.where(m_o > 0.0, s2_o / np.where(m_o > 0.0, m_o, 1.0), 1.0)
+            fano_draw = np.maximum(fano_f[None, :], own_fano)
+            z[:, sparse] = discrete_z(counts, rest, scale[:, None], runs - 1.0, fano_draw)
+            m_all = m_full[sparse] / qs
+            fcell[np.flatnonzero(stoch)[sparse]] = np.where(
+                m_all > 0.0, s2_full[sparse] / (qs * qs) / np.where(m_all > 0.0, m_all, 1.0), 1.0
+            )
         valid = np.all(np.isfinite(z), axis=1)
         z2 = z * z
         loo_d[valid] = z2[valid].sum(axis=1)
@@ -716,11 +790,15 @@ def fit_family(
             top_d = np.linalg.svd(zd, full_matrices=False)[2][0] if zd is not None else None
             # a *common* mode has loadings spread over the fields (participation ratio of at
             # least a quarter of them); one concentrated on a few fields is an event in those
-            # bins (an edge bin of a table), whose projection would collapse the local law
+            # bins (an edge bin of a table), and one that leaves no noise behind (a family of
+            # perfectly correlated fields: Epart of XE.dmp, mean z^2 left per field under
+            # MODE_MIN_RESIDUAL) would give a residual law of numerical noise: neither is
+            # projected out
             if (
                 zd is not None
                 and top_d is not None
                 and 1.0 / float(np.sum(top_d**4)) >= MODE_SPREAD * len(dense_cols)
+                and float(np.sum(zd**2) - np.sum((zd @ top_d) ** 2)) >= MODE_MIN_RESIDUAL * zd.size
             ):
                 # each draw is projected with the mode of the *other* draws, as a fresh run is
                 # (projecting with its own would remove noise and make the local law too narrow)
@@ -787,7 +865,19 @@ def fit_family(
             quantum_g, fano_g, vals, gid, quantum_hint, np.full(n_groups, np.nan), psi_g
         )
     return FamilyFit(
-        cls, mean, v_full, label_floor, quantum_g, fano_g, psi_g, mode, null, loo_d, loo_m
+        cls,
+        mean,
+        v_full,
+        label_floor,
+        quantum_g,
+        fano_g,
+        psi_g,
+        mode,
+        s2_cell,
+        fcell,
+        null,
+        loo_d,
+        loo_m,
     )
 
 

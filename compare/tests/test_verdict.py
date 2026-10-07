@@ -21,6 +21,7 @@ from compare import report, verdict
 from compare.calibrate import Calibration, calibrate
 from compare.extract import FileData, pack_pairs
 from compare.model import Key
+from compare.stats import t_equivalent
 from compare.tests.synth import (
     DMP,
     OUT,
@@ -269,14 +270,16 @@ def test_broad_shift_is_caught_by_the_global_statistic(ensemble: tuple[Calibrati
 
 
 def test_candidate_set_variance_scaling(ensemble: tuple[Calibration, Path]) -> None:
-    """z uses sqrt(v (1/m + 1/K)): m identical shifted runs give z = delta / sqrt(v (1/m + 1/K))."""
+    """The deviation is in units of sqrt(s^2 (1/m + 1/K)); a field judged by its own spread
+    (a scalar column) carries it as the normal equivalent of a t variable with K - 1 dof."""
     cal, _ = ensemble
     out = cal.file(OUT)
     assert out is not None
     fam = out.family("S1", "run1/1#1")
     assert fam is not None
     idx = next(i for i in range(len(fam.mean)) if fam.cls[i] == 1 and fam.kmat[i, 1] == 2)
-    v = float(fam.v[idx])
+    v = float(fam.s2[idx])
+    assert v > 0.0  # a column of scalars: judged by the cell's own sample variance
     delta = 12.0 * math.sqrt(v)
     zs: dict[int, float] = {}
     for m in (1, 4):
@@ -290,8 +293,9 @@ def test_candidate_set_variance_scaling(ensemble: tuple[Calibration, Path]) -> N
         hit = next(f for f in result.families if f.block == "S1")
         top = next(t for t in hit.top if t.key == "x[2]")
         zs[m] = top.z
-        assert top.z == pytest.approx(delta / math.sqrt(v * (1 / m + 1 / K)))
-    assert zs[4] / zs[1] == pytest.approx(math.sqrt((1 + 1 / K) / (1 / 4 + 1 / K)))
+        raw = delta / math.sqrt(v * (1 / m + 1 / K))
+        assert top.z == pytest.approx(float(t_equivalent(np.array([raw]), K - 1.0)[0]))
+    assert zs[4] > zs[1]  # more candidate runs: the same shift is more significant
 
 
 # ---- zero fill, new keys, classes ----
@@ -316,25 +320,45 @@ def test_absent_bins_are_zero_and_new_bins_are_judged(ensemble: tuple[Calibratio
     assert bad and bad[0].top[0].key == "y[9999]"
 
 
-def test_deterministic_mismatches_fail_outright(ensemble: tuple[Calibration, Path]) -> None:
+def _family(result: verdict.VerdictResult, block: str) -> verdict.FamilyResult:
+    return next(f for f in result.families if f.block == block)
+
+
+def test_deviating_constants_are_one_event_and_structure_is_exact(
+    ensemble: tuple[Calibration, Path],
+) -> None:
+    """A constant of the ensemble cannot be certified as deterministic by K runs (rule of
+    succession): a deviation is one event with p = 1 / (K + 1), never a hard failure. Only
+    structural text (titles, axes, version, range) fails outright."""
     cal, _ = ensemble
     rng = np.random.default_rng(5)
     base = draw_run(rng, seed=8000)
-    # numeric header
+    soft = 1.0 / (K + 1.0)
+    # numeric header: an event, not a failure (Holm cannot reject p = 1 / (K + 1))
     files = {r: dict(t) for r, t in base.items()}
     files[DMP][Key(DMP, "B1", "#1", "events", ())] = 100001
     r1 = _judge(cal, [MemoryExtract(files)])
-    assert not r1.passed and r1.rejected[0].mismatches[0].key == "events"
-    # deterministic text
+    f1 = _family(r1, "B1")
+    assert r1.passed and f1.n_events == 1 and f1.n_mismatch == 0
+    assert f1.p == pytest.approx(soft) and f1.mismatches[0].key == "events"
+    assert f1.mismatches[0].soft
+    # several deviating constants of one family are one event
+    files[DMP][Key(DMP, "B1", "#1", "events", ())] = 100002
+    files[DMP][Key(DMP, "B1", "#1", "title", ())] = "histogram 1"  # unchanged text
+    r1b = _judge(cal, [MemoryExtract(files)])
+    assert _family(r1b, "B1").p == pytest.approx(soft)
+    # deterministic structural text fails outright
     files = {r: dict(t) for r, t in base.items()}
     files[DMP][Key(DMP, "B1", "#1", "title", ())] = "something else"
     r2 = _judge(cal, [MemoryExtract(files)])
     assert not r2.passed and r2.rejected[0].mismatches[0].key == "title"
-    # a numeric constant of a table-free family
+    assert not r2.rejected[0].mismatches[0].soft
+    # a numeric constant of a table-free family: an event
     files = {r: dict(t) for r, t in base.items()}
     files[OUT][Key(OUT, "S0", "run1/1#1", "barrier", ())] = 5.5
     r3 = _judge(cal, [MemoryExtract(files)])
-    assert not r3.passed and r3.rejected[0].mismatches[0].key == "barrier"
+    assert r3.passed and _family(r3, "S0").n_events == 1
+    assert _family(r3, "S0").p == pytest.approx(soft)
     # a stochastic text field may differ freely
     files = {r: dict(t) for r, t in base.items()}
     files[DMP][Key(DMP, "B1", "#1", "comment", (0,))] = "another seed"
@@ -355,8 +379,12 @@ def test_missing_family_and_extra_text_key(ensemble: tuple[Calibration, Path]) -
     assert scoped.tested == N_COUNT
     files = {r: dict(t) for r, t in base.items()}
     files[DMP][Key(DMP, "B1", "#1", "surprise", (0,))] = "text"
+    unknown = _judge(cal, [MemoryExtract(files)])
+    assert unknown.passed and _family(unknown, "B1").n_events == 1  # an unseen text key: event
+    allowed = _judge(cal, [MemoryExtract(files)], allow_extra=True)
+    assert not any(f.block == "B1" and f.n_events for f in allowed.families)
+    files[DMP][Key(DMP, "B1", "#1", "title", (3,))] = "a new structural key"
     assert not _judge(cal, [MemoryExtract(files)]).passed
-    assert _judge(cal, [MemoryExtract(files)], allow_extra=True).passed
 
 
 def test_group_map_selects_a_run(ensemble: tuple[Calibration, Path]) -> None:
@@ -416,7 +444,7 @@ def test_reports_are_deterministic_and_complete(ensemble: tuple[Calibration, Pat
     files = draw_run(np.random.default_rng(8), seed=9200)
     key = Key(DMP, "B6", "#1", "y", (40,))
     files[DMP][key] = float(files[DMP].get(key, 0.0)) + 0.5  # type: ignore[arg-type]
-    files[DMP][Key(DMP, "B1", "#1", "events", ())] = 5
+    files[DMP][Key(DMP, "B1", "#1", "title", ())] = "changed"
     a = _judge(cal, [MemoryExtract(files, name="cand")], names=["cand"])
     b = _judge(cal, [MemoryExtract(files, name="cand")], names=["cand"])
     assert report.render_text(a) == report.render_text(b)
@@ -425,7 +453,7 @@ def test_reports_are_deterministic_and_complete(ensemble: tuple[Calibration, Pat
     data = json.loads(report.render_json(a))
     assert data["verdict"] == "fail"
     assert data["exact_failures"] == 1
-    assert data["exact_failed_families"][0]["mismatches"][0]["key"] == "events"
+    assert data["exact_failed_families"][0]["mismatches"][0]["key"] == "title"
     rej = next(f for f in data["rejected_families"] if f["block"] == "B6")
     assert rej["holm_rank"] == 1 and rej["holm_threshold"] == pytest.approx(0.01 / a.holm_total)
     assert rej["top_bins"][0]["key"] == "y[40]"
@@ -485,7 +513,7 @@ def test_cli_end_to_end(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> N
     assert verdict.main(args) == 0
     assert json.loads((tmp_path / "v.json").read_text())["verdict"] == "pass"
     bad_files = draw_run(rng, n_count=3, n_scalar=1, seed=98)
-    bad_files[DMP][Key(DMP, "B0", "#1", "events", ())] = 7
+    bad_files[DMP][Key(DMP, "B0", "#1", "title", ())] = "x"
     bad = write_extract(tmp_path / "bad", bad_files, tmp_path / "pool")
     assert (
         verdict.main(["--calibration", str(cal_dir), "--candidate-extract", str(bad), "--quiet"])
@@ -543,4 +571,5 @@ def test_constant_in_a_stochastic_column_is_not_exact(tmp_path: Path) -> None:
     # the column-free constant (events) is still exact
     bad = _edge_run(rng, True)
     bad[DMP][Key(DMP, "T", "#1", "events", ())] = 1001
-    assert not verdict.judge(cal, [MemoryExtract(bad)]).passed
+    r = verdict.judge(cal, [MemoryExtract(bad)])
+    assert r.passed and r.families[0].p <= 1 / 11  # an event, K = 10: p = min(p_stat, 1/(K+1))

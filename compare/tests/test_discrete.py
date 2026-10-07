@@ -193,6 +193,62 @@ def test_a_planted_shift_is_still_found_with_a_run_factor(tmp_path: Path) -> Non
     cal = Calibration.open(tmp_path / "cal")
     files = overdispersed_run(rng, 0.15)
     key = Key(DMP, "B2", "#1", "y", (40,))
-    files[DMP][key] = float(files[DMP][key]) * 3.0  # type: ignore[operator]
+    files[DMP][key] = float(files[DMP][key]) * 6.0  # type: ignore[operator]
     hit = verdict.judge(cal, [MemoryExtract(files)]).rejected
     assert hit and hit[0].block == "B2"
+
+
+SIGMA_CELL = np.random.default_rng(7).uniform(0.0, 0.3, size=(4, 100))  # fixed per-cell dispersion
+
+
+def per_cell_run(rng: np.random.Generator) -> dict[str, dict[Key, Value]]:
+    """Dense histograms whose cells scatter by their own lognormal factor (0 to 30 %)."""
+    lam = 30.0 + 3000.0 * np.exp(-0.5 * ((np.arange(100) - 50) / 20.0) ** 2)
+    table: dict[Key, Value] = {}
+    for f in range(4):
+        mu = lam * np.exp(SIGMA_CELL[f] * rng.standard_normal(100))
+        counts = np.asarray(rng.poisson(mu), dtype=np.int64)
+        for b, c in enumerate(counts.tolist()):
+            table[Key(DMP, f"B{f}", "#1", "y", (b,))] = c * Q
+        table[Key(DMP, f"B{f}", "#1", "events", ())] = 100000
+    return {DMP: table}
+
+
+def test_p_values_stay_valid_with_per_cell_dispersion(tmp_path: Path) -> None:
+    """The column model cannot know a cell's own dispersion: cells take their sample variance
+    and a t law (STATISTICS.md section 2). Pooled over ensembles."""
+    pooled: list[float] = []
+    for seed in range(60, 76):
+        rng = np.random.default_rng(seed)
+        sub = tmp_path / str(seed)
+        members = [
+            str(write_extract(sub / f"s{i}", per_cell_run(rng), sub / "pool")) for i in range(K)
+        ]
+        calibrate(members, sub / "cal", jobs=1, mde=[], input_sha256=SHA)
+        cal = Calibration.open(sub / "cal")
+        for _ in range(40):
+            pooled.extend(verdict.judge(cal, [MemoryExtract(per_cell_run(rng))]).p_values.tolist())
+    p = np.array(pooled)
+    for t in (1e-4, 1e-3, 1e-2, 1e-1):
+        assert int(np.sum(p <= t)) <= binom_interval(len(p), t)[1], f"t={t}: {np.mean(p <= t):.4f}"
+
+
+def test_a_planted_shift_is_found_among_dispersed_cells(tmp_path: Path) -> None:
+    rng = np.random.default_rng(77)
+    members = [
+        str(write_extract(tmp_path / f"s{i}", per_cell_run(rng), tmp_path / "pool"))
+        for i in range(K)
+    ]
+    calibrate(members, tmp_path / "cal", jobs=1, mde=[], input_sha256=SHA)
+    cal = Calibration.open(tmp_path / "cal")
+    cell = int(np.argmin(SIGMA_CELL[1, 30:70])) + 30  # a quiet cell with many counts
+    fam = cal.file(DMP).family("B1", "#1")  # type: ignore[union-attr]
+    assert fam is not None
+    row = next(i for i in range(len(fam.mean)) if fam.kmat[i, 1] == cell and fam.kmat[i, 0] == 1)
+    files = per_cell_run(rng)
+    key = Key(DMP, "B1", "#1", "y", (cell,))
+    # the column's dispersion is the larger of the model and the cell's own, so a quiet cell is
+    # no more sensitive than the column: shift by 25 of the cell's standard deviations
+    files[DMP][key] = float(fam.mean[row]) + 25.0 * float(np.sqrt(max(fam.v[row], fam.s2[row])))
+    hit = verdict.judge(cal, [MemoryExtract(files)]).rejected
+    assert hit and hit[0].block == "B1" and hit[0].top[0].key == f"y[{cell}]"

@@ -171,6 +171,8 @@ class CalFamily:
     label_fano: FloatArray
     label_psi: FloatArray
     mode: FloatArray
+    s2: FloatArray
+    fcell: FloatArray
     tlabels: tuple[str, ...]
     tkmat: NDArray[np.int64]
     tcls: NDArray[np.int8]
@@ -220,6 +222,8 @@ class CalFile:
             e["lfano"][l0:l1],
             e["lpsi"][l0:l1],
             e["mode"][n0:n1],
+            e["s2"][n0:n1],
+            e["fcell"][n0:n1],
             f.tlabels,
             self.layout.tkmat[f.tkpos : f.tkpos + f.nt * (1 + f.twidth)].reshape(
                 f.nt, 1 + f.twidth
@@ -446,6 +450,8 @@ def _calibrate_file(job: tuple[str, int, list[str], str]) -> FileResult:
     lfano_parts: list[FloatArray] = []
     lpsi_parts: list[FloatArray] = []
     mode_parts: list[FloatArray] = []
+    s2_parts: list[FloatArray] = []
+    fcell_parts: list[FloatArray] = []
     tcls_parts: list[NDArray[np.int8]] = []
     tvals: list[str] = []
     rows: list[FloatArray] = []
@@ -510,6 +516,8 @@ def _calibrate_file(job: tuple[str, int, list[str], str]) -> FileResult:
         lfano_parts.append(fit.label_fano)
         lpsi_parts.append(fit.label_psi)
         mode_parts.append(fit.mode)
+        s2_parts.append(fit.s2)
+        fcell_parts.append(fit.fcell)
         for g in map(int, np.unique(aligned.kmat[cls == CLS_STOCH, 0]).tolist()):
             if np.isfinite(fit.label_floor[g]):
                 floors.setdefault(aligned.labels[g], []).append(float(fit.label_floor[g]))
@@ -530,6 +538,8 @@ def _calibrate_file(job: tuple[str, int, list[str], str]) -> FileResult:
         "lfano": _cat(lfano_parts, np.float64),
         "lpsi": _cat(lpsi_parts, np.float64),
         "mode": _cat(mode_parts, np.float64),
+        "s2": _cat(s2_parts, np.float64),
+        "fcell": _cat(fcell_parts, np.float64),
         "tcls": _cat(tcls_parts, np.int8),
         "tvals": np.array(json.dumps(tvals)),
         "fparams": fparams,
@@ -600,6 +610,7 @@ def calibrate(
     alpha: float = ALPHA,
     input_sha256: str | None = None,
     log: Callable[[str], None] | None = None,
+    only: Sequence[str] = (),
 ) -> dict[str, Any]:
     """Calibrate on ``members`` and write the artifact to ``out``; returns the manifest."""
     say: Callable[[str], None] = log or _quiet
@@ -627,6 +638,8 @@ def calibrate(
     t_extract = time.perf_counter() - start
     say(f"extracted {len(extracts)} runs in {t_extract:.1f} s")
     rels = sorted({rel for e in extracts for rel in e.rels})
+    if only:  # a partial artifact for diagnosis: only the files matching one of the globs
+        rels = [r for r in rels if any(fnmatch.fnmatchcase(r, g) for g in only)]
     out.mkdir(parents=True, exist_ok=True)
     (out / "files").mkdir(exist_ok=True)
     roots = [str(e.root) for e in extracts]
@@ -928,6 +941,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--jobs", type=int, default=MAX_JOBS, help=f"processes (max {MAX_JOBS})")
     parser.add_argument("--cache", type=Path, default=DEFAULT_CACHE)
     parser.add_argument("--alpha", type=float, default=ALPHA)
+    parser.add_argument(
+        "--only", action="append", default=[], metavar="GLOB",
+        help="diagnosis: calibrate only the files matching GLOB (a partial artifact)",
+    )  # fmt: skip
     parser.add_argument("--input-sha256", help="input hash for ensemble runs without run.json")
     parser.add_argument(
         "--mde", action="append", metavar="FILEGLOB::BLOCKGLOB",
@@ -949,7 +966,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         manifest = calibrate(
             members, args.out, excluded=excluded, cache=args.cache, jobs=args.jobs, mde=selectors,
             alpha=args.alpha, input_sha256=args.input_sha256,
-            log=_stderr,
+            log=_stderr, only=args.only,
         )  # fmt: skip
     except (OSError, ValueError) as exc:
         print(f"error: {exc}", file=sys.stderr)

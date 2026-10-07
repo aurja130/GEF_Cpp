@@ -201,7 +201,9 @@ def test_variance_model_poisson_shape_recovers_phi() -> None:
         np.array([False]), runs,
     )  # fmt: skip
     assert model.phi[0, 0] == pytest.approx(quantum, rel=0.1)  # var = quantum * mean
-    assert model.v[0] == pytest.approx(quantum * mean[0], rel=0.05)
+    # v = max(model, sample variance): never below the model, within noise of it for Poisson data
+    assert np.all(model.v[0] >= 0.999 * model.phi[0, 0] * mean[0])
+    assert float(np.median(model.v[0] / (quantum * mean[0]))) == pytest.approx(1.0, abs=0.1)
 
 
 def test_fit_null_distribution_of_d_matches_fitted_chi2() -> None:

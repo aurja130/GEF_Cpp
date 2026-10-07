@@ -59,7 +59,11 @@ def _family_dict(f: FamilyResult) -> dict[str, Any]:
         "holm_rank": f.rank or None,
         "holm_threshold": _clean(f.threshold),
         "n_mismatch": f.n_mismatch,
-        "mismatches": [{"key": m.key, "expected": m.expected, "got": m.got} for m in f.mismatches],
+        "n_events": f.n_events,
+        "mismatches": [
+            {"key": m.key, "expected": m.expected, "got": m.got, "soft": m.soft}
+            for m in f.mismatches
+        ],
         "stochastic_text_keys": f.listed_text,
         "top_bins": [
             {"key": t.key, "candidate": t.candidate, "mean": t.mean, "z": t.z} for t in f.top
@@ -96,6 +100,10 @@ def result_dict(r: VerdictResult) -> dict[str, Any]:
         "per_kind_energy": {k: r.energies[k] for k in sorted(r.energies, key=_energy_sort)},
         "unparsed_candidate_files": r.unparsed_candidate,
     }
+
+
+def _events(n: int) -> str:
+    return f", {n} deviating constant(s)" if n else ""
 
 
 def _energy_sort(label: str) -> tuple[str, float, str]:
@@ -148,7 +156,8 @@ def render_text(r: VerdictResult) -> str:
                 continue
             w(f"{_family_name(f)}: {f.status}, {f.n_mismatch} mismatch(es)")
             for m in f.mismatches:
-                w(f"    {m.key}: expected {m.expected}, got {m.got}")
+                tag = "" if m.soft else " (structural)"
+                w(f"    {m.key}: expected {m.expected}, got {m.got}{tag}")
     rej = d["rejected_families"]
     if rej:
         w("")
@@ -172,7 +181,8 @@ def render_text(r: VerdictResult) -> str:
         for fd in near:
             w(
                 f"p={_g(fd['p'])} {fd['file']} | {fd['block']} | {fd['group']} "
-                f"(M={_g(fd['m'])}, n={fd['n_tested_fields']})"
+                f"(M={_g(fd['m'])}, n={fd['n_tested_fields']}"
+                f"{_events(fd['n_events'])})"
             )
     w("")
     w("== Summary per file kind ==")
