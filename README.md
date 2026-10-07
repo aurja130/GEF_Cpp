@@ -129,6 +129,10 @@ python3 -m tools.toolchain.manifest_validation verify   # reports missing, chang
 
 ## License
 
-This project is licensed under the MIT License; see [`LICENSE.txt`](LICENSE.txt). Every source file carries an SPDX license notice.
+GEF_Cpp is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. It is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See [`LICENSE.txt`](LICENSE.txt) for the full text. Every source file carries an SPDX license notice.
 
-The upstream GEF code in `Reference/GEF_code` is a separate work under its own license (see `Reference/GEF_code/LICENSE`).
+Copyright (C) 2026 Aurora Jahan.
+
+GEF_Cpp is a derivative work of GEF, which is licensed under the same terms. The GEF code is Copyright (C) 2009–2025 Dr. Karl-Heinz Schmidt and Dr. Beatriz Jurado; its development was supported by the European Union (EURATOM FP6 EFNUDAT, contract FP6-036434; FP7 ERINDA, contract FP7-269499) and by the Nuclear Energy Agency of the OECD (2010–2016). The original sources are in the `Reference/GEF_code` submodule (see its `LICENSE` and `README.md`). Files that port GEF code carry the GEF copyright line in addition to ours.
+
+Third-party components keep their own licenses: Catch2 (Boost Software License 1.0, fetched at build time), NumPy and SciPy (BSD-3-Clause). All are GPL-3.0-compatible.

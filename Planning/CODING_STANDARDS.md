@@ -7,23 +7,33 @@ The goal of every rule here is fidelity first, then readability: the C++ code mu
 
 ## 1. License notice
 
-Every source file created in this repository starts with this notice, after the shebang line if there is one. This covers C++ sources and headers, Python (including `__init__.py` and tests), shell scripts and CMake files. It is not used for JSON, Markdown documents, or generated files under `build/`.
+The project is licensed under the GNU General Public License, version 3 or (at your option) any later version (`GPL-3.0-or-later`, `LICENSE.txt`). It is a derivative work of GEF, which is under the same license.
+
+Every source file created in this repository starts with this notice, after the shebang line if there is one. This covers C++ sources and headers, Python (including `__init__.py` and tests), shell scripts, CMake files and tool configuration files that allow comments. It is not used for JSON, Markdown documents, or generated files under `build/`.
 
 C++:
 
 ```cpp
-// SPDX-License-Identifier: MIT
-// Copyright (c) 2026 Aurora Jahan
-// See LICENSE.txt in the repository root for the full license text.
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 Aurora Jahan
+// Licensed under the GNU GPL v3 or later, WITHOUT ANY WARRANTY; see LICENSE.txt.
 ```
 
 Python, shell, CMake:
 
 ```python
-# SPDX-License-Identifier: MIT
-# Copyright (c) 2026 Aurora Jahan
-# See LICENSE.txt in the repository root for the full license text.
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2026 Aurora Jahan
+# Licensed under the GNU GPL v3 or later, WITHOUT ANY WARRANTY; see LICENSE.txt.
 ```
+
+**Files that port or translate GEF code** (C++ ported from the BASIC, FreeBASIC harness drivers, data generated from GEF tables) keep the GEF authors' copyright as well. Add this line directly after our copyright line:
+
+```cpp
+// Ported from GEF 2025/1.2, Copyright (C) 2009-2025 Karl-Heinz Schmidt and Beatriz Jurado.
+```
+
+Generated files that embed GEF data carry the same two copyright lines in their generated header. Third-party code (e.g. Catch2, BSL-1.0) keeps its own license and is never relabelled; only GPL-3.0-compatible dependencies may be added.
 
 ## 2. C++
 

@@ -1,6 +1,6 @@
-// SPDX-License-Identifier: MIT
-// Copyright (c) 2026 Aurora Jahan
-// See LICENSE.txt in the repository root for the full license text.
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 Aurora Jahan
+// Licensed under the GNU GPL v3 or later, WITHOUT ANY WARRANTY; see LICENSE.txt.
 
 // gef command-line entry point. M0 provides build and floating-point environment
 // information only.
@@ -43,6 +43,11 @@ int print_version() {
     gef::fb::FpEnvironmentReport const report = gef::fb::check_fp_environment();
 
     std::println("gef {}", info.project_version);
+    std::println("Copyright (C) 2026 Aurora Jahan. A port of GEF, "
+                 "Copyright (C) 2009-2025 Karl-Heinz Schmidt and Beatriz Jurado.");
+    std::println("License GPLv3+: GNU GPL version 3 or later <https://gnu.org/licenses/gpl.html>.");
+    std::println("This is free software: you are free to change and redistribute it. "
+                 "There is NO WARRANTY.");
     std::println("git revision:        {}", gef::app::git_revision());
     std::println("compiler:            {} {}", info.compiler_id, info.compiler_version);
     std::println("build preset:        {}", info.build_preset);

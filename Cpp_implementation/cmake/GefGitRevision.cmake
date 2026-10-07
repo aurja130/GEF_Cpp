@@ -1,6 +1,6 @@
-# SPDX-License-Identifier: MIT
-# Copyright (c) 2026 Aurora Jahan
-# See LICENSE.txt in the repository root for the full license text.
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2026 Aurora Jahan
+# Licensed under the GNU GPL v3 or later, WITHOUT ANY WARRANTY; see LICENSE.txt.
 #
 # Build-time script (cmake -P): writes a C++ source defining gef::app::git_revision() from
 # `git describe --always --dirty` of the repository at GEF_SOURCE_DIR. Runs on every build;

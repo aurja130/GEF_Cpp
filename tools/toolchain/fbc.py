@@ -1,6 +1,6 @@
-# SPDX-License-Identifier: MIT
-# Copyright (c) 2026 Aurora Jahan
-# See LICENSE.txt in the repository root for the full license text.
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2026 Aurora Jahan
+# Licensed under the GNU GPL v3 or later, WITHOUT ANY WARRANTY; see LICENSE.txt.
 """Locate and identify the pinned FreeBASIC compiler (fbc 1.10.1).
 
 fbc is not vendored. It is found through the ``GEF_FBC`` environment variable,

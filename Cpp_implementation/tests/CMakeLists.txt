@@ -1,6 +1,6 @@
-# SPDX-License-Identifier: MIT
-# Copyright (c) 2026 Aurora Jahan
-# See LICENSE.txt in the repository root for the full license text.
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2026 Aurora Jahan
+# Licensed under the GNU GPL v3 or later, WITHOUT ANY WARRANTY; see LICENSE.txt.
 
 # Catch2 v3, pinned by release tag and archive SHA-256. Downloaded once at first configure.
 # SYSTEM: Catch2 headers are system headers for our targets, so our warning set does not

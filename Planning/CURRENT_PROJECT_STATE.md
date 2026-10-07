@@ -1,6 +1,6 @@
 # GEF in C++: Current Project State
 
-**As of:** 2026-10-06
+**As of:** 2026-10-07
 **Phase:** M0 (Foundations) complete (`Planning/MILESTONE_0_PLAN.md`). Next: plans for M1 (reference harness) and M2 (comparison toolkit); M3 (FreeBASIC runtime emulation) can start in parallel. No GEF physics has been ported yet.
 
 ## 1. Summary
@@ -16,7 +16,7 @@
 | Reference harness (`harness/`) | Not started (M1) |
 | Comparison toolkit (`compare/`) | Not started (M2); one ad-hoc analysis done (§4) |
 | Quirk register | `Planning/QUIRKS.md`: 29 quirks (Q-001–Q-029) and 4 build notes (B-001–B-004) |
-| Coverage matrix | `Planning/COVERAGE_MATRIX.md`: 114 rows × T0–T5; no cell covered yet; one cell deferred pending user approval |
+| Coverage matrix | `Planning/COVERAGE_MATRIX.md`: 114 rows × T0–T5; no cell covered yet; one cell deferred (approved 2026-10-07) |
 | Coding standards | `Planning/CODING_STANDARDS.md` |
 | Code maps | `Planning/code_maps/`: the six planning-session reports, with a README listing corrected claims |
 | Version control | `.omp/` and `validation/` are gitignored; everything else of M0 is committed |
@@ -25,7 +25,7 @@
 
 ### 2.1 BASIC reference: `Reference/GEF_code` (submodule)
 - Pinned at `ba9f0aa`. `git describe` reports `2023-V3.2-12-gba9f0aa`, but the source declares `C_GEF_Version = "2025/1.2"` (`GEF.bas:3`). The tag name is stale; the code is 2025/1.2.
-- Licensed GPL-3.0 (`Reference/GEF_code/LICENSE`); this repository is MIT (`LICENSE.txt`).
+- Licensed GPL-3.0-or-later (`Reference/GEF_code/LICENSE`, `README.md` "Licence and copyright"; copyright 2009–2025 Karl-Heinz Schmidt and Beatriz Jurado). This repository is a derivative work and is licensed GPL-3.0-or-later as well (`LICENSE.txt`, relicensed from MIT on 2026-10-07).
 - Source: `source/` holds about 88k lines in 40 files (38 `.bas`/`.bi`/`.mac` plus 2 `.dat`).
   - `GEF.bas` has 18,176 lines: module-level main program at 1–15670, functions at 15691–18176.
   - About 45k lines are `DATA` tables.
@@ -149,17 +149,15 @@ The six planning-session reports are saved in `Planning/code_maps/` (M0.1). Thei
 
 ## 5. Open risks and items
 
-1. **License compatibility.** Upstream GEF is GPL-3.0; this repository is MIT. A port that translates GEF's code may count as a derivative work of the GPL code. Needs a decision by the project owner before ported code is published.
-2. **Optimisation level vs fbc's `-O0`** (`QUIRKS.md` B-001): measured by M3/M5 T1 tests; fallback `-O0` per translation unit.
-3. **fbc expression reordering** (B-004): the extent of fbc's constant folding and reassociation is not characterised yet. M3 drivers must establish the rules.
-4. **`-fwrapv` in the fbc backend** (B-002): BASIC integer overflow wraps; C++ helpers must make it explicit (M3).
-5. **Reference rebuild reproducibility** (B-003): M1 must build with `SOURCE_DATE_EPOCH` or mask the `compiled on` line.
-6. **Deferred coverage cell:** the `Static Ntimes` negative-TKE guard at T4 cannot be triggered statistically; marked "deferred — needs user approval" in `COVERAGE_MATRIX.md`.
-7. **Unregistered quirk candidates** seen in the code maps but not yet verified, to be registered by their owning milestones: `d_ZISOPOST` reader checks `_ZISOPOST` bounds (`Spectra.bas:1779–1787`); two-system covariance issues (`GEF.bas:11651–11652, 11905`); 1st-isomer β⁻2n line prints `Radd` instead of `2*Radd` (`Branchings.bas:578`); `TKEmin` exponents 0.33333/0.3333 (`GEF.bas:8254`); `DEFOtab(A_post - Z_sci, Z_sci)` (`GEF.bas:9313/9433`); `EexcA2d` registered as `Eexc2dlight` (`Spectra.bas:512–514`); `#If EgammaA` missing its `B_` prefix (`GEF.bas:9418`).
-8. **`FetchContent` needs network** on the first configure of each build tree. Offline fallback: `catch2-devel` via dnf and `find_package`.
+1. **Optimisation level vs fbc's `-O0`** (`QUIRKS.md` B-001): measured by M3/M5 T1 tests; fallback `-O0` per translation unit.
+2. **fbc expression reordering** (B-004): the extent of fbc's constant folding and reassociation is not characterised yet. M3 drivers must establish the rules.
+3. **`-fwrapv` in the fbc backend** (B-002): BASIC integer overflow wraps; C++ helpers must make it explicit (M3).
+4. **Reference rebuild reproducibility** (B-003): M1 must build with `SOURCE_DATE_EPOCH` or mask the `compiled on` line.
+5. **Deferred coverage cell:** the `Static Ntimes` negative-TKE guard at T4 cannot be checked statistically. Deferral approved by the user on 2026-10-07, to be revisited later (`COVERAGE_MATRIX.md`). The guard is still ported faithfully in M10 and checked at T2 (M10) and T3 (M15).
+6. **Unregistered quirk candidates** seen in the code maps but not yet verified, to be registered by their owning milestones: `d_ZISOPOST` reader checks `_ZISOPOST` bounds (`Spectra.bas:1779–1787`); two-system covariance issues (`GEF.bas:11651–11652, 11905`); 1st-isomer β⁻2n line prints `Radd` instead of `2*Radd` (`Branchings.bas:578`); `TKEmin` exponents 0.33333/0.3333 (`GEF.bas:8254`); `DEFOtab(A_post - Z_sci, Z_sci)` (`GEF.bas:9313/9433`); `EexcA2d` registered as `Eexc2dlight` (`Spectra.bas:512–514`); `#If EgammaA` missing its `B_` prefix (`GEF.bas:9418`).
+7. **`FetchContent` needs network** on the first configure of each build tree. Offline fallback: `catch2-devel` via dnf and `find_package`.
 
 ## 6. Next steps
 
 1. Write `MILESTONE_1_PLAN.md` (reference harness) and `MILESTONE_2_PLAN.md` (comparison toolkit). M1 builds the patched reference binary with `tools/fbsrc` patch directories and the pinned fbc.
 2. Write `MILESTONE_3_PLAN.md` (FreeBASIC runtime emulation); it can run in parallel with M1/M2 and should start by characterising fbc's expression reordering (B-004).
-3. Decide the license question (§5 item 1).

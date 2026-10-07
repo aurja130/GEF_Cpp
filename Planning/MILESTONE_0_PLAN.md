@@ -302,5 +302,5 @@ Closed 2026-10-06 (started and finished the same day).
 - **Coverage matrix:** 114 rows; 424 cells planned, 259 n/a with a reason, 1 deferred (the `Static Ntimes` negative-TKE guard at T4) pending user approval.
 - **CTest `noTestsAction=error`** in the test presets: a label filter that matches nothing (e.g. `-L T1` today) fails instead of passing silently.
 - **Clang and `-fexcess-precision=standard`:** accepted, but on Clang it only governs `_Float16`/`__bf16`; `FLT_EVAL_METHOD == 0` is checked at run time instead.
-- **License notices:** every source file carries an SPDX MIT notice (`.omp/AGENTS.md`, `CODING_STANDARDS.md` §1).
+- **License notices:** every source file carries an SPDX license notice (`.omp/AGENTS.md`, `CODING_STANDARDS.md` §1). The project was relicensed from MIT to GPL-3.0-or-later on 2026-10-07, after M0 closed, because the port is a derivative work of GPL-licensed GEF.
 - `IMPLEMENTATION_STRATEGY.md` needed no change: no decision in this plan altered it.

@@ -11,7 +11,7 @@
 | `planned (Mxx)` | Applies and is owned by milestone `Mxx` (`IMPLEMENTATION_STRATEGY.md` §3). With several milestones, e.g. `planned (M10, M14)`, the earlier ones contribute partial evidence and the **last listed milestone closes the cell**. |
 | `covered (test id)` | A gating test passes. The test id is the Catch2 `TEST_CASE` name (C++) or the pytest node id (Python harness/compare), e.g. `covered ("event: mode choice replay" [T2][event])`. Several ids are separated by `;`. |
 | `n/a — reason` | The tier genuinely does not apply to this cell; the reason is stated in one line. |
-| `deferred — needs user approval` | Applies, but no milestone plans to cover it; it stays open until the user approves the deferral or assigns a milestone. |
+| `deferred — needs user approval` | Applies, but no milestone plans to cover it; it stays open until the user approves the deferral or assigns a milestone. Once approved it reads `deferred (approved YYYY-MM-DD)`, stays open and is revisited when a milestone can cover it. |
 
 Tiers (vision §4.2, strategy §3 *Conventions*):
 
@@ -176,7 +176,7 @@ Tiers (vision §4.2, strategy §3 *Conventions*):
 | Rejection-loop paths (draw counts depend on data) | n/a — no embedded table specific to this cell | n/a — stochastic; see T2 | planned (M8, M10) | planned (M9, M10) | planned (M14) | planned (M18) |
 | Isomer stop in the gamma cascade | planned (M4) | planned (M5) | planned (M10) | planned (M10) | planned (M14) | planned (M18) |
 | `J_attempt` retry and double histogram fill | n/a — no embedded table specific to this cell | n/a — stochastic; see T2 | planned (M10) | planned (M10) | planned (M14) | n/a — exercised indirectly by every integral run |
-| `Static Ntimes` negative-TKE guard (99 events) | n/a — no embedded table specific to this cell | n/a — stochastic trigger; see T2 | planned (M10) | planned (M15) | deferred — needs user approval | n/a — not triggered by reference systems |
+| `Static Ntimes` negative-TKE guard (99 events) | n/a — no embedded table specific to this cell | n/a — stochastic trigger; see T2 | planned (M10) | planned (M15) | deferred (approved 2026-10-07) — no statistical comparison exists for a run that stops; revisit later. The guard itself is still ported and replicated (M10 scope) | n/a — not triggered by reference systems |
 | `Eva` `Static E_MIN` carry-over | n/a — no embedded table specific to this cell | n/a — stochastic; see T2 | planned (M8) | planned (M10) | n/a — exercised indirectly by every integral run | n/a — exercised indirectly by every integral run |
 | State persisting across energy steps (incl. stale `Z`, `EPART`/`PEOZ`/`PEON`) | n/a — no embedded table specific to this cell | planned (M7, M9) | n/a — leak is in deterministic state | planned (M14) | planned (M14) | planned (M18) |
 | State persisting across perturbation passes | n/a — no embedded table specific to this cell | planned (M12) | n/a — leak is in deterministic state | planned (M14) | planned (M14) | planned (M18) |

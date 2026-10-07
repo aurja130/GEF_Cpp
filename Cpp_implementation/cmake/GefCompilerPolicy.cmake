@@ -1,6 +1,6 @@
-# SPDX-License-Identifier: MIT
-# Copyright (c) 2026 Aurora Jahan
-# See LICENSE.txt in the repository root for the full license text.
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2026 Aurora Jahan
+# Licensed under the GNU GPL v3 or later, WITHOUT ANY WARRANTY; see LICENSE.txt.
 #
 # Project-wide compiler policy as interface targets:
 #   gef_exact_fp  exact-mode floating-point flags (Planning/MILESTONE_0_PLAN.md §2). Every GEF
