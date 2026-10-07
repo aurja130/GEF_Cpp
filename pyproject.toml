@@ -3,8 +3,8 @@
 # Licensed under the GNU GPL v3 or later, WITHOUT ANY WARRANTY; see LICENSE.txt.
 
 # Python tooling for the GEF C++ port. The packages are run in place from the
-# repository root (`python3 -m tools.<package>.<module>`); nothing is installed.
-# `harness/` (M1) and `compare/` (M2) join `tools/` when their milestones start.
+# repository root (`python3 -m <package>.<module>`); nothing is installed.
+# Packages: `tools/` (M0), `harness/` (M1), `compare/` (M2).
 
 [project]
 name = "gef-cpp-tooling"

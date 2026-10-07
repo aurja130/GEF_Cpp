@@ -103,10 +103,12 @@ Each parser returns typed observables keyed by (system, energy step, energy, fil
 - [ ] Collect all family p-values from these null judgements and test them for uniformity (KS, p > 0.01).
 
 ### M2.9 Sensitivity (gate G5)
-- [ ] `compare.inject`: applies synthetic faults to the parsed observables of a held-out run, consistently across every file that carries the quantity:
-  - one independent yield scaled by 2 %;
-  - one mass bin's content moved to its neighbour;
-  - one isomeric state dropped (its yield moved to the ground state).
+- [ ] `compare.inject`: applies synthetic faults to the parsed observables of a held-out run, each in a fixed primary representation:
+  - one independent yield scaled by 2 %: ENDF MF8/MT454 `Y` of one (ZA, state) at one energy;
+  - one mass bin's content moved to its neighbour: the `dmp` `APOST` analyzer of one energy step;
+  - one isomeric state dropped: ENDF MT454 `Y` of state 1 added to state 0 and set to 0.
+
+  A real fault would show in every file that carries the quantity. Injecting it in one representation is the harder case for detection, because only one family sees it.
 - [ ] Before injecting, `compare.calibrate` reports the **minimum detectable effect** of each family at the designed α, so detectability is known in advance.
 - [ ] Faults are injected at every energy of each held-out run, at the largest-yield nuclide or mass bin and at a mid-yield one.
 
