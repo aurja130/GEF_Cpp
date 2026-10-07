@@ -55,8 +55,9 @@ from pathlib import Path
 
 import numpy as np
 
+from compare.parsers import ParseError
+from compare.parsers.endf import Nuclide, Tape, read_mt454
 from harness.common import HarnessError, write_json
-from harness.endf_mt454 import Nuclide, Tape, parse_file
 
 __all__ = [
     "FAIL",
@@ -233,7 +234,12 @@ def compare_tapes(
 
 
 def _select(path: Path, index: int, label: str) -> Tape:
-    tapes = parse_file(path)
+    try:
+        tapes = read_mt454(path)
+    except OSError as exc:
+        raise HarnessError(f"cannot read {path}: {exc}") from exc
+    except ParseError as exc:
+        raise HarnessError(str(exc)) from exc
     print(f"{label}: {path} holds {len(tapes)} tape(s); using index {index}")
     if not tapes:
         raise HarnessError(f"{path}: no tape found")

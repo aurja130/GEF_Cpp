@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Copyright (C) 2026 Aurora Jahan
 # Licensed under the GNU GPL v3 or later, WITHOUT ANY WARRANTY; see LICENSE.txt.
-"""Tests for harness.endf_mt454 and harness.minicheck on synthetic tapes."""
+"""Tests for harness.minicheck on synthetic tapes (parser: ``compare.parsers.endf``)."""
 
 from __future__ import annotations
 
@@ -12,8 +12,10 @@ from pathlib import Path
 import numpy as np
 import pytest
 
+from compare.parsers.endf import Nuclide, parse_endf_float
+from compare.parsers.endf import mt454_tapes as parse_text
+from compare.parsers.endf import read_mt454 as parse_file
 from harness.common import REPO_ROOT, HarnessError
-from harness.endf_mt454 import Nuclide, parse_endf_float, parse_file, parse_text
 from harness.minicheck import PASS, PASS_FLUCT, compare_tapes, main, z_scores
 
 Spec = dict[float, list[tuple[int, int, float]]]
