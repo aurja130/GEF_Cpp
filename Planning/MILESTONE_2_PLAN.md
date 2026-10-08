@@ -155,3 +155,24 @@ Each parser returns typed observables keyed by (system, energy step, energy, fil
 ## 8. Completion notes
 
 *(Filled in when M2 closes: dates, ensemble timings, calibration diagnostics, null-validation and sensitivity results, MDE table, deviations from this plan.)*
+
+### Interim status (2026-10-08, 03:00)
+
+**Done and passing:**
+- **G1:** round-trip of 417 ENDF, 4,482 `dmp`, 166 `mvd` and 17 `par` files; `out/` coverage of 183 files at 100 %.
+- **G2:** same-seed runs are identical over 4.6 M fields. Probed against unprobed builds: 0 mismatches; the only extras are the probe files.
+- **Ensembles:** all 60 stored. The full 59-energy runs took about 3.7 h each under load.
+- **G3 Cf-252:** 0 of 22 failed suites (2 allowed).
+- **G4:** `m1-g1-rn215-ref1` passes against the short Rn-215 calibration.
+- **G5 Cf-252:** every fault of at least 1 MDE is detected.
+
+**Open, for the user** (method changes are within the approved boundary; the target is not changed):
+- **G3 Rn-215 short:** 5 of 22 failed suites (2 allowed).
+  - s1001 is the 18.5 MeV rare-regime run: the pre-pass gave a second-chance split in 1 of 20 runs, 123 families.
+  - The other failures are single-cell bursts in sparse histograms (`NmultA`, `Nspectrum`, `mvd` cells), 10–20 σ under the Poisson / own-sample model.
+  - Leaving 18.5 MeV out does not change the count (diagnostic `--skip-energy`).
+- **G5 Rn-215 short:** 3 of 26 faults at or above 1 MDE were missed, all `isomer` (state 1 moved to state 0) at 2 MeV (5.6 MDE), 22 MeV and 30 MeV (about 1 MDE).
+  - Suspected cause: the zeroed isomer key looks like a lost row and is judged as one soft event with p = 1/(K+1).
+  - A single-nuclide 2 % shift is below 1 MDE at every Rn-215 energy (0.002–0.29 MDE). It is detectable for the Cf-252 peak nuclide (1.25 MDE, 10⁷ events).
+- **Calibration diagnostics:** `dmp` families show a median κ² of about 10²⁷ in the G4 table. That points to a degenerate local-law fit and needs investigation before G5 numbers for `dmp` can be trusted.
+- **Running:** calibration of the full 59-energy ensemble, the `validation/test_run` verdict, and G3 on the full ensemble (outputs in `build/compare/final/`).
