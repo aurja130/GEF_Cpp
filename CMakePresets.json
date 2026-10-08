@@ -119,7 +119,12 @@
     {
       "name": "dev-clang",
       "inherits": "base",
-      "configurePreset": "dev-clang"
+      "configurePreset": "dev-clang",
+      "filter": {
+        "exclude": {
+          "label": "slow"
+        }
+      }
     },
     {
       "name": "asan-ubsan",

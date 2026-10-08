@@ -20,8 +20,10 @@ find_package(Threads REQUIRED)
 add_executable(gef_tests
     conversion_test.cpp
     fbc_arithmetic_test.cpp
+    format_test.cpp
     fp_environment_test.cpp
     maths_test.cpp
+    print_using_test.cpp
     rng_test.cpp
     text_test.cpp
     support/golden.cpp)

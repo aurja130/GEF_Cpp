@@ -5,8 +5,10 @@
 # FreeBASIC runtime emulation (namespace gef::fb).
 add_library(gef_fbrt STATIC
     convert.cpp
+    format.cpp
     fp_environment.cpp
     gef_math.cpp
+    print_using.cpp
     reseed.cpp
     rng.cpp
     text.cpp)

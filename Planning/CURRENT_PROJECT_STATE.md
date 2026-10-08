@@ -181,7 +181,7 @@ Configuration: `pyproject.toml` (ruff, basedpyright strict over `tools/` and `ha
 | ENDF n-induced runs use N + 3 energy steps; the first two and the last write no MT454 data | read; matches `run.log` |
 | fbc reassociates `*` and `+` chains, drops their parentheses, and applies numeric literals last (`a * 0.03 * b * c` → `((a*b)*c)*0.03`, `s * (t * u)` → `(s*t)*u`); port arithmetic from the generated C | fbc C and a run (`QUIRKS.md` B-004, `Cpp_implementation/src/fbrt/FBC_ARITHMETIC.md`) |
 | `MyParameters.dat` is never applied in any mode (not only batch): `MyparRead` runs once at `GEF.bas:1017`, before its flag can be set | fbc C (`QUIRKS.md` Q-018) |
-| All quirks and their evidence | `Planning/QUIRKS.md` (13 confirmed in output, 12 confirmed by fbc C, 4 read only) |
+| All quirks and their evidence | `Planning/QUIRKS.md` (13 confirmed in output, 13 confirmed by fbc C, 4 read only; Q-031 added in M3.6b) |
 
 ### 4.3 Code maps
 
@@ -189,9 +189,9 @@ The six planning-session reports are saved in `Planning/code_maps/` (M0.1). Thei
 
 ## 5. Open risks and items
 
-1. **Optimisation level vs fbc's `-O0`** (`QUIRKS.md` B-001): measured by M3/M5 T1 tests; fallback `-O0` per translation unit.
-2. **fbc expression reordering** (B-004): characterised in M3.2 (`FBC_ARITHMETIC.md`, rules R1–R8, verified by a driver run in all presets including `-O3`). The remaining risk is a GEF expression shape the probes did not cover; the porting rule (follow the generated C) and the M5 T1 tests cover it.
-3. **`-fwrapv` in the fbc backend** (B-002): BASIC integer overflow wraps; C++ helpers must make it explicit (M3).
+1. **Optimisation level vs fbc's `-O0`** (`QUIRKS.md` B-001): measured per function by the M3 T1 tests in `release-exact`. So far: no non-NaN difference; NaN sign/payload differences are accepted by user decision (2026-10-08). M5 extends the check to the physics functions.
+2. **fbc expression reordering** (B-004): characterised in M3.2 and M3.6a (`FBC_ARITHMETIC.md`, rules R1–R10, verified by driver runs in all presets including `-O3`). The remaining risk is a GEF expression shape the probes did not cover; the porting rule (follow the generated C) and the M5 T1 tests cover it.
+3. **`-fwrapv` in the fbc backend** (B-002): resolved for the runtime layer by the `fb::add/sub/mul/neg/abs` helpers (M3.3); ported code must use them where `Integer`/`Long` arithmetic can overflow.
 4. **Statistical calibration of Rn-215-like inputs** (M2): 20 BASIC runs cannot calibrate the extreme per-family tails a full-output comparison needs. Rare pre-pass regimes (one run in 20 at 18.5 MeV gets a second-chance split), sparse bursts and row churn exceed the model. Irrelevant for phase 1 (exact equality). In phase 2, large exact-C++ ensembles are needed; detection power for single-nuclide shifts also needs several candidate runs.
 5. **Deferred coverage cell:** the `Static Ntimes` negative-TKE guard at T4 cannot be checked statistically. Deferral approved by the user on 2026-10-07, to be revisited later (`COVERAGE_MATRIX.md`). The guard is still ported faithfully in M10 and checked at T2 (M10) and T3 (M15).
 6. **Unregistered quirk candidates** seen in the code maps but not yet verified, to be registered by their owning milestones: `d_ZISOPOST` reader checks `_ZISOPOST` bounds (`Spectra.bas:1779–1787`); two-system covariance issues (`GEF.bas:11651–11652, 11905`); 1st-isomer β⁻2n line prints `Radd` instead of `2*Radd` (`Branchings.bas:578`); `TKEmin` exponents 0.33333/0.3333 (`GEF.bas:8254`); `DEFOtab(A_post - Z_sci, Z_sci)` (`GEF.bas:9313/9433`); `EexcA2d` registered as `Eexc2dlight` (`Spectra.bas:512–514`); `#If EgammaA` missing its `B_` prefix (`GEF.bas:9418`).
@@ -206,6 +206,7 @@ The six planning-session reports are saved in `Planning/code_maps/` (M0.1). Thei
    - M3.3 conversions and integer semantics (`fbrt/convert.hpp`: `fb::f2i/f2l/f2ul/d2i/d2l/d2ul/fix/sgn`, wrapping `add/sub/mul/neg/abs`, `idiv/imod`; bit-exact against drivers `conv_single.bas` (all 2³² `Single` patterns), `conv_double.bas`, `int_ops.bas`; B-002 resolved for this layer; first B-001 finding: gcc `-O3` folds `x * -1` into a negation, which changes NaN results of `Fix`, fixed in the source).
    - M3.4 maths (`fbrt/gef_math.hpp`: GEF's `Min`, `Max`, `Erf`, `Erfc`, `Tanh`, `Coth`, `Log10`, `Floor`, `Ceil`, `Round`, `Modulo`; libm intrinsics are called through the `std::` overload of the same type; bit-exact against drivers `math_single.bas` (14 functions × all 2³² `Single`), `math_double.bas`, `gef_math2.bas` in `dev-gcc`, `dev-clang` and `release-exact`; the only differences were NaN sign and payload, which by user decision compare equal (B-001 finding 2)).
    - M3.6a `Str` and `Print #` (`fbrt/text.hpp`: `fb::str` for `Single`/`Double`/`Integer`, `fb::PrintFile` with zones, `;`, `Tab` and libfb's line-length tracking; bit-exact against drivers `str_single.bas` (all 2³² `Single`), `str_numbers.bas`, `print_file.bas`; new fbc rule R10: `(x - 0.5) * 2000` compiles to `x * 2000 + -1000`).
+   - M3.6b `Print Using` and `Format` (`PrintFile::using_*` from `io_printusg.c`, `fb::format` from `str_format.c`; inventory `fbrt/TEMPLATES.md` from `tools.fbsrc.fb_templates`: 39 templates, 4 patterns; byte-exact against drivers `print_using.bas` (5,719 statements) and `format.bas` (7,271 calls)).
 
-   Next: M3.6b `Print Using` and `Format`, M3.7 arrays, M3.8 `DATA`/input, M3.9 close-out. Full CI now takes about 26 min, mostly the three exhaustive `Single` tests in each Debug preset.
+   Next: M3.7 arrays, M3.8 `DATA`/input, M3.9 close-out. The Clang Debug test preset skips `[slow]` tests (user, 2026-10-08); work on this machine is limited to 10 cores (`taskset -c 0-9`, `-j 10`) while it is shared.
 2. Per the exact-first decision, later milestone plans gate on bit-exact equality with BASIC (T0–T3) and use `compare.exact` and the per-event reseed mode to triage divergences.

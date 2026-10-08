@@ -403,6 +403,17 @@ Tool commands are run from the repository root: `python3 -m tools.fbsrc.fbline <
 - **C++ symbol:** not yet ported
 - **Owning milestone:** M13
 
+### Q-031 `Print Using "####.#"; x; " ";` drops the `" "`
+
+- **BASIC location:** `GEF.bas:12292`
+- **Mechanism:** the template has one numeric field and no string field. After `x` uses the field, the runtime restarts the template for the `" "` item (`fb_PrintUsingStr`), finds the numeric field `#` first and prints nothing; `fb_PrintUsingEnd` then prints the template text up to the next field, which is none. GEF.c passes mask 0 to both items, so the template is not freed early and the behaviour is well defined. (With a trailing newline the last item carries `FB_PRINT_ISLAST`, the runtime frees the template before `fb_PrintUsingEnd` reads it, and stray bytes appear; GEF does not do that.)
+- **Effect:** the intended space after each `K * 0.1` value is missing, so the value runs into the following table text.
+- **Evidence status:** *confirmed by fbc C*
+- **Evidence:** `fbline GEF.bas:12292` shows GEF.c:87359-87367: `fb_PrintUsingInit`, `fb_PrintUsingDouble(…, 0)`, `fb_PrintUsingStr(…, 0)`, `fb_PrintUsingEnd`. `tools.fbsrc.fb_templates` lists it as the only statement with more items than fields. Runtime probe (M3.6b, 2026-10-08, scratch program compiled with the pinned fbc): `Print #1, Using "####.#"; x; " ";` repeated 32 times prints the values with no spaces, identical over three runs; with a trailing newline instead, the bytes after the newline differ between runs. The same calls on `gef::fb::PrintFile` (scratch program) give the probe's 16 lines byte for byte.
+- **Fidelity switch:** `fix_using_space` (would print the space)
+- **C++ symbol:** `gef::fb::PrintFile::using_print` (runtime behaviour); call site not yet ported
+- **Owning milestone:** M13
+
 ## 5. Build notes (not GEF quirks)
 
 These describe how the toolchain, not GEF, can make the C++ results differ from the reference binary. They have no fidelity switch.
@@ -477,7 +488,8 @@ These describe how the toolchain, not GEF, can make the C++ results differ from 
 | Q-028 | `NN.dmp` comment says "protons" | `GEF.bas:15289` | confirmed in output | `fix_nn_dmp_comment` | M13 |
 | Q-029 | `d_NZIcumu` capped only in printed window | `Branchings.bas:876-899, 963-978` | read only | `fix_cumulative_uncertainty_cap` | M12 |
 | Q-030 | `.par` files print an unassigned date | `GEF.bas:5165, 5179` | confirmed in output | `fix_par_timestamp` | M13 |
+| Q-031 | `Print Using "####.#"; x; " ";` drops the `" "` | `GEF.bas:12292` | confirmed by fbc C | `fix_using_space` | M13 |
 | B-001 | Optimisation level vs fbc `-O0` | (toolchain) | open risk | — | M3, M5 |
-| B-002 | fbc gcc passes `-fwrapv -fno-strict-aliasing` | (toolchain) | open | — | M3 |
+| B-002 | fbc gcc passes `-fwrapv -fno-strict-aliasing` | (toolchain) | resolved for the runtime layer (M3.3) | — | M3 |
 | B-003 | `Compilationstamp` needs `SOURCE_DATE_EPOCH` | `GEF.bas:17` | handled (M1) | — | M1 |
 | B-004 | fbc reassociates `*`/`+` chains, literals last | `GEF.bas:2608, 2610` | confirmed by fbc C and run | — | M3, M5 |
