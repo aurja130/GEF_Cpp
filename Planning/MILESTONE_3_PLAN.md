@@ -1,6 +1,6 @@
 # Milestone 3: FreeBASIC Runtime Emulation
 
-**Status:** not started
+**Status:** in progress (M3.1 and M3.5 done, 2026-10-08)
 **Strategy reference:** `IMPLEMENTATION_STRATEGY.md` §2.2, §2.3, §2.9 and §3, M3
 **Depends on:** M0, M1 (driver framework, `fbmt.py`, reseed vectors), M2 (exact comparison)
 **Unblocks:** M4 (data layer uses `DataReader`, arrays, conversions), M5 (physics functions use the maths intrinsics), M8 (samplers use `FbMtRng`), M13 (writers use the text formatting), and through them every later milestone
@@ -57,10 +57,10 @@ From the generated C (`build/fbsrc/ba9f0aa/src/GEF.c`) and the sources at `ba9f0
 Tasks in execution order. Mark each one done here when finished, and update `CURRENT_PROJECT_STATE.md` (see `.omp/AGENTS.md`).
 
 ### M3.1 Golden-file workflow and library layout
-- [ ] `python3 -m harness.golden promote <driver> [--out-name NAME]`: runs a driver with `harness.driver` and copies its outputs and `driver.json` to `Cpp_implementation/tests/golden/<name>/`, or to the reference store when over 1 MB (D1).
-- [ ] A pytest checks every committed golden against the current driver source hash and fbc version. A stale golden fails CI.
-- [ ] C++ test support: a small reader for golden files (hex and decimal records) and a store-path resolver that `SKIP`s when the store is absent.
-- [ ] Library layout under `Cpp_implementation/src/fbrt/`: `convert`, `math`, `rng`, `reseed`, `text` (`str`, `print`, `print_using`, `format`), `array`, `data_reader`, `input`, one header and source each, plus `FBC_ARITHMETIC.md`. Licence lines per D4. Also add the rtlib copyright line to `harness/fbmt.py`.
+- [x] `python3 -m harness.golden promote <driver> --name NAME [-- args]`: runs a driver with `harness.driver` and copies its outputs and `driver.json` to `Cpp_implementation/tests/golden/<name>/`, or to the reference store when over 1 MB (D1).
+- [x] A pytest checks every committed golden against the current driver source hash and fbc version. A stale golden fails CI. (`harness.golden check`, `harness/tests/test_golden.py`; it also checks included and cut GEF sources and each output's hash.)
+- [x] C++ test support: a small reader for golden files (hex and decimal records) and a store-path resolver that `SKIP`s when the store is absent. (`Cpp_implementation/tests/support/golden.hpp`.)
+- [x] Library layout under `Cpp_implementation/src/fbrt/`: `convert`, `math`, `rng`, `reseed`, `text` (`str`, `print`, `print_using`, `format`), `array`, `data_reader`, `input`, one header and source each, plus `FBC_ARITHMETIC.md`. Licence lines per D4. Also add the rtlib copyright line to `harness/fbmt.py`. (Each file is created by the task that fills it, never as an empty stub; `rng` and `reseed` exist. The rtlib line is two comment lines, wrapped by clang-format.)
 
 **Done when:** a trivial driver round-trips through `promote` and is read by a Catch2 test in all presets.
 
@@ -87,12 +87,15 @@ Tasks in execution order. Mark each one done here when finished, and update `CUR
 **Done when:** every intrinsic and helper is bit-exact against its driver in every preset, and B-001 is resolved for this layer.
 
 ### M3.5 Random numbers and reseed mode
-- [ ] `fb::FbMtRng`: `randomize(seed)`, `rnd()` returning the same `double` as fbc, and `next_u32()`. Transcribed from `math_rnd.c` (D4); the state is explicit, with no globals.
-- [ ] `fb::derive_seed(master, scope, tuple…)` and the reseed procedure of `harness/RESEED_SPEC.md`, with its test vectors.
-- [ ] Tests:
+- [x] `fb::FbMtRng`: `randomize(seed)`, `rnd()` returning the same `double` as fbc, and `next_u32()`. Transcribed from `math_rnd.c` (D4); the state is explicit, with no globals. (Also: `Rnd(0)` repeats the last value, other arguments draw; the lazy start-up equals seed 0; `randomize_seed_bits` reproduces the runtime's `(uint32_t)seed` cast, including fractions, negatives, values outside int64 and NaN/±Inf, which all give seed 0; `Randomize -1`, the clock seed, is rejected.)
+- [x] `fb::derive_seed(master, scope, tuple…)` and the reseed procedure of `harness/RESEED_SPEC.md`, with its test vectors. (`fb::reseed` re-seeds; clearing the `PGauss` cache is M8's.)
+- [x] Tests (`Cpp_implementation/tests/rng_test.cpp`):
   - `m1-golden-rnd-stream-42`;
-  - 20 seeds × 10⁶ draws from the `rnd_stream` driver, stored, including seeds 0, 1, 2³¹−1, 2³¹ and 2³²−1;
+  - 20 seeds × 10⁶ draws, stored as `m3-rnd-seeds-1e6`, including seeds 0, 1, 2³¹−1, 2³¹ and 2³²−1. They come from a new driver `rnd_seeds.bas` rather than `rnd_stream`, so one run covers all seeds;
+  - 22 edge seeds × 1,300 draws (two state regenerations), the `Rnd(n)` argument sequence and the pre-`Randomize` stream, committed as golden `m3-rnd-seeds-edge`;
   - the reseed vectors of `harness/reseed.py`.
+
+  The 21 × 10⁶ stored values take 2.4 s in `release-exact` and 4 s in `dev-gcc`, including reading the files.
 
 **Done when:** all streams and vectors are bit-exact, and the 10⁶-draw test runs in under a second in `release-exact`.
 

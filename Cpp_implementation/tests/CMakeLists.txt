@@ -17,7 +17,14 @@ list(APPEND CMAKE_MODULE_PATH "${catch2_SOURCE_DIR}/extras")
 include(Catch)
 
 add_executable(gef_tests
-    fp_environment_test.cpp)
+    fp_environment_test.cpp
+    rng_test.cpp
+    support/golden.cpp)
+target_include_directories(gef_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
+# Driver goldens (M3 plan D1): committed ones, and the reference store for large ones.
+target_compile_definitions(gef_tests PRIVATE
+    GEF_TEST_GOLDEN_DIR="${CMAKE_CURRENT_SOURCE_DIR}/golden"
+    GEF_TEST_STORE_CAPTURES_DIR="${PROJECT_SOURCE_DIR}/validation/reference_store/captures")
 target_link_libraries(gef_tests PRIVATE gef_fbrt Catch2::Catch2WithMain)
 gef_apply_policy(gef_tests)
 

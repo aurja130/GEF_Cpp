@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Copyright (C) 2026 Aurora Jahan
 # Licensed under the GNU GPL v3 or later, WITHOUT ANY WARRANTY; see LICENSE.txt.
+# Ported from the FreeBASIC 1.10.1 runtime library, Copyright (C) the FreeBASIC development team
+# (LGPL-2.0-or-later).
 """Pure-Python reference of the fbc 1.10.1 ``Randomize seed, 3`` + ``Rnd`` generator.
 
 Transcribed from ``src/rtlib/math_rnd.c`` and ``fb_math.h`` at fbc tag ``1.10.1``:

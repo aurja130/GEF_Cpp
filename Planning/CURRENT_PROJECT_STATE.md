@@ -199,5 +199,5 @@ The six planning-session reports are saved in `Planning/code_maps/` (M0.1). Thei
 
 ## 6. Next steps
 
-1. Implement M3 (FreeBASIC runtime emulation) per `MILESTONE_3_PLAN.md` (written 2026-10-08). Its decisions: small driver goldens committed and large ones in the store; text formatting covers the generic machinery plus the full inventory of GEF's about 40 `Print Using` templates and 4 `Format` patterns; a custom `fb::Array` type. It settles B-001, B-002 and B-004 (risks 1–3 above) and starts with the golden-file workflow (M3.1) and the fbc arithmetic probes (M3.2).
+1. Continue M3 (FreeBASIC runtime emulation) per `MILESTONE_3_PLAN.md`. Done so far (2026-10-08): M3.1 golden workflow (`harness.golden promote/check`, committed goldens in `Cpp_implementation/tests/golden/`, C++ `support/golden.hpp`) and M3.5 random numbers (`fb::FbMtRng`, `fb::derive_seed`/`fb::reseed`, bit-exact against 22 edge seeds, 20 stored seeds × 10⁶ draws `m3-rnd-seeds-1e6`, the M1 golden stream and the reseed vectors; driver `harness/drivers/rnd_seeds.bas`). Next: M3.2 fbc arithmetic probes (B-004), then M3.3 conversions, M3.4 maths (B-001), M3.6 text, M3.7 arrays, M3.8 `DATA`/input.
 2. Per the exact-first decision, later milestone plans gate on bit-exact equality with BASIC (T0–T3) and use `compare.exact` and the per-event reseed mode to triage divergences.

@@ -4,6 +4,8 @@
 
 # FreeBASIC runtime emulation (namespace gef::fb).
 add_library(gef_fbrt STATIC
-    fp_environment.cpp)
+    fp_environment.cpp
+    reseed.cpp
+    rng.cpp)
 target_include_directories(gef_fbrt PUBLIC "${PROJECT_SOURCE_DIR}/Cpp_implementation/src")
 gef_apply_policy(gef_fbrt)
