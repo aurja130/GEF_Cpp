@@ -199,5 +199,5 @@ The six planning-session reports are saved in `Planning/code_maps/` (M0.1). Thei
 
 ## 6. Next steps
 
-1. Write `MILESTONE_3_PLAN.md` (FreeBASIC runtime emulation). It starts from the M1 references (`m1-golden-rnd-stream-42`, `harness/fbmt.py`, `harness/reseed.py` test vectors). It should characterise fbc's expression reordering (B-004), the optimisation-level question (B-001) and integer wrapping (B-002), because exact reproduction now depends on them.
+1. Implement M3 (FreeBASIC runtime emulation) per `MILESTONE_3_PLAN.md` (written 2026-10-08). Its decisions: small driver goldens committed and large ones in the store; text formatting covers the generic machinery plus the full inventory of GEF's about 40 `Print Using` templates and 4 `Format` patterns; a custom `fb::Array` type. It settles B-001, B-002 and B-004 (risks 1–3 above) and starts with the golden-file workflow (M3.1) and the fbc arithmetic probes (M3.2).
 2. Per the exact-first decision, later milestone plans gate on bit-exact equality with BASIC (T0–T3) and use `compare.exact` and the per-event reseed mode to triage divergences.

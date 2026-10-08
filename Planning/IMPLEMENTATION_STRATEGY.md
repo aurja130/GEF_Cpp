@@ -406,6 +406,8 @@ Two tracks run in parallel after M5 and meet at M14:
 
 ### M3 — FreeBASIC runtime emulation
 
+**Status:** planned (2026-10-08), see `Planning/MILESTONE_3_PLAN.md`.
+
 **Goal:** a C++ library that behaves like the FreeBASIC runtime wherever GEF depends on it.
 
 **Scope:**
