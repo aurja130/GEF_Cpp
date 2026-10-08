@@ -265,14 +265,14 @@ def _input_override(args: argparse.Namespace) -> str | None:
 
 def _judge_and_save(
     results: Path, name: str, kind: str, cal: Calibration, spec: str, override: str | None,
-    group_map: dict[str, str], cache: Path = DEFAULT_CACHE,
+    group_map: dict[str, str], cache: Path = DEFAULT_CACHE, skip: Sequence[float] = (),
 ) -> None:  # fmt: skip
     done = results / f"{name}.json"
     if done.is_file():
         return
     ex = load_extract(spec, cache)
     check_inputs(cal, [ex], override)
-    result = judge(cal, [ex], names=[spec], group_map=group_map)
+    result = judge(cal, [ex], names=[spec], group_map=group_map, skip_energies=skip)
     record = summarize(result, name)
     record["kind"] = kind
     record["spec"] = spec
@@ -337,7 +337,15 @@ def run_null(args: argparse.Namespace) -> int:
             )  # fmt: skip
         print(f"[{j + 1}/{len(members)}] judging {member}", file=sys.stderr, flush=True)
         _judge_and_save(
-            results, name, "loo", Calibration.open(cal_dir), member, override, {}, args.cache
+            results,
+            name,
+            "loo",
+            Calibration.open(cal_dir),
+            member,
+            override,
+            {},
+            args.cache,
+            args.skip_energy,
         )
         if not args.keep_calibrations:
             shutil.rmtree(cal_dir, ignore_errors=True)
@@ -351,7 +359,15 @@ def run_null(args: argparse.Namespace) -> int:
             run, _, mapping = spec.partition("@")
             gmap = _parse_group_map([m for m in mapping.split(",") if m])
             _judge_and_save(
-                results, f"held-{Path(run).name}", "held-out", cal, run, override, gmap, args.cache
+                results,
+                f"held-{Path(run).name}",
+                "held-out",
+                cal,
+                run,
+                override,
+                gmap,
+                args.cache,
+                args.skip_energy,
             )
     records = [json.loads(p.read_text()) for p in sorted(results.glob("*.json"))]
     ps = [np.load(p) for p in sorted(results.glob("*.p.npy"))]
@@ -532,6 +548,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     null.add_argument("--out", type=Path, required=True)
     null.add_argument("--jobs", type=int, default=4)
     null.add_argument("--keep-calibrations", action="store_true")
+    null.add_argument(
+        "--skip-energy", type=float, action="append", default=[], metavar="MEV",
+        help="diagnostic only: leave the families of this energy step out of every judgement",
+    )  # fmt: skip
     g4 = sub.add_parser("g4", parents=[common], help="gate G4")
     g4.add_argument("--calibration", required=True)
     g4.add_argument("--candidate", required=True)

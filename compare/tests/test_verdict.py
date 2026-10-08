@@ -573,3 +573,80 @@ def test_constant_in_a_stochastic_column_is_not_exact(tmp_path: Path) -> None:
     bad[DMP][Key(DMP, "T", "#1", "events", ())] = 1001
     r = verdict.judge(cal, [MemoryExtract(bad)])
     assert r.passed and r.families[0].p <= 1 / 11  # an event, K = 10: p = min(p_stat, 1/(K+1))
+
+
+# ---- rows that appear and vanish together ----
+
+ISO = "work/out/Iso.dat"
+
+
+def _iso_run(
+    rng: np.random.Generator, extra: tuple[int, ...] = (), drop: tuple[int, ...] = ()
+) -> dict[str, dict[Key, float | int | str]]:
+    """Value-keyed rows (a level E* in eV): 12 levels always there, some rare ones that come and
+    go, each row holding E*, a spin J (small integers) and a yield."""
+    table: dict[Key, float | int | str] = {}
+    levels = [*range(1000, 13000, 1000), *extra]
+    levels = [e for e in levels if e not in drop]
+    for e in levels:
+        table[Key(ISO, "Iso", "g", "E*", (e,))] = e / 1000.0
+        table[Key(ISO, "Iso", "g", "J", (e,))] = float(1 + (e // 1000) % 5)
+        table[Key(ISO, "Iso", "g", "Yield", (e,))] = 1.0 + 0.2 * rng.standard_normal() + e / 1e4
+    for rare in (50001, 50002, 50003):  # present in a fraction of the ensemble runs
+        if rng.uniform() < 0.3:
+            table[Key(ISO, "Iso", "g", "E*", (rare,))] = rare / 1000.0
+            table[Key(ISO, "Iso", "g", "J", (rare,))] = 3.0
+            table[Key(ISO, "Iso", "g", "Yield", (rare,))] = 0.05 + 0.01 * rng.standard_normal()
+    return {ISO: table}
+
+
+@pytest.fixture(scope="module")
+def iso_calibration(tmp_path_factory: pytest.TempPathFactory) -> Calibration:
+    root = tmp_path_factory.mktemp("iso")
+    rng = np.random.default_rng(88)
+    members = [str(write_extract(root / f"s{i}", _iso_run(rng), root / "pool")) for i in range(20)]
+    calibrate(members, root / "cal", jobs=1, mde=[], input_sha256=SHA)
+    return Calibration.open(root / "cal")
+
+
+def test_a_row_never_seen_is_one_event(iso_calibration: Calibration) -> None:
+    """A level that no ensemble run had brings E*, J and Yield together: one event with
+    p = 1 / (K + 1), not three fields judged against the column floors."""
+    cal = iso_calibration
+    rng = np.random.default_rng(1)
+    plain = _judge(cal, [MemoryExtract(_iso_run(rng))])
+    assert plain.passed
+    files = _iso_run(rng)
+    for label, value in (("E*", 77.7), ("J", 4.0), ("Yield", 1.3)):
+        files[ISO][Key(ISO, "Iso", "g", label, (77700,))] = value
+    result = _judge(cal, [MemoryExtract(files)])
+    fam = _family(result, "Iso")
+    assert result.passed and fam.n_events == 1 and fam.n_mismatch == 0
+    assert fam.p == pytest.approx(1 / 21) or fam.p < 1 / 21
+    assert "never seen" in fam.mismatches[0].key and fam.mismatches[0].soft
+
+
+def test_rows_lost_together_are_one_event_only_if_the_key_set_varies(
+    iso_calibration: Calibration,
+) -> None:
+    cal = iso_calibration
+    rng = np.random.default_rng(2)
+    files = _iso_run(rng, drop=(3000, 4000, 5000))  # three rows every ensemble run had
+    result = _judge(cal, [MemoryExtract(files)])
+    fam = _family(result, "Iso")
+    assert result.passed and fam.n_events == 1
+    assert "lost" in fam.mismatches[0].key
+    # the candidate with its rows keeps no event at all
+    again = _judge(cal, [MemoryExtract(_iso_run(rng))])
+    assert not any(f.block == "Iso" and f.n_events for f in again.families)
+
+
+def test_skip_energy_is_a_diagnostic_filter(ensemble: tuple[Calibration, Path]) -> None:
+    cal, _ = ensemble
+    files = draw_run(np.random.default_rng(3), seed=9400)
+    files[DMP][Key(DMP, "B1", "#1", "title", ())] = "changed"  # structural: fails at E = 1 MeV
+    assert not _judge(cal, [MemoryExtract(files)]).passed
+    skipped = _judge(cal, [MemoryExtract(files)], skip_energies=[1.0])
+    assert skipped.passed and skipped.tested == 0  # both files are the 1 MeV step
+    other = _judge(cal, [MemoryExtract(files)], skip_energies=[2.0])
+    assert not other.passed and other.tested == N_COUNT + N_SCALAR

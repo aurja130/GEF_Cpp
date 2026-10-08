@@ -27,7 +27,8 @@ Artifact layout (a directory, storable with ``harness.store add DIR --id ID --ki
     One per source file: the union key layout (``extract.write_layout_npz``) and, per numeric field,
     ``cls`` / ``mean`` / ``v`` (class, ensemble mean or deterministic value, variance model),
     per label ``lfloor`` (variance floor of fields not seen nonzero), ``lquantum`` / ``lfano`` /
-    ``lpsi`` (event quantum, phi / q and quadratic dispersion of discrete count columns),
+    ``lpsi`` (event quantum, phi / q and quadratic dispersion of discrete count columns), per field
+    ``npres`` (ensemble runs that had the key),
     per text key ``tcls`` (0 deterministic, 1 stochastic) and ``tvals`` (JSON list, the value of
     deterministic text), per family ``fparams`` (columns ``PARAM_COLS``), ``nruns`` (runs that
     had the family) and the K leave-one-out draws ``loo_d`` / ``loo_m``.
@@ -173,6 +174,7 @@ class CalFamily:
     mode: FloatArray
     s2: FloatArray
     fcell: FloatArray
+    npres: NDArray[np.int64]
     tlabels: tuple[str, ...]
     tkmat: NDArray[np.int64]
     tcls: NDArray[np.int8]
@@ -224,6 +226,7 @@ class CalFile:
             e["mode"][n0:n1],
             e["s2"][n0:n1],
             e["fcell"][n0:n1],
+            e["npres"][n0:n1],
             f.tlabels,
             self.layout.tkmat[f.tkpos : f.tkpos + f.nt * (1 + f.twidth)].reshape(
                 f.nt, 1 + f.twidth
@@ -452,6 +455,7 @@ def _calibrate_file(job: tuple[str, int, list[str], str]) -> FileResult:
     mode_parts: list[FloatArray] = []
     s2_parts: list[FloatArray] = []
     fcell_parts: list[FloatArray] = []
+    npres_parts: list[NDArray[np.int64]] = []
     tcls_parts: list[NDArray[np.int8]] = []
     tvals: list[str] = []
     rows: list[FloatArray] = []
@@ -518,6 +522,7 @@ def _calibrate_file(job: tuple[str, int, list[str], str]) -> FileResult:
         mode_parts.append(fit.mode)
         s2_parts.append(fit.s2)
         fcell_parts.append(fit.fcell)
+        npres_parts.append(aligned.present.sum(axis=0).astype(np.int64))
         for g in map(int, np.unique(aligned.kmat[cls == CLS_STOCH, 0]).tolist()):
             if np.isfinite(fit.label_floor[g]):
                 floors.setdefault(aligned.labels[g], []).append(float(fit.label_floor[g]))
@@ -540,6 +545,7 @@ def _calibrate_file(job: tuple[str, int, list[str], str]) -> FileResult:
         "mode": _cat(mode_parts, np.float64),
         "s2": _cat(s2_parts, np.float64),
         "fcell": _cat(fcell_parts, np.float64),
+        "npres": _cat(npres_parts, np.int64),
         "tcls": _cat(tcls_parts, np.int8),
         "tvals": np.array(json.dumps(tvals)),
         "fparams": fparams,

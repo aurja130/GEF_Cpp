@@ -409,12 +409,57 @@ def judge_family(
     entries: list[tuple[str, float, str]] = []
     new_rows = np.flatnonzero(~matched)
     changed_rows: list[int] = new_rows[cmean_c[new_rows] != 0.0].tolist() if len(new_rows) else []
+    # keys that no ensemble run ever had. A key alone at its index (a histogram bin nobody
+    # filled) in a count column gets the exact discrete p, the bins being independent given the
+    # rates. Several never-seen fields at one index are a *row* (a level that appears in one run
+    # only brings E*, Events, J, Upper limit, Yield together; a spectrum energy brings Counts,
+    # Counts total, Yield norm., ...): the row is ONE event of the family, p = 1 / (K + 1), not
+    # one test per field, and a spin J of 4.5 is not a count of nine events.
+    fresh: list[str] = []
+    per_index: dict[tuple[int, ...], list[int]] = {}
     for r in changed_rows:
         label = labels_c[int(kmat_c[r, 0])]
-        if label not in derived and not untested:
-            entries.append((_row_key(labels_c, kmat_c[r].tolist()), float(cmean_c[r]), label))
+        if label in derived or untested:
+            continue
+        per_index.setdefault(tuple(kmat_c[r, 1:].tolist()), []).append(r)
+    for rows in per_index.values():
+        first_row = rows[0]
+        label = labels_c[int(kmat_c[first_row, 0])]
+        lid0 = cal_lid.get(label, -1)
+        q0 = float(fam.label_quantum[lid0]) if 0 <= lid0 < len(fam.label_quantum) else 0.0
+        ratio0 = float(cmean_c[first_row]) / q0 if q0 > 0.0 else 0.0
+        if (
+            len(rows) == 1
+            and q0 > 0.0
+            and abs(ratio0 - np.rint(ratio0)) <= INTEGRAL_TOL + 1e-5 * abs(ratio0)
+        ):
+            entries.append(
+                (_row_key(labels_c, kmat_c[first_row].tolist()), float(cmean_c[first_row]), label)
+            )
+        else:
+            fresh.append(_row_key(labels_c, kmat_c[first_row].tolist()))
+    if fresh:
+        _mismatch(
+            res, mism, f"<{len(fresh)} row(s) never seen: {fresh[0]}...>", "<absent>", "<new>"
+        )
     for i in moved_idx.tolist():
         entries.append((key_of(i), float(cm[i]), fam.labels[int(fam.kmat[i, 0])]))
+    # the symmetric case: rows every ensemble run had that the candidate lacks, in a family whose
+    # key set varies between ensemble runs (outside histograms, where an absent bin is a zero)
+    lost = np.zeros(n_cal, dtype=bool)
+    if kind != "dmp" and fam.null.n_stoch and len(fam.npres):
+        varies = bool(np.any((fam.npres > 0) & (fam.npres < k) & (fam.cls != CLS_DET)))
+        lost = varies & (fam.npres >= k) & ~np.any(got_present, axis=0)
+        if lost.any():
+            first = int(np.flatnonzero(lost)[0])
+            _mismatch(
+                res,
+                mism,
+                f"<{int(lost.sum())} row key(s) lost: {key_of(first)}...>",
+                "<present>",
+                "<absent>",
+            )
+            stat_fields &= ~lost
     new_sparse: list[bool] = []
     z_new: FloatArray = np.zeros(0)
     new_mean: FloatArray = np.zeros(0)
@@ -559,8 +604,15 @@ def _unseen_family(rel: str, block: str, group: str) -> CalFamily:
     return CalFamily(
         rel, block, group, (), empty_i, np.zeros(0, np.int8), np.zeros(0), np.zeros(0), np.zeros(0),
         np.zeros(0), np.zeros(0), np.zeros(0), np.zeros(0), np.zeros(0), np.zeros(0),
+        np.zeros(0, np.int64),
         (), empty_i, np.zeros(0, np.int8), [], null, 0, np.zeros(0), np.zeros(0),
     )  # fmt: skip
+
+
+def _skipped(rel: str, group: str, energies: Sequence[float]) -> bool:
+    """Diagnostic: the family belongs to one of the energy steps left out (``--skip-energy``)."""
+    label = family_energy(rel, group)
+    return bool(label) and any(abs(float(label) - e) <= 1e-9 * max(1.0, abs(e)) for e in energies)
 
 
 def remap_groups(fd: FileData, group_map: dict[str, str]) -> dict[tuple[str, str], int]:
@@ -592,6 +644,7 @@ def judge(
     allow_extra: bool = False,
     holm_total: str = "tested",
     alpha: float | None = None,
+    skip_energies: Sequence[float] = (),
 ) -> VerdictResult:
     """Judge a candidate set against a calibration; see the module docstring."""
     a = cal.alpha if alpha is None else alpha
@@ -619,6 +672,8 @@ def judge(
         variable_file = cf is not None and bool(np.any(cf.extra["nruns"] < cal.runs))
         cal_keys: set[tuple[str, str]] = set(cf.families) if cf is not None else set()
         for block, group in sorted(cal_keys | cand_keys):
+            if skip_energies and _skipped(rel, group, skip_energies):
+                continue
             if (block, group) not in cal_keys:
                 ks["extra"] += 1
                 fam = _unseen_family(rel, block, group)
