@@ -1,0 +1,56 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 Aurora Jahan
+// Licensed under the GNU GPL v3 or later, WITHOUT ANY WARRANTY; see LICENSE.txt.
+// Ported from the FreeBASIC 1.10.1 runtime library, Copyright (C) the FreeBASIC development team
+// (LGPL-2.0-or-later).
+
+// `Str` and `Print #` as GEF's compiled code performs them (M3.6a). Numbers are formatted by
+// the C library exactly as libfb does (`%.7g`, `%.16g`, `%lld`), in the "C" locale.
+
+#pragma once
+
+#include <cstddef>
+#include <cstdint>
+#include <string>
+#include <string_view>
+
+namespace gef::fb {
+
+// Str(): fb_FloatToStr ("%.7g"), fb_DoubleToStr ("%.16g"), fb_LongintToStr ("%lld"). A
+// trailing '.' would be removed (never produced by %g, kept for fidelity).
+[[nodiscard]] std::string str(float x);
+[[nodiscard]] std::string str(double x);
+[[nodiscard]] std::string str(std::int64_t x);
+
+// What follows an item in a Print statement: the mask fbc passes to the runtime.
+enum class PrintEnd : std::uint8_t {
+    None = 0,    // `;` (or `;` at the end of the statement)
+    Newline = 1, // end of statement
+    Pad = 2,     // `,`: advance to the next 14-column print zone
+};
+
+// The text written by a sequence of `Print #f` statements to one sequential file (libfb's
+// FB_FILE with width 0, not a console or pipe). It tracks libfb's line_length, the number of
+// characters since the last CR or LF, which zones (`,`) and Tab() depend on.
+class PrintFile {
+public:
+    void print(std::string_view s, PrintEnd end); // fb_PrintString
+    void print(float x, PrintEnd end);            // fb_PrintSingle: blank or '-', then %.7g
+    void print(double x, PrintEnd end);           // fb_PrintDouble: blank or '-', then %.16g
+    void print(std::int64_t x, PrintEnd end);     // fb_PrintLongint: "% lld"
+    void print_void(PrintEnd end); // fb_PrintVoid: `Print #f` with no item, or a trailing `,`
+    void tab(std::int32_t column); // fb_PrintTab: `Tab(column)`
+
+    [[nodiscard]] std::string const& text() const noexcept { return text_; }
+    [[nodiscard]] std::size_t line_length() const noexcept { return line_length_; }
+
+private:
+    void write(std::string_view s);
+    void pad();
+    void print_item(std::string_view s, PrintEnd end);
+
+    std::string text_;
+    std::size_t line_length_ = 0;
+};
+
+} // namespace gef::fb

@@ -1,6 +1,6 @@
 # Milestone 3: FreeBASIC Runtime Emulation
 
-**Status:** in progress (M3.1–M3.5 done, 2026-10-08)
+**Status:** in progress (M3.1–M3.5 and M3.6a done, 2026-10-08)
 **Strategy reference:** `IMPLEMENTATION_STRATEGY.md` §2.2, §2.3, §2.9 and §3, M3
 **Depends on:** M0, M1 (driver framework, `fbmt.py`, reseed vectors), M2 (exact comparison)
 **Unblocks:** M4 (data layer uses `DataReader`, arrays, conversions), M5 (physics functions use the maths intrinsics), M8 (samplers use `FbMtRng`), M13 (writers use the text formatting), and through them every later milestone
@@ -101,10 +101,10 @@ Tasks in execution order. Mark each one done here when finished, and update `CUR
 
 ### M3.6 Text formatting
 - [ ] Inventory script (`python3 -m tools.fbsrc.fb_templates`): lists every `Print Using` template and `Format` pattern in GEF.c with its argument types and BASIC locations. The output is committed as the coverage list.
-- [ ] `fb::str` (`Single`, `Double`, `Integer`), the `Print` number formatting (leading space for non-negatives, `Single` with 7 significant digits, `Double` with 15–16, exponent forms), comma zones, `;`, `Tab`, and line endings.
+- [x] `fb::str` (`Single`, `Double`, `Integer`), the `Print` number formatting (leading space for non-negatives, `Single` with 7 significant digits, `Double` with 15–16, exponent forms), comma zones, `;`, `Tab`, and line endings. (M3.6a, `fbrt/text.hpp`: `fb::str` and `fb::PrintFile`, transcribed from `str_convto_flt.c`, `str_ftoa.c`, `io_print*.c`, `io_printpad.c`, `io_spc.c`, `file_put.c`. `Single` prints with `%.7g`, `Double` with `%.16g`.)
 - [ ] `fb::print_using(template, args…)`: the full template machinery (`#`, `.`, `,`, `+`, `-`, `**`, `$$`, `^^^^`, `&`, `!`, `\ \`, literal text, `_` escapes, `%` overflow marker), transcribed from the runtime.
 - [ ] `fb::format(value, pattern)`: the numeric patterns GEF uses, plus the date pattern driven by an explicit time value, so tests are deterministic.
-- [ ] Tests: for every template and pattern in the inventory, a driver output over edge grids (±0, rounding halves at each printed digit, powers of ten across the representable range, values that overflow the field, NaN, ±Inf, denormals, large integers). Generic `Str`/`Print` tests over exhaustive `Single` patterns via hashing (D6) and `Double` grids.
+- [ ] Tests: for every template and pattern in the inventory, a driver output over edge grids (±0, rounding halves at each printed digit, powers of ten across the representable range, values that overflow the field, NaN, ±Inf, denormals, large integers). Generic `Str`/`Print` tests over exhaustive `Single` patterns via hashing (D6) and `Double` grids. (`Str`/`Print` part done in M3.6a: drivers `str_single.bas` (all 2³² `Single`, 14 min), `str_numbers.bas` (grids and 2²⁰ random and moderate `Double`, `Integer`), `print_file.bas` (19 `Print #` statements with zones, trailing `;`/`,`, `Tab` backwards and to column 60, embedded LF); goldens `m3-str-single`, `m3-str-numbers`, `m3-print-file`; `text_test.cpp` passes in `dev-gcc`, `dev-clang` and `release-exact`. The exhaustive test takes 235–370 s on all cores. Templates and patterns: M3.6b.)
 
 **Done when:** every inventoried template is byte-exact over its grid, and `Str`/`Print` of `Single` is exact for all 2³² patterns.
 

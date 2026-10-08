@@ -1,0 +1,21 @@
+{
+  "binary_sha256": "c98250fd4df1943680f865540fae17ef99642fc5c8f6350e139a5fbb1bc28936",
+  "command": [
+    "str_numbers"
+  ],
+  "cuts": [],
+  "driver": "str_numbers",
+  "driver_sha256": "a47a75a3fe1893de8339d43259bedb5182972037b232c6a927b08c4fecd49f13",
+  "fbc_version": "1.10.1",
+  "includes": [],
+  "outputs": {
+    "stdout.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "str_double_grid.txt": "0cd22ab5828980616098b0fe44d267ea0924435b662833474e0b6b4df2737eec",
+    "str_double_moderate.txt": "ba4e788c167970539f00c8a4fff8c7c8685038120f88f975a69e8f40fce7235f",
+    "str_double_random.txt": "2be12ab8a58cc539d8ff5fb70820005b1424326adf8d7551c7c9ca62f0a6993c",
+    "str_longint.txt": "6b4e3dbbcabee8af04b63c03fbf10d3710913473b4c0036b06f3eacf15554b5c",
+    "str_single_grid.txt": "43a879ef28d1ac14fe79e4f881bde8d563e6f961cd7f68189e51a7a1c6570c87"
+  },
+  "returncode": 0,
+  "run_wall_time_s": 0.732
+}

@@ -1,0 +1,19 @@
+abc
+abcabc
+ 1.5-2.25 0 3.402823e+38 1e-08
+ 0.1-1e+300 2.5
+ 42-7 0
+ 1.5          -2.25          0.1           42           abc
+exactly14chars              abc
+exactly14charsexactly14chars              abc
+abc           -7
+abc 1.5       
+         abc
+    abc             42
+line1
+xy  z         abc
+                                                            2.5
+
+
+ 1.5
+  -2.25

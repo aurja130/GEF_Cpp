@@ -5,7 +5,7 @@ GEF's BASIC is compiled by fbc 1.10.1 to C, and gcc compiles that C. fbc does no
 **Porting rule** (coding standards §5): port every arithmetic statement from its generated C (`python3 -m tools.fbsrc.fbline <file>:<line>`). The rules below explain that C and make it predictable; they do not replace looking at it.
 
 **Evidence:**
-- Probe programs `tools/fbsrc/probes/arith_probe1.bas`–`arith_probe3.bas`; `fbc -gen gcc -r` writes their C next to them (M3.2, 2026-10-08). Every "Generated C" cell below is quoted from that output.
+- Probe programs `tools/fbsrc/probes/arith_probe1.bas`–`arith_probe4.bas`; `fbc -gen gcc -r` writes their C next to them (M3.2 and M3.6a, 2026-10-08). Every "Generated C" cell below is quoted from that output.
 - The driver `harness/drivers/arith_rules.bas` evaluates one example per rule over 2,000 random input sets. Its output is the committed golden `m3-arith-rules`.
 - `Cpp_implementation/tests/fbc_arithmetic_test.cpp` writes each example the way these rules say and reproduces every result bit for bit, in `dev-gcc`, `dev-clang` and `release-exact` (`-O3`).
 
@@ -110,6 +110,19 @@ These are inline macros in the generated C, not runtime calls:
 ## R9 `If x <> x` is folded away
 
 In a branch condition fbc folds a comparison of a variable with itself: `If r <> r Then …` compiles to an unconditional jump past the block, and `If r = r Then …` to the block alone, so a NaN test written this way never fires. In an expression the comparison is kept: `n = (r <> r)` → `N = (int32)(int64)-(R != R)`. GEF does not use the idiom; drivers that test for NaN use the expression form (`math_single.bas`, M3.4).
+
+## R10 A literal multiplier is distributed over a sum with a literal
+
+`(x + a) * b`, with literals `a` and `b`, compiles to `x * b + (a·b folded)`. This also works through nested products and for subtracted literals; it does not happen for `/`, for a non-literal multiplier, or for a sum without a literal:
+
+| BASIC | Generated C |
+|---|---|
+| `y = (x - 0.5) * 2000` | `Y = (X * 0x1.F4p+10) + -0x1.F4p+9` |
+| `y = 2 * (x + 0.5)` | `Y = (X * 0x1.p+1) + 0x1.p+0` |
+| `y = (x * 3 + 0.5) * 2` | `Y = (X * 0x1.8p+2) + 0x1.p+0` |
+| `y = (x + 0.5) * t`, `(x + t) * 2`, `(x + 0.5) / 4`, `-(x + 0.5)` | kept as written |
+
+`(Rnd - 0.5) * 2000` therefore rounds once in the multiplication and once in the addition of −1000, not in `Rnd - 0.5` first. Run-time evidence: the input generators of `arith_rules.bas` and `str_numbers.bas`, reproduced bit for bit by `fbc_arithmetic_test.cpp` and `text_test.cpp`.
 
 ## Writing C++ that keeps fbc's order
 

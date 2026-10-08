@@ -1,0 +1,17 @@
+{
+  "binary_sha256": "0222b81efb34dd04a33b723986295148b2bf7773de72e94e60cded61952a193c",
+  "command": [
+    "print_file"
+  ],
+  "cuts": [],
+  "driver": "print_file",
+  "driver_sha256": "3d1e2fde9eafebf8348c10c194b2d2c0cbcf8f3a258d2644da81cd2da1571255",
+  "fbc_version": "1.10.1",
+  "includes": [],
+  "outputs": {
+    "print_file.txt": "8f50ab3a81467924ed2139b09c0b34e02ca59089748cf4fc015e6dafbad14fb8",
+    "stdout.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "returncode": 0,
+  "run_wall_time_s": 0.001
+}

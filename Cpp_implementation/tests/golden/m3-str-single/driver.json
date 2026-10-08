@@ -1,0 +1,17 @@
+{
+  "binary_sha256": "bbfb96483bd7ab9b74e6c83953955650a12d8c280a37d28ebce5bb6b9b6e48de",
+  "command": [
+    "str_single"
+  ],
+  "cuts": [],
+  "driver": "str_single",
+  "driver_sha256": "13c681ac358a7cc3eaa2474c274c243e758bac8f136631979a5b5977f1aca56c",
+  "fbc_version": "1.10.1",
+  "includes": [],
+  "outputs": {
+    "stdout.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "str_single.txt": "bfbdef841b238a906b95bdd2f6aebda7e84b39f269e625d66540b31bb16ad24e"
+  },
+  "returncode": 0,
+  "run_wall_time_s": 815.153
+}

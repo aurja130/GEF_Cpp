@@ -8,6 +8,7 @@ add_library(gef_fbrt STATIC
     fp_environment.cpp
     gef_math.cpp
     reseed.cpp
-    rng.cpp)
+    rng.cpp
+    text.cpp)
 target_include_directories(gef_fbrt PUBLIC "${PROJECT_SOURCE_DIR}/Cpp_implementation/src")
 gef_apply_policy(gef_fbrt)
