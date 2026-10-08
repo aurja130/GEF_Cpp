@@ -1,6 +1,6 @@
 # Milestone 3: FreeBASIC Runtime Emulation
 
-**Status:** in progress (M3.1, M3.2 and M3.5 done, 2026-10-08)
+**Status:** in progress (M3.1, M3.2, M3.3 and M3.5 done, 2026-10-08)
 **Strategy reference:** `IMPLEMENTATION_STRATEGY.md` §2.2, §2.3, §2.9 and §3, M3
 **Depends on:** M0, M1 (driver framework, `fbmt.py`, reseed vectors), M2 (exact comparison)
 **Unblocks:** M4 (data layer uses `DataReader`, arrays, conversions), M5 (physics functions use the maths intrinsics), M8 (samplers use `FbMtRng`), M13 (writers use the text formatting), and through them every later milestone
@@ -72,9 +72,9 @@ Tasks in execution order. Mark each one done here when finished, and update `CUR
 **Done when:** every rule in the document is backed by a probe whose generated C and run-time output are recorded.
 
 ### M3.3 Conversions and integer semantics (B-002)
-- [ ] `fb::cint`, `fb::clng`, `fb::cuint` (each matching `fb_F2L`, `fb_D2L`, `fb_D2UL`), `fb::int_` (floor), `fb::fix`, `fb::sgn`, integer `\` and `Mod`, and implicit `Single`↔`Double`↔integer conversions on assignment.
-- [ ] Wrapping arithmetic helpers for the operations where GEF's integers can overflow (D8).
-- [ ] Exhaustive tests over all `Single` patterns for the `Single`-argument conversions (D6). `Double` conversions get edge grids (±0, halves, 2⁵², 2⁶³ boundaries, NaN, ±Inf, denormals) plus 10⁶ random values. Out-of-range and NaN behaviour reproduces what the driver prints.
+- [x] `fb::cint`, `fb::clng`, `fb::cuint` (each matching `fb_F2L`, `fb_D2L`, `fb_D2UL`), `fb::int_` (floor), `fb::fix`, `fb::sgn`, integer `\` and `Mod`, and implicit `Single`↔`Double`↔integer conversions on assignment. (Named after the generated C instead, so ported statements map one to one: `fb::f2i`, `f2l`, `f2ul`, `d2i`, `d2l`, `d2ul`, `fix`, `sgn` (Single, Double, Integer), `idiv`, `imod`. No `int_`: fbc emits plain `floorf`/`floor` for `Int`, which M3.4 covers. Narrower targets (`Short`, `UByte`, `ULong`) are a C cast of `f2i`/`d2i`/`d2l` (`(uint32)fb_D2L(D)`), and integer-to-float conversions are plain casts.)
+- [x] Wrapping arithmetic helpers for the operations where GEF's integers can overflow (D8). (`fb::add/sub/mul/neg/abs`, `Integer` and `Long`.)
+- [x] Exhaustive tests over all `Single` patterns for the `Single`-argument conversions (D6). `Double` conversions get edge grids (±0, halves, 2⁵², 2⁶³ boundaries, NaN, ±Inf, denormals) plus 10⁶ random values. Out-of-range and NaN behaviour reproduces what the driver prints. (Drivers `conv_single.bas`, `conv_double.bas`, `int_ops.bas`; goldens `m3-conv-single` (hashes of 256 blocks of 2²⁴ patterns), `m3-conv-double` (57 grid values, 2²⁰ random bit patterns), `m3-int-ops`; tests in `conversion_test.cpp`. The exhaustive test takes 132 s in `dev-gcc` and 31 s in `release-exact`; it is tagged `[slow]`, which the sanitizer test presets and `ci.sh --quick` skip. One `-O3` difference was found and fixed in `fb::fix`, see `QUIRKS.md` B-001.)
 
 **Done when:** all conversion tests are bit-exact in every preset.
 
@@ -124,8 +124,8 @@ Tasks in execution order. Mark each one done here when finished, and update `CUR
 
 ### M3.9 CI, documentation and close-out
 - [ ] All new tests are tagged `[T1]` or `[T2]` and `[fbrt]`; the exhaustive ones are also tagged `[slow]` if over 10 s. CTest labels mirror the tags.
-- [ ] `scripts/ci.sh` gains a `release-exact` build-and-test step (today it builds `dev-gcc`, `dev-clang`, `asan-ubsan` and `tsan`), so the D7 check runs in CI. The full run includes the store-backed and `[slow]` tests; `--quick` excludes them.
-- [ ] `CODING_STANDARDS.md`: the `gef::fb` helpers become mandatory for conversions (replacing the M0 interim `static_cast` rule), with a pointer to `FBC_ARITHMETIC.md`.
+- [x] `scripts/ci.sh` gains a `release-exact` build-and-test step (today it builds `dev-gcc`, `dev-clang`, `asan-ubsan` and `tsan`), so the D7 check runs in CI. The full run includes the store-backed and `[slow]` tests; `--quick` excludes them. (Done in M3.3. `--quick` excludes `[slow]`; store-backed tests stay in, as they take about 2 s. The sanitizer test presets also exclude `[slow]`: the exhaustive `Single` loop is pure arithmetic and already runs in `dev-gcc`, `dev-clang` and `release-exact`. This narrows G1's "all presets" to the three non-sanitizer presets for the `[slow]` tests.)
+- [x] `CODING_STANDARDS.md`: the `gef::fb` helpers become mandatory for conversions (replacing the M0 interim `static_cast` rule), with a pointer to `FBC_ARITHMETIC.md`. (Done in M3.3, §2.4.)
 - [ ] `QUIRKS.md` (B-001, B-002, B-004, plus any new runtime quirk), `COVERAGE_MATRIX.md` (the "FreeBASIC numeric semantics" row and the T2 random-number cells close here), `IMPLEMENTATION_STRATEGY.md` (M3 status and any refinement), `CURRENT_PROJECT_STATE.md`. Mark this plan complete.
 
 ## 5. Exit gate (all must hold)

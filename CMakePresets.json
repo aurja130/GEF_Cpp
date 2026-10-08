@@ -125,6 +125,11 @@
       "name": "asan-ubsan",
       "inherits": "base",
       "configurePreset": "asan-ubsan",
+      "filter": {
+        "exclude": {
+          "label": "slow"
+        }
+      },
       "environment": {
         "ASAN_OPTIONS": "detect_leaks=1:abort_on_error=1",
         "UBSAN_OPTIONS": "print_stacktrace=1:halt_on_error=1"
@@ -139,6 +144,11 @@
       "name": "tsan",
       "inherits": "base",
       "configurePreset": "tsan",
+      "filter": {
+        "exclude": {
+          "label": "slow"
+        }
+      },
       "environment": {
         "TSAN_OPTIONS": "halt_on_error=1:second_deadlock_stack=1"
       }

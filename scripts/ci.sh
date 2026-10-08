@@ -7,10 +7,12 @@
 #
 # Usage: scripts/ci.sh [--quick]
 #   (default)  toolchain check; configure, build and test dev-gcc, dev-clang,
-#              asan-ubsan and tsan; clang-tidy; clang-format; ruff lint and format
+#              asan-ubsan, tsan and release-exact (the sanitizer presets skip
+#              [slow] tests); clang-tidy; clang-format; ruff lint and format
 #              check; basedpyright; pytest; validation-manifest and
 #              reference-store verification.
-#   --quick    dev-gcc configure/build/test and the Python steps only.
+#   --quick    dev-gcc configure/build/test without [slow] tests, and the
+#              Python steps only.
 #
 # Every step runs even if an earlier one failed, except steps that need a
 # build that failed. Each step's output goes to build/ci/<step>.log; the tail
@@ -27,7 +29,7 @@ case "${1:-}" in
     "") ;;
     --quick) quick=1 ;;
     -h | --help)
-        sed -n '8,18p' "$0" | sed 's/^# \{0,1\}//'
+        sed -n '8,20p' "$0" | sed 's/^# \{0,1\}//'
         exit 0
         ;;
     *)
@@ -79,7 +81,11 @@ skip_step() {
 
 preset_pipeline() {
     local preset="$1"
-    cmake --preset "$preset" && cmake --build --preset "$preset" && ctest --preset "$preset"
+    local exclude=()
+    # --quick skips [slow] tests (the exhaustive Single checks); the full run keeps them.
+    [[ $quick -eq 1 ]] && exclude=(-LE slow)
+    cmake --preset "$preset" && cmake --build --preset "$preset" &&
+        ctest --preset "$preset" "${exclude[@]}"
 }
 
 cpp_files() {
@@ -118,7 +124,7 @@ fi
 if [[ $quick -eq 1 ]]; then
     presets=(dev-gcc)
 else
-    presets=(dev-gcc dev-clang asan-ubsan tsan)
+    presets=(dev-gcc dev-clang asan-ubsan tsan release-exact)
 fi
 for preset in "${presets[@]}"; do
     run_step "build-test-$preset" preset_pipeline "$preset"

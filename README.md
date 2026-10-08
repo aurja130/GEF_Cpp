@@ -107,7 +107,7 @@ scripts/ci.sh           # everything
 scripts/ci.sh --quick   # dev-gcc build and tests, plus the Python checks
 ```
 
-The full run executes the toolchain check; configure, build and test for `dev-gcc`, `dev-clang`, `asan-ubsan` and `tsan`; clang-tidy; clang-format; ruff (lint and format); basedpyright; pytest; and validation-manifest and reference-store verification (skipped with a notice when `validation/` is absent). It prints a one-line summary per step and exits non-zero on any failure. Logs go to `build/ci/`.
+The full run executes the toolchain check; configure, build and test for `dev-gcc`, `dev-clang`, `asan-ubsan`, `tsan` and `release-exact` (the sanitizer presets skip tests tagged `[slow]`); clang-tidy; clang-format; ruff (lint and format); basedpyright; pytest; and validation-manifest and reference-store verification (skipped with a notice when `validation/` is absent). `--quick` runs the `dev-gcc` pipeline without `[slow]` tests and the Python steps. It prints a one-line summary per step and exits non-zero on any failure. Logs go to `build/ci/`.
 
 ### Running the BASIC reference
 

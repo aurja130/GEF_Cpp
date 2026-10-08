@@ -68,15 +68,14 @@ Ported identifiers keep their BASIC name in snake_case where that stays readable
 
 - BASIC `Single` → `float`; BASIC `Double` → `double`. BASIC `Integer` (64-bit in fbc on x86-64) → `std::int64_t`; `Long` → `std::int32_t`; check the generated C (§5) when in doubt.
 - Literals follow FreeBASIC typing: an unsuffixed BASIC literal with a decimal point is a `double`; write it as a `double` literal and convert explicitly where BASIC narrows.
-- **Every Single/Double/integer conversion goes through the `gef::fb` helpers once M3 provides them** (`fb::cint` round-half-even, `fb::int_` floor, `fb::fix`, integer `\`, etc.).
-- **Until M3 lands**, write such conversions as an explicit `static_cast` with a comment stating the FreeBASIC semantics being reproduced, for example:
+- **Float → integer conversions go through the `gef::fb` helpers** (`fbrt/convert.hpp`), named after the macro in the generated C: `fb_F2L(S$)` → `fb::f2l(s)`, `fb_D2I(D$)` → `fb::d2i(d)`, likewise `f2i`, `f2ul`, `d2l`, `d2ul`, `fix`, `sgn`. They round half to even and reproduce fbc's out-of-range results; a bare `static_cast` from floating point to an integer is not allowed.
+- **`Integer`/`Long` arithmetic that can overflow uses `fb::add`, `sub`, `mul`, `neg`, `abs`** (fbc compiles with `-fwrapv`; C++ signed overflow is undefined). Integer `\` and `Mod` are `fb::idiv` and `fb::imod`.
+- `Single` ↔ `Double` and integer → floating-point conversions are written as explicit `static_cast`s in the places the generated C has its casts (`Cpp_implementation/src/fbrt/FBC_ARITHMETIC.md`, rules R1–R5), for example:
 
   ```cpp
-  // GEF.bas:8392 — division in double, narrowed to Single on assignment
+  // GEF.bas:8392: division in Double, narrowed to Single on assignment
   e_ratio = static_cast<float>(static_cast<double>(e_a) / e_b_double);
   ```
-
-  These casts are replaced by `gef::fb` helpers when M3 closes.
 - Never rely on implicit promotion or narrowing; the warnings in §2.5 make that a compile error.
 
 ### 2.5 Warnings, floating-point flags and static analysis

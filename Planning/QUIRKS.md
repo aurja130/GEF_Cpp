@@ -411,14 +411,15 @@ These describe how the toolchain, not GEF, can make the C++ results differ from 
 
 - **Source:** `manifests/toolchain.txt` `[fbc -v backend capture]`: fbc compiles the generated C with `gcc … -O0 …`. `MILESTONE_0_PLAN.md` §2 (note on optimisation level) and §7 (risk table).
 - **Issue:** the exact-mode C++ build does not fix the optimisation level. With SSE, round-to-nearest and FMA contraction off, IEEE results should not depend on it, except where GCC constant-folds or inlines libm calls differently.
-- **Status:** open risk. Measured by the M3/M5 T1 bit-exact tests. Fallback: compile the affected translation units at `-O0`.
+- **Status:** open risk, measured per function by the M3/M5 T1 bit-exact tests, which run in `release-exact` (`-O3`) as well. Fallback: compile the affected translation units at `-O0`.
+- **Finding 1 (M3.3, 2026-10-08):** `fb::fix` written as libfb computes it, `trunc(|x|) * sgn(x)`, differs at `-O3` for NaN inputs. Without `-fsignaling-nans`, gcc folds the multiplication by −1 into a negation, which keeps the NaN's sign and does not quiet a signalling NaN; libfb (and our `-O0` builds) return `|x|` quieted. Fixed in the source rather than by flags: `fix` handles NaN with explicit bit operations and the other cases with `t`/`-t`/`0`, which no optimisation can change. Lesson for later ports: a multiplication by a literal −1 (or by a sign) can lose its NaN behaviour at `-O3`.
 - **Owning milestone:** M3, M5
 
 ### B-002 fbc's backend gcc also passes `-fwrapv -fno-strict-aliasing`
 
 - **Source:** `manifests/toolchain.txt`: `gcc -m64 -march=x86-64 … -O0 -fno-strict-aliasing -frounding-math -fno-math-errno -fwrapv …`. The C++ exact-mode flags (`Cpp_implementation/cmake/GefCompilerPolicy.cmake`, `gef_exact_fp`; coding standards §2.5) mirror `-march=x86-64 -frounding-math -fno-math-errno` but not `-fwrapv` or `-fno-strict-aliasing`.
 - **Issue:** signed integer overflow in the BASIC program wraps (two's complement), because GEF.c is compiled with `-fwrapv`; in C++ it is undefined behaviour. [INFERENCE] `-fno-strict-aliasing` matters for fbc's pointer-cast array access in GEF.c, not for idiomatic C++.
-- **Status:** open. M3's integer-conversion and arithmetic helpers must make any wrapping that BASIC relies on explicit (unsigned arithmetic or checked conversion) instead of relying on a compiler flag.
+- **Status:** resolved for the runtime layer (M3.3). `gef::fb::add/sub/mul/neg/abs` (`Integer` and `Long`) wrap in unsigned arithmetic, verified against `int_ops.bas` (19 × 19 `Integer` and 13 × 13 `Long` edge pairs, golden `m3-int-ops`); UBSan in `asan-ubsan` runs the same tests. fbc evaluates `Long` `+`, `-`, `*` in 64 bits and truncates (`(int32)((int64)A * (int64)B)`), which equals 32-bit wrapping. Integer `\` and `Mod` are C `/` and `%`; a zero divisor or `&h8000000000000000 \ -1` traps (SIGFPE) in BASIC and throws `std::domain_error` in C++. Ported code must use these helpers wherever an `Integer` or `Long` operation can overflow.
 - **Owning milestone:** M3
 
 ### B-003 `Compilationstamp` makes emitted C and binaries time-dependent

@@ -1,0 +1,17 @@
+{
+  "binary_sha256": "08d884c07917b728520afb81c74f701bcf668fc9405a093be3a33ff3ba8f9314",
+  "command": [
+    "conv_single"
+  ],
+  "cuts": [],
+  "driver": "conv_single",
+  "driver_sha256": "1365e7291e6edce5f6515304be832e59d3be0b4f2aa0497888723459d4d5c660",
+  "fbc_version": "1.10.1",
+  "includes": [],
+  "outputs": {
+    "conv_single.txt": "a19ed935f4874fbfcf12aeedbd2b5f84e6d5d0c7a65a3bfb93c2edf438fb6c0c",
+    "stdout.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "returncode": 0,
+  "run_wall_time_s": 76.711
+}

@@ -4,6 +4,7 @@
 
 # FreeBASIC runtime emulation (namespace gef::fb).
 add_library(gef_fbrt STATIC
+    convert.cpp
     fp_environment.cpp
     reseed.cpp
     rng.cpp)
