@@ -10,10 +10,10 @@
 #        build, compare byte for byte (masked)                       ~65 min, 4 GEF runs
 #   g23  G2 repeatability and G3 neutrality on m1_rn215_short, normal and reseed mode,
 #        probes/logging traced at steps 2 and 8 (18.5 MeV), passes 0 and 31    ~45 min, 11 runs
-#   g4   minicheck three-way rule on the g1 ref-1 tapes; runs the independent Cf-252
-#        ref-1 run (T tape) first if it is missing                  ~18 min first time
+#   g4   the g1 ref-1 runs judged by the M2 statistical verdict against the stored
+#        calibrations m2-cal-m1-rn215-short and m2-cal-m1-cf252-gs   ~2 min, no GEF runs
 #   all  g1, g23 and g4
-# Results: DIR/g1/<input>/{ref,seed}, DIR/g23/<run>, DIR/g4/cf252_t, plus one log per gate.
+# Results: DIR/g1/<input>/{ref,seed}, DIR/g23/<run>, DIR/verdict_<input>.txt, one log per gate.
 # Exit status: 0 if every requested gate passed, 1 otherwise.
 
 set -uo pipefail
@@ -111,34 +111,21 @@ run_g23() {
     for b in r_probes r_rnd r_rp; do compare "G3 reseed" "$dir/r_a" "$dir/$b"; done
 }
 
-minicheck() { # minicheck <label> <args...>
-    local label=$1
-    shift
-    if python3 -m harness.minicheck "$@" >"$out/minicheck_$label.txt" 2>&1; then
-        echo "PASS G4 $label: $(tail -n 1 "$out/minicheck_$label.txt")"
+verdict() { # verdict <label> <calibration id> <run dir>
+    local label=$1 calibration="validation/reference_store/captures/$2" run=$3
+    local report="$out/verdict_$label.txt"
+    if python3 -m compare.verdict --calibration "$calibration" --candidate "$run" \
+        --text "$report" >"$out/verdict_$label.log" 2>&1; then
+        echo "PASS G4 $label: $(head -n 1 "$report")"
     else
-        echo "FAIL G4 $label: $(tail -n 1 "$out/minicheck_$label.txt") (report: $out/minicheck_$label.txt)"
+        echo "FAIL G4 $label: $(head -n 1 "$report" 2>/dev/null) (report: $report)"
         failed=1
     fi
 }
 
 run_g4() {
-    local cf_t="$out/g4/cf252_t"
-    if [[ ! -d "$cf_t" ]]; then
-        mkdir -p "$out/g4"
-        python3 -m harness.run --binary "$(binary seed)" --input harness/inputs/m1_cf252_gs.in \
-            --seed 20261008 --out "$cf_t" >"$out/g4/cf252_t.log" 2>&1 || {
-            echo "FAIL G4: independent Cf-252 run failed"
-            failed=1
-            return
-        }
-    fi
-    minicheck rn215 "$out/g1/m1_rn215_short/seed/work/ENDF/GEFY_86_214_n.dat" \
-        validation/reference/gefy_nfy_ENDF/GEFY_86_214_n.dat --events 1000000 \
-        --third validation/test_run/ENDF/GEFY_86_214_n.dat
-    minicheck cf252 "$out/g1/m1_cf252_gs/seed/work/ENDF/GEFY_98_252_s.dat" \
-        validation/reference/gefy_sfy_ENDF/GEFY_98_252_s.dat --events 10000000 \
-        --third "$cf_t/work/ENDF/GEFY_98_252_s.dat"
+    verdict rn215 m2-cal-m1-rn215-short "$out/g1/m1_rn215_short/seed"
+    verdict cf252 m2-cal-m1-cf252-gs "$out/g1/m1_cf252_gs/seed"
 }
 
 case "$gate" in

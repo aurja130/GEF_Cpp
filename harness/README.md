@@ -74,16 +74,15 @@ python3 -m harness.driver run rnd_stream -- 42 1000000
 
 A driver is a FreeBASIC program in `drivers/`. `'@include-source <file>` copies a GEF source file next to it; `'@cut <file>:<first>-<last> as <name>.bi` extracts a line range (e.g. one function) so it can be included. `driver.json` records the source, binary and output hashes and every cut. `rnd_stream` writes the `Randomize s,3` + `Rnd` stream as u32 hex; seed 42 × 10⁶ is stored as `m1-golden-rnd-stream-42` and matches `harness.fbmt`, the Python reference of fbc's generator.
 
-## Logs, probes and statistics
+## Logs and probes
 
 ```sh
 python3 -m harness.rndlog summary work/rnd.log
 python3 -m harness.rndlog scopes work/rnd.log --master 12345   # reseed mode: draws outside scopes, stream checks
 python3 -m harness.probes summary work/probes/P3.txt
-python3 -m harness.minicheck <tape R> <library tape L> --events 1000000 --third <tape T>
 ```
 
-`minicheck` is the provisional statistical check of plan §4.9 (three-way rule against the library and an independent BASIC run). M2's comparison toolkit replaces it.
+Comparisons of runs (exact field by field, or statistical against a calibration) are done with the `compare` package (M2, `compare/README.md`). M1's provisional `minicheck` was retired there.
 
 ## Python references for M3
 

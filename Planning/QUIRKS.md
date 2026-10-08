@@ -392,6 +392,17 @@ Tool commands are run from the repository root: `python3 -m tools.fbsrc.fbline <
 - **C++ symbol:** not yet ported
 - **Owning milestone:** M12
 
+### Q-030 `.par` files print an unassigned date (`30.12.1899, 00:00:00`)
+
+- **BASIC location:** `GEF.bas:5165` (local `Dim As Double Rdatetime`), `GEF.bas:5178-5179` (print)
+- **Mechanism:** the parameter-file block declares its own local `Rdatetime` (5165) and prints `Format(Rdatetime, "dd.mm.yyyy, hh:mm:ss")` without ever assigning it. GEF.c:57176 formats `RDATETIME$11`, which is 0.0, so FreeBASIC prints the date serial 0. The other output blocks assign `Rdatetime = Now` before printing.
+- **Effect:** every `tmp/*.par` "Output written on" line reads `30.12.1899, 00:00:00` instead of the run time. It is the one time stamp that is deterministic, so `harness/masks.toml` deliberately does not mask it.
+- **Evidence status:** *confirmed in output*
+- **Evidence:** all 60 such lines in `validation/test_run/tmp/GEF_86_215_n.par`; `fbline GEF.bas:5179`, `fbdef Rdatetime` (five separate local declarations).
+- **Fidelity switch:** `fix_par_timestamp`
+- **C++ symbol:** not yet ported
+- **Owning milestone:** M13
+
 ## 5. Build notes (not GEF quirks)
 
 These describe how the toolchain, not GEF, can make the C++ results differ from the reference binary. They have no fidelity switch.
@@ -457,6 +468,7 @@ These describe how the toolchain, not GEF, can make the C++ results differ from 
 | Q-027 | `UBound(_NZPOST,3)` on a 2-D array | `Spectra.bas:1758-1759` | confirmed by fbc C | `fix_d_nzpost_bounds_check` | M12 |
 | Q-028 | `NN.dmp` comment says "protons" | `GEF.bas:15289` | confirmed in output | `fix_nn_dmp_comment` | M13 |
 | Q-029 | `d_NZIcumu` capped only in printed window | `Branchings.bas:876-899, 963-978` | read only | `fix_cumulative_uncertainty_cap` | M12 |
+| Q-030 | `.par` files print an unassigned date | `GEF.bas:5165, 5179` | confirmed in output | `fix_par_timestamp` | M13 |
 | B-001 | Optimisation level vs fbc `-O0` | (toolchain) | open risk | — | M3, M5 |
 | B-002 | fbc gcc passes `-fwrapv -fno-strict-aliasing` | (toolchain) | open | — | M3 |
 | B-003 | `Compilationstamp` needs `SOURCE_DATE_EPOCH` | `GEF.bas:17` | handled (M1) | — | M1 |

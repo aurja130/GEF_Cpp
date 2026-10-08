@@ -83,11 +83,23 @@ Both kinds are required. Passing differential tests without integral tests prove
 | **T0: Data** | differential | Embedded tables: nuclide properties, isomer table, decay branchings, masses, shell and deformation tables, ENDF MAT numbers | Exact equality, entry by entry |
 | **T1: Deterministic functions** | differential | Pure functions such as masses (`LyMass`, `AME2020`, `U_MASS`), shell and pairing terms, barriers (`BFTF*`), level densities and temperatures, `Getyield`, `Masscurv`, `Erf`, `U_Gauss`, rounding helpers. Also the per-nucleus tables built before the event loop (mode yields, widths, `EPART` energy sorting, Z(A) polarisation) | Bit-exact where both sides use the same precision; otherwise a stated ULP or relative bound justified per function |
 | **T2: Samplers** | differential | Random distributions (`PGauss`, `PBox2`, `PMaxwell*`, `PLinGauss`, `PExp`, `PPower*`) and single physics stages driven with controlled random inputs | Same outputs for the same random stream (T2a). Same distribution under independent streams, checked with KS/χ² (T2b) |
-| **T3: Seeded trajectory** | differential/integral | Whole event histories with both codes on the same fixed seed and the same FreeBASIC-compatible generator | Identical event-by-event output for as long as the arithmetic is reproduced exactly. The point of first divergence is reported |
-| **T4: Single-system integral** | integral | Every output of one GEF calculation: all `dmp` analyzers, `out/` sections, ENDF MT454/MT459, uncertainties, covariances and correlations | Statistical agreement (§4.5) |
+| **T3: Seeded trajectory** | differential/integral | Whole calculations with both codes on the same fixed seed and the same FreeBASIC-compatible generator: every output file, every event | **Identical output** (timestamps masked). Any difference is a defect of the port; the point of first divergence is reported |
+| **T4: Statistical integral** | integral | Every output of one GEF calculation: all `dmp` analyzers, `out/` sections, ENDF MT454/MT459, uncertainties, covariances and correlations | Statistical agreement (§4.5). Used where identical output is impossible by design: optimised and parallel C++ modes against the exact C++ code |
 | **T5: Library integral** | integral | Full regeneration of `gefy_nfy` and `gefy_sfy` compared with `validation/reference/` | Statistical agreement across all 382 tapes and all energies, with no systematic trend over Z, A or E |
 
-T3 is the strongest evidence and also the most expensive to reach. It requires the C++ code to offer, as an option, a generator that reproduces FreeBASIC's Mersenne Twister. That includes FreeBASIC's own seeding (an LCG fill rather than standard `init_genrand`), its conversion of random numbers to `Double`, and `PGauss`'s cached second value. T3 is a goal we pursue, not a precondition for release. T4 and T5 are the release criteria.
+**Exact reproduction first (decision 2026-10-08).** The port is built in two phases.
+
+1. **Phase 1: exact reproduction.** The C++ code reproduces the BASIC arithmetic exactly. A seeded C++ run gives the same output bytes as the seeded BASIC reference binary, timestamps masked. T0–T3 are the acceptance criteria. T3 is therefore the release criterion of the port, not an optional goal.
+   - This needs a generator that reproduces FreeBASIC's Mersenne Twister: its own seeding (an LCG fill, not the standard `init_genrand`), its conversion of random numbers to `Double`, and `PGauss`'s cached second value.
+   - Every divergence is a defect to be found and fixed. Per-event reseeding and draw logs localise each one.
+   - A divergence that provably cannot be removed (for example a libm result that cannot be reproduced) needs a written analysis and the user's approval. It is then judged by T4 for the affected outputs only.
+2. **Phase 2: optimisation and improvement.** Faster code, parallel execution and corrected quirks behind fidelity switches are compared against the **exact C++ code**, not against BASIC:
+   - T3 where the random stream is unchanged;
+   - T4 where it changes by design.
+
+   The exact C++ code is fast and freely instrumentable, so null-calibration ensembles can be as large as the statistics need. With 20 BASIC runs per input they cannot (M2 completion notes).
+
+The reason for this order: testing an optimised implementation directly against BASIC needs statistical tests of every output at extreme confidence levels, calibrated from BASIC runs that are expensive and that the project can only patch minimally. Exact reproduction removes that problem for the port itself.
 
 ### 4.3 Making the BASIC side testable
 
@@ -145,17 +157,16 @@ Integral comparisons are statistical, and the metric has to measure Monte Carlo 
 
 ## 5. Definition of done
 
-The C++ implementation counts as a correct recreation of GEF when:
+The C++ implementation counts as a correct recreation of GEF when, in exact mode:
 
 1. T0 data tests are exact for every table.
-2. T1 function tests pass at their stated precision bounds over the full input domain used by GEF.
-3. T2 sampler tests pass for every distribution and physics stage.
-4. T4 integral tests pass for every cell of the coverage matrix in §4.4.
-5. T5 regeneration of both reference libraries agrees statistically with `validation/reference/` across all tapes and energies, with no systematic trend.
-6. The mutation checks in §4.5 are caught by the suite.
-7. Every intentional difference from the BASIC behaviour is documented, switchable and measured.
+2. T1 function tests are bit-exact over the full input domain used by GEF. A stated ULP bound is acceptable only with a written reason and the user's approval.
+3. T2a sampler tests reproduce the BASIC draw-by-draw behaviour for every distribution and physics stage.
+4. T3 seeded runs give output identical to the BASIC reference binary for every cell of the coverage matrix in §4.4, at production settings.
+5. T5 regeneration of both reference libraries agrees statistically with `validation/reference/` across all tapes and energies, with no systematic trend. The library was produced from clock seeds by a build whose seeds were not recorded, so this comparison can only be statistical.
+6. Every intentional difference from the BASIC behaviour is documented, switchable and measured.
 
-T3 seeded trajectory equivalence, if achieved, adds the strongest evidence on top.
+Optimised and parallel modes (phase 2) are done when they pass T3 (unchanged random stream) or T4 (changed stream) against the exact C++ code, and when planted faults (§4.5) are detected.
 
 ## 6. Guiding principles
 
@@ -163,4 +174,5 @@ T3 seeded trajectory equivalence, if achieved, adds the strongest evidence on to
 - **Prove, don't assume.** No component is "ported" until a differential test has compared it with the original.
 - **Reproducibility is mandatory.** Every comparison records inputs, seeds, binary hashes and tolerances, and can be rerun by someone else.
 - **Readable over clever.** The C++ code should be the version of GEF a physicist can read, test and extend. The original's structure is not a template to copy.
+- **Exact first, then optimise.** The port reproduces BASIC bit for bit before anything is optimised. Optimisations are measured against the exact C++ code, never directly against BASIC.
 - **Measure performance, never at the expense of fidelity.** Speed-ups are welcome and measured against the ~1 h 46 min per nucleus baseline. They are accepted only when the test suite still passes.

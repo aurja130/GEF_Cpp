@@ -79,19 +79,15 @@ __all__ = [
     "EndfTape",
     "ListRecord",
     "Mt451",
-    "Nuclide",
     "RawLines",
     "Section",
-    "Tape",
     "Yields",
     "format_float",
-    "mt454_tapes",
     "observables",
     "observables_from",
     "parse_endf_float",
     "parse_text",
     "read",
-    "read_mt454",
     "render",
     "roundtrip",
 ]
@@ -626,56 +622,3 @@ def observables_from(endf: EndfFile, rel: str) -> Iterator[tuple[Key, Value]]:
 def observables(path: Path, rel: str) -> Iterator[tuple[Key, Value]]:
     """All observables of the ENDF file at ``path``; ``rel`` is the run-relative path."""
     return observables_from(read(path), rel)
-
-
-# --------------------------------------------------------------------------------------------
-# MT454 view (harness.minicheck)
-# --------------------------------------------------------------------------------------------
-
-
-@dataclass(frozen=True)
-class Nuclide:
-    """One fission product: ``za`` = 1000*Z + A, isomeric ``state`` (FPS), yield, uncertainty."""
-
-    za: int
-    state: int
-    y: float
-    dy: float
-
-    @property
-    def z(self) -> int:
-        return self.za // 1000
-
-    @property
-    def a(self) -> int:
-        return self.za % 1000
-
-
-# energy [eV] -> nuclides, in file order
-type Tape = dict[float, list[Nuclide]]
-
-
-def mt454_tapes(text: str, where: str = "<text>") -> list[Tape]:
-    """The MF8/MT454 yields of every tape of ``text``, ``{energy: [Nuclide, ...]}`` each."""
-    out: list[Tape] = []
-    for tape in parse_text(text, where).tapes:
-        result: Tape = {}
-        for sec in tape.sections(8, 454):
-            content = sec.content
-            assert isinstance(content, Yields)
-            for lst in content.lists:
-                energy = lst.head.values[0]
-                if energy in result:
-                    raise _fail(where, sec.lineno, f"duplicate energy {energy:g}")
-                v = lst.values
-                result[energy] = [
-                    Nuclide(int(v[j]), int(v[j + 1]), v[j + 2], v[j + 3])
-                    for j in range(0, len(v), 4)
-                ]
-        out.append(result)
-    return out
-
-
-def read_mt454(path: Path) -> list[Tape]:
-    """The MF8/MT454 yields of every tape of the file at ``path``."""
-    return mt454_tapes(path.read_bytes().decode("latin-1"), str(path))

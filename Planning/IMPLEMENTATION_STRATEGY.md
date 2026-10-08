@@ -123,7 +123,7 @@ flowchart TD
   - `Single`-variable `^2` evaluated as `x*x` in `float`; other `^` via `pow`;
   - the custom `Erf`/`Tanh`/`Min`/`Max`.
   - Build flags: `-ffp-contract=off`, no `-ffast-math`, no FMA, glibc libm, x86-64 SSE.
-  - This mode is what makes T1 and T3 bit-exact comparison possible.
+  - This mode is what makes T1 and T3 bit-exact comparison possible. It is the acceptance mode of the whole port (phase 1, §2.9).
 - **No "improved precision" mode during the port.** Changing precision is a quirk-level decision taken after release (§2.1).
 
 ### 2.3 Random-number architecture
@@ -134,7 +134,7 @@ flowchart TD
 - **Per-event reseed mode**, available in both the C++ code and the BASIC harness:
   - Before each pre-pass history, each perturbation draw block and each event, the generator is reseeded from (master seed, scope, index), and the `PGauss` cache is reset.
   - This turns T3 from one fragile process-long trajectory into many independent per-event comparisons, so one divergence cannot poison the rest.
-- **Parallel mode (M17):** per-event substreams derived from the master seed, so results do not depend on thread count. It is validated statistically (T4/T5) against exact mode, not by trajectory.
+- **Parallel mode (M17):** per-event substreams derived from the master seed, so results do not depend on thread count. It is validated statistically (T4) against the exact C++ code, not by trajectory and not directly against BASIC.
 
 ### 2.4 State model replaces globals
 
@@ -212,9 +212,9 @@ The submodule is never edited. The harness:
   - KS tests for distributions;
   - control of the false-alarm rate across thousands of comparisons.
 - **Null calibration:**
-  - For every T4/T5 metric, run BASIC against BASIC with K different seeds to measure the natural spread, including noise common to a whole energy step (e.g. the 18.5 MeV outlier in the test run).
-  - The C++ code passes when its distance to BASIC falls inside the BASIC-to-BASIC spread.
-  - This is the basis of every statistical acceptance threshold.
+  - Phase 1 (§2.9): run BASIC against BASIC with K different seeds to measure the natural spread, including noise common to a whole energy step (e.g. the 18.5 MeV outlier in the test run). In phase 1 statistics are only a diagnostic and the T5 library check. The port is accepted by exact equality.
+  - Phase 2: calibrate from the exact C++ code. It is fast enough for large ensembles (K in the hundreds or more). M2 showed that 20 BASIC runs cannot calibrate per-bin tails at the confidence levels a full-output comparison needs (M2 plan, completion notes).
+  - A candidate passes when its distance to the reference falls inside the calibrated spread. This is the basis of every statistical acceptance threshold.
 - **Sensitivity proof:** planted faults in the C++ build must be detected (vision §4.5).
 
 ### 2.8 Proposed C++ layout
@@ -248,6 +248,19 @@ tools/           data converter and other generators
 - Validation artifacts stay outside git (`validation/` is gitignored).
 - What is committed: manifests of inputs, seeds, binary hashes and SHA-256 checksums of stored reference outputs.
 
+### 2.9 Two phases: exact reproduction, then optimisation (decision 2026-10-08)
+
+- **Phase 1 (M3–M16): exact reproduction.** Every milestone proves its component bit-exact against BASIC (T0–T3). Integral acceptance is T3: a seeded C++ run in exact mode writes the same output bytes as the seeded `ref-1` run, timestamps masked, in normal mode at production settings.
+  - Per-event reseed mode and the `Rnd` draw logs localise divergences.
+  - A divergence is a defect. It is triaged to its first differing draw or value and fixed.
+  - A divergence that provably cannot be removed needs a written analysis and the user's approval. Its outputs are then judged by T4.
+- **Phase 2 (M17 onward): optimisation and improvement.** Performance work, parallel mode and fidelity-switch fixes are judged against the **exact C++ code**:
+  - T3 where the random stream is unchanged;
+  - T4 where it changes by design.
+
+  The exact C++ code is the oracle from then on: it can be instrumented, rerun and ensembled freely, unlike the BASIC program.
+- **Why:** comparing an optimised implementation directly with BASIC requires statistical tests of every output at extreme confidence levels. Those tests can only be calibrated from BASIC runs that are expensive and that the project patches minimally. Exact reproduction makes the port's correctness a yes/no question; statistics are needed only where differences are intended.
+
 ---
 
 ## 3. Milestones
@@ -259,8 +272,8 @@ tools/           data converter and other generators
   - T0: data, exact;
   - T1: deterministic functions;
   - T2a: same random stream; T2b: same distribution;
-  - T3: seeded trajectory;
-  - T4: single-system integral;
+  - T3: seeded trajectory, identical output; the integral acceptance tier of phase 1 (§2.9);
+  - T4: statistical integral; phase 2 only, against the exact C++ code;
   - T5: library integral.
 - **Probe-fed tests:** a C++ component consumes inputs captured from BASIC probes and must reproduce the BASIC outputs captured at the matching probe. This lets downstream components be built and proven before upstream physics exists.
 - **Plans:** every milestone opens with a plan file. It closes with an update to the coverage matrix and the quirk register.
@@ -369,23 +382,25 @@ Two tracks run in parallel after M5 and meet at M14:
 
 ### M2 — Comparison toolkit
 
-**Goal:** turn "same output" into automated, calibrated verdicts (§2.7).
+**Goal:** turn "same output" into automated verdicts (§2.7): exact field-level comparison of any two runs, and calibrated statistical verdicts.
+
+**Status:** complete (2026-10-08), with the statistical part re-scoped after the phase decision (§2.9). See `Planning/MILESTONE_2_PLAN.md`.
 
 **Scope:**
 - Parsers for `dmp`, `out/`, ENDF MF8, `mvd`, `par` and probe dumps.
 - Exact comparators with masks.
-- Statistical comparators: Poisson z per bin and per nuclide, binomial tests, covariance-aware χ², KS.
-- Multiple-comparison control.
+- Statistical comparators: Poisson z per bin and per nuclide, discrete low-count tests, multiple-comparison control (Holm).
 - Report generation that pinpoints the failing observable, energy and bin.
-- A null-calibration workflow running BASIC against BASIC with K seeds.
+- A null-calibration workflow from K seeded runs.
 
 **Proven by:**
-- The parsers round-trip every file in `validation/test_run/` and `validation/reference/`.
-- BASIC-against-BASIC runs on the Rn-215 case pass at the designed false-alarm rate.
-- Synthetic perturbations of BASIC output are detected, e.g. a yield scaled by 2%, a shifted mass bin, a dropped isomer.
-- The M1 G4 exception is explained by the calibration: at Rn-215 18.5 MeV the pre-pass decides the chance split from about 15 fissions, so ref-1 (0 of 15 second-chance) deviates from the library at independent z_rms 2.47 (capture `m1-g1-rn215-ref1`). The null calibration must cover such energies with seed ensembles and accept this run.
+- The parsers round-trip every file in `validation/test_run/` and `validation/reference/` (G1).
+- The exact comparator finds no difference between same-seed runs and reports single-ULP changes (G2).
+- For Cf-252, BASIC-against-BASIC runs pass at the designed false-alarm rate (G3), and synthetic faults at or above the minimum detectable effect are detected (G5).
+- The M1 G4 exception run passes against the calibration.
+- Re-scoped: Rn-215 statistical calibration from 20 BASIC runs does not reach the 1 % false-alarm target. It moves to phase 2, where exact-C++ ensembles can be large.
 
-**Exit:** T4/T5 verdicts can be produced for any pair of output directories.
+**Exit:** exact verdicts for any pair of output directories (the phase-1 acceptance tool); statistical verdicts for inputs whose ensembles calibrate (phase 2 and T5).
 
 ---
 
@@ -550,8 +565,8 @@ Two tracks run in parallel after M5 and meet at M14:
 
 **Proven by:**
 - **T2a stage replay:** each stage fed the BASIC per-event input record and recorded draw slice must reproduce the BASIC output record and histogram increments bit for bit.
-- **T3:** per-event reseeded full events against BASIC per-event probes, for ≥ 10⁵ events across coverage systems. The first divergence is reported and triaged.
-- **T4:** statistical comparison of every `dmp` analyzer for single-energy, single-pass runs.
+- **T3:** per-event reseeded full events against BASIC per-event probes, for ≥ 10⁵ events across coverage systems. Every divergence is triaged to its first differing draw or value and fixed.
+- **T3 integral:** seeded single-energy, single-pass runs in normal mode write every `dmp` analyzer identical to BASIC.
 
 **Exit:** the C++ code generates the same events as BASIC.
 
@@ -643,9 +658,9 @@ Two tracks run in parallel after M5 and meet at M14:
 - In-process execution only; nothing in `ctl/`.
 
 **Proven by:**
-- **T3:** full seeded runs (per-event reseed mode) of short calculations (reduced `Fenhance`) for a core coverage set produce identical `out/`, `dmp` and ENDF files, or a triaged first divergence.
-- **T4:** null-calibrated statistical agreement for every `out/` section, every `dmp` analyzer and ENDF MT454/MT459, at production settings (`Fenhance` = 10 for n-induced, 100 for sf), on a core set. The set covers pre-actinide (Rn-215), major actinides (U-235+n, Pu-239+n, U-238+n), Cf-252 sf and one superheavy sf case, with energies on both sides of every multi-chance threshold.
-- **Sensitivity:** fault-injection checks on the C++ build are detected.
+- **T3 (acceptance):** full seeded runs in normal mode at production settings (`Fenhance` = 10 for n-induced, 100 for sf) write `out/`, `dmp`, `tmp/` and ENDF files identical to the seeded `ref-1` runs, timestamps masked. The core set covers pre-actinide (Rn-215), major actinides (U-235+n, Pu-239+n, U-238+n), Cf-252 sf and one superheavy sf case, with energies on both sides of every multi-chance threshold. The BASIC side of each case is run once and stored.
+- **T3 (localisation):** the same cases in per-event reseed mode, used to locate and fix divergences.
+- **Sensitivity:** planted faults in the C++ build make the T3 comparison fail at the right place.
 
 **Exit:** C++ GEF is proven on the paths that produce the GEFY library.
 
@@ -663,10 +678,7 @@ Two tracks run in parallel after M5 and meet at M14:
 - **List-mode output (`LMD`/`LMD+`),** including its random-number consumption and record format.
 - **Edge systems:** unbound CN, nuclides missing from NucTab (`IMATmax`), very low fissility, superheavies.
 
-**Proven by:** for each cell, the cheapest tier that fully exercises it:
-- T1/T3 where the change is deterministic or trajectory-level;
-- T4 statistical otherwise;
-- T3 per-event diff of `.lmd` files for list-mode.
+**Proven by:** T1 or T3 for every cell (exact equality with the seeded BASIC reference). This includes a T3 per-event diff of `.lmd` files for list-mode. T4 is used only for a divergence the user has approved as irreducible.
 
 **Exit:** the coverage matrix has no uncovered cell except those deferred with your explicit approval.
 
@@ -685,7 +697,6 @@ Two tracks run in parallel after M5 and meet at M14:
 
 **Proven by:**
 - **T3:** seeded fit runs of a few iterations on a small system set produce identical parameter trajectories, χ² values and `Fitpar.dat`.
-- **T4:** statistical agreement of final χ² over seed ensembles.
 
 **Exit:** fit mode is available and proven. This is the lowest priority because the reference library does not depend on it.
 
@@ -693,7 +704,7 @@ Two tracks run in parallel after M5 and meet at M14:
 
 ### M17 — Performance and parallelism
 
-**Goal:** make the C++ code substantially faster than the BASIC baseline (~1 h 46 min single-process for Rn-215 at 59 energies) without losing fidelity.
+**Goal:** make the C++ code substantially faster than the BASIC baseline (~1 h 46 min single-process for Rn-215 at 59 energies) without losing fidelity. This is the start of phase 2 (§2.9): the exact C++ code is the reference.
 
 **Scope:**
 - Profiling.
@@ -703,8 +714,9 @@ Two tracks run in parallel after M5 and meet at M14:
 - Memory layout of histograms.
 
 **Proven by:**
-- Exact mode is unchanged: T3 on the M14 core set is still identical.
-- Parallel mode passes T4 against BASIC.
+- Exact mode is unchanged: T3 on the M14 core set is still identical to BASIC.
+- Optimisations that keep the random stream pass T3 against the exact C++ code.
+- Parallel mode passes T4 against the exact C++ code, null-calibrated from large exact-C++ ensembles. The M2 toolkit is reused, and its tail calibration is re-validated (M2 gate G3) at the new ensemble size, including Rn-215.
 - Parallel mode is bit-identical across thread counts for a fixed seed.
 - Benchmarks are recorded against the BASIC baseline.
 
@@ -718,7 +730,7 @@ Two tracks run in parallel after M5 and meet at M14:
 
 **Scope:**
 - Regenerate `gefy_nfy` (143 tapes) and `gefy_sfy` (239 tapes) with the C++ code.
-- Compare them against `validation/reference/` with T5 metrics, null-calibrated by re-running a subset of systems in BASIC with several seeds.
+- Compare them against `validation/reference/` with T5 metrics, null-calibrated with exact-C++ ensembles (statistically equivalent to BASIC by phase 1).
 - Look for systematic trends over Z, A and E.
 - Run the full fault-injection campaign.
 - Finalise the quirk register and coverage matrix.
@@ -726,7 +738,7 @@ Two tracks run in parallel after M5 and meet at M14:
 
 **Proven by:**
 - T5 green across all 382 tapes and all energies.
-- Every earlier gate re-run green on the release build.
+- Every earlier gate re-run green on the release build, including T3 against BASIC on the M14 core set.
 - Planted faults detected.
 
 **Exit:** the C++ implementation is declared a correct recreation of GEF 2025/1.2.
@@ -748,12 +760,12 @@ Two tracks run in parallel after M5 and meet at M14:
 
 | Risk | Impact | Mitigation |
 |---|---|---|
-| fbc's generated code differs subtly from the C++ arithmetic (cast points, `expf` vs `exp`, literal typing) | T1/T3 not bit-exact | Inspect fbc's generated C (`-gen gcc -R`) for disputed expressions. Document any residual ULP bound per function. T4/T5 remain the release criteria (vision §4.2). |
-| One-ULP differences flip comparisons and desynchronise the random stream | T3 diverges early | Per-event reseed mode keeps divergence local. Stage replay (T2a) isolates the cause. Triage the first divergence, never the aggregate. |
+| fbc's generated code differs subtly from the C++ arithmetic (cast points, `expf` vs `exp`, literal typing) | T1/T3 not bit-exact | Inspect fbc's generated C (`-gen gcc -R`) for disputed expressions and port arithmetic from it (`QUIRKS.md` B-004). A residual difference needs a written analysis and the user's approval (§2.9); T3 stays the release criterion. |
+| One-ULP differences flip comparisons and desynchronise the random stream | T3 diverges early | Per-event reseed mode keeps divergence local. Stage replay (T2a) and the draw logs isolate the cause. Triage the first divergence, never the aggregate; fix it before moving on. |
 | Probes change BASIC behaviour | False references | Neutrality proof for every patch set (M1). |
 | Hidden state leaks not yet discovered | Integral mismatches with no local cause | Scope-state model (§2.4). Multi-system, multi-step T3 runs in M14 expose order dependence. |
-| Statistical tests too loose, or too strict | False pass or false alarms | BASIC-against-BASIC null calibration and planted-fault sensitivity checks (M2, M14, M18). |
-| Pre-pass noise shared by all passes of a step (near-threshold energies have tiny `Imulti`) | Outliers per energy step | Seed ensembles in the null calibration. Accept per step against the calibrated spread, never per nuclide in isolation. |
-| BASIC run cost (~250 CPU-hours for the full n-induced library) | Slow T5 iteration | Reuse the existing version-matched `validation/reference/`. Re-run in BASIC only the subsets needed for null calibration. |
+| Statistical tests too loose, or too strict | False pass or false alarms in phase 2 and T5 | Null calibration with planted-fault sensitivity checks. M2 showed that 20 BASIC runs calibrate Cf-252 but not Rn-215 at full-output scale; phase 2 calibrates from large exact-C++ ensembles and re-validates the false-alarm rate there (M17). |
+| Pre-pass noise shared by all passes of a step (near-threshold energies have tiny `Imulti`) | Outliers per energy step | Irrelevant for phase 1 (exact equality). In phase 2, large ensembles cover the rare regimes. |
+| BASIC run cost (~2 h per Rn-215 system at production settings) | Slow T3 reference generation | The BASIC side of each T3 case is run once with a recorded seed and stored; later comparisons reuse it. |
 | Toolchain drift (glibc libm, compilers) | Exact results change | Pin toolchains in the manifest. Exact-mode gates run on the pinned platform only. |
 | The volume of output-format detail (~2,700 lines of `out/` writer) | Slow progress on M13 | Snapshot-fed byte-exact tests let M13 run in parallel with the physics track and be checked section by section. |

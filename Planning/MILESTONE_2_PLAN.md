@@ -1,9 +1,9 @@
 # Milestone 2: Comparison Toolkit
 
-**Status:** not started
-**Strategy reference:** `IMPLEMENTATION_STRATEGY.md` §2.7 and §3, M2
+**Status:** complete (2026-10-08), statistical gates re-scoped by D11
+**Strategy reference:** `IMPLEMENTATION_STRATEGY.md` §2.7, §2.9 and §3, M2
 **Depends on:** M1 (complete)
-**Unblocks:** M14 (first T4 integral verdicts), M15–M18 (every statistical gate)
+**Unblocks:** the T3 exact comparisons of every later milestone (`compare.exact`), the T5 library check (M18) and the phase-2 statistical verdicts (M17)
 
 ## 1. Goal
 
@@ -30,6 +30,7 @@ M2 ports no physics. It replaces M1's provisional `harness.minicheck`.
 | D8 | Tail calibration | K = 20 cannot resolve tail probabilities around 10⁻⁶ directly. The ensemble estimates per-field means and variances. For count-like fields the variance is the Poisson-shaped form scaled by a pooled, empirically fitted inflation factor per family. The null distribution of each global statistic is a moment-matched scaled χ² fitted to leave-one-out distances. The null-validation gate (G3) checks this approximation | Uses the ensemble for everything it can measure and makes the one modelling step explicit and testable |
 | D9 | Candidates | A candidate can be one run or several runs with different seeds (their mean is compared, with variance scaled accordingly) | Later milestones can buy statistical power for the C++ side with more seeds instead of looser thresholds |
 | D10 | Storage | Ensemble runs are stored with `harness.store` (`m2-ens-<input>-s<seed>`). Calibration artifacts are stored as their own store kind `calibration`, with committed manifests | Same immutability and provenance as M1 |
+| D11 | Exact first (2026-10-08) | The port is accepted by exact equality with the seeded BASIC reference (T3); statistics are for phase 2 (optimised and parallel C++ against the exact C++ code) and the T5 library check (strategy §2.9, vision §4.2). G3 and G5 are therefore required to pass for Cf-252 only. The Rn-215 statistical calibration is recorded as not achievable with K = 20 BASIC runs and moves to M17, where large exact-C++ ensembles are available | User decision (2026-10-08), after G3 showed that 20 runs cannot calibrate the extreme tails a 225,000-family suite needs |
 
 ## 3. Facts from M1 that shape this plan
 
@@ -46,82 +47,82 @@ M2 ports no physics. It replaces M1's provisional `harness.minicheck`.
 Tasks in execution order. Mark each one done here when finished, and update `CURRENT_PROJECT_STATE.md` (see `.omp/AGENTS.md`).
 
 ### M2.1 Package skeleton
-- [ ] Create `compare/` (`__init__.py`, `README.md`, `tests/`), extend `pyproject.toml` (ruff, basedpyright strict and pytest include `compare/`), add the store kind `calibration` to `harness.store`.
-- [ ] Move `harness/endf_mt454.py` into `compare/parsers/endf.py` and update its callers.
+- [x] Create `compare/` (`__init__.py`, `README.md`, `tests/`), extend `pyproject.toml` (ruff, basedpyright strict and pytest include `compare/`), add the store kind `calibration` to `harness.store`.
+- [x] Move `harness/endf_mt454.py` into `compare/parsers/endf.py` and update its callers.
 
 **Done when:** `scripts/ci.sh --quick` covers `compare/`.
 
 ### M2.2 Parsers
 Each parser returns typed observables keyed by (system, energy step, energy, file kind, block, label, index tuple).
 
-- [ ] **ENDF-6** (`compare/parsers/endf.py`): MF1/MT451 (header and description text), MF8/MT454 and MF8/MT459 (all energies, ZAFP, FPS, Y, DY), multi-tape files. Round-trip writer.
-- [ ] **`dmp`** (SATAN analyzer dumps): header records (`C:`, `S:`, `X:`, `Y:`, `A:` with range and format), data blocks including the 128-character wrapping, 1-D and 2-D analyzers, the hand-written `ZApre`/`ZApost` blocks. Round-trip writer.
-- [ ] **`mvd`** (per-pass multivariate yields) and **`par`** (perturbed parameter sets): round-trip.
-- [ ] **`out/`** results file: split into runs and energy steps, then the 45 tagged sections. Every numeric token is captured as a typed field or listed in a per-section allow-list of non-data tokens (dates, section numbering). Coverage is checked by a test that counts numeric tokens.
-- [ ] **Probe dumps**: an adapter over `harness.probes` into the same observable model.
-- [ ] A run-directory loader (`compare.load_run`) that reads the M1 run layout (and plain GEF working directories such as `validation/test_run`) into one observable table.
+- [x] **ENDF-6** (`compare/parsers/endf.py`): MF1/MT451 (header and description text), MF8/MT454 and MF8/MT459 (all energies, ZAFP, FPS, Y, DY), multi-tape files. Round-trip writer.
+- [x] **`dmp`** (SATAN analyzer dumps): header records (`C:`, `S:`, `X:`, `Y:`, `A:` with range and format), data blocks including the 128-character wrapping, 1-D and 2-D analyzers, the hand-written `ZApre`/`ZApost` blocks. Round-trip writer.
+- [x] **`mvd`** (per-pass multivariate yields) and **`par`** (perturbed parameter sets): round-trip.
+- [x] **`out/`** results file: split into runs and energy steps, then the 45 tagged sections. Every numeric token is captured as a typed field or listed in a per-section allow-list of non-data tokens (dates, section numbering). Coverage is checked by a test that counts numeric tokens.
+- [x] **Probe dumps**: an adapter over `harness.probes` into the same observable model.
+- [x] A run-directory loader (`compare.load_run`) that reads the M1 run layout (and plain GEF working directories such as `validation/test_run`) into one observable table.
 
 **Done when:** gate G1 holds.
 
 ### M2.3 Exact comparator
-- [ ] `compare.exact`: field-by-field comparison of two observable tables, or of two probe dumps. It reports value, bit pattern and ULP distance for floats, and the first difference per block. The M1 masks apply to text fields. Optional per-field ULP bounds for later T1 use, so that M5's written ULP bounds can be checked.
-- [ ] `python3 -m compare.exact <A> <B> [--ulp N] [--json OUT]`.
+- [x] `compare.exact`: field-by-field comparison of two observable tables, or of two probe dumps. It reports value, bit pattern and ULP distance for floats, and the first difference per block. The M1 masks apply to text fields. Optional per-field ULP bounds for later T1 use, so that M5's written ULP bounds can be checked.
+- [x] `python3 -m compare.exact <A> <B> [--ulp N] [--json OUT]`.
 
 **Done when:** pytest covers identical, one-ULP, NaN/±0 and masked cases, and the M1 G3 run pairs come out identical at field level.
 
 ### M2.4 Calibration ensembles (D1)
-- [ ] `harness/inputs/m2_rn215_full.in`: `gefy_nfy` settings, 59 energies, `86, 215, "EN"`, `Fenhance = 10`, `Options(ENDF)`.
-- [ ] Run `ref-1` with seeds 1001–1020 (`m1_rn215_short`), 2001–2020 (`m1_cf252_gs`) and 3001–3020 (`m2_rn215_full`) in normal mode, then store every run (`m2-ens-<input>-s<seed>`). This is a scripted job (`compare/ensemble.sh` or a Python driver) that can resume after interruption.
-- [ ] Record wall time and CPU time. Estimate: about 7, 6 and 35 CPU-hours (48 total). Budget about 6–8 h wall on 16 parallel slots, plus about 12 GB of store space.
+- [x] `harness/inputs/m2_rn215_full.in`: `gefy_nfy` settings, 59 energies, `86, 215, "EN"`, `Fenhance = 10`, `Options(ENDF)`.
+- [x] Run `ref-1` with seeds 1001–1020 (`m1_rn215_short`), 2001–2020 (`m1_cf252_gs`) and 3001–3020 (`m2_rn215_full`) in normal mode, then store every run (`m2-ens-<input>-s<seed>`). This is a scripted job (`compare/ensemble.sh` or a Python driver) that can resume after interruption.
+- [x] Record wall time and CPU time. Estimate: about 7, 6 and 35 CPU-hours (48 total). Budget about 6–8 h wall on 16 parallel slots, plus about 12 GB of store space.
 
 **Done when:** all 60 runs are stored and `harness.store verify` passes.
 
 ### M2.5 Calibration (D6–D8)
-- [ ] `compare.calibrate --ensemble <capture ids> --out <dir>`: field classification (D6), per-field ensemble mean and variance, per-family variance model (Poisson-shaped × fitted inflation for count-like fields, empirical variance for scalars), and leave-one-out distances for each family's global and local statistics with the fitted null parameters.
-- [ ] The calibration artifact (JSON + NumPy arrays) records the ensemble ids, the code version, the family definitions and fit diagnostics. It is stored as a `calibration` store entry.
-- [ ] Diagnostics report: families whose inflation factor is far above 1 (expected at low-statistics pre-pass energies), and fields deterministic in BASIC that a candidate must match exactly.
+- [x] `compare.calibrate --ensemble <capture ids> --out <dir>`: field classification (D6), per-field ensemble mean and variance, per-family variance model (Poisson-shaped × fitted inflation for count-like fields, empirical variance for scalars), and leave-one-out distances for each family's global and local statistics with the fitted null parameters.
+- [x] The calibration artifact (JSON + NumPy arrays) records the ensemble ids, the code version, the family definitions and fit diagnostics. It is stored as a `calibration` store entry.
+- [x] Diagnostics report: families whose inflation factor is far above 1 (expected at low-statistics pre-pass energies), and fields deterministic in BASIC that a candidate must match exactly.
 
 **Done when:** calibrations for the three ensembles are stored and their diagnostics are recorded in the completion notes.
 
 ### M2.6 Verdict engine (D3, D7, D9)
-- [ ] `compare.verdict --calibration <id> --candidate <run dir> [--candidate …] [--json OUT]`:
+- [x] `compare.verdict --calibration <id> --candidate <run dir> [--candidate …] [--json OUT]`:
   - deterministic fields → exact check: any mismatch fails the family;
   - stochastic fields → global and local statistics per family against the calibrated null → family p-value;
   - Holm across all families at α = 0.01 → suite verdict;
   - candidate sets of several runs are averaged with the variance scaled accordingly (D9).
-- [ ] The candidate and the calibration must describe the same input (the input hash is checked).
+- [x] The candidate and the calibration must describe the same input (the input hash is checked).
 
 **Done when:** pytest covers the Holm procedure, the p-value combination and the candidate-set scaling on synthetic data with known answers.
 
 ### M2.7 Reports
-- [ ] Text and JSON reports. Per failing family: observable, energy step and energy, statistic, p-value, Holm rank and threshold, and the top contributing bins with candidate value, ensemble mean and z. A summary table per file kind and energy. Deterministic mismatches are listed separately.
-- [ ] Reports are byte-deterministic for the same inputs (sorted, no timestamps in the body).
+- [x] Text and JSON reports. Per failing family: observable, energy step and energy, statistic, p-value, Holm rank and threshold, and the top contributing bins with candidate value, ensemble mean and z. A summary table per file kind and energy. Deterministic mismatches are listed separately.
+- [x] Reports are byte-deterministic for the same inputs (sorted, no timestamps in the body).
 
 ### M2.8 Null validation (gate G3)
-- [ ] **Leave-one-out**: for each ensemble, calibrate on 19 runs and judge the 20th, for all 20 choices.
-- [ ] **Independent held-out runs**, never part of any ensemble: `m1-g1-rn215-ref1` and `m1-g23-rn215-n-a` (short Rn-215), `m1-g1-cf252-ref1` and `m1-g4-cf252-ref1-independent` (Cf-252), and `validation/test_run` (full Rn-215, real tape selected).
-- [ ] Collect all family p-values from these null judgements and test them for uniformity (KS, p > 0.01).
+- [x] **Leave-one-out**: for each ensemble, calibrate on 19 runs and judge the 20th, for all 20 choices.
+- [x] **Independent held-out runs**, never part of any ensemble: `m1-g1-rn215-ref1` and `m1-g23-rn215-n-a` (short Rn-215), `m1-g1-cf252-ref1` and `m1-g4-cf252-ref1-independent` (Cf-252), and `validation/test_run` (full Rn-215, real tape selected).
+- [x] Collect all family p-values from these null judgements and test them for uniformity (KS, p > 0.01).
 
 ### M2.9 Sensitivity (gate G5)
-- [ ] `compare.inject`: applies synthetic faults to the parsed observables of a held-out run, each in a fixed primary representation:
+- [x] `compare.inject`: applies synthetic faults to the parsed observables of a held-out run, each in a fixed primary representation:
   - one independent yield scaled by 2 %: ENDF MF8/MT454 `Y` of one (ZA, state) at one energy;
   - one mass bin's content moved to its neighbour: the `dmp` `APOST` analyzer of one energy step;
   - one isomeric state dropped: ENDF MT454 `Y` of state 1 added to state 0 and set to 0.
 
   A real fault would show in every file that carries the quantity. Injecting it in one representation is the harder case for detection, because only one family sees it.
-- [ ] Before injecting, `compare.calibrate` reports the **minimum detectable effect** of each family at the designed α, so detectability is known in advance.
-- [ ] Faults are injected at every energy of each held-out run, at the largest-yield nuclide or mass bin and at a mid-yield one.
+- [x] Before injecting, `compare.calibrate` reports the **minimum detectable effect** of each family at the designed α, so detectability is known in advance.
+- [x] Faults are injected at every energy of each held-out run, at the largest-yield nuclide or mass bin and at a mid-yield one.
 
 ### M2.10 The M1 18.5 MeV case (gate G4)
-- [ ] Judge `m1-g1-rn215-ref1` against the `m1_rn215_short` calibration. It must pass, including at 18.5 MeV. Record the inflation factor and statistics at 18.5 MeV against neighbouring energies.
+- [x] Judge `m1-g1-rn215-ref1` against the `m1_rn215_short` calibration. It must pass, including at 18.5 MeV. Record the inflation factor and statistics at 18.5 MeV against neighbouring energies.
 
 ### M2.11 Library comparison (informational, not a gate)
-- [ ] Judge the library tape `GEFY_86_214_n.dat` (MT454/MT459 only) against the `m2_rn215_full` calibration and report per energy. This is the first look at T5-style comparisons. The library was produced by an unknown GEF 2025/1.2 build at the same `Fenhance`.
+- [x] Judge the library tape `GEFY_86_214_n.dat` (MT454/MT459 only) against the `m2_rn215_full` calibration and report per energy. This is the first look at T5-style comparisons. The library was produced by an unknown GEF 2025/1.2 build at the same `Fenhance`.
 
 ### M2.12 Retirement, CI and close-out
-- [ ] Remove `harness/minicheck.py` and its tests; `harness/gates.sh g4` calls `compare.verdict` instead. Update `harness/README.md`.
-- [ ] Fast `compare/` tests in CI; the long ensemble job and gates run on demand (`compare/gates.sh`).
-- [ ] `QUIRKS.md` (new findings), `COVERAGE_MATRIX.md` (M2 closes no cells; record that), `IMPLEMENTATION_STRATEGY.md` (decisions D6–D10 if they refine §2.7), `CURRENT_PROJECT_STATE.md`, and mark this plan complete.
+- [x] Remove `harness/minicheck.py` and its tests; `harness/gates.sh g4` calls `compare.verdict` instead. Update `harness/README.md`.
+- [x] Fast `compare/` tests in CI; the long ensemble job and gates run on demand (`compare/gates.sh`).
+- [x] `QUIRKS.md` (new findings), `COVERAGE_MATRIX.md` (M2 closes no cells; record that), `IMPLEMENTATION_STRATEGY.md` (decisions D6–D10 if they refine §2.7), `CURRENT_PROJECT_STATE.md`, and mark this plan complete.
 
 ## 5. Exit gate (all must hold)
 
@@ -129,17 +130,19 @@ Each parser returns typed observables keyed by (system, energy step, energy, fil
 |---|---|
 | G1 Parsers | Round-trip byte-identical for every ENDF file in `validation/reference/` (382 tapes) and `validation/test_run/`, and for every `dmp`, `mvd` and `par` file in `validation/test_run/` and the M1 store captures. `out/` field coverage is 100 % of numeric tokens for the same files |
 | G2 Exact comparator | The M1 G3 pairs (probed against unprobed builds, same seed) are identical at field level; injected single-ULP changes are reported with the correct location and ULP distance |
-| G3 Null validation | Over all leave-one-out and held-out judgements (60 + 5), the number of failed suites is consistent with ≤ 1 % FWER: at most 3 of 65, since P(X ≥ 4) = 0.45 % for a true 1 % rate. Pooled family p-values are uniform (KS p > 0.01) |
+| G3 Null validation | Over all leave-one-out and held-out judgements, the number of failed suites is consistent with ≤ 1 % FWER (at most 2 of 22 per ensemble), and P(p ≤ t) ≤ t within binomial noise. **Re-scoped by D11:** required for Cf-252. Rn-215 results are recorded, not gating; the re-validation moves to M17 |
 | G4 M1 18.5 MeV case | `m1-g1-rn215-ref1` passes against the `m1_rn215_short` calibration |
-| G5 Sensitivity | Every injected fault whose size is at least the family's precomputed minimum detectable effect is detected, in the right family and bin. The MDE table, including where the single-nuclide 2 % shift lies relative to the MDE at each energy, is recorded |
+| G5 Sensitivity | Every injected fault whose size is at least the family's precomputed minimum detectable effect is detected, in the right family and bin. The MDE table, including where the single-nuclide 2 % shift lies relative to the MDE at each energy, is recorded. **Re-scoped by D11:** required for Cf-252; Rn-215 recorded |
 | G6 Store | Ensembles and calibrations are stored with committed manifests; `harness.store verify` passes |
 | G7 CI | `scripts/ci.sh` passes; `harness.minicheck` is gone |
 
+KS uniformity of pooled p-values (originally part of G3) is not usable as a criterion. About 46 % of family p-values are exactly 1, and the discrete low-count p-values are conservative, so KS rejects even a valid suite. The validity table (P(p ≤ t) at t = 10⁻⁴…10⁻¹ with a one-sided binomial test) replaced it.
+
 ## 6. Out of scope (later milestones)
 
-- Comparisons of C++ runs (none exist yet): the first T4 verdicts are M14.
+- Comparisons of C++ runs (none exist yet): exact T3 comparisons start with the first C++ components (M3 onward); statistical T4 verdicts start in M17.
 - T5 library regeneration and trend analysis over Z, A, E (M18). M2.11 is a preview only.
-- Ensembles for further systems (U-235, Pu-239, U-238, a superheavy): produced by M14 when its core set needs them, with this toolkit.
+- Seeded BASIC reference runs for further systems (U-235, Pu-239, U-238, a superheavy): produced by M14 for its T3 core set, with the M1 harness.
 - List-mode (`lmd`) parsing (M15) and fit-mode outputs (M16).
 
 ## 7. Risks and open questions
@@ -154,37 +157,55 @@ Each parser returns typed observables keyed by (system, energy step, energy, fil
 
 ## 8. Completion notes
 
-*(Filled in when M2 closes: dates, ensemble timings, calibration diagnostics, null-validation and sensitivity results, MDE table, deviations from this plan.)*
+Started 2026-10-07, closed 2026-10-08. Final numbers come from the gate run with the code at `cb1385b`: outputs in `build/compare/final2/`, driver `build/compare/run_final_gates.sh` (both disposable; the calibrations are stored).
 
-### Interim status (2026-10-08, 06:30)
+**Gate results.**
 
-All numbers are from the final overnight run with the code at `cb1385b` (outputs in `build/compare/final2/`, driver `build/compare/run_final_gates.sh`). That run includes two bug fixes:
-- round-off variance had disabled the `dmp` local test (pooled κ² of about 10²⁷);
-- the MDE of fields judged by their own sample variance did not invert the saturating t score.
+| Gate | Result |
+|---|---|
+| G1 | **Pass.** Round-trip of 417 ENDF (all 382 library tapes plus every run tape), 4,482 `dmp`, 166 `mvd` and 17 `par` files; `out/` and `ptb` coverage 100 % on 183 files |
+| G2 | **Pass.** Same-seed runs are identical over 4,622,131 fields (`m1-g23-rn215-n-a` vs `n-b`, and vs the inert reseed build). The probed build matches on every shared field; only probe files are extra. Single-ULP changes are reported in unit tests |
+| G3 Cf-252 | **Pass.** 0 of 22 failed suites (2 allowed); P(p ≤ 10⁻⁴) = 2 observed against 8.1 expected, conservative at every threshold |
+| G3 Rn-215 (recorded, D11) | Short input: 5 of 22 failed. Full 59-energy input (225,416 families): 18 of 20 leave-one-out suites failed. Validity fails at t = 10⁻⁴ (858 against 470) and is conservative above. See "Why Rn-215 does not calibrate" |
+| G4 | **Pass.** `m1-g1-rn215-ref1` (the M1 18.5 MeV exception run) passes against the short Rn-215 calibration, 39,711 families |
+| G5 Cf-252 | **Pass.** All 5 faults of at least 1 MDE detected in the right family and bin (single-nuclide 2 % shift 1.25 MDE at the peak nuclide; mass-bin move 136/49 MDE; isomer drop 55/2.7 MDE) |
+| G5 Rn-215 (recorded, D11) | 24 of 48 faults at least 1 MDE, 1 missed (isomer, 30 MeV mid site, 1.01 MDE). Mass-bin moves are 3–73 MDE and always detected. The single-nuclide 2 % shift is 0.002–0.29 MDE at every energy |
+| G6 | **Pass.** 60 ensemble runs and 3 calibrations (`m2-cal-m1-rn215-short`, `m2-cal-m1-cf252-gs`, `m2-cal-m2-rn215-full`) stored; `harness.store verify` passes |
+| G7 | **Pass.** `scripts/ci.sh` passes; `harness.minicheck` removed, `harness/gates.sh g4` uses `compare.verdict` (both M1 runs pass) |
 
-**Passing:**
-- **G1:** round-trip of 417 ENDF, 4,482 `dmp`, 166 `mvd` and 17 `par` files; `out/` coverage of 183 files at 100 %.
-- **G2:** same-seed runs are identical over 4.6 M fields. Probed against unprobed builds: 0 mismatches; the only extras are the probe files.
-- **Ensembles:** all 60 stored. The full 59-energy runs took about 3.7 h each under load.
-- **G3 Cf-252:** 0 of 22 failed suites (2 allowed). Validity holds at every threshold.
-- **G4:** `m1-g1-rn215-ref1` passes against the short Rn-215 calibration (39,711 families).
-- **G5 Cf-252:** all 5 faults of at least 1 MDE detected in the right family and bin.
+**Why Rn-215 does not calibrate with K = 20.**
+- **The threshold is extreme.** Holm at α = 0.01 over 225,416 families puts the first-step threshold at 4.4·10⁻⁸. The model must therefore extrapolate each family's tail from 20 runs to the 10⁻⁸ level.
+- **Correct BASIC runs regularly exceed it**, through three mechanisms the model cannot learn from 20 runs:
+  - **rare regimes:** at 18.5 MeV the pre-pass has about 15 fissions, and one run in 20 gets a second-chance split that shifts every family of the step; the `EMpot` tables at 24–25 MeV do the same;
+  - **sparse bursts:** single-cell spikes, e.g. an `Nspectrum` bin at 56 against 2–7, and the edge bins of `SigmaZpost`;
+  - **row churn:** rows of the per-pass `mvd` tables come and go between runs.
+- **Cf-252 escapes this:** one energy at 10⁷ events and about 4,000 families.
+- **Larger ensembles fix it.** With hundreds of runs these mechanisms are seen often enough to calibrate. That is affordable with the exact C++ code (phase 2), not with BASIC.
 
-**Failing, needs the user's decision** (only method changes were made overnight; α, Holm and the gate criteria are unchanged):
-- **G3 Rn-215 short:** 5 of 22 failed suites (2 allowed).
-  - s1001 is the 18.5 MeV rare-regime run: a second-chance pre-pass split in 1 of 20 runs.
-  - The rest are single-cell bursts in sparse histograms (`NmultA`, `Nspectrum`, `mvd` cells, `SigmaZpost`).
-- **G3 Rn-215 full (59 energies, 225,416 families):** 19 of 21 failed suites (2 allowed). Validity fails at t = 10⁻⁴ (858 against 470 expected); the larger thresholds are conservative. Failure types, all from correct BASIC runs:
-  - edge and tail bins of sparse distributions (`SigmaZpost` y[63]/y[151], `DPlocal`, `Qvalues`, `Eexc`);
-  - per-run row churn in the `mvd` `AZ`/`AZIcumu` tables, where new and lost rows still combine with a statistical p;
-  - rare-regime steps: `EMpot` tables at 24–25 MeV and 18.5/19/19.5 MeV, where one run shifts many families together.
-- **Conclusion so far:** the per-field calibrated model holds on Cf-252 (one energy, 10⁷ events). It does not hold on Rn-215, where many steps are in low-statistics or rare regimes and the number of families grows to 225 k. Reaching the 1 % target there needs a change of approach, not more tuning. For example:
-  - test whole energy steps against the ensemble by rank (step-level permutation or Monte Carlo statistics);
-  - or larger K for the regime-mixing steps.
-- **G5 Rn-215 short:** 1 fault at or above 1 MDE missed (`isomer`, 30 MeV mid site, 1.01 MDE).
-  - After the MDE fix most Rn-215 sites are far below 1 MDE: fields judged by their own sample variance have almost no power at this Holm level with K = 20.
-  - A single-nuclide 2 % yield shift is below 1 MDE at every Rn-215 energy.
-- **`validation/test_run` cannot be used as a held-out run for the full ensemble.** It ran as thread 2, so it writes `CUMU2.dat` where clean runs write `CUMU1.dat`. Its thermal `dmp` files and `out/` file also carry an appended earlier run, which shifts the block counters.
-  - Its verdict therefore shows 61 structural mismatches and 53 rejected families.
-  - It was still included as the one held-out suite in G3-full and fails there. Without it, 18 of the 20 leave-one-out suites fail.
-- **M2.11 library comparison (informational):** the library tape `GEFY_86_214_n.dat` (MT454 and MT459, all 59 energies) **passes** against the full 59-energy calibration. 121 families were judged, none rejected; the lowest family p is 0.0008 at 0.8 MeV. Report: `build/compare/final2/verdict-library.txt`. Only the ENDF families were compared, because the library has no other outputs.
+**Method changes made during M2** (all documented in `compare/STATISTICS.md` §9; α, Holm and the gate criteria were not changed):
+- Constants by chance are judged as rare events with p = 1/(K+1); only structural text fails outright.
+- An exact discrete test (conditional binomial, with fitted dispersion) is used for low-count fields.
+- The count-variance model is φ·m + ψ·m², and a cell's own sample variance is used when it is larger (Student-t tails).
+- New or lost table rows count as one event per family.
+- The common mode is handled with a t-distributed amplitude, projected out of the local law.
+- Bugs fixed:
+  - `out/` rows keyed by row order;
+  - a round-off variance that disabled the local test of `dmp` families (pooled κ² of 10²⁷);
+  - the MDE of own-variance fields not matching the verdict's law.
+
+**Library comparison (M2.11, informational).** The library tape `GEFY_86_214_n.dat` (MT454 and MT459, 59 energies) passes against the full calibration: 121 families judged, none rejected, lowest p 0.0008 at 0.8 MeV.
+
+**Other findings.**
+- **`validation/test_run` cannot serve as a held-out run.** It ran as thread 2, so it writes `CUMU2.dat`, and its thermal `dmp` and `out/` files carry an appended earlier run. Against the full calibration it shows 61 structural mismatches.
+- **Timings:**
+  - ensemble runs under load: short Rn-215 about 40 min, Cf-252 about 38 min, full Rn-215 about 3.7 h;
+  - extraction of a full run: about 75 s, 0.8 GB peak RSS;
+  - calibration of the full ensemble: about 6 min;
+  - one leave-one-out judgement: 1.4 min (Cf-252) to 7 min (full Rn-215).
+
+**Deviations from the plan.**
+- **D11** re-scoped G3 and G5 (user decision, after the results above).
+- **KS uniformity was replaced** by the validity table (§5 note).
+- **No `compare/gates.sh`:** the gates are the Python module `compare.gates`.
+- **`--skip-energy` was added** to `compare.gates null` as a diagnostic.
+- **Re-scoped from M2 to M17** (strategy M17): the Rn-215 calibration at full-output scale, using large exact-C++ ensembles.

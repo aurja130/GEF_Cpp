@@ -378,29 +378,6 @@ def test_list_errors() -> None:
 
 
 # --------------------------------------------------------------------------------------------
-# MT454 view used by harness.minicheck
-# --------------------------------------------------------------------------------------------
-
-
-def test_mt454_view() -> None:
-    (tape,) = ep.mt454_tapes(_text(_tape()))
-    assert sorted(tape) == [pytest.approx(2.53e-2), 1.0e6]
-    nucs = tape[2.53e-2]
-    assert (nucs[2].za, nucs[2].state, nucs[2].y, nucs[2].dy) == (30081, 1, 0.25, 0.0)
-    assert (nucs[0].z, nucs[0].a) == (30, 80)
-
-
-def test_mt454_view_rejects_duplicate_energy() -> None:
-    spec = {_f(1.0): [(30080, 0, 1.0, 0.1)]}
-    lines = _yield_section(454, spec)
-    lines = (
-        lines[:-1] + [ln[:75] + f"{100 + n:5d}" for n, ln in enumerate(lines[1:-1])] + lines[-1:]
-    )
-    with pytest.raises(ParseError, match="duplicate energy"):
-        ep.mt454_tapes(_text(_tape([lines])), "d.dat")
-
-
-# --------------------------------------------------------------------------------------------
 # real data (gate G1)
 # --------------------------------------------------------------------------------------------
 
