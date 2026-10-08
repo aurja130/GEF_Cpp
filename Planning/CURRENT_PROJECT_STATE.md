@@ -204,6 +204,7 @@ The six planning-session reports are saved in `Planning/code_maps/` (M0.1). Thei
    - M3.2 fbc arithmetic rules (`Cpp_implementation/src/fbrt/FBC_ARITHMETIC.md`, probes in `tools/fbsrc/probes/`, driver `arith_rules.bas`, golden `m3-arith-rules`, `fbc_arithmetic_test.cpp`);
    - M3.5 random numbers (`fb::FbMtRng`, `fb::derive_seed`/`fb::reseed`, bit-exact against 22 edge seeds, 20 stored seeds × 10⁶ draws `m3-rnd-seeds-1e6`, the M1 golden stream and the reseed vectors; driver `rnd_seeds.bas`).
    - M3.3 conversions and integer semantics (`fbrt/convert.hpp`: `fb::f2i/f2l/f2ul/d2i/d2l/d2ul/fix/sgn`, wrapping `add/sub/mul/neg/abs`, `idiv/imod`; bit-exact against drivers `conv_single.bas` (all 2³² `Single` patterns), `conv_double.bas`, `int_ops.bas`; B-002 resolved for this layer; first B-001 finding: gcc `-O3` folds `x * -1` into a negation, which changes NaN results of `Fix`, fixed in the source).
+   - M3.4 maths (`fbrt/gef_math.hpp`: GEF's `Min`, `Max`, `Erf`, `Erfc`, `Tanh`, `Coth`, `Log10`, `Floor`, `Ceil`, `Round`, `Modulo`; libm intrinsics are called through the `std::` overload of the same type; bit-exact against drivers `math_single.bas` (14 functions × all 2³² `Single`), `math_double.bas`, `gef_math2.bas` in `dev-gcc`, `dev-clang` and `release-exact`; the only differences were NaN sign and payload, which by user decision compare equal (B-001 finding 2)).
 
-   Next: M3.4 maths (B-001), M3.6 text, M3.7 arrays, M3.8 `DATA`/input, M3.9 close-out.
+   Next: M3.6 text, M3.7 arrays, M3.8 `DATA`/input, M3.9 close-out.
 2. Per the exact-first decision, later milestone plans gate on bit-exact equality with BASIC (T0–T3) and use `compare.exact` and the per-event reseed mode to triage divergences.
