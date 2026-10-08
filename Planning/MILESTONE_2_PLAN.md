@@ -186,4 +186,4 @@ All numbers are from the final overnight run with the code at `cb1385b` (outputs
   - A single-nuclide 2 % yield shift is below 1 MDE at every Rn-215 energy.
 - **`validation/test_run` cannot be used as a held-out run for the full ensemble.** It ran as thread 2, so it writes `CUMU2.dat` where clean runs write `CUMU1.dat`. Its thermal `dmp` files and `out/` file also carry an appended earlier run, which shifts the block counters.
   - Its verdict therefore shows 61 structural mismatches and 53 rejected families.
-  - G3-full ran with the leave-one-out judgements only (that is 20 of the 21 suites; test_run was the extra one).
+  - It was still included as the one held-out suite in G3-full and fails there. Without it, 18 of the 20 leave-one-out suites fail.
