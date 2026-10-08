@@ -1,6 +1,6 @@
 # Milestone 3: FreeBASIC Runtime Emulation
 
-**Status:** in progress (M3.1 and M3.5 done, 2026-10-08)
+**Status:** in progress (M3.1, M3.2 and M3.5 done, 2026-10-08)
 **Strategy reference:** `IMPLEMENTATION_STRATEGY.md` §2.2, §2.3, §2.9 and §3, M3
 **Depends on:** M0, M1 (driver framework, `fbmt.py`, reseed vectors), M2 (exact comparison)
 **Unblocks:** M4 (data layer uses `DataReader`, arrays, conversions), M5 (physics functions use the maths intrinsics), M8 (samplers use `FbMtRng`), M13 (writers use the text formatting), and through them every later milestone
@@ -65,9 +65,9 @@ Tasks in execution order. Mark each one done here when finished, and update `CUR
 **Done when:** a trivial driver round-trips through `promote` and is read by a Catch2 test in all presets.
 
 ### M3.2 fbc arithmetic semantics (B-004)
-- [ ] Probe programs for literal typing (`Single`/`Double` literals, suffixes), mixed-type promotion, `/` vs `\`, constant folding, reassociation of `*` and `+` chains with literals, unary minus, comparisons between `Single` and `Double`, and the `^` special cases. Each probe is read through `emit_c`, and every rule found is confirmed by running it.
-- [ ] `FBC_ARITHMETIC.md`: the rules, each with a BASIC example, the generated C and the C++ that reproduces it. Plus guidance for writing C++ that the compiler will not reorder (no `-ffast-math`, explicit temporaries where fbc introduces them).
-- [ ] Update `QUIRKS.md` B-004 with the established rules.
+- [x] Probe programs for literal typing (`Single`/`Double` literals, suffixes), mixed-type promotion, `/` vs `\`, constant folding, reassociation of `*` and `+` chains with literals, unary minus, comparisons between `Single` and `Double`, and the `^` special cases. Each probe is read through `emit_c`, and every rule found is confirmed by running it. (Probes `tools/fbsrc/probes/arith_probe1–3.bas`, read with `fbc -gen gcc -r` because `emit_c` translates GEF only. The run is the driver `arith_rules.bas`: 18 expressions, one or more per rule, over 2,000 input sets drawn with `Randomize 1, 3`, golden `m3-arith-rules`.)
+- [x] `FBC_ARITHMETIC.md`: the rules, each with a BASIC example, the generated C and the C++ that reproduces it. Plus guidance for writing C++ that the compiler will not reorder (no `-ffast-math`, explicit temporaries where fbc introduces them). (Rules R1–R8; the C++ for each driver expression is in `fbc_arithmetic_test.cpp`, which passes in `dev-gcc`, `dev-clang` and `release-exact`. New finding beyond the plan: fbc also drops parentheses in `*`/`+` chains without literals.)
+- [x] Update `QUIRKS.md` B-004 with the established rules.
 
 **Done when:** every rule in the document is backed by a probe whose generated C and run-time output are recorded.
 

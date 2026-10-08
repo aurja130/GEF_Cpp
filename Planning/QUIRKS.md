@@ -428,12 +428,18 @@ These describe how the toolchain, not GEF, can make the C++ results differ from 
 - **Status:** handled (M1, 2026-10-07). `harness.build` sets `SOURCE_DATE_EPOCH` to the submodule commit time for every harness build, and builds are reproducible. Built with the epoch of 2026-09-15 17:20:38 UTC, the unpatched source reproduces every loaded section of `gef_reference` byte for byte. Run comparisons mask the `compiled on` line (`harness/masks.toml`, mask `compile_stamp`).
 - **Owning milestone:** M1
 
-### B-004 fbc moves numeric literals to the end of multiplication chains
+### B-004 fbc reassociates `*`/`+` chains and moves numeric literals to their end
 
 - **Source:** `python3 -m tools.fbsrc.fbline GEF.bas:2608` and `GEF.bas:2610`. BASIC `Var_P_Z_Curv_S5 = _P_Z_Curv_S5 * 0.03 * Fred_par * D_Par_Fac` becomes GEF.c:37645 `(float)((((double)_P_Z_CURV_S5$ * (double)FRED_PAR$0) * (double)D_PAR_FAC$) * 0x1.EB851EB851EB8p-6)`; `0.03 * Fred_par * PZ_S3_olap_curv * D_Par_Fac` (2610) becomes GEF.c:37651 `(((FRED_PAR * PZ_S3_OLAP_CURV) * D_PAR_FAC) * 0.03)`. fbc's constant folding reassociates the chain and applies the literal last.
-- **Issue:** floating-point multiplication is not associative, so a C++ port that follows the BASIC source order (`a * 0.03 * b * c`, left to right) can round differently from the reference binary. The operation order that matters is the one in the generated C, not the one in the BASIC text. Which other expression shapes fbc reorders (additions, divisions, mixed chains) is not yet established; `1.0 - 2.0 * rnd` at `GEF.bas:9680` becomes `-(vr1 * 2) + 1`, which is exact-equivalent.
-- **Status:** confirmed by fbc C. Coding rule: port arithmetic from the `fbline` output, not from the BASIC text (coding standards §5). M3 characterises the folding rules with FreeBASIC drivers; M5 T1 bit-exact tests catch any remaining order differences.
-- **Owning milestone:** M3, M5
+- **Issue:** floating-point arithmetic is not associative, so a C++ port that follows the BASIC source order (`a * 0.03 * b * c`, left to right) can round differently from the reference binary. The operation order that matters is the one in the generated C, not the one in the BASIC text.
+- **Established rules (M3.2, `Cpp_implementation/src/fbrt/FBC_ARITHMETIC.md`):**
+  - Operand types and conversions are fixed while parsing, left to right. Then each chain of `*` or `+` is flattened, its literals are folded into one constant in the chain's type, and that constant is applied last.
+  - Parentheses inside `*`/`+` chains are dropped even without literals: `s * (t * u)` → `(S*T)*U`, `s - (t - u)` → `(S-T)+U`.
+  - Literals never move across `/` or a subtracted non-literal.
+  - `Double` chains are affected most: `d * 0.1 * e` differs from left-to-right evaluation for 824 of 2,000 random inputs, `s * (t * u)` for 714.
+  - `1.0 - 2.0 * rnd` at `GEF.bas:9680` becomes `-(vr1 * 2) + 1`, which is exact-equivalent.
+- **Status:** confirmed by fbc C and by a run: driver `arith_rules.bas`, golden `m3-arith-rules`, reproduced bit for bit by `fbc_arithmetic_test.cpp` in `dev-gcc`, `dev-clang` and `release-exact`. Coding rule unchanged: port arithmetic from the `fbline` output, not from the BASIC text (coding standards §5). M5 T1 bit-exact tests catch any remaining order differences.
+- **Owning milestone:** M3 (rules, done), M5
 
 ## 6. Summary
 
@@ -472,4 +478,4 @@ These describe how the toolchain, not GEF, can make the C++ results differ from 
 | B-001 | Optimisation level vs fbc `-O0` | (toolchain) | open risk | — | M3, M5 |
 | B-002 | fbc gcc passes `-fwrapv -fno-strict-aliasing` | (toolchain) | open | — | M3 |
 | B-003 | `Compilationstamp` needs `SOURCE_DATE_EPOCH` | `GEF.bas:17` | handled (M1) | — | M1 |
-| B-004 | fbc moves literals to the end of multiplication chains | `GEF.bas:2608, 2610` | confirmed by fbc C | — | M3, M5 |
+| B-004 | fbc reassociates `*`/`+` chains, literals last | `GEF.bas:2608, 2610` | confirmed by fbc C and run | — | M3, M5 |

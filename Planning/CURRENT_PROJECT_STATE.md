@@ -179,7 +179,7 @@ Configuration: `pyproject.toml` (ruff, basedpyright strict over `tools/` and `ha
 | `GEFSUB`/`GEFRESULTS` (`GEF.bas:7514–7919`) is dead code inside a nested comment | read |
 | Float → integer conversion rounds half to even | fbc 1.10.1 test program |
 | ENDF n-induced runs use N + 3 energy steps; the first two and the last write no MT454 data | read; matches `run.log` |
-| fbc reassociates multiplication chains and applies numeric literals last (`a * 0.03 * b * c` → `((a*b)*c)*0.03`); port arithmetic from the generated C | fbc C (`QUIRKS.md` B-004) |
+| fbc reassociates `*` and `+` chains, drops their parentheses, and applies numeric literals last (`a * 0.03 * b * c` → `((a*b)*c)*0.03`, `s * (t * u)` → `(s*t)*u`); port arithmetic from the generated C | fbc C and a run (`QUIRKS.md` B-004, `Cpp_implementation/src/fbrt/FBC_ARITHMETIC.md`) |
 | `MyParameters.dat` is never applied in any mode (not only batch): `MyparRead` runs once at `GEF.bas:1017`, before its flag can be set | fbc C (`QUIRKS.md` Q-018) |
 | All quirks and their evidence | `Planning/QUIRKS.md` (13 confirmed in output, 12 confirmed by fbc C, 4 read only) |
 
@@ -190,7 +190,7 @@ The six planning-session reports are saved in `Planning/code_maps/` (M0.1). Thei
 ## 5. Open risks and items
 
 1. **Optimisation level vs fbc's `-O0`** (`QUIRKS.md` B-001): measured by M3/M5 T1 tests; fallback `-O0` per translation unit.
-2. **fbc expression reordering** (B-004): the extent of fbc's constant folding and reassociation is not characterised yet. M3 drivers must establish the rules.
+2. **fbc expression reordering** (B-004): characterised in M3.2 (`FBC_ARITHMETIC.md`, rules R1–R8, verified by a driver run in all presets including `-O3`). The remaining risk is a GEF expression shape the probes did not cover; the porting rule (follow the generated C) and the M5 T1 tests cover it.
 3. **`-fwrapv` in the fbc backend** (B-002): BASIC integer overflow wraps; C++ helpers must make it explicit (M3).
 4. **Statistical calibration of Rn-215-like inputs** (M2): 20 BASIC runs cannot calibrate the extreme per-family tails a full-output comparison needs. Rare pre-pass regimes (one run in 20 at 18.5 MeV gets a second-chance split), sparse bursts and row churn exceed the model. Irrelevant for phase 1 (exact equality). In phase 2, large exact-C++ ensembles are needed; detection power for single-nuclide shifts also needs several candidate runs.
 5. **Deferred coverage cell:** the `Static Ntimes` negative-TKE guard at T4 cannot be checked statistically. Deferral approved by the user on 2026-10-07, to be revisited later (`COVERAGE_MATRIX.md`). The guard is still ported faithfully in M10 and checked at T2 (M10) and T3 (M15).
@@ -199,5 +199,10 @@ The six planning-session reports are saved in `Planning/code_maps/` (M0.1). Thei
 
 ## 6. Next steps
 
-1. Continue M3 (FreeBASIC runtime emulation) per `MILESTONE_3_PLAN.md`. Done so far (2026-10-08): M3.1 golden workflow (`harness.golden promote/check`, committed goldens in `Cpp_implementation/tests/golden/`, C++ `support/golden.hpp`) and M3.5 random numbers (`fb::FbMtRng`, `fb::derive_seed`/`fb::reseed`, bit-exact against 22 edge seeds, 20 stored seeds × 10⁶ draws `m3-rnd-seeds-1e6`, the M1 golden stream and the reseed vectors; driver `harness/drivers/rnd_seeds.bas`). Next: M3.2 fbc arithmetic probes (B-004), then M3.3 conversions, M3.4 maths (B-001), M3.6 text, M3.7 arrays, M3.8 `DATA`/input.
+1. Continue M3 (FreeBASIC runtime emulation) per `MILESTONE_3_PLAN.md`. Done so far (2026-10-08):
+   - M3.1 golden workflow (`harness.golden promote/check`, committed goldens in `Cpp_implementation/tests/golden/`, C++ `support/golden.hpp`);
+   - M3.2 fbc arithmetic rules (`Cpp_implementation/src/fbrt/FBC_ARITHMETIC.md`, probes in `tools/fbsrc/probes/`, driver `arith_rules.bas`, golden `m3-arith-rules`, `fbc_arithmetic_test.cpp`);
+   - M3.5 random numbers (`fb::FbMtRng`, `fb::derive_seed`/`fb::reseed`, bit-exact against 22 edge seeds, 20 stored seeds × 10⁶ draws `m3-rnd-seeds-1e6`, the M1 golden stream and the reseed vectors; driver `rnd_seeds.bas`).
+
+   Next: M3.3 conversions (B-002), M3.4 maths (B-001), M3.6 text, M3.7 arrays, M3.8 `DATA`/input.
 2. Per the exact-first decision, later milestone plans gate on bit-exact equality with BASIC (T0–T3) and use `compare.exact` and the per-event reseed mode to triage divergences.

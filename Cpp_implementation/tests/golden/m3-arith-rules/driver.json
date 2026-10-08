@@ -1,0 +1,18 @@
+{
+  "binary_sha256": "3fa47fdf6984973ee5ac13a799e3757684e6cd3e9b1e647d2c4e199989994bf7",
+  "command": [
+    "arith_rules",
+    "2000"
+  ],
+  "cuts": [],
+  "driver": "arith_rules",
+  "driver_sha256": "6c49359e65e8752d5b0ebcb9082e0de57425d2503ffa4ce18d3831dcf108d256",
+  "fbc_version": "1.10.1",
+  "includes": [],
+  "outputs": {
+    "arith_rules.txt": "c173ef837b82f61d6bfed3141fe8e2adf44146213e38f3ce984efb5876cba86e",
+    "stdout.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "returncode": 0,
+  "run_wall_time_s": 0.01
+}

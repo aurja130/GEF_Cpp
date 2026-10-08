@@ -17,6 +17,7 @@ list(APPEND CMAKE_MODULE_PATH "${catch2_SOURCE_DIR}/extras")
 include(Catch)
 
 add_executable(gef_tests
+    fbc_arithmetic_test.cpp
     fp_environment_test.cpp
     rng_test.cpp
     support/golden.cpp)
