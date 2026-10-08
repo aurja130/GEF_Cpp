@@ -156,23 +156,34 @@ Each parser returns typed observables keyed by (system, energy step, energy, fil
 
 *(Filled in when M2 closes: dates, ensemble timings, calibration diagnostics, null-validation and sensitivity results, MDE table, deviations from this plan.)*
 
-### Interim status (2026-10-08, 03:00)
+### Interim status (2026-10-08, 06:30)
 
-**Done and passing:**
+All numbers are from the final overnight run with the code at `cb1385b` (outputs in `build/compare/final2/`, driver `build/compare/run_final_gates.sh`). That run includes two bug fixes:
+- round-off variance had disabled the `dmp` local test (pooled κ² of about 10²⁷);
+- the MDE of fields judged by their own sample variance did not invert the saturating t score.
+
+**Passing:**
 - **G1:** round-trip of 417 ENDF, 4,482 `dmp`, 166 `mvd` and 17 `par` files; `out/` coverage of 183 files at 100 %.
 - **G2:** same-seed runs are identical over 4.6 M fields. Probed against unprobed builds: 0 mismatches; the only extras are the probe files.
 - **Ensembles:** all 60 stored. The full 59-energy runs took about 3.7 h each under load.
-- **G3 Cf-252:** 0 of 22 failed suites (2 allowed).
-- **G4:** `m1-g1-rn215-ref1` passes against the short Rn-215 calibration.
-- **G5 Cf-252:** every fault of at least 1 MDE is detected.
+- **G3 Cf-252:** 0 of 22 failed suites (2 allowed). Validity holds at every threshold.
+- **G4:** `m1-g1-rn215-ref1` passes against the short Rn-215 calibration (39,711 families).
+- **G5 Cf-252:** all 5 faults of at least 1 MDE detected in the right family and bin.
 
-**Open, for the user** (method changes are within the approved boundary; the target is not changed):
+**Failing, needs the user's decision** (only method changes were made overnight; α, Holm and the gate criteria are unchanged):
 - **G3 Rn-215 short:** 5 of 22 failed suites (2 allowed).
-  - s1001 is the 18.5 MeV rare-regime run: the pre-pass gave a second-chance split in 1 of 20 runs, 123 families.
-  - The other failures are single-cell bursts in sparse histograms (`NmultA`, `Nspectrum`, `mvd` cells), 10–20 σ under the Poisson / own-sample model.
-  - Leaving 18.5 MeV out does not change the count (diagnostic `--skip-energy`).
-- **G5 Rn-215 short:** 3 of 26 faults at or above 1 MDE were missed, all `isomer` (state 1 moved to state 0) at 2 MeV (5.6 MDE), 22 MeV and 30 MeV (about 1 MDE).
-  - Suspected cause: the zeroed isomer key looks like a lost row and is judged as one soft event with p = 1/(K+1).
-  - A single-nuclide 2 % shift is below 1 MDE at every Rn-215 energy (0.002–0.29 MDE). It is detectable for the Cf-252 peak nuclide (1.25 MDE, 10⁷ events).
-- **Calibration diagnostics:** `dmp` families show a median κ² of about 10²⁷ in the G4 table. That points to a degenerate local-law fit and needs investigation before G5 numbers for `dmp` can be trusted.
-- **Running:** calibration of the full 59-energy ensemble, the `validation/test_run` verdict, and G3 on the full ensemble (outputs in `build/compare/final/`).
+  - s1001 is the 18.5 MeV rare-regime run: a second-chance pre-pass split in 1 of 20 runs.
+  - The rest are single-cell bursts in sparse histograms (`NmultA`, `Nspectrum`, `mvd` cells, `SigmaZpost`).
+- **G3 Rn-215 full (59 energies, 225,416 families):** 19 of 21 failed suites (2 allowed). Validity fails at t = 10⁻⁴ (858 against 470 expected); the larger thresholds are conservative. Failure types, all from correct BASIC runs:
+  - edge and tail bins of sparse distributions (`SigmaZpost` y[63]/y[151], `DPlocal`, `Qvalues`, `Eexc`);
+  - per-run row churn in the `mvd` `AZ`/`AZIcumu` tables, where new and lost rows still combine with a statistical p;
+  - rare-regime steps: `EMpot` tables at 24–25 MeV and 18.5/19/19.5 MeV, where one run shifts many families together.
+- **Conclusion so far:** the per-field calibrated model holds on Cf-252 (one energy, 10⁷ events). It does not hold on Rn-215, where many steps are in low-statistics or rare regimes and the number of families grows to 225 k. Reaching the 1 % target there needs a change of approach, not more tuning. For example:
+  - test whole energy steps against the ensemble by rank (step-level permutation or Monte Carlo statistics);
+  - or larger K for the regime-mixing steps.
+- **G5 Rn-215 short:** 1 fault at or above 1 MDE missed (`isomer`, 30 MeV mid site, 1.01 MDE).
+  - After the MDE fix most Rn-215 sites are far below 1 MDE: fields judged by their own sample variance have almost no power at this Holm level with K = 20.
+  - A single-nuclide 2 % yield shift is below 1 MDE at every Rn-215 energy.
+- **`validation/test_run` cannot be used as a held-out run for the full ensemble.** It ran as thread 2, so it writes `CUMU2.dat` where clean runs write `CUMU1.dat`. Its thermal `dmp` files and `out/` file also carry an appended earlier run, which shifts the block counters.
+  - Its verdict therefore shows 61 structural mismatches and 53 rejected families.
+  - G3-full ran with the leave-one-out judgements only (that is 20 of the 21 suites; test_run was the extra one).
