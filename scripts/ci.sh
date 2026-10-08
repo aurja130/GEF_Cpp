@@ -6,8 +6,8 @@
 # Single local CI entry point (Planning/MILESTONE_0_PLAN.md, M0.10).
 #
 # Usage: scripts/ci.sh [--quick]
-#   (default)  toolchain check; configure, build and test dev-gcc, dev-clang
-#              and asan-ubsan; clang-tidy; clang-format; ruff lint and format
+#   (default)  toolchain check; configure, build and test dev-gcc, dev-clang,
+#              asan-ubsan and tsan; clang-tidy; clang-format; ruff lint and format
 #              check; basedpyright; pytest; validation-manifest and
 #              reference-store verification.
 #   --quick    dev-gcc configure/build/test and the Python steps only.
@@ -118,7 +118,7 @@ fi
 if [[ $quick -eq 1 ]]; then
     presets=(dev-gcc)
 else
-    presets=(dev-gcc dev-clang asan-ubsan)
+    presets=(dev-gcc dev-clang asan-ubsan tsan)
 fi
 for preset in "${presets[@]}"; do
     run_step "build-test-$preset" preset_pipeline "$preset"

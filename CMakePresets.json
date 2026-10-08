@@ -57,6 +57,18 @@
       }
     },
     {
+      "name": "tsan",
+      "displayName": "GCC ThreadSanitizer",
+      "description": "GCC Debug with TSan; cannot be combined with ASan, so it is a separate build",
+      "inherits": "gcc",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_CXX_FLAGS": "-fsanitize=thread -fno-omit-frame-pointer",
+        "CMAKE_EXE_LINKER_FLAGS": "-fsanitize=thread",
+        "CMAKE_SHARED_LINKER_FLAGS": "-fsanitize=thread"
+      }
+    },
+    {
       "name": "release-exact",
       "displayName": "GCC Release, exact mode",
       "description": "GCC, optimised (Release), exact-mode FP flags",
@@ -82,6 +94,10 @@
     {
       "name": "release-exact",
       "configurePreset": "release-exact"
+    },
+    {
+      "name": "tsan",
+      "configurePreset": "tsan"
     }
   ],
   "testPresets": [
@@ -118,6 +134,14 @@
       "name": "release-exact",
       "inherits": "base",
       "configurePreset": "release-exact"
+    },
+    {
+      "name": "tsan",
+      "inherits": "base",
+      "configurePreset": "tsan",
+      "environment": {
+        "TSAN_OPTIONS": "halt_on_error=1:second_deadlock_stack=1"
+      }
     }
   ]
 }

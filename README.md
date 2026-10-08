@@ -31,7 +31,7 @@ No GEF physics has been ported yet; that starts with M3 (FreeBASIC runtime emula
 ## Repository layout
 
 ```
-CMakeLists.txt, CMakePresets.json   C++ build (presets dev-gcc, dev-clang, asan-ubsan, release-exact)
+CMakeLists.txt, CMakePresets.json   C++ build (presets dev-gcc, dev-clang, asan-ubsan, tsan, release-exact)
 Cpp_implementation/
   src/app/                          gef CLI
   src/fbrt/                         FreeBASIC runtime emulation (M0: floating-point environment self-check)
@@ -91,6 +91,7 @@ build/dev-gcc/Cpp_implementation/src/app/gef --version
 | `dev-gcc` | GCC | Debug development build |
 | `dev-clang` | Clang | Debug; second compiler; its `compile_commands.json` feeds clangd and clang-tidy |
 | `asan-ubsan` | GCC | AddressSanitizer + UndefinedBehaviorSanitizer, failing on the first error |
+| `tsan` | GCC | ThreadSanitizer (cannot share a build with ASan), failing on the first report |
 | `release-exact` | GCC | Optimised build with the exact-mode floating-point flags |
 
 All targets compile with `-Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wdouble-promotion -Wshadow -Werror` and the exact-mode flags `-march=x86-64 -ffp-contract=off -fno-fast-math -frounding-math -fno-math-errno -fexcess-precision=standard`.
@@ -106,7 +107,7 @@ scripts/ci.sh           # everything
 scripts/ci.sh --quick   # dev-gcc build and tests, plus the Python checks
 ```
 
-The full run executes the toolchain check; configure, build and test for `dev-gcc`, `dev-clang` and `asan-ubsan`; clang-tidy; clang-format; ruff (lint and format); basedpyright; pytest; and validation-manifest and reference-store verification (skipped with a notice when `validation/` is absent). It prints a one-line summary per step and exits non-zero on any failure. Logs go to `build/ci/`.
+The full run executes the toolchain check; configure, build and test for `dev-gcc`, `dev-clang`, `asan-ubsan` and `tsan`; clang-tidy; clang-format; ruff (lint and format); basedpyright; pytest; and validation-manifest and reference-store verification (skipped with a notice when `validation/` is absent). It prints a one-line summary per step and exits non-zero on any failure. Logs go to `build/ci/`.
 
 ### Running the BASIC reference
 

@@ -91,6 +91,7 @@ Recorded in `manifests/toolchain.txt`; checked by `python3 -m tools.toolchain.ch
   | `dev-gcc` | GCC | Debug |
   | `dev-clang` | Clang | Debug (its `compile_commands.json` feeds clangd and clang-tidy) |
   | `asan-ubsan` | GCC | ASan + UBSan, `-fno-sanitize-recover=all` |
+  | `tsan` | GCC | ThreadSanitizer, `TSAN_OPTIONS=halt_on_error=1` in the test preset (added 2026-10-08, earlier than the M0 plan's "M17") |
   | `release-exact` | GCC | Release (`-O3`) |
 
 - `Cpp_implementation/cmake/GefCompilerPolicy.cmake`: interface targets `gef_exact_fp` (exact-mode FP flags `-march=x86-64 -ffp-contract=off -fno-fast-math -frounding-math -fno-math-errno -fexcess-precision=standard`, linked PUBLIC) and `gef_warnings` (`-Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wdouble-promotion -Wshadow -Werror`, our targets only). New targets call `gef_apply_policy(<target>)`.
@@ -113,7 +114,9 @@ Configuration: `pyproject.toml` (ruff, basedpyright strict over `tools/` and `ha
 
 ### 3.3 Local CI
 
-`scripts/ci.sh` runs the toolchain check; configure, build and test for `dev-gcc`, `dev-clang`, `asan-ubsan`; clang-tidy; clang-format; ruff lint and format; basedpyright; pytest; validation-manifest and reference-store verification (both skipped with a notice without `validation/`). One summary line per step, logs in `build/ci/`, non-zero exit on any failure. `--quick` runs the `dev-gcc` pipeline and the Python steps. The long M1 gates are run on demand with `harness/gates.sh <g1|g23|g4|all>`.
+`scripts/ci.sh` runs the toolchain check; configure, build and test for `dev-gcc`, `dev-clang`, `asan-ubsan`, `tsan`; clang-tidy; clang-format; ruff lint and format; basedpyright; pytest; validation-manifest and reference-store verification (both skipped with a notice without `validation/`). One summary line per step, logs in `build/ci/`, non-zero exit on any failure. `--quick` runs the `dev-gcc` pipeline and the Python steps. The long M1 gates are run on demand with `harness/gates.sh <g1|g23|g4|all>`.
+
+**ThreadSanitizer pass (2026-10-08).** TSan works with GCC 16 and Clang 22 here: a racy probe is reported, a clean one is not. A TSan build of everything compiled so far (`gef_fbrt`, `gef`, the Catch2 tests), with GCC through the `tsan` preset and once with Clang, builds without warnings and passes all 7 tests and `gef --version` with no report; the binaries carry TSan instrumentation. This is an infrastructure check more than a finding: no C++ code creates threads yet, and the BASIC program (`GEF.c`) creates none either. The Python thread and process pools (`manifest_validation`, `check_toolchain`, `harness.store`, `compare.ensemble/extract/calibrate/gate_g1`) are outside TSan's reach. Each maps a pure function over independent items and collects results in the caller, so they share no mutable state. TSan becomes meaningful with parallel mode (M17).
 
 ### 3.4 Reference harness (M1, `harness/`, see `harness/README.md`)
 
