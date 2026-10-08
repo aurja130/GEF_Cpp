@@ -1,0 +1,21 @@
+{
+  "binary_sha256": "eb04375cc3c3b1f9d42ba0e3eba71a657cd09c4009cb9b2dd4401765eaf6a185",
+  "command": [
+    "math_double"
+  ],
+  "cuts": [],
+  "driver": "math_double",
+  "driver_sha256": "5fc3d80fe352b05846737f8d9a98442fb156b68e8a0da7d44c83acda8743c57f",
+  "fbc_version": "1.10.1",
+  "includes": [],
+  "outputs": {
+    "math_double_grid.txt": "213351ad1c579e2a02066760570d6fde86cf0d0fc9416eb06546a011ef9bb153",
+    "math_double_moderate.txt": "d13f6b1b7ac0dc3d4d5312cd6f79e8918f62c8045ee8c8ebfea3ad36b0dfb2ac",
+    "math_double_random.txt": "29da0f7112081d3484e9286669445bd1b6b1b0209c179c85ef5c1736ea449414",
+    "pow_grid.txt": "1a0650a1fd3f3ad3c8eb1cf9fa20c9ebfdaef8055f30e6b279459234ed5b2f77",
+    "pow_random.txt": "904aa497119bef8ba5cc455036ccba1e5b5a203e756605217ab6d07c88be6dea",
+    "stdout.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "returncode": 0,
+  "run_wall_time_s": 0.167
+}

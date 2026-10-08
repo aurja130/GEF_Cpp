@@ -88,7 +88,9 @@ fbc re-associates `*` and `+` chains to the left even without literals, and dist
 
 ## R7 Intrinsics are chosen by the argument's type
 
-`Exp(s)` → `expf`, `Exp(d)` → `exp`, `Exp(-s * 0.5)` → `exp((double)-S * 0x1.p-1)` (the argument is `Double`, R1). The same holds for `Sqr` (`sqrtf`/`sqrt`), `Log` (`logf`/`log`), `Abs` (`fabsf`/`fabs`) and `Int` (`floorf`/`floor`). `Fix` calls the runtime (`fb_FIXSingle`/`fb_FIXDouble`). The wrappers are M3.4's.
+`Exp(s)` → `expf`, `Exp(d)` → `exp`, `Exp(-s * 0.5)` → `exp((double)-S * 0x1.p-1)` (the argument is `Double`, R1). The same holds for `Sqr` (`sqrtf`/`sqrt`), `Log` (`logf`/`log`), `Abs` (`fabsf`/`fabs`) and `Int` (`floorf`/`floor`). `Fix` calls the runtime (`fb_FIXSingle`/`fb_FIXDouble`).
+
+The libm functions GEF.c calls (M3.4 inventory): `pow` (`Double` only, 459 calls), `sqrt`/`sqrtf`, `exp`/`expf`, `log`/`logf`, `fabs`/`fabsf`, `floor`/`floorf`, `cos` (`Double`), `sinf`, `acosf`. In C++, call the `std::` overload for the same argument type (`std::exp(float)` is `expf`); no wrapper is needed, and `-Wconversion`/`-Wdouble-promotion` reject an accidental change of type. Verified against drivers (goldens `m3-math-*`): all 2³² `Single` inputs for the `Single` functions, edge grids and 2²⁰ random inputs for the `Double` ones and `pow`, in `dev-gcc`, `dev-clang` and `release-exact`. Results agree bit for bit except NaN sign and payload, which compilers may change and which the gates ignore (`QUIRKS.md` B-001). GEF's own helpers (`Min`, `Max`, `Erf`, `Erfc`, `Tanh`, `Coth`, `Log10`, `Floor`, `Ceil`, `Round`, `Modulo`) are ported in `gef_math.hpp`.
 
 ## R8 Conversions to integers
 
@@ -104,6 +106,10 @@ These are inline macros in the generated C, not runtime calls:
 | `ri = s \ t` | `fb_F2L(S) / fb_F2L(T)`: operands rounded to integers first |
 
 `nearbyint` rounds in the current rounding mode (to nearest, ties to even: `CLng(-1.5)` is −2). Out of range, the C cast is undefined, but fbc's `-O0` code does the x86-64 thing (M3.3, goldens `m3-conv-*`): NaN and values outside the target range give the type's minimum (`&h80000000`, `&h8000000000000000`); the unsigned 64-bit cast gives `&h8000000000000000` for NaN, −Inf and values below −2⁶³, the two's-complement pattern for other negatives, and 0 from 2⁶⁴ up. `Fix` and `Sgn` are libfb calls: `fb_FIXSingle(x)` is `truncf(fabsf(x)) * (float)fb_SGNSingle(x)`, and `fb_SGNSingle` returns −1 for NaN. The C++ helpers are `fb::f2i`, `f2l`, `f2ul`, `d2i`, `d2l`, `d2ul`, `fix`, `sgn` in `convert.hpp`. Integer overflow wraps (`-fwrapv`): use `fb::add`, `sub`, `mul`, `neg`, `abs`.
+
+## R9 `If x <> x` is folded away
+
+In a branch condition fbc folds a comparison of a variable with itself: `If r <> r Then …` compiles to an unconditional jump past the block, and `If r = r Then …` to the block alone, so a NaN test written this way never fires. In an expression the comparison is kept: `n = (r <> r)` → `N = (int32)(int64)-(R != R)`. GEF does not use the idiom; drivers that test for NaN use the expression form (`math_single.bas`, M3.4).
 
 ## Writing C++ that keeps fbc's order
 

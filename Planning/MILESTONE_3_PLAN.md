@@ -1,6 +1,6 @@
 # Milestone 3: FreeBASIC Runtime Emulation
 
-**Status:** in progress (M3.1, M3.2, M3.3 and M3.5 done, 2026-10-08)
+**Status:** in progress (M3.1–M3.5 done, 2026-10-08)
 **Strategy reference:** `IMPLEMENTATION_STRATEGY.md` §2.2, §2.3, §2.9 and §3, M3
 **Depends on:** M0, M1 (driver framework, `fbmt.py`, reseed vectors), M2 (exact comparison)
 **Unblocks:** M4 (data layer uses `DataReader`, arrays, conversions), M5 (physics functions use the maths intrinsics), M8 (samplers use `FbMtRng`), M13 (writers use the text formatting), and through them every later milestone
@@ -79,10 +79,10 @@ Tasks in execution order. Mark each one done here when finished, and update `CUR
 **Done when:** all conversion tests are bit-exact in every preset.
 
 ### M3.4 Maths intrinsics and GEF helpers (B-001)
-- [ ] The intrinsic mapping table (D5), generated from the GEF.c inventory, with one wrapper per (intrinsic, argument type).
-- [ ] Ports of `Min`, `Max`, `Erf`, `Erfc`, `Tanh`, `Coth`, `Log10`, `Floor`, `Ceil`, `Round`, `Modulo`, `ShellSort1`, `ShellSort3`, cut from the sources by the driver `'@cut` directive so the driver runs GEF's own code.
-- [ ] Exhaustive single-argument `Single` tests (`expf`, `logf`, `sqrtf`, `floorf`, `fabsf`, `Erf`, `Tanh`, `Log10`, …). `Double` and two-argument functions (`pow`, `Round(R, N)`, `Min`/`Max`) get grids plus random inputs (D6).
-- [ ] **B-001 experiment:** the full set in `dev-gcc`, `dev-clang` and `release-exact`, reporting any difference by function and preset. Record the outcome and any per-function fix in `QUIRKS.md` B-001.
+- [x] The intrinsic mapping table (D5), generated from the GEF.c inventory, with one wrapper per (intrinsic, argument type). (Deviation: no wrappers. The `std::` overload for the argument type is the libm function fbc emits, and the warning set rejects type changes; the mapping table is `FBC_ARITHMETIC.md` R7.)
+- [x] Ports of `Min`, `Max`, `Erf`, `Erfc`, `Tanh`, `Coth`, `Log10`, `Floor`, `Ceil`, `Round`, `Modulo`, `ShellSort1`, `ShellSort3`, cut from the sources by the driver `'@cut` directive so the driver runs GEF's own code. (`fbrt/gef_math.hpp`, each from its generated C, including fbc's branch polarity. `ShellSort1/3` dropped: defined in `utilities.bi` but never called by GEF. The drivers `'@include-source utilities.bi` and `'@cut GEF.bas:18052-18089`.)
+- [x] Exhaustive single-argument `Single` tests (`expf`, `logf`, `sqrtf`, `floorf`, `fabsf`, `Erf`, `Tanh`, `Log10`, …). `Double` and two-argument functions (`pow`, `Round(R, N)`, `Min`/`Max`) get grids plus random inputs (D6). (Drivers `math_single.bas` (14 functions × 2³²; 6 min), `math_double.bas`, `gef_math2.bas`; goldens `m3-math-single`, `m3-math-double`, `m3-gef-math2`; `maths_test.cpp`, whose exhaustive test runs the 256 blocks on all cores: 135 s in Debug, 41 s in `release-exact`.)
+- [x] **B-001 experiment:** the full set in `dev-gcc`, `dev-clang` and `release-exact`, reporting any difference by function and preset. Record the outcome and any per-function fix in `QUIRKS.md` B-001. (No non-NaN difference anywhere. NaN sign and payload differ by compiler and optimisation level: `floor` in g++ Debug and at `-O3`, `Erf` in clang, `Erfc` at `-O3`. By user decision all NaNs compare equal; the drivers hash NaN results as the canonical NaN. With that, all 31 test cases pass in all three presets. `QUIRKS.md` B-001 finding 2.)
 
 **Done when:** every intrinsic and helper is bit-exact against its driver in every preset, and B-001 is resolved for this layer.
 
