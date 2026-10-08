@@ -2,11 +2,21 @@
 
 A C++ recreation of **GEF** (GEneral description of Fission observables, K.-H. Schmidt and B. Jurado), version 2025/1.2, originally written in FreeBASIC.
 
-The goal is a faithful, testable and modern C++ GEF. "Faithful" is defined by evidence: the C++ code must agree with the original BASIC binary in differential tests (tables, functions, samplers, seeded event trajectories) and integral tests (whole calculations and the full GEFY yield library), within criteria fixed in advance. Known defects of the original are reproduced by default and documented in a quirk register.
+The goal is a faithful, testable and modern C++ GEF, built in two phases:
+
+- **Phase 1: exact reproduction.** The C++ code must reproduce the BASIC arithmetic exactly. A seeded C++ run must write the same output bytes as the seeded original binary. Tables, functions and samplers are checked bit for bit along the way.
+- **Phase 2: optimisation.** Once the C++ reproduction is exact, it becomes the reference. Faster and parallel versions are measured against it, statistically where the random stream changes by design.
+
+Known defects of the original are reproduced by default and documented in a quirk register.
 
 ## Status
 
-**Milestones 0 (Foundations) and 1 (Reference harness) are complete.** The repository has its build, test, lint and CI infrastructure, tooling to inspect the BASIC source, and a reference harness that turns the original BASIC program into a repeatable, observable test oracle. No GEF physics has been ported yet; that starts with M3 (FreeBASIC runtime emulation), alongside M2 (comparison toolkit).
+**Milestones 0 (Foundations), 1 (Reference harness) and 2 (Comparison toolkit) are complete.** The repository has:
+- its build, test, lint and CI infrastructure, and tooling to inspect the BASIC source;
+- a reference harness that turns the original BASIC program into a repeatable, observable test oracle;
+- a comparison toolkit that parses every output file and compares runs field by field, or statistically against seeded ensembles.
+
+No GEF physics has been ported yet; that starts with M3 (FreeBASIC runtime emulation).
 
 | Area | State |
 |---|---|
@@ -14,6 +24,7 @@ The goal is a faithful, testable and modern C++ GEF. "Faithful" is defined by ev
 | Exact floating-point mode | Flags mirror fbc's gcc backend; checked at run time by `gef --version` |
 | BASIC-source tooling | FreeBASIC → C translation, BASIC line → C lookup, symbol index |
 | Reference harness | Seeded reference binary `ref-1`, proven byte-identical to the original binary; per-event reseed mode; random-draw logs; state probes; function drivers; immutable reference store |
+| Comparison toolkit | Lossless parsers for every GEF output; exact field-level comparison; calibrated statistical verdicts with false-alarm control |
 | Toolchain and data pinning | Toolchain check with fbc 1.10.1 pin; SHA-256 manifests for the validation data and the reference store |
 | Plans | 19 milestones (M0–M18); see `Planning/` |
 
@@ -31,6 +42,8 @@ tools/
   fbsrc/                            BASIC-source tools: emit_c, fbline, fbdef (see tools/fbsrc/README.md)
 harness/                            BASIC reference harness: patches, builder, runner, comparison,
                                     seed capture, store, drivers (see harness/README.md)
+compare/                            comparison toolkit: parsers, exact comparison, calibration,
+                                    statistical verdicts (see compare/README.md)
 manifests/                          committed toolchain record, SHA-256 manifests of validation/,
                                     reference-binary provenance and reference-store manifests
 scripts/ci.sh                       single local CI entry point
@@ -137,7 +150,7 @@ python3 -m tools.toolchain.manifest_validation verify   # reports missing, chang
 | [`Planning/GEF_CPP_VISION.md`](Planning/GEF_CPP_VISION.md) | Goals, test tiers T0–T5, coverage dimensions, statistical acceptance, definition of done |
 | [`Planning/IMPLEMENTATION_STRATEGY.md`](Planning/IMPLEMENTATION_STRATEGY.md) | Component inventory, strategic decisions, milestones M0–M18 and their gates |
 | [`Planning/CURRENT_PROJECT_STATE.md`](Planning/CURRENT_PROJECT_STATE.md) | What exists now, open risks, next steps |
-| [`Planning/MILESTONE_0_PLAN.md`](Planning/MILESTONE_0_PLAN.md), [`MILESTONE_1_PLAN.md`](Planning/MILESTONE_1_PLAN.md) | Milestone plans and completion notes |
+| [`Planning/MILESTONE_0_PLAN.md`](Planning/MILESTONE_0_PLAN.md), [`MILESTONE_1_PLAN.md`](Planning/MILESTONE_1_PLAN.md), [`MILESTONE_2_PLAN.md`](Planning/MILESTONE_2_PLAN.md) | Milestone plans and completion notes |
 | [`Planning/CODING_STANDARDS.md`](Planning/CODING_STANDARDS.md) | C++ and Python conventions, provenance and quirk annotations, tests, license notices |
 | [`Planning/QUIRKS.md`](Planning/QUIRKS.md) | Register of known BASIC quirks and defects that the port reproduces |
 | [`Planning/COVERAGE_MATRIX.md`](Planning/COVERAGE_MATRIX.md) | Coverage of GEF's dimensions by test tier, with owning milestones |
