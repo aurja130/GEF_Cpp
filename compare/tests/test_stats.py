@@ -25,9 +25,11 @@ from compare.stats import (
     holm,
     judge_values,
     local_null,
+    mde_own_values,
     mde_values,
     print_quantum,
     sidak_p,
+    t_equivalent,
     variance_model,
 )
 
@@ -293,6 +295,19 @@ def test_global_null_is_a_mode_plus_chi2_mixture() -> None:
     assert global_sf(150.0, 3.0, 2.0, 10.0) > chi2_scaled_sf(150.0, var / (2 * mean), nu)
 
 
+def test_round_off_variance_of_identical_values_is_no_spread() -> None:
+    """19 identical runs of a printed value leave a variance of 1e-27 (the mean of identical
+    floats is not exact), not 0; the run that differs must not get z = 1e16 against it."""
+    rng = np.random.default_rng(10)
+    table = np.sort(rng.uniform(100.0, 300.0, 30)).round(4)  # a printed table, the same in 19 runs
+    vals = np.tile(table, (20, 1))
+    vals[0] = 0.0  # the one run that has no such table
+    fit = fit_family(vals, np.ones_like(vals, dtype=bool), _gid(30), 1)
+    assert np.all(fit.cls == CLS_STOCH)
+    assert fit.loo_d[0] < 1e5  # was 1e32
+    assert fit.null.z2_sum < 1e6
+
+
 def test_zero_variance_estimates_never_give_an_infinite_z() -> None:
     """A column that is constant in the other runs of a leave-one-out draw, a phi of 0 and an
     all-zero group must take a floor; z is finite or the draw is invalid, never inf."""
@@ -357,3 +372,16 @@ def test_a_family_whose_d_is_all_mode_has_no_chi2_part() -> None:
     fit = fit_family(vals, present, _gid(n), 1)
     assert fit.null.degenerate or np.isfinite(fit.null.a)
     assert not np.any(np.isinf(fit.loo_d))
+
+
+def test_mde_of_own_sample_fields_inverts_the_saturating_t_score() -> None:
+    """The verdict scores such a field with the normal equivalent of a t with K - 1 dof; a shift of
+    one MDE must reach exactly t_star in that score (the linear MDE needed 12x less than that)."""
+    s2 = np.array([1e-4, 2.5e-2])
+    for t_star in (4.0, 9.0, 20.3):
+        for m in (1, 3):
+            mde = mde_own_values(s2, 20, m, t_star)
+            z = mde / np.sqrt(s2 * (1.0 / m + 1.0 / 20))
+            assert np.allclose(t_equivalent(z, 19.0), t_star, rtol=1e-6)
+            assert np.all(mde > t_star * np.sqrt(s2 * (1.0 / m + 1.0 / 20)))
+    assert np.all(np.isinf(mde_own_values(s2, 20, 1, 38.5)))  # beyond the score's range

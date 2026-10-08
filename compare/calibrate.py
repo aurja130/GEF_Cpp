@@ -89,6 +89,7 @@ from compare.stats import (
     file_kind,
     fit_family,
     local_null,
+    mde_own_values,
     mde_values,
 )
 from harness.common import REPO_ROOT, STORE_CAPTURES
@@ -350,6 +351,13 @@ def mde_of_family(cal: Calibration, fam: CalFamily, candidate_runs: int) -> MdeR
         a, r = mde_values(fam.v[stat], fam.mean[stat], cal.runs, candidate_runs, t_star)
         absolute[stat] = a
         relative[stat] = r
+        own = stat & (fam.s2 > 0.0)  # judged by the t law of its own variance: saturating score
+        if own.any():
+            absolute[own] = mde_own_values(fam.s2[own], cal.runs, candidate_runs, t_star)
+            with np.errstate(divide="ignore", invalid="ignore"):
+                relative[own] = np.where(
+                    fam.mean[own] != 0.0, absolute[own] / np.abs(fam.mean[own]), np.nan
+                )
     ign = fam.cls == CLS_IGN
     absolute[ign] = np.nan
     relative[ign] = np.nan

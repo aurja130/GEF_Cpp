@@ -604,6 +604,9 @@ def _occupancy(vals: FloatArray) -> tuple[FloatArray, FloatArray]:
     return occupied, np.where(occupied > 0.0, total / np.maximum(occupied, 1.0), 0.0)
 
 
+CONSTANT_RTOL = 1e-10  # relative spread below which values count as identical (round-off)
+
+
 def _loo_moments(
     vals: FloatArray,
 ) -> tuple[FloatArray, FloatArray, FloatArray, FloatArray, FloatArray]:
@@ -622,6 +625,11 @@ def _loo_moments(
         mean[:, cols] = sub.mean(axis=1)
         var[:, cols] = sub.var(axis=1, ddof=1)
         peak[:, cols] = np.abs(sub).max(axis=1)
+        # identical values leave round-off (1e-27) behind, not 0: such a field is constant in
+        # this leave-one-out ensemble and has no spread to divide by
+        var[:, cols] = np.where(
+            var[:, cols] <= (CONSTANT_RTOL * peak[:, cols]) ** 2, 0.0, var[:, cols]
+        )
         occupied[:, cols] = np.count_nonzero(sub, axis=1)
         nonzero_mean[:, cols] = np.where(
             occupied[:, cols] > 0, sub.sum(axis=1) / np.maximum(occupied[:, cols], 1.0), 0.0
@@ -1113,3 +1121,19 @@ def mde_values(
     with np.errstate(divide="ignore", invalid="ignore"):
         relative = np.where(mean != 0.0, absolute / np.abs(mean), np.nan)
     return absolute, relative
+
+
+def mde_own_values(s2: FloatArray, runs: int, candidate_runs: int, t_star: float) -> FloatArray:
+    """MDE in value units of fields judged by their own sample variance ``s2``.
+
+    The verdict turns such a field's deviation, in units of ``sqrt(s2 (1/m + 1/K))``, into the
+    normal-equivalent score of a Student t with ``K - 1`` degrees of freedom
+    (``t_equivalent``), so the score saturates: a shift ``x`` is detected where
+    ``t_equivalent(x) >= t_star``, i.e. ``x >= student_isf(ndtr(-t_star), K - 1)``. Infinite where
+    ``t_star`` lies beyond what the score can express (probabilities below 1e-300).
+    """
+    q = ndtr(-t_star) if np.isfinite(t_star) else 0.0
+    if q < 1e-300:
+        return np.full(s2.shape, np.inf)
+    x = student_isf(q, runs - 1.0)
+    return np.asarray(x * np.sqrt(s2 * (1.0 / candidate_runs + 1.0 / runs)), dtype=np.float64)
