@@ -224,9 +224,9 @@ Tool commands are run from the repository root: `python3 -m tools.fbsrc.fbline <
 - **Mechanism:** for an isomer row, `Read BranchData(I_Branch).R_alpha_m` is followed by `BranchData(I_Branch).R_alpha = BranchData(I_Branch).R_alpha_m * 0.01`. GEF.c:106335 writes offset +56 (the `R_alpha` field, the same offset written by the ground-state line 121, GEF.c:106275) from offset +88 (`R_alpha_m`). The analogous `_mm` line 192 is inside a comment block (fbline: no C).
 - **Effect (expected):** the ground-state α branching of that record is replaced by the isomer's (scaled to a fraction), and `R_alpha_m` stays in percent. Both are read in the decay sweeps (`Branchings.bas:365-368, 447-450`).
 - **Evidence status:** *confirmed by fbc C*
-- **Evidence:** `fbline Branchings.bas:157-158`, `fbline Branchings.bas:121`, `fbline Branchings.bas:192` (exit 1). Branchings.bas is included twice (`GEF.bas:14704, 14836`), so the C appears twice (also GEF.c:158685).
+- **Evidence:** `fbline Branchings.bas:157-158`, `fbline Branchings.bas:121`, `fbline Branchings.bas:192` (exit 1). Branchings.bas is included twice (`GEF.bas:14704, 14836`), so the C appears twice (also GEF.c:158685). M4.3: the T0 dump of `BranchData` (probe's private loader copy) shows the effect and the C++ reproduces it (`tables_test.cpp`).
 - **Fidelity switch:** `fix_branch_alpha_isomer`
-- **C++ symbol:** not yet ported
+- **C++ symbol:** `gef::data::load_branchings` (`Cpp_implementation/src/data/branchings.cpp`); the switch comes with a later fix decision (strategy §2.1)
 - **Owning milestone:** M4
 
 ### Q-016 3rd-isomer missing-branch fallback uses state 2
@@ -246,9 +246,9 @@ Tool commands are run from the repository root: `python3 -m tools.fbsrc.fbline <
 - **Mechanism:** `If BranchData(I_Branch).I_Z = 88 and BranchData(I_Branch).I_A = 234 Then Alarm = 0 : Exit Do` (GEF.c:106476–106481). The `BranchTable` DATA continues after the (88, 234) row at `DCLbranchingJEFF33.bas:4139` with 469 rows for Z = 89–111 (lines 4140–4608).
 - **Effect (expected):** decay data for Z = 89–111 are never loaded, so cumulative yields and delayed-neutron/antineutrino results ignore their decays.
 - **Evidence status:** *confirmed by fbc C*
-- **Evidence:** `fbline Branchings.bas:225-228` as quoted; row count from the DATA source. Confirmed by M4 T0 (BranchData dump).
+- **Evidence:** `fbline Branchings.bas:225-228` as quoted; row count from the DATA source. Confirmed by M4 T0 (BranchData dump): the C++ loader reproduces it (`tables_test.cpp`).
 - **Fidelity switch:** `fix_branch_table_full_load`
-- **C++ symbol:** not yet ported
+- **C++ symbol:** `gef::data::load_branchings` (`Cpp_implementation/src/data/branchings.cpp`); the switch comes with a later fix decision (strategy §2.1)
 - **Owning milestone:** M4
 
 ### Q-018 `MyParameters.dat` never applied; `Fitpar.dat` values reset per system by the re-included `Parameters.bas`
@@ -417,12 +417,34 @@ Tool commands are run from the repository root: `python3 -m tools.fbsrc.fbline <
 ### Q-032 The stock `NucPropNUBASE2020.bas` stops GEF while loading
 
 - **BASIC location:** `NucPropNUBASE2020.bas:56-94` (selected by replacing the include at `GEF.bas:1052`)
-- **Mechanism:** with the NUBASE 2020 nuclide file included instead of JEFF-3.3, the `NuclideData` loader runs past the `N_MAT_MAX` it counted (`If I_MAT > N_MAT_MAX Then Print "<E> NucPropx: N_MAT_MAX too small!"`) until a record's `I_ISO` falls outside 0…9, then prints `<E> Error in NucProp` and `GEF stopped.` and ends. Why the counting and loading loops disagree is established when M4.3 ports the loader.
+- **Mechanism:** the mass-excess conversion loop `For I_MAT = 1 To N_MAT_MAX … Next I_MAT` (`NucPropNUBASE2020.bas:95-98`) sits inside the record-reading `Do Until I_MAT = N_MAT_MAX` loop instead of after it, and reuses `I_MAT` as its counter. After the first record it leaves `I_MAT = N_MAT_MAX + 1`, so the `Do Until` test never holds again: each further pass increments `I_MAT`, prints `<E> NucPropx: N_MAT_MAX too small!` (line 80) and reads a record into `NucTab(I_MAT)` past the array's end (an out-of-bounds write; GEF is compiled without bounds checks). The lines after the inner loop (R_SPI clamp, isomer bookkeeping) also address `NucTab(N_MAT_MAX + 1)`. The `DATA` pointer keeps advancing through the following tables until a value read as `I_ISO` lies outside 0…9; then line 89-93 prints `<E> Error in NucProp` and `GEF stopped.` and ends the program.
 - **Effect:** GEF cannot run with this variant as shipped; it stops before the T0 probe point.
 - **Evidence status:** *confirmed in output*
 - **Evidence:** reference-store capture `m4-t0-nubase2020` (patch set `m4-nubase2020`, input `harness/inputs/m4_t0.in`): 6,556 "too small" lines, then the error and stop. Same output from a build with only `nucprop-nubase2020` and `seed` (M4.1, 2026-10-09). The NUBASE 2016 file loads normally.
 - **Fidelity switch:** none planned (the C++ loader reproduces the stop when this variant is selected)
-- **C++ symbol:** not yet ported
+- **C++ symbol:** `gef::data::load_nubase2020` (`Cpp_implementation/src/data/nuclide_tables.cpp`, M4.3) throws `GefStopped` with the same 6,558 lines (checked against the capture's `stdout.log`). It reproduces every `Read` (so the stop comes at the same item) and the printed lines; the out-of-bounds writes and the statements that address `NucTab(N_MAT_MAX + 1)` have no observable effect before the stop and are not emulated.
+- **Owning milestone:** M4
+
+### Q-033 Loader error messages say "GEF stopped." but GEF continues
+
+- **BASIC location:** `NucPropJEFF33.bas:77-82` and the same block in `NucPropJEFF311.bas`, `NucPropNUBASE2016.bas`, `NucPropx/mf/f.bas`; `Branchings.bas:76-80`
+- **Mechanism:** the checks print an error and `GEF stopped.`, then `Sleep`, but have no `End` (unlike `NucPropNUBASE2020.bas:89-93`), so the program carries on with the bad record after a key press. (The unknown-time-unit message at `Branchings.bas:214-216` also continues, but does not claim to stop.)
+- **Effect:** none with the shipped tables: no certified variant triggers these checks (the `stdout.log` of every M4.1 capture has no such line). With a corrupt table the run would continue after claiming to stop.
+- **Evidence status:** *confirmed by fbc C*
+- **Evidence:** `fbline NucPropJEFF33.bas:77-82`, `fbline Branchings.bas:76-80` (no `fb_End` call); M4.3 tests check that the loaders print nothing for the shipped data.
+- **Fidelity switch:** `fix_loader_error_stop`
+- **C++ symbol:** `gef::data::load_plain` and `gef::data::load_branchings` write the lines to `TableSet::console` and continue
+- **Owning milestone:** M4
+
+### Q-034 JEFF-3.1.1 nuclide table is 9 records shorter than its `N_MAT_MAX`
+
+- **BASIC location:** `NucPropJEFF311.bas:47-57` (counting loop), `90` (`If NucTab(I_MAT).I_Z = 111 Then Exit Do`), `94` (message)
+- **Mechanism:** the counting loop counts every record up to the `9999` terminator, `N_MAT_MAX = 3887`, and `NucTab` is dimensioned for them; the reading loop leaves at the first `I_Z = 111` record, number 3878. The last 9 entries stay zero (Z = 0, A = 0) and the loader prints `<E> Nucprop: N_MAT_MAX too large, should be  3878` and continues. (The JEFF-3.3 and NUBASE files have the `I_Z = 111` exit commented out.)
+- **Effect:** every JEFF-3.1.1 run prints that line; lookups that scan `NucTab` to its end see the 9 empty entries.
+- **Evidence status:** *confirmed in output*
+- **Evidence:** capture `m4-t0-jeff311`: `stdout.log` line 21, and the T0 dump (`N_MAT_MAX` 3887, records 3879–3887 zero). Reproduced by `nuclide_tables_test.cpp`.
+- **Fidelity switch:** none planned (data, not code)
+- **C++ symbol:** `gef::data::load_plain` (`TableSet::console`)
 - **Owning milestone:** M4
 
 ## 5. Build notes (not GEF quirks)
@@ -500,7 +522,9 @@ These describe how the toolchain, not GEF, can make the C++ results differ from 
 | Q-029 | `d_NZIcumu` capped only in printed window | `Branchings.bas:876-899, 963-978` | read only | `fix_cumulative_uncertainty_cap` | M12 |
 | Q-030 | `.par` files print an unassigned date | `GEF.bas:5165, 5179` | confirmed in output | `fix_par_timestamp` | M13 |
 | Q-031 | `Print Using "####.#"; x; " ";` drops the `" "` | `GEF.bas:12292` | confirmed by fbc C | `fix_using_space` | M13 |
-| Q-032 | Stock `NucPropNUBASE2020.bas` stops GEF while loading | `NucPropNUBASE2020.bas:56-94` | confirmed in output | — | M4 |
+| Q-032 | Stock `NucPropNUBASE2020.bas` stops GEF while loading | `NucPropNUBASE2020.bas:56-98` | confirmed in output | — | M4 |
+| Q-033 | Loader errors say "GEF stopped." but continue | `NucPropJEFF33.bas:77-82`, `Branchings.bas:76-80` | confirmed by fbc C | `fix_loader_error_stop` | M4 |
+| Q-034 | JEFF-3.1.1 table 9 records shorter than `N_MAT_MAX` | `NucPropJEFF311.bas:47-57, 90, 94` | confirmed in output | — | M4 |
 | B-001 | Optimisation level vs fbc `-O0` | (toolchain) | open risk | — | M3, M5 |
 | B-002 | fbc gcc passes `-fwrapv -fno-strict-aliasing` | (toolchain) | resolved for the runtime layer (M3.3) | — | M3 |
 | B-003 | `Compilationstamp` needs `SOURCE_DATE_EPOCH` | `GEF.bas:17` | handled (M1) | — | M1 |

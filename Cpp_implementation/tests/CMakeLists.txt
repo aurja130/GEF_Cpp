@@ -25,10 +25,12 @@ add_executable(gef_tests
     format_test.cpp
     fp_environment_test.cpp
     maths_test.cpp
+    nuclide_tables_test.cpp
     print_using_test.cpp
     probe_dump_test.cpp
     program_data_test.cpp
     rng_test.cpp
+    tables_test.cpp
     text_test.cpp
     support/golden.cpp
     support/probe_dump.cpp)

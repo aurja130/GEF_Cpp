@@ -55,9 +55,9 @@ Tasks in execution order. Mark each one done here when finished, and update `CUR
 **Done when:** all variants are generated, committed and regenerate identically.
 
 ### M4.3 Table loaders
-- [ ] Port, line by line from the generated C: the NucTab/`MAT_for_ISO`/Isotab loader (including the spin-sorted states and `R_Lim` windows), BranchData/EndA/INlast (`Branchings.bas` loader), `BEldmTF`, `BEexp`, `DEFOtab`, `ShellMO`, `EVOD`, `CElement`, `ENfrvar_lim` (`Spectra.bas:798`). Converter and loader assertions on counts and index ranges.
-- [ ] `TableSet` (in `ProcessState`), loaded for a chosen variant combination.
-- [ ] Tests: every table's fingerprint equals the T0 dump of its combination (committed goldens), for all eight combinations.
+- [x] Port, line by line from the generated C: the NucTab/`MAT_for_ISO`/Isotab loader (including the spin-sorted states and `R_Lim` windows), BranchData/EndA/INlast (`Branchings.bas` loader), `BEldmTF`, `BEexp`, `DEFOtab`, `ShellMO`, `EVOD`, `CElement`, `ENfrvar_lim` (`Spectra.bas:798`). Converter and loader assertions on counts and index ranges. (`src/data/nuclide_tables.cpp` (each variant's own loader: the files differ in record layout, in an active or commented `I_Z = 111` exit, and in a bounded or unbounded `N_ISO_MAT`), `mass_tables.cpp`, `branchings.cpp`, `tables.cpp`. Loader messages that do not stop go to `TableSet::console` with BASIC's `Print` formatting; the NUBASE 2020 stop throws `GefStopped` with the same 6,558 lines (Q-032). Quirks reproduced and annotated: Q-015, Q-017, Q-032, new Q-033 and Q-034. `N_ISO_MAT`'s unchecked loop never reads past `NucTab` with the shipped tables; the bounds-checked access would throw.)
+- [x] `TableSet` (in `ProcessState`), loaded for a chosen variant combination. (`gef::data::load_tables(ProgramData const&)`; `ProcessState` itself comes with M6.)
+- [x] Tests: every table's fingerprint equals the T0 dump of its combination (committed goldens), for all eight combinations. (`nuclide_tables_test.cpp`, `tables_test.cpp`, with the C++ probe writer `tests/support/probe_dump.hpp` and the store-derived goldens `m4-t0-<variant>` from `harness.probe_fingerprints`: six certified combinations (seven exist, NUBASE 2020 stops before T0); all pass in `dev-gcc`, `dev-clang`, `release-exact`. The legacy files' probe writes `N_MAT_MAX` under its `#DEFINE` value (e.g. `3897`), which the tests map.)
 
 **Done when:** all T0 table fingerprints match for every certified combination.
 

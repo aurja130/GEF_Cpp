@@ -65,7 +65,7 @@ std::string element_text(T const& value) {
     } else if constexpr (std::integral<T>) {
         return std::to_string(value);
     } else if constexpr (std::same_as<T, std::string>) {
-        return quoted(value);
+        return detail::quoted(value);
     } else {
         static_assert(always_false<T>, "probe_dump: unsupported element type");
         return {};
