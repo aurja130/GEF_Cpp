@@ -10,8 +10,9 @@ Usage (from the repository root)::
     python3 -m harness.build --compare-sections <binary A> <binary B>
 
 ``<patchset>`` names ``harness/patchsets/<patchset>.txt``: one patch name per line (without
-``.patch``), ``#`` comments allowed, in the canonical stacking order ``seed``, ``scope``,
-``reseed``, ``rndlog``, ``probes``. The set ``none`` is empty (the unmodified source).
+``.patch``), ``#`` comments allowed, in the canonical stacking order: the M4 variant patches
+(``nucprop-*``, ``legacy-isosource``), then ``seed``, ``scope``, ``reseed``, ``rndlog``,
+``probes``, ``datachain``. The set ``none`` is empty (the unmodified source).
 
 The build copies the submodule source to ``build/harness/<build-id>/src/``, applies the
 patches with ``patch -p1 --fuzz=0``, runs ``fbc GEF.bas [-d DEFINE ...]`` with
@@ -77,7 +78,23 @@ __all__ = [
 ]
 
 SCHEMA = 1
-CANONICAL_ORDER = ("seed", "scope", "reseed", "rndlog", "probes")
+# Variant patches (M4: alternative nuclide-data and branching files) come first, the DATA chain
+# dump (M4) last.
+CANONICAL_ORDER = (
+    "nucprop-jeff311",
+    "nucprop-nubase2016",
+    "nucprop-nubase2020",
+    "nucprop-x",
+    "nucprop-mf",
+    "nucprop-f",
+    "legacy-isosource",
+    "seed",
+    "scope",
+    "reseed",
+    "rndlog",
+    "probes",
+    "datachain",
+)
 BINARY_NAME = "GEF"
 BUILD_JSON = "build.json"
 _DEFINE_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*(=[A-Za-z0-9_.+-]+)?$")

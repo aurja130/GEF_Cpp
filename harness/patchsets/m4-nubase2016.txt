@@ -1,0 +1,6 @@
+# Patch set "m4-nubase2016" (M4.1): NucPropNUBASE2016 with branchings JEFF-3.3. Build with -d GEF_PROBES -d GEF_DATACHAIN.
+nucprop-nubase2016
+seed
+scope
+probes
+datachain

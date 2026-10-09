@@ -1,0 +1,6 @@
+# Patch set "m4-nubase2020" (M4.1): NucPropNUBASE2020 with branchings JEFF-3.3. Build with -d GEF_PROBES -d GEF_DATACHAIN.
+nucprop-nubase2020
+seed
+scope
+probes
+datachain

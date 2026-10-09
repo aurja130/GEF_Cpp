@@ -1,0 +1,47 @@
+--- a/GEF.bas
++++ b/GEF.bas
+@@ -1565,2 +1565,4 @@
+   #Include Once "ShellMO.bas"
++#Include "harness_datachain.bi"
++#line 1565
+   
+--- /dev/null
++++ b/harness_datachain.bi
+@@ -0,0 +1,37 @@
++' SPDX-License-Identifier: GPL-3.0-or-later
++' Copyright (C) 2026 Aurora Jahan
++' Licensed under the GNU GPL v3 or later, WITHOUT ANY WARRANTY; see LICENSE.txt.
++' Harness patch "datachain" (M4.1): with -d GEF_DATACHAIN, writes every DATA item of the
++' program, in the order Read sees them from the first DATA block on, to
++' probes/datachain.txt: one line per item, the item's bytes as uppercase hex ("-" for an
++' empty item). It reads HD_COUNT items; past the end of the data Read gives "", so the file
++' ends with "-" lines. The data pointer is restored to the first block afterwards, as before
++' the dump, so the run is unchanged.
++
++#ifdef GEF_DATACHAIN
++Scope
++  Const HD_COUNT = 300000   ' more than any variant's item count (default build: 214,639)
++  Dim As Long hd_err = MkDir("probes")
++  Dim As Long hd_file = FreeFile
++  If Open("probes/datachain.txt" For Output As #hd_file) <> 0 Then
++    Print "<harness> cannot open probes/datachain.txt"
++  Else
++    Dim As String hd_item, hd_hex
++    Restore
++    For hd_i As Long = 1 To HD_COUNT
++      Read hd_item
++      If Len(hd_item) = 0 Then
++        hd_hex = "-"
++      Else
++        hd_hex = ""
++        For hd_k As Long = 1 To Len(hd_item)
++          hd_hex &= Hex(Asc(hd_item, hd_k), 2)
++        Next hd_k
++      End If
++      Print #hd_file, hd_hex
++    Next hd_i
++    Close #hd_file
++    Restore
++  End If
++End Scope
++#endif

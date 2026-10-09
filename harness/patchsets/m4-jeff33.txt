@@ -1,0 +1,5 @@
+# Patch set "m4-jeff33" (M4.1): default nuclide data (JEFF-3.3, branchings JEFF-3.3), seed, scope, probes and the DATA chain dump. Build with -d GEF_PROBES -d GEF_DATACHAIN.
+seed
+scope
+probes
+datachain

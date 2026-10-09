@@ -1,0 +1,6 @@
+# Patch set "m4-jeff311" (M4.1): NucPropJEFF311 with branchings JEFF-3.3 (DCLbranchingJEFF311.bas does not compile with GEF 2025/1.2). Build with -d GEF_PROBES -d GEF_DATACHAIN.
+nucprop-jeff311
+seed
+scope
+probes
+datachain

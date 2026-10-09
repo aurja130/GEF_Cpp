@@ -10,7 +10,7 @@ The submodule `Reference/GEF_code/` is never modified. Every binary is built fro
 
 ## Patches and patch sets
 
-Unified diffs in `patches/`, applied with `patch -p1 --fuzz=0` in the canonical order **seed → scope → reseed → rndlog → probes**. None of them changes the line numbering of `GEF.bas` (draw-site tags and probe locations use the original lines). Harness code lives in new `harness_*.bi` files that the patches add.
+Unified diffs in `patches/`, applied with `patch -p1 --fuzz=0` in the canonical order **variant patches → seed → scope → reseed → rndlog → probes → datachain**. None of them changes the line numbering of `GEF.bas` (draw-site tags and probe locations use the original lines). Harness code lives in new `harness_*.bi` files that the patches add.
 
 | Patch | Effect | Switch |
 |---|---|---|
@@ -19,8 +19,11 @@ Unified diffs in `patches/`, applied with `patch -p1 --fuzz=0` in the canonical 
 | `reseed` | Per-event reseed mode, `RESEED_SPEC.md` | `GEF_RESEED=1` at run time |
 | `rndlog` | Logs every traced `Rnd` draw to `rnd.log`, `RNDLOG.md` | compile with `-d GEF_RNDLOG` |
 | `probes` | Hex dumps of state at T0, P1, P2, P3 to `probes/<ID>.txt`, `PROBES.md` | compile with `-d GEF_PROBES` |
+| `datachain` | Dumps every `DATA` item, in `Read` order, as hex to `probes/datachain.txt` (M4) | compile with `-d GEF_DATACHAIN` |
+| `nucprop-<v>` | Swaps the nuclide-data include at `GEF.bas:1052` for `NucProp<v>.bas` (`jeff311`, `nubase2016`, `nubase2020`, `x`, `mf`, `f`; M4) | always |
+| `legacy-isosource` | Defines `ISOSOURCE` in the legacy `NucPropx/mf/f.bas`, which GEF 2025/1.2 needs; not a stock configuration (M4) | always |
 
-Patch sets (`patchsets/<name>.txt`): `none`, `seed`, `seed-rndlog`, `seed-probes`, `seed-rndlog-probes`, `seed-reseed`, `seed-reseed-rndlog`, `seed-reseed-probes`, `seed-reseed-rndlog-probes`.
+Patch sets (`patchsets/<name>.txt`): `none`, `seed`, `seed-rndlog`, `seed-probes`, `seed-rndlog-probes`, `seed-reseed`, `seed-reseed-rndlog`, `seed-reseed-probes`, `seed-reseed-rndlog-probes`, and the M4 variant sets `m4-jeff33`, `m4-jeff311`, `m4-nubase2016`, `m4-nubase2020`, `m4-legacy-x`, `m4-legacy-mf`, `m4-legacy-f` (each with seed, scope, probes and datachain).
 
 ```sh
 python3 -m harness.build seed                                   # -> build/harness/seed-<hash>/GEF

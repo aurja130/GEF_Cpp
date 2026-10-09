@@ -414,6 +414,17 @@ Tool commands are run from the repository root: `python3 -m tools.fbsrc.fbline <
 - **C++ symbol:** `gef::fb::PrintFile::using_print` (runtime behaviour); call site not yet ported
 - **Owning milestone:** M13
 
+### Q-032 The stock `NucPropNUBASE2020.bas` stops GEF while loading
+
+- **BASIC location:** `NucPropNUBASE2020.bas:56-94` (selected by replacing the include at `GEF.bas:1052`)
+- **Mechanism:** with the NUBASE 2020 nuclide file included instead of JEFF-3.3, the `NuclideData` loader runs past the `N_MAT_MAX` it counted (`If I_MAT > N_MAT_MAX Then Print "<E> NucPropx: N_MAT_MAX too small!"`) until a record's `I_ISO` falls outside 0…9, then prints `<E> Error in NucProp` and `GEF stopped.` and ends. Why the counting and loading loops disagree is established when M4.3 ports the loader.
+- **Effect:** GEF cannot run with this variant as shipped; it stops before the T0 probe point.
+- **Evidence status:** *confirmed in output*
+- **Evidence:** reference-store capture `m4-t0-nubase2020` (patch set `m4-nubase2020`, input `harness/inputs/m4_t0.in`): 6,556 "too small" lines, then the error and stop. Same output from a build with only `nucprop-nubase2020` and `seed` (M4.1, 2026-10-09). The NUBASE 2016 file loads normally.
+- **Fidelity switch:** none planned (the C++ loader reproduces the stop when this variant is selected)
+- **C++ symbol:** not yet ported
+- **Owning milestone:** M4
+
 ## 5. Build notes (not GEF quirks)
 
 These describe how the toolchain, not GEF, can make the C++ results differ from the reference binary. They have no fidelity switch.
@@ -489,6 +500,7 @@ These describe how the toolchain, not GEF, can make the C++ results differ from 
 | Q-029 | `d_NZIcumu` capped only in printed window | `Branchings.bas:876-899, 963-978` | read only | `fix_cumulative_uncertainty_cap` | M12 |
 | Q-030 | `.par` files print an unassigned date | `GEF.bas:5165, 5179` | confirmed in output | `fix_par_timestamp` | M13 |
 | Q-031 | `Print Using "####.#"; x; " ";` drops the `" "` | `GEF.bas:12292` | confirmed by fbc C | `fix_using_space` | M13 |
+| Q-032 | Stock `NucPropNUBASE2020.bas` stops GEF while loading | `NucPropNUBASE2020.bas:56-94` | confirmed in output | — | M4 |
 | B-001 | Optimisation level vs fbc `-O0` | (toolchain) | open risk | — | M3, M5 |
 | B-002 | fbc gcc passes `-fwrapv -fno-strict-aliasing` | (toolchain) | resolved for the runtime layer (M3.3) | — | M3 |
 | B-003 | `Compilationstamp` needs `SOURCE_DATE_EPOCH` | `GEF.bas:17` | handled (M1) | — | M1 |

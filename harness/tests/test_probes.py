@@ -341,8 +341,8 @@ def test_probes_patch_applies_in_every_patch_set(tmp_path: Path, patchset: str) 
     src = tmp_path / "src"
     shutil.copytree(GEF_SOURCE_DIR, src)
     files = read_patchset(patchset)
-    assert files[-1] == PROBES_PATCH
-    for patch in files[:-1]:
+    before_probes = files[: files.index(PROBES_PATCH)]
+    for patch in before_probes:
         _apply(src, patch)
     without = (src / "GEF.bas").read_bytes().splitlines()
     _apply(src, PROBES_PATCH, dry_run=True)

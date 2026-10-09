@@ -1,0 +1,7 @@
+# Patch set "m4-legacy-mf" (M4.1): legacy NucPropmf (compatibility patch legacy-isosource; not a stock GEF 2025/1.2 configuration) with branchings JEFF-3.3. Build with -d GEF_PROBES -d GEF_DATACHAIN.
+nucprop-mf
+legacy-isosource
+seed
+scope
+probes
+datachain

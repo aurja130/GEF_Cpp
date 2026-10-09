@@ -1,0 +1,21 @@
+--- a/NucPropx.bas
++++ b/NucPropx.bas
+@@ -2,3 +2,3 @@
+ ' This version of NucProp allows for an extended table of isotopes.
+-' Note: In this version of NucProp, the MAT numbers from JEFF are not preserved!
++#DEFINE ISOSOURCE "NucPropx"
+ ' To preserve the MAT numbers from JEFF, the version NucProp.bas must be used.
+--- a/NucPropmf.bas
++++ b/NucPropmf.bas
+@@ -2,3 +2,3 @@
+ ' Note: In this version of NucProp, the MAT numbers from JEFF are not preserved!
+-' To preserve the MAT numbers from JEFF, the version NucProp.bas must be used.
++#DEFINE ISOSOURCE "NucPropmf"
+ 
+--- a/NucPropf.bas
++++ b/NucPropf.bas
+@@ -2,3 +2,3 @@
+ ' Note: In this version of NucProp, the MAT numbers from JEFF are not preserved!
+-' To preserve the MAT numbers from JEFF, the version NucProp.bas must be used.
++#DEFINE ISOSOURCE "NucPropf"
+ 

@@ -1,0 +1,43 @@
+{
+  "created_utc": "2026-10-09T11:13:02Z",
+  "file_count": 6,
+  "files": {
+    "run.json": "6d2df0f0bf95c8ee4fac0e6eefbaa16af4b001ff3be013302a654b5f4ef7b18c",
+    "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout.log": "d1c7b6297f123221e4daad63252499a869f65be4350bb47898c64cbfe87bae07",
+    "work/file.in": "3a6a34608896cabdf9b34c423fa070cc32321290880d7004325cc62c1f25e6e4",
+    "work/in/m4_t0.in": "a38c770904b9fdcc466f6106dd3c5455d59f710ef6f6906c8dfde1beac4bad6c",
+    "work/tmp/ParameterUpdate.dat": "7329de19014b6d27fa20dd8447cdb49f34ba9069b6b2f4b8d2abd2782189fcad"
+  },
+  "id": "m4-t0-nubase2020",
+  "kind": "capture",
+  "note": "M4.1: patch set m4-nubase2020; GEF stops while loading NucPropNUBASE2020 ('Error in NucProp'), no T0",
+  "run_json": {
+    "binary": {
+      "build_id": "m4-nubase2020-adeec722bd0c",
+      "path": "/home/aurja/Programming/GEF_Cpp/build/harness/m4-nubase2020-adeec722bd0c/GEF",
+      "sha256": "a85bd6d241fa7b1f396cec47e45af0cbf8f426ad53904d97f1585331dd1d2dcb"
+    },
+    "command": [
+      "/home/aurja/Programming/GEF_Cpp/build/harness/m4-nubase2020-adeec722bd0c/GEF"
+    ],
+    "cwd": "/home/aurja/Programming/GEF_Cpp/build/m4_t0/nubase2020/work",
+    "end_utc": "2026-10-09T11:12:20+00:00",
+    "env_set": {
+      "GEF_SEED": "12345"
+    },
+    "exit_code": 0,
+    "input": {
+      "name": "m4_t0.in",
+      "sha256": "a38c770904b9fdcc466f6106dd3c5455d59f710ef6f6906c8dfde1beac4bad6c"
+    },
+    "mode": "normal",
+    "reseed": false,
+    "schema": 1,
+    "seed": 12345,
+    "start_utc": "2026-10-09T11:12:19+00:00",
+    "wall_time_s": 0.103
+  },
+  "schema": 1,
+  "total_bytes": 237209
+}

@@ -1,0 +1,7 @@
+--- a/GEF.bas
++++ b/GEF.bas
+@@ -1051,3 +1051,3 @@
+ '    #Include Once "NucPropJEFF311.bas"  ' JEFF 3.1.1 is not recommended any more.
+-     #Include Once "NucPropJEFF33.bas"   ' Uses nuclear properties from JEFF-3.3.
++     #Include Once "NucPropx.bas"   ' harness patch nucprop-x (was NucPropJEFF33.bas)
+   
