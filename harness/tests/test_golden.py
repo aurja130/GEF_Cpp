@@ -48,3 +48,20 @@ def test_edited_missing_and_extra_outputs_are_stale(copied: tuple[Path, Path]) -
     assert any("differs" in p and outputs[0].name in p for p in problems)
     assert any("missing" in p and outputs[1].name in p for p in problems)
     assert any("not recorded" in p and "extra.txt" in p for p in problems)
+
+
+def test_derived_golden_detects_changed_output_and_source(tmp_path: Path) -> None:
+    source = next(
+        p for p in sorted(golden.GOLDEN_DIR.iterdir()) if (p / golden.DERIVED_JSON).is_file()
+    )
+    path = tmp_path / source.name
+    shutil.copytree(source, path)
+    assert golden.check_golden(path) == []
+    record = json.loads((path / golden.DERIVED_JSON).read_text(encoding="utf-8"))
+    record["sources"][0]["sha256"] = "0" * 64
+    (path / golden.DERIVED_JSON).write_text(json.dumps(record), encoding="utf-8")
+    output = next(p for p in path.iterdir() if p.name != golden.DERIVED_JSON)
+    output.write_bytes(output.read_bytes() + b"x")
+    problems = golden.check_golden(path)
+    assert any("capture file" in p and "changed" in p for p in problems)
+    assert any("differs" in p and output.name in p for p in problems)
