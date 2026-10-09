@@ -313,7 +313,7 @@ void spectra_bas_analyzers(AnalyzerRegistry& reg, std::int64_t& i_anl) {
     par(i_anl).i_dim = 2;                                                     // Spectra.bas:554
     par(i_anl).c_type = "digital";                                            // Spectra.bas:555
 
-    i_anl = i_anl + 1;                                              // Spectra.bas:558
+    i_anl = i_anl + 1; // Spectra.bas:558
     // QUIRK(Q-020): the array ErotL2dlight is registered as "ErotL2dheavy"
     par(i_anl).c_name = "ErotL2dheavy";                             // Spectra.bas:559
     par(i_anl).c_title = "Rotational energy over angular momentum"; // Spectra.bas:560
@@ -331,7 +331,7 @@ void spectra_bas_analyzers(AnalyzerRegistry& reg, std::int64_t& i_anl) {
     par(i_anl).r_alim(2, 3) = 0x1.99999Ap-4F;                                 // Spectra.bas:572
     par(i_anl).i_dim = 2;                                                     // Spectra.bas:573
 
-    i_anl = i_anl + 1;                                              // Spectra.bas:576
+    i_anl = i_anl + 1; // Spectra.bas:576
     // QUIRK(Q-020): the array ErotL2dheavy is registered as "ErotL2d"
     par(i_anl).c_name = "ErotL2d";                                  // Spectra.bas:577
     par(i_anl).c_title = "Rotational energy over angular momentum"; // Spectra.bas:578
@@ -591,13 +591,13 @@ void spectra_bas_analyzers(AnalyzerRegistry& reg, std::int64_t& i_anl) {
     par(i_anl).c_linesymbol = "LTR11";           // Spectra.bas:1070
     par(i_anl).c_type = "digital";               // Spectra.bas:1071
 
-    i_anl = i_anl + 1;                                                 // Spectra.bas:1074
-    par(i_anl).c_name = "NNCN";                                        // Spectra.bas:1075
-    par(i_anl).c_title = "Neutron multiplicity (from CN)";             // Spectra.bas:1076
-    par(i_anl).c_xaxis = "Number of neutrons";                         // Spectra.bas:1077
-    par(i_anl).c_yaxis = "Probability";                                // Spectra.bas:1078
-    par(i_anl).c_linesymbol = "LTR11";                                 // Spectra.bas:1079
-    par(i_anl).c_type = "digital";                                     // Spectra.bas:1080
+    i_anl = i_anl + 1;                                     // Spectra.bas:1074
+    par(i_anl).c_name = "NNCN";                            // Spectra.bas:1075
+    par(i_anl).c_title = "Neutron multiplicity (from CN)"; // Spectra.bas:1076
+    par(i_anl).c_xaxis = "Number of neutrons";             // Spectra.bas:1077
+    par(i_anl).c_yaxis = "Probability";                    // Spectra.bas:1078
+    par(i_anl).c_linesymbol = "LTR11";                     // Spectra.bas:1079
+    par(i_anl).c_type = "digital";                         // Spectra.bas:1080
     // QUIRK(Q-020): no `I_Anl = I_Anl + 1` before NNCNtot and NPCNtot; both overwrite NNCN
     par(i_anl).c_name = "NNCNtot";                                     // Spectra.bas:1083
     par(i_anl).c_title = "Neutron multiplicity (from CN) w/o fission"; // Spectra.bas:1084
