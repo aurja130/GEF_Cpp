@@ -1,6 +1,6 @@
 # Milestone 4: Static Data, Parameters and Analyzer Registry
 
-**Status:** not started
+**Status:** complete (2026-10-09)
 **Strategy reference:** `IMPLEMENTATION_STRATEGY.md` §2.4, §2.5, §2.9 and §3, M4
 **Depends on:** M1 (T0 probe, drivers, patch sets, reference store), M2 (exact comparison), M3 (`fb::DataReader`, `fb::Array`, conversions, `fb::InputFile`)
 **Unblocks:** M5 (physics functions read the mass, shell and deformation tables), M6 (target and isomer lookups), M7 and later (nominal parameters, perturbation order), M11 (branchings), M13 (analyzer registry, element names)
@@ -77,8 +77,8 @@ Tasks in execution order. Mark each one done here when finished, and update `CUR
 - [x] Tests (T1): a driver evaluates each over the full (Z, A) grid (and isomer index where relevant) in a fresh `ctl/`, for the default combination and for each other certified combination; the C++ reproduces every result and the evolution of `IMATmax`. (Instead of a standalone driver, harness patch `lookups` (`-d GEF_LOOKUPS`) runs inside GEF: at start-up, after the tables are loaded and before GEF's own first call, it evaluates `I_MAT_ENDF`, `R_AWR_ENDF`, `ISO_for_ZA`, `NStates_for_ZA`, `N_ISO_MAT`, `ISO_for_MAT` over every Z 0..120 with A from the lowest A − 3 to the highest A + 3 of the Z's NucTab entries (Int(2.5 Z) ± 2 for a Z without entries), and `N_ISO_MAT`/`ISO_for_MAT` over every MAT up to `UBound(NucTab)` − 6 (above that the mac form reads past NucTab, undefined in BASIC); after the first `Branchings.bas` loader run it evaluates `Ibranch_for_ZAI` over the same grid with ISO 0..3, then ends. Patch sets `m4-lookups-<variant>`, captures `m4-lookups-<variant>` (six certified variants), goldens of whole-file fingerprints (new `harness.probe_fingerprints --files`) of `lookups.txt`, `lookups_branch.txt` and `ctl/IMATmax.ctl`; `lookups_test.cpp` reproduces all of them, and with the store the console lines appear as one block in `stdout.log`.)
 
 ### M4.7 CI, documentation and close-out
-- [ ] Tests tagged `[T0]`/`[T1]` and `[data]`/`[params]`; slow ones `[slow]`.
-- [ ] `QUIRKS.md` (new loader quirks), `COVERAGE_MATRIX.md` (the cells M4 closes), `IMPLEMENTATION_STRATEGY.md` (§2.5 amended per D1, M4 status), `CODING_STANDARDS.md` (generated data, variant selection), `CURRENT_PROJECT_STATE.md`. Mark this plan complete with completion notes.
+- [x] Tests tagged `[T0]`/`[T1]` and `[data]`/`[params]`; slow ones `[slow]`. (Also `[analysis]`, `[util]`, `[fbrt]`. No M4 test needed `[slow]`: the longest, the lookup grids, take about 5 s each in Debug.)
+- [x] `QUIRKS.md` (new loader quirks), `COVERAGE_MATRIX.md` (the cells M4 closes), `IMPLEMENTATION_STRATEGY.md` (§2.5 amended per D1, M4 status), `CODING_STANDARDS.md` (generated data, variant selection), `CURRENT_PROJECT_STATE.md`. Mark this plan complete with completion notes.
 
 ## 5. Exit gate (all must hold)
 
@@ -110,4 +110,27 @@ Tasks in execution order. Mark each one done here when finished, and update `CUR
 
 ## 8. Completion notes
 
-*(Filled in when M4 closes.)*
+Closed 2026-10-09. Full `scripts/ci.sh` passes in all five presets (dev-gcc, dev-clang, asan-ubsan, tsan, release-exact), with clang-tidy, clang-format, ruff, basedpyright, pytest and the store checks.
+
+**Exit gate:**
+
+| Gate | Result |
+|---|---|
+| G1 Generated data | Met. `gen_gef_data --check` regenerates every committed file byte for byte; the item-count cross-check was replaced by a stronger one: every item of every variant equals the BASIC program's own `DATA` dump (`datachain`) |
+| G2 Tables | Met for the six combinations that load: JEFF-3.3, JEFF-3.1.1 (with the JEFF-3.3 branchings, see M4.1), NUBASE 2016 and the three legacy files. The eighth combination of D5 does not exist (`DCLbranchingJEFF311.bas` does not compile) and NUBASE 2020 stops GEF before T0 (Q-032; the C++ reproduces the stop and its 6,558 lines). The `DCLplotting` tables are covered item by item through `datachain` |
+| G3 Parameters | Met: nominal parameters and initial `Var_*` against T0 in every variant, final `Var_*` and the per-system reset against P1 (M1 run and a `Fitpar.dat` run), console and `ParameterUpdate.dat` with and without `Fitpar.dat`. The perturbation order equals the `PGAUSS` calls of the emitted C (checked when the table was written); the draws themselves are proven at T3 by M12 |
+| G4 Registry | Met: every `Anl_Par` field of entries 0…`N_Anl` equals T0 in every variant |
+| G5 Lookups | Met: every lookup function over the (Z, A) grid and the evolution of `ctl/IMATmax.ctl` reproduce the `lookups` run of every certified variant |
+| G6 CI | Met |
+
+**Deviations from the plan, with reasons:**
+- JEFF-3.1.1 runs with the JEFF-3.3 branchings (M4.1): its own branchings file is an older version that does not compile with GEF 2025/1.2. Open user question: make it compile (which would change its code) or leave it.
+- The T1 "driver" of M4.6 and the `Fitpar.dat` "driver" of M4.4 are runs of GEF itself with harness patches (`lookups`) or an extra working-directory file (`harness.run --work-file`), not standalone FreeBASIC drivers: they exercise the real code with all its globals and run in seconds.
+- Committed goldens are fingerprints (D7) or small copies of capture files (`harness.golden copy`); full dumps stay in the store.
+- `ParameterUpdate.mac` is ported as a text function (`parameter_update_text`); the file write belongs to the run flow (M6). Likewise `read_input_file` reads `Fitpar.dat`, and `MatNumberState` carries `ctl/IMATmax.ctl`, but where and when they are read and written is M6's.
+
+**New quirks:** Q-033 (loader messages "GEF stopped." without stopping), Q-034 (JEFF-3.1.1 table shorter than `N_MAT_MAX`), Q-035 (an unterminated `/'` in a parameter file hangs GEF; C++ throws `GefHangs`), Q-036 (legacy files map missing nuclides to the last table entry). Q-032's mechanism was established; Q-015, Q-017, Q-018 (Fitpar part), Q-019, Q-020 and Q-021 are reproduced and annotated in C++, Q-021 now confirmed in output.
+
+**Contributions to cells other milestones close:** `lookups_test.cpp` covers the M4 part of T1 for "Nuclide missing from NucTab/Isotab" (closes in M11), "ENDF MAT numbering" (M13) and BranchData (`Ibranch_for_ZAI`, M11).
+
+**For later milestones:** `TableSet`, `Parameters`, `PerturbationWidths`, `AnalyzerRegistry` and `MatNumberState` are plain values; M6 places them in `ProcessState`/`SystemState` (D9) and wires the call order of GEF.bas:1015-1017, 2515-2620 and 3320. The runtime gained `fb::trim/ucase/instr/mid`, `InputFile::line_input/eof`, and GEF's `CC_Count`/`CC_Cut`/`ConvTab` (`gef::util`), which M6's input parsing needs.

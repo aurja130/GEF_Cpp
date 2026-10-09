@@ -42,7 +42,9 @@ Generated files that embed GEF data carry the same two copyright lines in their 
 - C++23 in ISO mode (`-std=c++23`, never `gnu++23`).
 - Sources live in `Cpp_implementation/src/<module>/`; the include root is `Cpp_implementation/src`, so includes read `#include "fbrt/fp_environment.hpp"`.
 - File names are `snake_case.hpp` / `snake_case.cpp`.
-- Everything is in namespace `gef`. FreeBASIC-runtime emulation is in `gef::fb` (directory `fbrt/`, CMake target `gef_fbrt`). Further modules follow strategy §2.8 (`data/`, `params/`, `physics/`, `run/`, `prepass/`, `tables/`, `event/`, `analysis/`, `output/`, `app/`); each milestone plan may refine it.
+- Everything is in namespace `gef`. FreeBASIC-runtime emulation is in `gef::fb` (directory `fbrt/`, CMake target `gef_fbrt`). Further modules follow strategy §2.8 (`data/`, `params/`, `physics/`, `run/`, `prepass/`, `tables/`, `event/`, `analysis/`, `output/`, `app/`); each milestone plan may refine it. M4 added `util/` (`gef::util`, target `gef_util`) for GEF's own general routines from `utilities.bi` (`CC_Count`, `CC_Cut`, `ConvTab`), which several modules use.
+- **Generated data (M4):** `Cpp_implementation/src/data/generated/` is written only by `python3 -m tools.fbsrc.gen_gef_data` from the C fbc emits and is never edited by hand; `--check` must pass. Long straight-line ports (`Parameters.bas`, the analyzer registry) may be transcribed once from the emitted C by a throwaway script; the result is ordinary reviewed source with a provenance comment per statement and no generator dependency.
+- **Nuclide-data variants (M4):** the variant is a run-time value (`gef::data::NuclideData`, carried by `ProgramData` and `TableSet::variant`). Code whose BASIC differs per variant file (or per `#If ISOSOURCE = …` branch) selects the form with a `switch` on the variant, one function per BASIC form, each with its own provenance comment (`data/lookups.cpp` is the pattern). No preprocessor switches for variants.
 - Every target links the interface target `gef_exact_fp`, which carries the floating-point flags (§2.5).
 
 ### 2.2 Naming

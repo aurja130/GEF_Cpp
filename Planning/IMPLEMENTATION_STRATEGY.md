@@ -152,14 +152,11 @@ BASIC's shared globals (about 470 `Dim/ReDim/Static Shared` statements across `G
 
 Every leak across scopes is an explicit field, documented in the quirk register.
 
-### 2.5 Data comes from the BASIC sources, never hand-copied
+### 2.5 Data comes from the program fbc builds, never hand-copied
 
-- A converter (`tools/gen_gef_data.py`) applies FreeBASIC's `DATA` lexing rules to the submodule sources:
-  - `_` continuation;
-  - `'` and `/' '/` comments;
-  - labels and quoted strings.
-- It emits generated C++ (a token stream plus label offsets).
-- A C++ `DataReader` emulates `Restore` and `Read`, including `(float)strtod` for `Single`, reads that cross label boundaries, and the past-the-end value 0.
+- **Amended at M4 close-out (2026-10-09, M4 plan D1):** the `DATA` items are taken from the C that fbc emits for GEF (`GEF.c`), not lexed from the BASIC text. fbc rewrites unquoted numeric items at compile time (15 significant digits, `1.E-3` → `0.001`, `&H1F` → `31`), so only the emitted tables hold what the binary reads.
+- A generator (`tools/fbsrc/gen_gef_data.py`) extracts every block of every nuclide-data variant from its emitted C and writes committed C++ (`Cpp_implementation/src/data/generated/`); `--check` regenerates and compares. Every item of every variant equals the BASIC program's own dump of its `DATA` chain (harness patch `datachain`).
+- The C++ `fb::DataReader` emulates `Restore` and `Read`, including the runtime's conversions for `Single`, reads that cross label boundaries, and the past-the-end value 0.
 - Loaders are ported line for line so that their quirks are kept, e.g. BranchData isomer rows overwriting `R_alpha`, and loading stopping at Ra-234.
 
 ### 2.6 The reference harness (BASIC side)
@@ -433,7 +430,7 @@ Two tracks run in parallel after M5 and meet at M14:
 
 ### M4 — Static data, parameters and analyzer registry
 
-**Status:** planned (2026-10-09), see `Planning/MILESTONE_4_PLAN.md`. Refinements decided there: the `DATA` items come from the C fbc emits, not from the BASIC text (§2.5 is amended at M4 close-out); all nuclide-data variants are ported and selectable, JEFF-3.3 is the certified default and the others are certified at T0.
+**Status:** complete (2026-10-09), see `Planning/MILESTONE_4_PLAN.md`. Refinements decided there: the `DATA` items come from the C fbc emits, not from the BASIC text (§2.5 amended); all nuclide-data variants are ported and selectable, JEFF-3.3 is the certified default and the others are certified at T0 and T1 (JEFF-3.1.1 with the JEFF-3.3 branchings; the stock NUBASE 2020 file stops GEF while loading, Q-032).
 
 **Goal:** every table and constant that GEF loads, identical in C++.
 
