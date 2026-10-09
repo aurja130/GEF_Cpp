@@ -70,6 +70,7 @@ Ported identifiers keep their BASIC name in snake_case where that stays readable
 - Literals follow FreeBASIC typing: an unsuffixed BASIC literal with a decimal point is a `double`; write it as a `double` literal and convert explicitly where BASIC narrows.
 - **Float → integer conversions go through the `gef::fb` helpers** (`fbrt/convert.hpp`), named after the macro in the generated C: `fb_F2L(S$)` → `fb::f2l(s)`, `fb_D2I(D$)` → `fb::d2i(d)`, likewise `f2i`, `f2ul`, `d2l`, `d2ul`, `fix`, `sgn`. They round half to even and reproduce fbc's out-of-range results; a bare `static_cast` from floating point to an integer is not allowed.
 - **`Integer`/`Long` arithmetic that can overflow uses `fb::add`, `sub`, `mul`, `neg`, `abs`** (fbc compiles with `-fwrapv`; C++ signed overflow is undefined). Integer `\` and `Mod` are `fb::idiv` and `fb::imod`.
+- **BASIC arrays are `gef::fb::Array<T, rank>`** (`fbrt/array.hpp`), with the BASIC bounds as written (`ReDim a(-5 To 10)` → `a.redim({{Bounds{-5, 10}}})`), `redim_preserve` for `ReDim Preserve`, `erase`, `lbound(d)`/`ubound(d)`. Access is bounds-checked and throws; an out-of-bounds access found while porting is a quirk to register and reproduce explicitly, never to silence.
 - `Single` ↔ `Double` and integer → floating-point conversions are written as explicit `static_cast`s in the places the generated C has its casts (`Cpp_implementation/src/fbrt/FBC_ARITHMETIC.md`, rules R1–R5), for example:
 
   ```cpp

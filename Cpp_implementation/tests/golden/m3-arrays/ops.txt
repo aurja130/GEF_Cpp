@@ -1,0 +1,45 @@
+dump A1
+redim A1 1 5
+fill A1 1
+preserve A1 1 8
+preserve A1 1 3
+preserve A1 -2 3
+erase A1
+preserve A1 4 6
+fill A1 2
+redim A1 7 2
+redim A1 0 3
+fill A1 3
+preserve A1 5 1
+extend A1 2 10
+extend A1 -4 0
+erase A1
+extend A1 5 9
+extend A1 16777215 16777219
+extend A1 -16777219 -16777215
+dump A2
+redim A2 0 2 1 3
+fill A2 1
+preserve A2 0 3 1 3
+preserve A2 0 2 1 4
+preserve A2 1 2 0 1
+extend A2 -1 4 0 5
+erase A2
+extend A2 2 3 4 5
+redim A2 3 1 0 1
+dump A3
+redim A3 0 1 0 2 0 3
+fill A3 1
+preserve A3 0 1 0 2 0 4
+preserve A3 0 2 0 1 0 3
+extend A3 -1 2 -1 2 -1 2
+erase A3
+extend A3 1 2 1 2 1 2
+dump S1
+redim S1 0 3
+fill S1 1
+preserve S1 0 5
+preserve S1 0 1
+erase S1
+preserve S1 2 4
+fill S1 2

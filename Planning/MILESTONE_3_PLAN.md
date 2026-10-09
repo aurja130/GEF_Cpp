@@ -1,6 +1,6 @@
 # Milestone 3: FreeBASIC Runtime Emulation
 
-**Status:** in progress (M3.1–M3.6 done, 2026-10-08)
+**Status:** in progress (M3.1–M3.7 done, 2026-10-09)
 **Strategy reference:** `IMPLEMENTATION_STRATEGY.md` §2.2, §2.3, §2.9 and §3, M3
 **Depends on:** M0, M1 (driver framework, `fbmt.py`, reseed vectors), M2 (exact comparison)
 **Unblocks:** M4 (data layer uses `DataReader`, arrays, conversions), M5 (physics functions use the maths intrinsics), M8 (samplers use `FbMtRng`), M13 (writers use the text formatting), and through them every later milestone
@@ -109,9 +109,9 @@ Tasks in execution order. Mark each one done here when finished, and update `CUR
 **Done when:** every inventoried template is byte-exact over its grid, and `Str`/`Print` of `Single` is exact for all 2³² patterns.
 
 ### M3.7 Arrays
-- [ ] `fb::Array<T, N>`, N ≤ 6: bounds as written (`ReDim a(lo To hi, …)`), row-major element order, zero-initialised `ReDim`, `ReDim Preserve` (the 25 GEF uses), `Erase`, `LBound`/`UBound` including the dimension-0 and out-of-range dimension results that `QUIRKS.md` Q-004 and Q-027 depend on.
-- [ ] `fb::extend_1dim/2dim/3dim`, as written, including the round trip of the bounds through `Single` `Min`/`Max`.
-- [ ] Tests against drivers: growth sequences (bounds and contents after each step), `Preserve` behaviour on multi-dimensional arrays, `UBound(a, d)` for d = 0…N+1.
+- [x] `fb::Array<T, N>`, N ≤ 6: bounds as written (`ReDim a(lo To hi, …)`), row-major element order, zero-initialised `ReDim`, `ReDim Preserve` (the 25 GEF uses), `Erase`, `LBound`/`UBound` including the dimension-0 and out-of-range dimension results that `QUIRKS.md` Q-004 and Q-027 depend on. (`fbrt/array.hpp`, `fb::Array<T, rank>`, rank 1–8 as in FreeBASIC; GEF uses up to 4. From `array_redim.c`, `array_redimpresv.c`, `array_erase.c`, `array_lbound.c`, `array_ubound.c`: `ReDim Preserve` keeps the elements' linear order, so multi-dimensional elements move; `ReDim` with lbound > ubound leaves the array erased and `ReDim Preserve` leaves it unchanged, as the runtime's ignored error does. Element access is bounds-checked in every build and throws `std::out_of_range` (user decision 2026-10-09).)
+- [x] `fb::extend_1dim/2dim/3dim`, as written, including the round trip of the bounds through `Single` `Min`/`Max`. (`fbrt/extend.hpp`. An unallocated array counts as `0 To -1`, so the result includes index 0; bounds beyond 2²⁴ are rounded through `Single`, e.g. 16777219 becomes 16777220.)
+- [x] Tests against drivers: growth sequences (bounds and contents after each step), `Preserve` behaviour on multi-dimensional arrays, `UBound(a, d)` for d = 0…N+1. (Driver `arrays.bas`: 56 operations on 1-, 2-, 3-dimensional `Double` and a `String` array, with the state after each; golden `m3-arrays`; `array_test.cpp` matches every state in `dev-gcc`, `dev-clang` and `release-exact`.)
 
 **Done when:** every sequence matches the driver.
 

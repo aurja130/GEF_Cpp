@@ -18,6 +18,7 @@ include(Catch)
 find_package(Threads REQUIRED)
 
 add_executable(gef_tests
+    array_test.cpp
     conversion_test.cpp
     fbc_arithmetic_test.cpp
     format_test.cpp
