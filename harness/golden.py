@@ -8,14 +8,20 @@ Small goldens (at most ``MAX_COMMITTED_BYTES``) are committed under
 ``Cpp_implementation/tests/golden/<name>/``; larger ones go into the reference store as
 capture ``<name>`` (kind ``driver``). C++ tests that need a store golden skip without it.
 
+A *store-derived* golden (M4 plan, D7) is a small file computed from reference-store captures
+(e.g. per-table fingerprints of a T0 dump). Its directory holds ``derived.json`` instead of
+``driver.json``: the producing tool, the capture files it read with their SHA-256 (which the
+committed store manifests must confirm), and the SHA-256 of every output file. Producers call
+``write_derived``.
+
 Usage::
 
     python3 -m harness.golden promote <driver> --name NAME [--note TEXT] [--replace] [-- args]
-    python3 -m harness.golden check     # committed goldens still match their drivers
+    python3 -m harness.golden check     # committed goldens still match their sources
 
-``check`` fails when a driver source, an included or cut GEF source, the fbc version or a
-golden file no longer matches the recorded ``driver.json``: such a golden is stale and must
-be promoted again.
+``check`` fails when a driver source, an included or cut GEF source, the fbc version, a
+capture file of a derived golden or a golden file no longer matches its record: such a golden
+is stale and must be produced again.
 """
 
 from __future__ import annotations
@@ -36,6 +42,8 @@ from tools.toolchain.fbc import REQUIRED_FBC_VERSION
 
 GOLDEN_DIR = REPO_ROOT / "Cpp_implementation" / "tests" / "golden"
 MAX_COMMITTED_BYTES = 1_000_000
+DERIVED_JSON = "derived.json"
+STORE_MANIFESTS = REPO_ROOT / "manifests" / "reference_store"
 
 
 def promote(
@@ -67,11 +75,75 @@ def promote(
         return dest
 
 
+def write_derived(golden: Path, tool: str, sources: list[tuple[str, str]]) -> Path:
+    """Record a store-derived golden: ``sources`` are (capture id, file in capture) pairs.
+
+    Call after writing the golden's output files into ``golden``; their hashes and those of the
+    capture files (from the committed store manifests) go into ``derived.json``.
+    """
+    records: list[dict[str, str]] = []
+    for capture, file in sources:
+        files = _manifest_files(capture)
+        if file not in files:
+            raise HarnessError(f"{file} is not in the manifest of capture {capture}")
+        records.append({"capture": capture, "file": file, "sha256": files[file]})
+    outputs = {
+        p.relative_to(golden).as_posix(): sha256_file(p)
+        for p in sorted(golden.rglob("*"))
+        if p.is_file() and p.name != DERIVED_JSON
+    }
+    record = {"kind": "store-derived", "tool": tool, "sources": records, "outputs": outputs}
+    path = golden / DERIVED_JSON
+    path.write_text(json.dumps(record, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return path
+
+
+def _manifest_files(capture: str) -> dict[str, str]:
+    manifest = STORE_MANIFESTS / f"{capture}.json"
+    if not manifest.is_file():
+        raise HarnessError(f"no store manifest for capture {capture}")
+    files: dict[str, str] = json.loads(manifest.read_text(encoding="utf-8"))["files"]
+    return files
+
+
+def _check_outputs(path: Path, outputs: dict[str, str], record_name: str) -> list[str]:
+    problems: list[str] = []
+    present = {
+        p.relative_to(path).as_posix(): p
+        for p in path.rglob("*")
+        if p.is_file() and p.name != record_name
+    }
+    for rel in sorted(set(present) ^ set(outputs)):
+        problems.append(f"{rel} is {'not recorded' if rel in present else 'missing'}")
+    for rel in sorted(set(present) & set(outputs)):
+        if sha256_file(present[rel]) != outputs[rel]:
+            problems.append(f"{rel} differs from its recorded hash")
+    return problems
+
+
+def check_derived(path: Path) -> list[str]:
+    """Problems that make the store-derived golden at ``path`` stale; empty when current."""
+    record = json.loads((path / DERIVED_JSON).read_text(encoding="utf-8"))
+    problems: list[str] = []
+    for source in record["sources"]:
+        try:
+            files = _manifest_files(source["capture"])
+        except HarnessError as exc:
+            problems.append(str(exc))
+            continue
+        if files.get(source["file"]) != source["sha256"]:
+            problems.append(f"capture file {source['capture']}/{source['file']} changed")
+    problems += _check_outputs(path, record["outputs"], DERIVED_JSON)
+    return [f"{path.name}: {p}" for p in problems]
+
+
 def check_golden(path: Path, drivers_dir: Path = DRIVERS_DIR) -> list[str]:
     """Problems that make the committed golden at ``path`` stale; empty when current."""
+    if (path / DERIVED_JSON).is_file():
+        return check_derived(path)
     record_path = path / DRIVER_JSON
     if not record_path.is_file():
-        return [f"{path.name}: no {DRIVER_JSON}"]
+        return [f"{path.name}: no {DRIVER_JSON} or {DERIVED_JSON}"]
     record = json.loads(record_path.read_text(encoding="utf-8"))
     problems: list[str] = []
     source = drivers_dir / f"{record['driver']}.bas"
@@ -92,17 +164,7 @@ def check_golden(path: Path, drivers_dir: Path = DRIVERS_DIR) -> list[str]:
         data = cut_lines(src, cut["first"], cut["last"]) if src.is_file() else b""
         if hashlib.sha256(data).hexdigest() != cut["cut_sha256"]:
             problems.append(f"cut {cut['file']}:{cut['first']}-{cut['last']} changed")
-    present = {
-        p.relative_to(path).as_posix(): p
-        for p in path.rglob("*")
-        if p.is_file() and p.name != DRIVER_JSON
-    }
-    outputs: dict[str, str] = record["outputs"]
-    for rel in sorted(set(present) ^ set(outputs)):
-        problems.append(f"{rel} is {'not recorded' if rel in present else 'missing'}")
-    for rel in sorted(set(present) & set(outputs)):
-        if sha256_file(present[rel]) != outputs[rel]:
-            problems.append(f"{rel} differs from its recorded hash")
+    problems += _check_outputs(path, record["outputs"], DRIVER_JSON)
     return [f"{path.name}: {p}" for p in problems]
 
 

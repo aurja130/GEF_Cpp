@@ -1,0 +1,44 @@
+{
+  "kind": "store-derived",
+  "outputs": {
+    "fingerprints.txt": "8ab71f05440f0922d7429842074d2358c4c96c3b7a410de663bd0c6ef9d64520"
+  },
+  "sources": [
+    {
+      "capture": "m4-t0-jeff33",
+      "file": "work/probes/datachain.txt",
+      "sha256": "1fdbe2b45513a64e8b54505687f7523680210bc0d2c50c0213649eff414017e2"
+    },
+    {
+      "capture": "m4-t0-jeff311",
+      "file": "work/probes/datachain.txt",
+      "sha256": "2c9ec703144473921b21ea3f88392ea74f22bd907b09aaa5bafaaf03c8a8df43"
+    },
+    {
+      "capture": "m4-t0-nubase2016",
+      "file": "work/probes/datachain.txt",
+      "sha256": "011a8684127a6ae81f23deb1dc92004cb4d15b310e7e3a77c88eb93e258d21a2"
+    },
+    {
+      "capture": "m4-datachain-nubase2020",
+      "file": "work/probes/datachain.txt",
+      "sha256": "d125eabd232dfe6c15ba54cbf684bf4d45746ff912b591c51b51bf28132f2769"
+    },
+    {
+      "capture": "m4-t0-legacy-x",
+      "file": "work/probes/datachain.txt",
+      "sha256": "2ff92c291a909fff50ab2c3c93990a5bd6248b95e50116e92aff8e41af07a218"
+    },
+    {
+      "capture": "m4-t0-legacy-mf",
+      "file": "work/probes/datachain.txt",
+      "sha256": "1e1f91316f6b1126d59677dc12a97ef7a76768d72385736518b8230b52683b41"
+    },
+    {
+      "capture": "m4-t0-legacy-f",
+      "file": "work/probes/datachain.txt",
+      "sha256": "638bc836c9ca8a4eb4d0ae1446d03ea57f4683f4a958ee212c6996b301dac889"
+    }
+  ],
+  "tool": "python3 -m tools.fbsrc.gen_gef_data --fingerprints"
+}
