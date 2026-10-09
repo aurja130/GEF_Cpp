@@ -1,0 +1,14 @@
+{
+  "kind": "store-derived",
+  "outputs": {
+    "P1.txt": "5686f82fc4d5ff118f56cfcdacfeed2138fbd2563cfd9c877033116bf2fc0374"
+  },
+  "sources": [
+    {
+      "capture": "m1-g23-rn215-r-probes",
+      "file": "work/probes/P1.txt",
+      "sha256": "9046f17a9d41024123dd44fc67c579a8bc5537dbe3ebceae36929a1f1eedeeb9"
+    }
+  ],
+  "tool": "python3 -m harness.probe_fingerprints m1-g23-rn215-r-probes --name m4-p1-rn215 --probe P1 --context 'step=2 pass=- bin=- rec=1'"
+}

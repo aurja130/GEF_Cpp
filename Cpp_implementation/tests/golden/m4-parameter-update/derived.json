@@ -1,0 +1,14 @@
+{
+  "kind": "store-derived",
+  "outputs": {
+    "ParameterUpdate.dat": "52a3b5fbbfbf63cec6d1a2ef54a702affa190fdd3d0a45164523657e09519881"
+  },
+  "sources": [
+    {
+      "capture": "m4-t0-jeff33",
+      "file": "work/tmp/ParameterUpdate.dat",
+      "sha256": "52a3b5fbbfbf63cec6d1a2ef54a702affa190fdd3d0a45164523657e09519881"
+    }
+  ],
+  "tool": "python3 -m harness.golden copy m4-t0-jeff33 work/tmp/ParameterUpdate.dat --name m4-parameter-update"
+}

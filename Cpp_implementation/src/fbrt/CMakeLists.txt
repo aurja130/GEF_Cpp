@@ -14,6 +14,7 @@ add_library(gef_fbrt STATIC
     print_using.cpp
     reseed.cpp
     rng.cpp
+    strings.cpp
     text.cpp)
 target_include_directories(gef_fbrt PUBLIC "${PROJECT_SOURCE_DIR}/Cpp_implementation/src")
 gef_apply_policy(gef_fbrt)

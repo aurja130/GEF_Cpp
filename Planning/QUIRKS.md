@@ -260,9 +260,9 @@ Tool commands are run from the repository root: `python3 -m tools.fbsrc.fbline <
   - The `Var_*` widths are computed once at 2574ff, after `FitparRead` at 2555 and before the per-system reset (`Var_P_A_Width_S2 = _P_A_Width_S2 * 0.03 …`, 2578; `fbdef`: no other assignment).
 - **Effect (expected):** `MyParameters.dat` has no effect on the calculation in any mode, although the results file still prints "Values of Parameters found in MyParameters.dat are replaced." and lists them (`GEF.bas:12039-12066`). In non-fit runs `Fitpar.dat` values are overwritten before every system, but relative perturbation widths derived from them remain. Seed said "ignored in batch"; the source shows it is ignored in every mode.
 - **Evidence status:** *confirmed by fbc C*
-- **Evidence:** `fbline MyparRead.bas:3`, `fbline GEF.bas:2360`, `fbline GEF.bas:2866`, `fbline GEF.bas:2155` (exit 1), `fbline FitparRead.bas:2`, `fbline Parameters.bas:52`, `fbline GEF.bas:3316-3321`; `fbdef B_MyParameters --refs`, `fbdef MyparRead --refs`. Not exercised in `validation/test_run`; end-to-end confirmation in M15 (override-path runs).
+- **Evidence:** `fbline MyparRead.bas:3`, `fbline GEF.bas:2360`, `fbline GEF.bas:2866`, `fbline GEF.bas:2155` (exit 1), `fbline FitparRead.bas:2`, `fbline Parameters.bas:52`, `fbline GEF.bas:3316-3321`; `fbdef B_MyParameters --refs`, `fbdef MyparRead --refs`. M4.4: capture `m4-t0-fitpar` (a `Fitpar.dat` in the working directory) confirms the Fitpar part: P1 of the first system holds the `Parameters.bas` values again for every parameter that file sets, while those it does not set (`D_Par_Fac`, `EOscale`, `_Delta_S0`, `Chisqr_Fit_min`) and `Var_P_A_Width_S2` (computed from the Fitpar value at 2578) keep the Fitpar values. MyParameters.dat: end-to-end confirmation in M15 (override-path runs).
 - **Fidelity switch:** `fix_parameter_file_overrides`
-- **C++ symbol:** not yet ported
+- **C++ symbol:** `gef::params::mypar_read` (gated by `Parameters::b_myparameters`), `gef::params::fitpar_read`, `gef::params::load_parameters_bas` (`Cpp_implementation/src/params/`, M4.4); the per-system call order belongs to the M6 run flow
 - **Owning milestone:** M15 (per-system reset in M6, `Var_*` in M4)
 
 ### Q-019 `Var_PZ_S3_olap_curv` is zero, so `PZ_S3_olap_curv` is never perturbed
@@ -273,7 +273,7 @@ Tool commands are run from the repository root: `python3 -m tools.fbsrc.fbline <
 - **Evidence status:** *confirmed in output*
 - **Evidence:** `fbline GEF.bas:2610` as quoted. Output `validation/test_run/tmp/GEF_86_215_n.par`: all 1860 `PZ_S3_olap_curv =` lines read `0.004088318` (the `Parameters.bas:52` value), while `P_DZ_Mean_S2` takes 1859 distinct values.
 - **Fidelity switch:** `fix_pz_s3_olap_curv_width`
-- **C++ symbol:** not yet ported
+- **C++ symbol:** `gef::params::update_widths` (argument `pz_s3_olap_curv`, M4.4; matches P1)
 - **Owning milestone:** M12 (registry list in M4)
 
 ### Q-020 Analyzer registry naming errors
@@ -447,6 +447,17 @@ Tool commands are run from the repository root: `python3 -m tools.fbsrc.fbline <
 - **C++ symbol:** `gef::data::load_plain` (`TableSet::console`)
 - **Owning milestone:** M4
 
+### Q-035 An unterminated or reversed `/'` comment in a parameter file hangs GEF
+
+- **BASIC location:** `ReadParameters.mac:1-8` (included by `FitparRead.bas` and `MyparRead.bas`)
+- **Mechanism:** `Do While Instr(Cline,"/'") > 0` removes a `/' … '/` comment only `If Ileft < Iright`. When a line has a `/'` without a later `'/` (`Iright` = 0, or the first `'/` stands before the first `/'`), the body changes nothing after the first `Trim`, so the loop never ends.
+- **Effect:** GEF hangs while reading `Fitpar.dat` (or `MyParameters.dat`, Q-018) with such a line; nothing after the four "File Fitpar.dat found." notice lines is printed.
+- **Evidence status:** *confirmed in output*
+- **Evidence:** `fbline ReadParameters.mac:1-8` (GEF.c:20644-20692: the loop jumps back to `label$214` without changing `CLINE$3` when `ILEFT$3 >= IRIGHT$3`). Run of `m4-jeff33-3164a3415262` with a `Fitpar.dat` holding `_P_Shell_S1 = 1 /' open` (M4.4, 2026-10-09): no further output, killed after 30 s.
+- **Fidelity switch:** none planned. The C++ cannot usefully loop forever: `gef::params::read_parameters` throws `gef::params::GefHangs` where BASIC would start the endless loop.
+- **C++ symbol:** `gef::params::read_parameters` (`Cpp_implementation/src/params/parameter_files.cpp`)
+- **Owning milestone:** M4
+
 ## 5. Build notes (not GEF quirks)
 
 These describe how the toolchain, not GEF, can make the C++ results differ from the reference binary. They have no fidelity switch.
@@ -525,6 +536,7 @@ These describe how the toolchain, not GEF, can make the C++ results differ from 
 | Q-032 | Stock `NucPropNUBASE2020.bas` stops GEF while loading | `NucPropNUBASE2020.bas:56-98` | confirmed in output | — | M4 |
 | Q-033 | Loader errors say "GEF stopped." but continue | `NucPropJEFF33.bas:77-82`, `Branchings.bas:76-80` | confirmed by fbc C | `fix_loader_error_stop` | M4 |
 | Q-034 | JEFF-3.1.1 table 9 records shorter than `N_MAT_MAX` | `NucPropJEFF311.bas:47-57, 90, 94` | confirmed in output | — | M4 |
+| Q-035 | Unterminated `/'` in a parameter file hangs GEF | `ReadParameters.mac:1-8` | confirmed in output | — | M4 |
 | B-001 | Optimisation level vs fbc `-O0` | (toolchain) | open risk | — | M3, M5 |
 | B-002 | fbc gcc passes `-fwrapv -fno-strict-aliasing` | (toolchain) | resolved for the runtime layer (M3.3) | — | M3 |
 | B-003 | `Compilationstamp` needs `SOURCE_DATE_EPOCH` | `GEF.bas:17` | handled (M1) | — | M1 |

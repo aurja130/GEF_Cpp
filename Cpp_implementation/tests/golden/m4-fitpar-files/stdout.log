@@ -1,0 +1,119 @@
+ 
+   **************************************************************************
+   *       Model code for a general description of fission observables      *
+   *                                 G E F                                  *
+   *                           Version 2025/1.2                             *
+   *    Copyright 2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019,   *
+   *              2020,2021,2022,2023,2024,2025                                 *
+   *                      K.-H. Schmidt and B. Jurado                       *
+   **************************************************************************
+ 
+   GEF 2025/1.2 compiled on 2025-07-18 at 09:53:22.
+
+Subfolder /ctl created for output of GEF.
+Subfolder /out created for output of GEF.
+Subfolder /tmp created for output of GEF.
+Subfolder /dmp created for output of GEF.
+Subfolder /GRAF created for output of GEF.
+Subfolder /BestFit created for output of GEF.
+Subfolder /External created for evtl. input of external yields into GEF.
+See README.txt file for details!
+File Fitpar.dat found.
+Parameter values from file 'Fitpar.dat' are used as starting values.
+To avoid this (and to keep the values of Parameters.bas), 
+the file Fitpar.dat must be renamed or deleted.
+CHISQR_FIT_MIN = 12.5
+_P_DZ_Mean_S1 = -0.3
+_p_shell_s1=-2.1
+_P_Z_CurV_S2 = 0.07
+	D_Par_Fac	=	1.5	
+EOSCALE = 1e-1
+_BETAL0 = &H10
+_T_low_S3 = .33x
+_P_A_Width_S2 = 12.25
+R_SUPP_S1 = 0.5
+UNKNOWN_PAR = 3
+<E> Readparameters.mac: Parameter UNKNOWN_PAR not defined.
+<E> Syntax error in no equals sign here .
+a = b = c
+<E> Syntax error in a = b = c .
+TFCOLL =
+= 5
+<E> Readparameters.mac: Parameter  not defined.
+_HOMPOL = 1.7  x
+_Delta_S0 = 0.25
+SPIN_ODD = 0.45
+KAPPA = -1.5E+00
+_Jscaling = 1.01
+Subfolder /ENDF created for output of GEF.
+<I> This is the basic process (thread number = 1).
+    It is necessary for the time management and the
+    proper organization of the parallel computing of
+    a series of GEF calculations in batch mode.
+File Fitpar.dat found.
+Parameter values from file 'Fitpar.dat' are used as starting values.
+To avoid this (and to keep the values of Parameters.bas), 
+the file Fitpar.dat must be renamed or deleted.
+CHISQR_FIT_MIN = 12.5
+_P_DZ_Mean_S1 = -0.3
+_p_shell_s1=-2.1
+_P_Z_CurV_S2 = 0.07
+	D_Par_Fac	=	1.5	
+EOSCALE = 1e-1
+_BETAL0 = &H10
+_T_low_S3 = .33x
+_P_A_Width_S2 = 12.25
+R_SUPP_S1 = 0.5
+UNKNOWN_PAR = 3
+<E> Readparameters.mac: Parameter UNKNOWN_PAR not defined.
+<E> Syntax error in no equals sign here .
+a = b = c
+<E> Syntax error in a = b = c .
+TFCOLL =
+= 5
+<E> Readparameters.mac: Parameter  not defined.
+_HOMPOL = 1.7  x
+_Delta_S0 = 0.25
+SPIN_ODD = 0.45
+KAPPA = -1.5E+00
+_Jscaling = 1.01
+File 'file.in' found.
+Manual input suspended, input will be taken from file.
+Number of running processes: 1
+Maximum number of parallel processes: 8
+ 
+Sequence of nuclei given in in/m4_t0.in will be calculated!
+ 
+Fission barrier of CN (Z = 98, A = 252):
+Macrosc. barrier (Thomas-Fermi) =  1.48 MeV
+Inner saddle = 5.48 MeV, second saddle = 3.69 MeV
+Third saddle (estimated) = -8.91
+exp. Mass = -1881.267 MeV
+Lymass    = -1879.456 MeV
+G.S.Shell effect (Moeller) = -3.23 MeV, G.S.Shell effect (exp,TF) = -3.18 MeV
+S_n(exp.) =  6.171753 MeV
+S_n(Lymass) =  5.908936 MeV
+CN: Z = 98, A = 252, E =  0 MeV, Spin =  0
+Ground-state spin  0 imposed.
+ 
+ 
+Please wait ... code is running.
+ 
+Calculation with nominal model parameters.
+ 100000 events will be calculated.
+ 10000 Events ( 10% ) of  100000 events processed at 09.10.2026, 16:16:21
+ 20000 Events ( 20% ) of  100000 events processed at 09.10.2026, 16:16:22
+ 30000 Events ( 30% ) of  100000 events processed at 09.10.2026, 16:16:22
+ 40000 Events ( 40% ) of  100000 events processed at 09.10.2026, 16:16:23
+ 50000 Events ( 50% ) of  100000 events processed at 09.10.2026, 16:16:23
+ 60000 Events ( 60% ) of  100000 events processed at 09.10.2026, 16:16:24
+ 70000 Events ( 70% ) of  100000 events processed at 09.10.2026, 16:16:25
+ 80000 Events ( 80% ) of  100000 events processed at 09.10.2026, 16:16:25
+ 90000 Events ( 90% ) of  100000 events processed at 09.10.2026, 16:16:26
+ 100000 Events ( 100% ) of  100000 events processed at 09.10.2026, 16:16:27
+ 
+Output is written to file out\GEF_98_252_sf.dat.
+ 
+Subfolder \dmp\Z98_A252_sf_E0MeV created.
+GEF is terminated.
+Press ENTER to close this window!

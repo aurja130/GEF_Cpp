@@ -43,8 +43,17 @@ public:
     // True when no byte is left to read (the putback buffer included).
     [[nodiscard]] bool at_end() const noexcept;
 
+    // `Line Input #f, s` on a file opened For Input: fb_FileLineInput -> fb_DevFileReadLine
+    // (dev_file_readline.c, fb_DevFileReadLineDumb). Reads from the file position; the putback
+    // buffer is not consulted and is left as it is.
+    [[nodiscard]] std::string line_input();
+
+    // EOF(f) on a file opened For Input: fb_FileEofEx (file_eof.c) with the text-mode device
+    // branch (dev_file_eof.c). Same condition as at_end().
+    [[nodiscard]] bool eof() const noexcept;
+
 private:
-    static constexpr int eof = -1;
+    static constexpr int eof_char = -1;
 
     int read_char() noexcept;
     void unread_char(int c);

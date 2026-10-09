@@ -8,6 +8,8 @@
 
 #include "fbrt/convert.hpp"
 
+#include <algorithm>
+#include <array>
 #include <cstdlib>
 #include <utility>
 
@@ -20,6 +22,7 @@ constexpr std::size_t max_int_len = 9;              // FB_INPUT_MAXINTLEN
 constexpr std::size_t max_long_len = 18;            // FB_INPUT_MAXLONGLEN
 constexpr std::size_t max_numeric_len = 2 + 64 + 1; // FB_INPUT_MAXNUMERICLEN
 constexpr std::size_t max_string_len = 4096;        // FB_INPUT_MAXSTRINGLEN
+constexpr std::size_t fgets_size = 512;             // char buffer[512] of fb_DevFileReadLineDumb
 
 // str_hskip.c fb_hStrSkipChar(s, len, ' ')
 std::string_view skip_blanks(std::string_view s) noexcept {
@@ -149,6 +152,92 @@ bool InputFile::at_end() const noexcept {
     return putback_.empty() && pos_ >= contents_.size();
 }
 
+namespace {
+
+// fgets(buffer, 512, fp) on the in-memory file: at most 511 bytes, through the first LF, then a
+// NUL. Returns false where fgets returns NULL (end of file).
+bool fgets_chunk(std::string const& data, std::size_t& pos, std::array<char, fgets_size>& buffer) {
+    if (pos >= data.size()) {
+        return false;
+    }
+    std::size_t n = 0;
+    while (n < fgets_size - 1 && pos < data.size()) {
+        char const ch = data.at(pos++);
+        buffer.at(n++) = ch;
+        if (ch == '\n') {
+            break;
+        }
+    }
+    buffer.at(n) = '\0';
+    return true;
+}
+
+struct ScanResult {
+    bool found;
+    std::size_t buffer_len;
+    std::size_t tmp_buf_len;
+};
+
+// The backward scan and CR LF filter of fb_DevFileReadLineDumb. Updates buffer in place.
+ScanResult scan_chunk(std::array<char, fgets_size>& buffer) {
+    // while (buffer_len--) { ... } with unsigned wrap-around, as in C.
+    std::size_t buffer_len = fgets_size - 1;
+    bool found = false;
+    while (buffer_len-- > 0) {
+        char const ch = buffer.at(buffer_len);
+        if (ch == '\r' || ch == '\n') {
+            found = true;
+            break;
+        }
+        if (ch != '\0') {
+            break;
+        }
+    }
+    if (!found) {
+        ++buffer_len;
+        return {.found = false, .buffer_len = buffer_len, .tmp_buf_len = buffer_len};
+    }
+    std::size_t const tmp_buf_len = buffer_len + 1;
+    // filter a CR LF pair: the CR is dropped
+    if (buffer.at(buffer_len) == '\n' && buffer_len != 0 && buffer.at(buffer_len - 1) == '\r') {
+        --buffer_len;
+    }
+    buffer.at(buffer_len) = '\0';
+    return {.found = true, .buffer_len = buffer_len, .tmp_buf_len = tmp_buf_len};
+}
+
+} // namespace
+
+// dev_file_readline.c fb_DevFileReadLineDumb: fixed fgets(buf, 512) chunks from the FILE position;
+// the putback buffer is not consulted for Line Input.
+std::string InputFile::line_input() {
+    // Literal port of fb_DevFileReadLineDumb (dev_file_readline.c). The 512-byte buffer is not
+    // cleared between chunks: only the previous chunk's real length is memset, so stale bytes
+    // from an earlier chunk survive into the next scan (observed on fbc 1.10.1).
+    std::string result;
+    std::array<char, fgets_size> buffer{};
+    std::size_t mem_len = fgets_size;
+    while (true) {
+        std::fill_n(buffer.begin(), mem_len, '\0');
+        if (!fgets_chunk(contents_, pos_, buffer)) {
+            break;
+        }
+        ScanResult const scan = scan_chunk(buffer);
+        for (std::size_t k = 0; k < scan.buffer_len; ++k) {
+            result.push_back(buffer.at(k));
+        }
+        mem_len = scan.tmp_buf_len;
+        if (scan.found) {
+            break;
+        }
+    }
+    return result;
+}
+
+bool InputFile::eof() const noexcept {
+    return at_end();
+}
+
 // file_input_tok.c hReadChar (device branch): putback bytes first, then the file.
 int InputFile::read_char() noexcept {
     if (!putback_.empty()) {
@@ -157,7 +246,7 @@ int InputFile::read_char() noexcept {
         return c;
     }
     if (pos_ >= contents_.size()) {
-        return eof;
+        return eof_char;
     }
     return static_cast<unsigned char>(contents_.at(pos_++));
 }
@@ -184,7 +273,7 @@ void InputFile::skip_delimiter(int c) {
     }
     switch (c) {
     case ',':
-    case eof:
+    case eof_char:
     case '\n':
         break;
     case '\r':
@@ -208,7 +297,7 @@ std::string InputFile::next_token(std::size_t max_chars, bool is_string, bool& i
     bool isquote = false;
     bool hasamp = false;
     int c = skip_white();
-    while (c != eof && buffer.size() < max_chars) {
+    while (c != eof_char && buffer.size() < max_chars) {
         bool save = false;
         bool done = false;
         switch (c) {

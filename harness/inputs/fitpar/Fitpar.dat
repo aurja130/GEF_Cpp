@@ -1,0 +1,24 @@
+' Fitpar.dat of the M4.4 capture m4-t0-fitpar: every path of ReadParameters.mac except the endless loop (Q-035)
+CHISQR_FIT_MIN = 12.5
+_P_DZ_Mean_S1 = -0.3   /' block comment '/  ' trailing comment
+  _p_shell_s1=-2.1
+_P_Z_CurV_S2 = 0.07 ' mixed-case key
+	D_Par_Fac	=	1.5	
+EOSCALE = 1e-1
+_BETAL0 = &H10
+_T_low_S3 = .33x
+_P_A_Width_S2 = 12.25
+R_SUPP_S1 = 0.5
+UNKNOWN_PAR = 3
+no equals sign here
+a = b = c
+TFCOLL =
+= 5
+/'only a comment'/
+
+   
+_HOMPOL = 1.7 /' a '/ x /' b '/
+_Delta_S0 = 0.25
+SPIN_ODD = 0.45
+KAPPA = -1.5E+00
+_Jscaling = 1.01

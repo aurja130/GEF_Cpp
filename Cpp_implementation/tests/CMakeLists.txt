@@ -24,14 +24,18 @@ add_executable(gef_tests
     fbc_arithmetic_test.cpp
     format_test.cpp
     fp_environment_test.cpp
+    line_input_test.cpp
     maths_test.cpp
     nuclide_tables_test.cpp
+    params_test.cpp
     print_using_test.cpp
     probe_dump_test.cpp
     program_data_test.cpp
     rng_test.cpp
+    strings_test.cpp
     tables_test.cpp
     text_test.cpp
+    utilities_test.cpp
     support/golden.cpp
     support/probe_dump.cpp)
 target_include_directories(gef_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
@@ -39,7 +43,8 @@ target_include_directories(gef_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
 target_compile_definitions(gef_tests PRIVATE
     GEF_TEST_GOLDEN_DIR="${CMAKE_CURRENT_SOURCE_DIR}/golden"
     GEF_TEST_STORE_CAPTURES_DIR="${PROJECT_SOURCE_DIR}/validation/reference_store/captures")
-target_link_libraries(gef_tests PRIVATE gef_data gef_fbrt Catch2::Catch2WithMain Threads::Threads)
+target_link_libraries(gef_tests PRIVATE gef_data gef_fbrt gef_params gef_util
+    Catch2::Catch2WithMain Threads::Threads)
 gef_apply_policy(gef_tests)
 
 # Test tags become CTest labels ([unit] -> unit, [T1] -> T1), so `ctest -L T1` runs one tier.

@@ -1,0 +1,26 @@
+{
+  "kind": "store-derived",
+  "outputs": {
+    "Fitpar.dat": "1d3a622ba2fb113ebd279cb1caead92670b4c16064909f3d5ccf86ef8eccfe11",
+    "ParameterUpdate.dat": "2d8363c63c5296ee21430b50df337865488a1e8b1e913805d5c5fcf65efe564e",
+    "stdout.log": "de0f35a4a36a91b4e379e2fc0a60b34782357f65d2f42267ed32553a833a6851"
+  },
+  "sources": [
+    {
+      "capture": "m4-t0-fitpar",
+      "file": "work/Fitpar.dat",
+      "sha256": "1d3a622ba2fb113ebd279cb1caead92670b4c16064909f3d5ccf86ef8eccfe11"
+    },
+    {
+      "capture": "m4-t0-fitpar",
+      "file": "work/tmp/ParameterUpdate.dat",
+      "sha256": "2d8363c63c5296ee21430b50df337865488a1e8b1e913805d5c5fcf65efe564e"
+    },
+    {
+      "capture": "m4-t0-fitpar",
+      "file": "stdout.log",
+      "sha256": "de0f35a4a36a91b4e379e2fc0a60b34782357f65d2f42267ed32553a833a6851"
+    }
+  ],
+  "tool": "python3 -m harness.golden copy m4-t0-fitpar work/Fitpar.dat work/tmp/ParameterUpdate.dat stdout.log --name m4-fitpar-files"
+}

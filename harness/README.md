@@ -47,12 +47,13 @@ With `Options(ENDF)` and N energies, GEF runs N+3 energy steps: step 1 is the lo
 
 ```sh
 python3 -m harness.run --binary seed-<hash> --input harness/inputs/m1_rn215_short.in \
-    --seed 12345 --out build/runs/a [--reseed] [--scope steps=8 --scope passes=0,31 --scope events=1-20]
+    --seed 12345 --out build/runs/a [--reseed] [--scope steps=8 --scope passes=0,31 --scope events=1-20] \
+    [--work-file harness/inputs/fitpar/Fitpar.dat]
 python3 -m harness.compare_runs build/runs/a build/runs/b [--allow-only-in-b 'work/probes/*' --allow-only-in-b work/rnd.log]
 python3 -m harness.capture_seed --input harness/inputs/m1_rn215_short.in --out build/runs/ref
 ```
 
-- `run` creates a fresh run directory (`run.json`, `stdout.log`, `stderr.log`, `work/` = GEF's working directory with `file.in`, `in/`, `out/`, `dmp/`, `tmp/`, `ENDF/`, `ctl/`, …). It refuses an existing directory.
+- `run` creates a fresh run directory (`run.json`, `stdout.log`, `stderr.log`, `work/` = GEF's working directory with `file.in`, `in/`, `out/`, `dmp/`, `tmp/`, `ENDF/`, `ctl/`, …). It refuses an existing directory. `--work-file` copies a file (e.g. `Fitpar.dat`) into `work/` before the run and records it in `run.json`. P1/P2 need both `--scope steps=…` and `--scope passes=…`.
 - `compare_runs` compares two run directories byte for byte. Only the time-dependent fields listed in `masks.toml` are masked; each mask names the BASIC statement that writes it, and masks that matched nothing are listed.
 - `capture_seed` runs the original `gef_reference` under gdb, verifies its SHA-256 first, and records the seed it derives from the clock (breakpoint on the runtime's MT initialiser).
 

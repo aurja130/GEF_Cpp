@@ -1,0 +1,14 @@
+{
+  "kind": "store-derived",
+  "outputs": {
+    "T0.txt": "a6c4242c950bb8580446e6056754d1ce1868e38d2895d5039c53792f6fc15d5f"
+  },
+  "sources": [
+    {
+      "capture": "m4-t0-fitpar",
+      "file": "work/probes/T0.txt",
+      "sha256": "0066698a62e5789f1412bef8707117458d947ca25833b006e1bf71c11a41e056"
+    }
+  ],
+  "tool": "python3 -m harness.probe_fingerprints m4-t0-fitpar --name m4-t0-fitpar --probe T0"
+}

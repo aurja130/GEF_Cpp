@@ -9,14 +9,15 @@ Small goldens (at most ``MAX_COMMITTED_BYTES``) are committed under
 capture ``<name>`` (kind ``driver``). C++ tests that need a store golden skip without it.
 
 A *store-derived* golden (M4 plan, D7) is a small file computed from reference-store captures
-(e.g. per-table fingerprints of a T0 dump). Its directory holds ``derived.json`` instead of
-``driver.json``: the producing tool, the capture files it read with their SHA-256 (which the
-committed store manifests must confirm), and the SHA-256 of every output file. Producers call
-``write_derived``.
+(e.g. per-table fingerprints of a T0 dump) or copied from one (``copy``). Its directory holds
+``derived.json`` instead of ``driver.json``: the producing tool, the capture files it read with
+their SHA-256 (which the committed store manifests must confirm), and the SHA-256 of every
+output file. Producers call ``write_derived``.
 
 Usage::
 
     python3 -m harness.golden promote <driver> --name NAME [--note TEXT] [--replace] [-- args]
+    python3 -m harness.golden copy <capture> <file> [<file> ...] --name NAME
     python3 -m harness.golden check     # committed goldens still match their sources
 
 ``check`` fails when a driver source, an included or cut GEF source, the fbc version, a
@@ -35,7 +36,14 @@ import tempfile
 from pathlib import Path
 
 from harness import driver, store
-from harness.common import BUILD_ROOT, DRIVERS_DIR, GEF_SOURCE_DIR, REPO_ROOT, HarnessError
+from harness.common import (
+    BUILD_ROOT,
+    DRIVERS_DIR,
+    GEF_SOURCE_DIR,
+    REPO_ROOT,
+    STORE_CAPTURES,
+    HarnessError,
+)
 from harness.driver import DRIVER_JSON, cut_lines
 from tools.fbsrc.common import sha256_file
 from tools.toolchain.fbc import REQUIRED_FBC_VERSION
@@ -96,6 +104,27 @@ def write_derived(golden: Path, tool: str, sources: list[tuple[str, str]]) -> Pa
     path = golden / DERIVED_JSON
     path.write_text(json.dumps(record, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return path
+
+
+def copy_from_store(capture: str, files: list[str], name: str) -> Path:
+    """A store-derived golden holding verbatim copies of capture files (under their base
+    names), e.g. ``work/tmp/ParameterUpdate.dat`` of a capture."""
+    golden = GOLDEN_DIR / name
+    if golden.exists():
+        raise HarnessError(f"golden {golden} exists; remove it first to produce it again")
+    bases = [Path(f).name for f in files]
+    if len(set(bases)) != len(bases):
+        raise HarnessError("the copied files must have distinct base names")
+    sources = [STORE_CAPTURES / capture / f for f in files]
+    for src in sources:
+        if not src.is_file():
+            raise HarnessError(f"missing capture file {src}")
+    golden.mkdir(parents=True)
+    for src in sources:
+        shutil.copyfile(src, golden / src.name)
+    tool = f"python3 -m harness.golden copy {capture} {' '.join(files)} --name {name}"
+    write_derived(golden, tool, [(capture, f) for f in files])
+    return golden
 
 
 def _manifest_files(capture: str) -> dict[str, str]:
@@ -189,11 +218,19 @@ def main(argv: list[str] | None = None) -> int:
     p_promote.add_argument("--replace", action="store_true", help="overwrite a committed golden")
     p_promote.add_argument("args", nargs="*", help="driver arguments, after --")
     sub.add_parser("check", help="verify committed goldens against their drivers")
+    p_copy = sub.add_parser("copy", help="copy capture files into a store-derived golden")
+    p_copy.add_argument("capture")
+    p_copy.add_argument("files", nargs="+", help="paths inside the capture directory")
+    p_copy.add_argument("--name", required=True, help="golden directory")
     ns = parser.parse_args(argv)
     try:
         if ns.cmd == "promote":
             where = promote(ns.driver, ns.args, ns.name, note=ns.note, replace=ns.replace)
             print(where.relative_to(REPO_ROOT) if where.is_relative_to(REPO_ROOT) else where)
+            return 0
+        if ns.cmd == "copy":
+            where = copy_from_store(ns.capture, ns.files, ns.name)
+            print(where.relative_to(REPO_ROOT))
             return 0
         problems = check()
     except HarnessError as exc:

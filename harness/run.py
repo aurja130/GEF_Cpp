@@ -7,7 +7,7 @@ Usage (from the repository root)::
 
     python3 -m harness.run --binary <path|build-id> --input <sequence file> --seed N
                            --out <dir> [--reseed] [--scope steps=1,3-5] [--scope passes=1]
-                           [--scope events=1-100] [--env NAME=VALUE ...]
+                           [--scope events=1-100] [--env NAME=VALUE ...] [--work-file PATH ...]
 
 ``--binary`` is a file path or a build id under ``build/harness/`` (see ``harness.build``).
 ``--out`` must not exist. The run directory layout is::
@@ -15,8 +15,9 @@ Usage (from the repository root)::
     <out>/run.json     manifest (binary and input SHA-256, seed, mode, env set, timings, exit code)
     <out>/stdout.log   the program's standard output
     <out>/stderr.log   the program's standard error
-    <out>/work/        GEF's working directory (cwd): file.in, in/<input>, and everything GEF
-                       and the harness patches create (ctl/ out/ dmp/ tmp/ ENDF/ probes/ rnd.log)
+    <out>/work/        GEF's working directory (cwd): file.in, in/<input>, the --work-file copies
+                       (e.g. Fitpar.dat), and everything GEF and the harness patches create
+                       (ctl/ out/ dmp/ tmp/ ENDF/ probes/ rnd.log)
 
 ``work/file.in`` holds the quoted relative path ``"in/<input name>"`` and ``END``, like a
 batch-mode ``file.in``. The program runs with ``stdin`` from ``/dev/null`` and the current
@@ -76,8 +77,9 @@ def utc_now() -> str:
     return datetime.now(UTC).isoformat(timespec="seconds")
 
 
-def prepare_run_dir(out_dir: Path, input_file: Path) -> Path:
-    """Create ``out_dir`` with ``work/``, ``work/in/<input>`` and ``work/file.in``.
+def prepare_run_dir(out_dir: Path, input_file: Path, work_files: Sequence[Path] = ()) -> Path:
+    """Create ``out_dir`` with ``work/``, ``work/in/<input>``, ``work/file.in`` and a copy of
+    each of ``work_files`` in ``work/`` (under its own name, e.g. ``Fitpar.dat``).
 
     Refuses an existing ``out_dir``. Returns the (absolute) work directory.
     """
@@ -86,10 +88,18 @@ def prepare_run_dir(out_dir: Path, input_file: Path) -> Path:
         raise HarnessError(f"output directory {out} already exists; runs never overwrite")
     if not input_file.is_file():
         raise HarnessError(f"input file {input_file} does not exist")
+    names = [f.name for f in work_files]
+    for f in work_files:
+        if not f.is_file():
+            raise HarnessError(f"work file {f} does not exist")
+        if f.name in ("file.in", "in") or names.count(f.name) > 1:
+            raise HarnessError(f"work file name {f.name!r} is reserved or repeated")
     work = out / "work"
     (work / "in").mkdir(parents=True)
     (work / "in" / input_file.name).write_bytes(input_file.read_bytes())
     (work / "file.in").write_bytes(f'"in/{input_file.name}"\nEND\n'.encode())
+    for f in work_files:
+        (work / f.name).write_bytes(f.read_bytes())
     return work
 
 
@@ -138,6 +148,7 @@ def run(
     extra_env: Mapping[str, str] | None = None,
     scope: Mapping[str, str] | None = None,
     timeout_s: float | None = None,
+    work_files: Sequence[Path] = (),
 ) -> RunResult:
     """Run ``binary`` on ``input_file`` in a fresh run directory (see the module docstring).
 
@@ -147,7 +158,7 @@ def run(
     if not binary.is_file() or not os.access(binary, os.X_OK):
         raise HarnessError(f"binary {binary} is not an executable file")
     harness_env = build_environment(seed, reseed, extra_env, scope)
-    work = prepare_run_dir(out_dir, input_file)
+    work = prepare_run_dir(out_dir, input_file, work_files)
     out = work.parent
     command = [str(binary)]
     start_utc = utc_now()
@@ -187,6 +198,8 @@ def run(
         "wall_time_s": round(wall, 3),
         "exit_code": exit_code,
     }
+    if work_files:
+        record["work_files"] = [{"name": f.name, "sha256": sha256_file(f)} for f in work_files]
     write_json(out / "run.json", record)
     if exit_code != 0:
         raise HarnessError(
@@ -222,6 +235,14 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument(
         "--env", action="append", default=[], metavar="NAME=VALUE", help="extra environment"
     )
+    parser.add_argument(
+        "--work-file",
+        action="append",
+        default=[],
+        type=Path,
+        metavar="PATH",
+        help="copy into work/ before the run (recorded in run.json)",
+    )
     args = parser.parse_args(argv)
     try:
         binary = resolve_binary(args.binary)
@@ -233,6 +254,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             reseed=args.reseed,
             extra_env=_parse_pairs(args.env, "env"),
             scope=_parse_pairs(args.scope, "scope"),
+            work_files=args.work_file,
         )
     except HarnessError as exc:
         print(f"harness.run: {exc}", file=sys.stderr)
