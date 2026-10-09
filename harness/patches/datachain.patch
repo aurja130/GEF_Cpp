@@ -1,10 +1,10 @@
 --- a/GEF.bas
 +++ b/GEF.bas
-@@ -1565,2 +1565,4 @@
-   #Include Once "ShellMO.bas"
+@@ -1011,2 +1011,4 @@
+ 
 +#Include "harness_datachain.bi"
-+#line 1565
-   
++#line 1011
+    
 --- /dev/null
 +++ b/harness_datachain.bi
 @@ -0,0 +1,37 @@
