@@ -154,7 +154,7 @@ python3 -m tools.toolchain.manifest_validation verify   # reports missing, chang
 | [`Planning/GEF_CPP_VISION.md`](Planning/GEF_CPP_VISION.md) | Goals, test tiers T0–T5, coverage dimensions, statistical acceptance, definition of done |
 | [`Planning/IMPLEMENTATION_STRATEGY.md`](Planning/IMPLEMENTATION_STRATEGY.md) | Component inventory, strategic decisions, milestones M0–M18 and their gates |
 | [`Planning/CURRENT_PROJECT_STATE.md`](Planning/CURRENT_PROJECT_STATE.md) | What exists now, open risks, next steps |
-| [`Planning/MILESTONE_0_PLAN.md`](Planning/MILESTONE_0_PLAN.md) … [`MILESTONE_3_PLAN.md`](Planning/MILESTONE_3_PLAN.md) | Milestone plans and completion notes |
+| [`Planning/MILESTONE_0_PLAN.md`](Planning/MILESTONE_0_PLAN.md) … [`MILESTONE_4_PLAN.md`](Planning/MILESTONE_4_PLAN.md) | Milestone plans and completion notes |
 | [`Planning/CODING_STANDARDS.md`](Planning/CODING_STANDARDS.md) | C++ and Python conventions, provenance and quirk annotations, tests, license notices |
 | [`Planning/QUIRKS.md`](Planning/QUIRKS.md) | Register of known BASIC quirks and defects that the port reproduces |
 | [`Planning/COVERAGE_MATRIX.md`](Planning/COVERAGE_MATRIX.md) | Coverage of GEF's dimensions by test tier, with owning milestones |

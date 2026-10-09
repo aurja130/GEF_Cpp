@@ -212,5 +212,5 @@ The six planning-session reports are saved in `Planning/code_maps/` (M0.1). Thei
 
 ## 6. Next steps
 
-1. Write `MILESTONE_4_PLAN.md` (static data, parameters and analyzer registry). It uses `fb::DataReader` for GEF's `DATA` tables and must take the item texts from GEF.c: fbc stores unquoted numeric `DATA` items rewritten to 15 significant digits (M3.8). Q-004 and Q-027 (`UBound` with a wrong dimension) are reproduced by `fb::Array::ubound`.
+1. Implement M4 per `MILESTONE_4_PLAN.md` (written 2026-10-09). User decisions: `DATA` items extracted from the emitted C, generated C++ committed, all nuclide-data variants ported and selectable (JEFF-3.3 certified end to end, the others at T0, the three legacy files through a compatibility patch), `Fitpar.dat` ported in M4, per-table fingerprints committed with full dumps in the store. M4 starts with the variant builds and their T0 probes (M4.1).
 2. Per the exact-first decision, later milestone plans gate on bit-exact equality with BASIC (T0–T3) and use `compare.exact` and the per-event reseed mode to triage divergences. The Clang Debug test preset skips `[slow]` tests (user, 2026-10-08); work on this machine is limited to 10 cores (`taskset -c 0-9`, `-j 10`) while it is shared.

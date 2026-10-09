@@ -433,6 +433,8 @@ Two tracks run in parallel after M5 and meet at M14:
 
 ### M4 — Static data, parameters and analyzer registry
 
+**Status:** planned (2026-10-09), see `Planning/MILESTONE_4_PLAN.md`. Refinements decided there: the `DATA` items come from the C fbc emits, not from the BASIC text (§2.5 is amended at M4 close-out); all nuclide-data variants are ported and selectable, JEFF-3.3 is the certified default and the others are certified at T0.
+
 **Goal:** every table and constant that GEF loads, identical in C++.
 
 **Scope:**
