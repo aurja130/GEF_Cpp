@@ -1,0 +1,14 @@
+{
+  "kind": "store-derived",
+  "outputs": {
+    "T0.txt": "4c24528942f190044eb6a9c9594ea721702fc78231443897821cf2c21779a877"
+  },
+  "sources": [
+    {
+      "capture": "m4-t0-legacy-f",
+      "file": "work/probes/T0.txt",
+      "sha256": "1b361ed2a4ac161b5e7b36fa0790e1e18464725cb34013e78a11fcd777baaf58"
+    }
+  ],
+  "tool": "python3 -m harness.probe_fingerprints m4-t0-legacy-f --name m4-t0-legacy-f --probe T0"
+}

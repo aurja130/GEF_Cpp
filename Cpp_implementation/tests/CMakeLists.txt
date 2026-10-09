@@ -26,10 +26,12 @@ add_executable(gef_tests
     fp_environment_test.cpp
     maths_test.cpp
     print_using_test.cpp
+    probe_dump_test.cpp
     program_data_test.cpp
     rng_test.cpp
     text_test.cpp
-    support/golden.cpp)
+    support/golden.cpp
+    support/probe_dump.cpp)
 target_include_directories(gef_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
 # Driver goldens (M3 plan D1): committed ones, and the reference store for large ones.
 target_compile_definitions(gef_tests PRIVATE

@@ -1,0 +1,14 @@
+{
+  "kind": "store-derived",
+  "outputs": {
+    "T0.txt": "56ce88a227f3fefbd9fed486cf58e7df637bbc9a61e04d479773ec0b793a296e"
+  },
+  "sources": [
+    {
+      "capture": "m4-t0-nubase2016",
+      "file": "work/probes/T0.txt",
+      "sha256": "c6b48d5b79ad88b6ec3be3ae5ae73d928f6f8d12eb3cd58509564faafae6b851"
+    }
+  ],
+  "tool": "python3 -m harness.probe_fingerprints m4-t0-nubase2016 --name m4-t0-nubase2016 --probe T0"
+}

@@ -1,0 +1,14 @@
+{
+  "kind": "store-derived",
+  "outputs": {
+    "T0.txt": "5f84d65448c2c4a1d21fb1397094daea3d2987e2c6c6b03598072c5c3289090c"
+  },
+  "sources": [
+    {
+      "capture": "m4-t0-jeff33",
+      "file": "work/probes/T0.txt",
+      "sha256": "9cc19392dad9b09c730423f804c59e4d2dce1852bb9ce180533d4b2292e8e082"
+    }
+  ],
+  "tool": "python3 -m harness.probe_fingerprints m4-t0-jeff33 --name m4-t0-jeff33 --probe T0"
+}
