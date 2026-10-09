@@ -1,0 +1,133 @@
+--- a/GEF.bas
++++ b/GEF.bas
+@@ -1571,2 +1571,4 @@
+ 
++#Include "harness_lookups.bi"
++#line 1572
+ /'
+--- a/Branchings.bas
++++ b/Branchings.bas
+@@ -252,2 +252,4 @@
+ End If   ' If Branching_first_call = 1 Then
++#Include "harness_lookups_branch.bi"
++#line 253
+ 
+--- /dev/null
++++ b/harness_lookups.bi
+@@ -0,0 +1,64 @@
++' SPDX-License-Identifier: GPL-3.0-or-later
++' Copyright (C) 2026 Aurora Jahan
++' Licensed under the GNU GPL v3 or later, WITHOUT ANY WARRANTY; see LICENSE.txt.
++' Harness patch "lookups" (M4.6), part 1: with -d GEF_LOOKUPS, evaluates the nuclide lookup
++' functions of the NucProp file at start-up (GEF.bas:1572, after the tables are loaded and
++' before GEF calls any of them; ctl/ is fresh) and writes probes/lookups.txt.
++'
++' Grid: every Z 0..120. A Z that has NucTab entries takes A from its lowest A - 3 (not below
++' 0) to its highest A + 3; any other Z takes A from Int(2.5 Z) - 2 to Int(2.5 Z) + 2. Per
++' grid point, in this order, one line
++'   "N Z A I_MAT_ENDF(Z,A) R_AWR_ENDF(Z,A) ISO_for_ZA(Z,A) NStates_for_ZA(Z,A) N_ISO_MAT(m) ISO_for_MAT(m)"
++' with m = I_MAT_ENDF(Z,A) and R_AWR_ENDF as the Single's bits in hex. N_ISO_MAT(m) is "-" for
++' UBound(NucTab) - 6 < m <= UBound(NucTab): there the NucProp_Functions.mac form would read
++' past the end of NucTab (undefined in BASIC, which has no bounds checks).
++' Then one line "M m N_ISO_MAT(m) ISO_for_MAT(m)" for m = LBound(NucTab) .. UBound(NucTab) - 6.
++' I_MAT_ENDF prints to the console and keeps ctl/IMATmax.ctl as GEF does (QUIRKS.md Q-021).
++
++#ifdef GEF_LOOKUPS
++Scope
++  Dim As Long hl_err = MkDir("probes")
++  Dim As Long hl_file = FreeFile
++  Open "probes/lookups.txt" For Output As #hl_file
++  Dim As Integer hl_amin(0 To 120), hl_amax(0 To 120)
++  For hl_z As Integer = 0 To 120
++    hl_amin(hl_z) = -1
++    hl_amax(hl_z) = -1
++  Next hl_z
++  For hl_i As Integer = LBound(NucTab) To UBound(NucTab)
++    Dim As Integer hl_nz = NucTab(hl_i).I_Z, hl_na = NucTab(hl_i).I_A
++    If hl_nz >= 0 And hl_nz <= 120 Then
++      If hl_amin(hl_nz) < 0 Or hl_na < hl_amin(hl_nz) Then hl_amin(hl_nz) = hl_na
++      If hl_na > hl_amax(hl_nz) Then hl_amax(hl_nz) = hl_na
++    End If
++  Next hl_i
++  Dim As Integer hl_ub = UBound(NucTab)
++  For hl_z As Integer = 0 To 120
++    Dim As Integer hl_alo, hl_ahi
++    If hl_amax(hl_z) >= 0 Then
++      hl_alo = hl_amin(hl_z) - 3
++      If hl_alo < 0 Then hl_alo = 0
++      hl_ahi = hl_amax(hl_z) + 3
++    Else
++      hl_alo = Int(2.5 * hl_z) - 2
++      If hl_alo < 0 Then hl_alo = 0
++      hl_ahi = Int(2.5 * hl_z) + 2
++    End If
++    For hl_a As Integer = hl_alo To hl_ahi
++      Dim As Integer hl_imat = I_MAT_ENDF(hl_z, hl_a)
++      Dim As Single hl_awr = R_AWR_ENDF(hl_z, hl_a)
++      Dim As Integer hl_iso = ISO_for_ZA(hl_z, hl_a)
++      Dim As Integer hl_nst = NStates_for_ZA(hl_z, hl_a)
++      Dim As String hl_niso = "-"
++      If hl_imat <= hl_ub - 6 Or hl_imat > hl_ub Then hl_niso = Str(N_ISO_MAT(hl_imat))
++      Print #hl_file, "N " & hl_z & " " & hl_a & " " & hl_imat & " " & _
++        Hex(*Cast(ULong Ptr, @hl_awr), 8) & " " & hl_iso & " " & hl_nst & " " & hl_niso & " " & _
++        ISO_for_MAT(hl_imat)
++    Next hl_a
++  Next hl_z
++  For hl_m As Integer = LBound(NucTab) To hl_ub - 6
++    Print #hl_file, "M " & hl_m & " " & N_ISO_MAT(hl_m) & " " & ISO_for_MAT(hl_m)
++  Next hl_m
++  Close #hl_file
++End Scope
++#endif
+--- /dev/null
++++ b/harness_lookups_branch.bi
+@@ -0,0 +1,49 @@
++' SPDX-License-Identifier: GPL-3.0-or-later
++' Copyright (C) 2026 Aurora Jahan
++' Licensed under the GNU GPL v3 or later, WITHOUT ANY WARRANTY; see LICENSE.txt.
++' Harness patch "lookups" (M4.6), part 2: with -d GEF_LOOKUPS, evaluates Ibranch_for_ZAI
++' right after the Branchings.bas loader has filled BranchData (Branchings.bas:252, the first
++' time it runs), writes probes/lookups_branch.txt and ends the program.
++'
++' Grid: every Z 0..120; A from the lowest A - 3 (not below 0) to the highest A + 3 of the
++' NucTab entries of Z, or Int(2.5 Z) - 2 .. Int(2.5 Z) + 2 without entries; ISO 0..3. One
++' line "B Z A ISO Ibranch_for_ZAI(Z,A,ISO)" per point.
++
++#ifdef GEF_LOOKUPS
++Scope
++  Dim As Long hb_file = FreeFile
++  Open "probes/lookups_branch.txt" For Output As #hb_file
++  Dim As Integer hb_amin(0 To 120), hb_amax(0 To 120)
++  For hb_z As Integer = 0 To 120
++    hb_amin(hb_z) = -1
++    hb_amax(hb_z) = -1
++  Next hb_z
++  For hb_i As Integer = LBound(NucTab) To UBound(NucTab)
++    Dim As Integer hb_nz = NucTab(hb_i).I_Z, hb_na = NucTab(hb_i).I_A
++    If hb_nz >= 0 And hb_nz <= 120 Then
++      If hb_amin(hb_nz) < 0 Or hb_na < hb_amin(hb_nz) Then hb_amin(hb_nz) = hb_na
++      If hb_na > hb_amax(hb_nz) Then hb_amax(hb_nz) = hb_na
++    End If
++  Next hb_i
++  For hb_z As Integer = 0 To 120
++    Dim As Integer hb_alo, hb_ahi
++    If hb_amax(hb_z) >= 0 Then
++      hb_alo = hb_amin(hb_z) - 3
++      If hb_alo < 0 Then hb_alo = 0
++      hb_ahi = hb_amax(hb_z) + 3
++    Else
++      hb_alo = Int(2.5 * hb_z) - 2
++      If hb_alo < 0 Then hb_alo = 0
++      hb_ahi = Int(2.5 * hb_z) + 2
++    End If
++    For hb_a As Integer = hb_alo To hb_ahi
++      For hb_iso As Integer = 0 To 3
++        Print #hb_file, "B " & hb_z & " " & hb_a & " " & hb_iso & " " & Ibranch_for_ZAI(hb_z, hb_a, hb_iso)
++      Next hb_iso
++    Next hb_a
++  Next hb_z
++  Close #hb_file
++  Print "<harness> lookups written; GEF ends here."
++  End 0
++End Scope
++#endif

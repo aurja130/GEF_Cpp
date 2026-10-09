@@ -1,0 +1,4 @@
+# Patch set "m4-lookups-nubase2016" (M4.6): nuclide lookup functions of the nubase2016 nuclide data over a (Z, A) grid. Build with -d GEF_LOOKUPS.
+nucprop-nubase2016
+seed
+lookups

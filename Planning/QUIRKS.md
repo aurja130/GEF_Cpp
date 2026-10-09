@@ -292,12 +292,12 @@ Tool commands are run from the repository root: `python3 -m tools.fbsrc.fbline <
 ### Q-021 `I_MAT_ENDF` persists state in `ctl/IMATmax.ctl`
 
 - **BASIC location:** `NucProp_Functions.mac:11-63` (seed said 28–49; the file I/O spans 37–58)
-- **Mechanism:** for a nuclide missing from `NucTab`, the lookup does `CHDIR("ctl")` (37; GEF.c:4668 `fb_ChDir`), reads `IMATmax.ctl` for an earlier assignment (38–49), otherwise assigns `IMAT_max + 1`, appends `IZ, IA, IMAT` to the file (51–56) and returns with `CHDIR("..")` (58). The file is never deleted (no `Kill` in the source).
+- **Mechanism:** for a nuclide missing from `NucTab`, the lookup does `CHDIR("ctl")` (37; GEF.c:4668 `fb_ChDir`), reads `IMATmax.ctl` for an earlier assignment (38–49), otherwise assigns `IMAT_max + 1`, appends `IZ, IA, IMAT` to the file (51–56) and returns with `CHDIR("..")` (58). The file is never deleted (no `Kill` in the source). "Missing" is `IMAT = 0`, so Z = 0, A = 0, which matches the empty record `NucTab(0)`, is treated as missing too and gets a MAT number from the file (the first one of a fresh `ctl/` in the M4.6 grid: 3853 for JEFF-3.3).
 - **Effect (expected):** MAT numbers of nuclides outside `NucTab` depend on the history of earlier runs in the same working directory, and the lookup changes the process working directory temporarily. Callers (`fbdef I_MAT_ENDF --refs`) include the event loop (`GEF.bas:9259, 9379`), the isomeric-yield output (14246), set-up (3562, 3707, 3751) and the ENDF writer (`ENDF.bas:332, 695, 934`).
-- **Evidence status:** *confirmed by fbc C*
-- **Evidence:** `fbline NucProp_Functions.mac:37`, `fbline NucProp_Functions.mac:52-53` as quoted. Not exercised in `validation/test_run`: `ctl/` holds no `IMATmax.ctl` and `run.log` has no `<I> IMAT =` line. Confirmed by M4 T1 (lookup over full grids in a fresh `ctl/`) and M15 (edge systems).
+- **Evidence status:** *confirmed in output*
+- **Evidence:** `fbline NucProp_Functions.mac:37`, `fbline NucProp_Functions.mac:52-53` as quoted. Not exercised in `validation/test_run`: `ctl/` holds no `IMATmax.ctl` and `run.log` has no `<I> IMAT =` line. M4.6 T1: captures `m4-lookups-jeff33` and `m4-lookups-nubase2016` (harness patch `lookups`, the full (Z, A) grid in a fresh `ctl/`): 720 and 713 assignments in `ctl/IMATmax.ctl`, reproduced line by line by the C++ (`lookups_test.cpp`). Edge systems in M15.
 - **Fidelity switch:** `fix_imat_no_persistent_state`
-- **C++ symbol:** not yet ported
+- **C++ symbol:** `gef::data::i_mat_endf` with `gef::data::MatNumberState` (`Cpp_implementation/src/data/lookups.cpp`, M4.6): the state holds `I_message` and the bytes of `ctl/IMATmax.ctl`; reading and writing the file belong to the run flow (M6)
 - **Owning milestone:** M4
 
 ### Q-022 TXE printed with the TKE uncertainty
@@ -458,6 +458,17 @@ Tool commands are run from the repository root: `python3 -m tools.fbsrc.fbline <
 - **C++ symbol:** `gef::params::read_parameters` (`Cpp_implementation/src/params/parameter_files.cpp`)
 - **Owning milestone:** M4
 
+### Q-036 The legacy NucProp files map nuclides outside `NucTab` to its last entry
+
+- **BASIC location:** `NucPropx.bas:157-165`, `NucPropmf.bas:165-173`, `NucPropf.bas:162-170` (`I_MAT_ENDF`), with `R_AWR_ENDF` (`NucPropx.bas:182-188`, `NucPropmf.bas:190-196`, `NucPropf.bas:187-193`)
+- **Mechanism:** `For I = LBound(NucTab) To UBound(NucTab): IMAT = I: If <match> Then Exit For: Next: I_MAT_ENDF = IMAT`. Without a match the function returns the loop variable's last value, `UBound(NucTab)`, and prints nothing; `R_AWR_ENDF` then returns that entry's AWR.
+- **Effect:** in a build with a legacy nuclide-data file (not a stock GEF 2025/1.2 configuration, M4 plan D4), every nuclide missing from the table gets the MAT number and the AWR of the table's last nuclide. (JEFF-3.1.1's own version returns 0 and prints the warning once; the stock files use `NucProp_Functions.mac`, Q-021.)
+- **Evidence status:** *confirmed in output*
+- **Evidence:** capture `m4-lookups-legacy-x` (M4.6): `N 50 96 3897 43866893 …`, i.e. Sn-96 gets MAT 3897 = `UBound(NucTab)` and AWR 268.8; no "Missing MAT number" line in `stdout.log` (`m4-lookups-legacy-mf`, `-f` likewise).
+- **Fidelity switch:** none planned (legacy, non-stock files)
+- **C++ symbol:** `gef::data::i_mat_endf`, `gef::data::r_awr_endf` (`Cpp_implementation/src/data/lookups.cpp`)
+- **Owning milestone:** M4
+
 ## 5. Build notes (not GEF quirks)
 
 These describe how the toolchain, not GEF, can make the C++ results differ from the reference binary. They have no fidelity switch.
@@ -522,7 +533,7 @@ These describe how the toolchain, not GEF, can make the C++ results differ from 
 | Q-018 | `MyParameters.dat` never applied; `Fitpar.dat` reset per system | `GEF.bas:1017, 2555, 3317-3321` | confirmed by fbc C | `fix_parameter_file_overrides` | M15 |
 | Q-019 | `Var_PZ_S3_olap_curv` is zero | `GEF.bas:2610` | confirmed in output | `fix_pz_s3_olap_curv_width` | M12 |
 | Q-020 | Analyzer registry naming errors | `Spectra.bas:557-577, 1082-1096` | confirmed in output | `fix_analyzer_registry_names` | M4 |
-| Q-021 | `I_MAT_ENDF` persists `ctl/IMATmax.ctl` | `NucProp_Functions.mac:11-63` | confirmed by fbc C | `fix_imat_no_persistent_state` | M4 |
+| Q-021 | `I_MAT_ENDF` persists `ctl/IMATmax.ctl` | `NucProp_Functions.mac:11-63` | confirmed in output | `fix_imat_no_persistent_state` | M4 |
 | Q-022 | TXE printed with TKE uncertainty | `GEF.bas:14402-14403` | confirmed in output | `fix_txe_uncertainty` | M13 |
 | Q-023 | "Width" prints variance | `GEF.bas:13753, 13773` | confirmed in output | `fix_width_standard_deviation` | M13 |
 | Q-024 | ENDF `R_Norm` in `Single` | `ENDF.bas:157, 496-502` | confirmed in output | `fix_endf_norm_double` | M13 |
@@ -537,6 +548,7 @@ These describe how the toolchain, not GEF, can make the C++ results differ from 
 | Q-033 | Loader errors say "GEF stopped." but continue | `NucPropJEFF33.bas:77-82`, `Branchings.bas:76-80` | confirmed by fbc C | `fix_loader_error_stop` | M4 |
 | Q-034 | JEFF-3.1.1 table 9 records shorter than `N_MAT_MAX` | `NucPropJEFF311.bas:47-57, 90, 94` | confirmed in output | — | M4 |
 | Q-035 | Unterminated `/'` in a parameter file hangs GEF | `ReadParameters.mac:1-8` | confirmed in output | — | M4 |
+| Q-036 | Legacy NucProp files map missing nuclides to the last entry | `NucPropx.bas:157-188` (and mf, f) | confirmed in output | — | M4 |
 | B-001 | Optimisation level vs fbc `-O0` | (toolchain) | open risk | — | M3, M5 |
 | B-002 | fbc gcc passes `-fwrapv -fno-strict-aliasing` | (toolchain) | resolved for the runtime layer (M3.3) | — | M3 |
 | B-003 | `Compilationstamp` needs `SOURCE_DATE_EPOCH` | `GEF.bas:17` | handled (M1) | — | M1 |

@@ -10,6 +10,7 @@
 
 #include "data/nuclide_tables.hpp"
 
+#include "data/lookups.hpp"
 #include "fbrt/array.hpp"
 #include "fbrt/convert.hpp"
 #include "fbrt/data_reader.hpp"
@@ -28,13 +29,10 @@ namespace {
 
 // Per-variant differences of the loader. NucPropNUBASE2016.bas and NucPropNUBASE2020.bas have
 // C_Lifetime in `Type NucProp`; JEFF33, JEFF311 and the legacy files do not.
-// NucProp_Functions.mac (included by JEFF33 and NUBASE2016) bounds N_ISO_MAT to five isomers;
-// NucPropJEFF311, NucPropx, NucPropmf and NucPropf define an unbounded N_ISO_MAT.
 // The legacy files have `#DEFINE N_MAT_MAX <n>` and no count loop.
 struct Layout {
     bool string_record;           // the record and the count loop end with C_Lifetime
     bool exit_at_111;             // `If NucTab(I_MAT).I_Z = 111 Then Exit Do` is active
-    bool iso_bounded;             // N_ISO_MAT from NucProp_Functions.mac
     std::int64_t fixed_n_mat_max; // `#DEFINE N_MAT_MAX` of the legacy files; 0 = counted
     bool legacy_names;            // NucPropx/mf/f print "NucPropx"/"Nucpropx" in their messages
     bool i_iso_detail;            // JEFF33 also prints "    I_ISO out of range."
@@ -45,42 +43,36 @@ Layout layout_for(NuclideData variant) {
     case NuclideData::Jeff33:
         return {.string_record = false,
                 .exit_at_111 = false,
-                .iso_bounded = true,
                 .fixed_n_mat_max = 0,
                 .legacy_names = false,
                 .i_iso_detail = true};
     case NuclideData::Jeff311:
         return {.string_record = false,
                 .exit_at_111 = true,
-                .iso_bounded = false,
                 .fixed_n_mat_max = 0,
                 .legacy_names = false,
                 .i_iso_detail = false};
     case NuclideData::Nubase2016:
         return {.string_record = true,
                 .exit_at_111 = false,
-                .iso_bounded = true,
                 .fixed_n_mat_max = 0,
                 .legacy_names = false,
                 .i_iso_detail = false};
     case NuclideData::LegacyX:
         return {.string_record = false,
                 .exit_at_111 = true,
-                .iso_bounded = false,
                 .fixed_n_mat_max = 3897,
                 .legacy_names = true,
                 .i_iso_detail = false};
     case NuclideData::LegacyMf:
         return {.string_record = false,
                 .exit_at_111 = true,
-                .iso_bounded = false,
                 .fixed_n_mat_max = 3889,
                 .legacy_names = true,
                 .i_iso_detail = false};
     case NuclideData::LegacyF:
         return {.string_record = false,
                 .exit_at_111 = true,
-                .iso_bounded = false,
                 .fixed_n_mat_max = 3885,
                 .legacy_names = true,
                 .i_iso_detail = false};
@@ -89,7 +81,6 @@ Layout layout_for(NuclideData variant) {
     }
     return {.string_record = false,
             .exit_at_111 = false,
-            .iso_bounded = true,
             .fixed_n_mat_max = 0,
             .legacy_names = false,
             .i_iso_detail = false};
@@ -163,46 +154,6 @@ Record read_record(fb::DataReader& reader, bool string_record) {
     return rec;
 }
 
-// N_ISO_MAT (NucProp_Functions.mac:65-86): 0 when IMAT > UBound(NucTab); otherwise compares the
-// entries IMAT..IMAT+5 with IMAT's Z and A. BASIC does not check the upper end of that loop; with
-// the shipped tables it always leaves before NucTab ends (the last nuclides with isomers are
-// followed by a different nuclide), and the bounds-checked access throws if a table ever made it
-// read past the end.
-std::int64_t n_iso_mat_bounded(fb::Array<NucProp, 1> const& nuc, std::int64_t /*n_mat_max*/,
-                               std::int64_t imat) {
-    if (imat > nuc.ubound(1)) { // NucProp_Functions.mac:69 `If IMAT <= UBound(NucTab) Then`
-        return 0;
-    }
-    std::int64_t const first = imat;
-    std::int64_t const iz = nuc(first).i_z;
-    std::int64_t const ia = nuc(first).i_a;
-    std::int64_t last = first;
-    for (std::int64_t i = first; i <= first + 5; ++i) {
-        last = i;
-        if (nuc(i).i_z != iz || nuc(i).i_a != ia) {
-            break;
-        }
-    }
-    return last - first - 1;
-}
-
-// N_ISO_MAT of NucPropJEFF311.bas, NucPropx.bas, NucPropmf.bas and NucPropf.bas: searches to the
-// end of NucTab.
-std::int64_t n_iso_mat_unbounded(fb::Array<NucProp, 1> const& nuc, std::int64_t n_mat_max,
-                                 std::int64_t imat) {
-    std::int64_t const first = imat;
-    std::int64_t const iz = nuc(first).i_z;
-    std::int64_t const ia = nuc(first).i_a;
-    std::int64_t last = first;
-    for (std::int64_t i = first + 1; i <= n_mat_max; ++i) {
-        if (nuc(i).i_z != iz || nuc(i).i_a != ia) {
-            break;
-        }
-        last = i;
-    }
-    return last - first;
-}
-
 // NucPropNUBASE2020.bas:24-30 `F_AWR`.
 double f_awr(std::int64_t a, double m_excess) {
     double const m_neutron = 939.56542194; // MeV/c^2
@@ -213,9 +164,8 @@ double f_awr(std::int64_t a, double m_excess) {
 
 // The Isotab loop of the variant file (NucPropJEFF33.bas:133-177 and the same lines of the other
 // variants): sorts the states of each nuclide by spin and sets the spin windows R_lim.
-void build_isotab(TableSet& tables, Layout const& lay) {
+void build_isotab(TableSet& tables) {
     fb::Array<NucProp, 1> const& nuc = tables.nuc_tab;
-    std::int64_t const n_mat_max = tables.n_mat_max;
     // Redim Shared Isotab(N_ISO_TOT) As Isoprop
     tables.isotab.redim({fb::Bounds{0, tables.n_iso_tot}});
 
@@ -225,9 +175,8 @@ void build_isotab(TableSet& tables, Layout const& lay) {
         iso.i_mat = mat;
         iso.i_z = nuc(mat).i_z;
         iso.i_a = nuc(mat).i_a;
-        std::int64_t const n_iso = lay.iso_bounded ? n_iso_mat_bounded(nuc, n_mat_max, iso.i_mat)
-                                                   : n_iso_mat_unbounded(nuc, n_mat_max, iso.i_mat);
-        iso.n_states = n_iso + 1; // Number of states
+        std::int64_t const n_iso = n_iso_mat(tables, iso.i_mat); // the variant's N_ISO_MAT
+        iso.n_states = n_iso + 1;                                // Number of states
 
         // Sorting the spin in ascending order (Single loop R1, 0 To 50.0 Step 0.5)
         std::int64_t inmbr = 0;
@@ -366,7 +315,7 @@ void load_plain(ProgramData const& data, fb::DataReader& reader, TableSet& table
         tables.mat_for_iso(i1) = mat_for_iso_prov(i1);
     }
 
-    build_isotab(tables, lay);
+    build_isotab(tables);
 }
 
 // NucPropNUBASE2020.bas:56-109 and 200-end. The main loop's `For I_MAT = 1 To N_MAT_MAX`

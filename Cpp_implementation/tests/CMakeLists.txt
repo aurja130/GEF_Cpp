@@ -26,6 +26,7 @@ add_executable(gef_tests
     format_test.cpp
     fp_environment_test.cpp
     line_input_test.cpp
+    lookups_test.cpp
     maths_test.cpp
     nuclide_tables_test.cpp
     params_test.cpp

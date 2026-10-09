@@ -61,6 +61,10 @@ private:
     std::map<std::string, std::vector<std::string>, std::less<>> lines_;
 };
 
+// The fingerprint of any sequence of lines (e.g. a whole file, `harness.probe_fingerprints
+// --files`).
+[[nodiscard]] ProbeFingerprint fingerprint_lines(std::vector<std::string> const& lines);
+
 // The committed fingerprints of one probe file (see tools for how they are produced):
 // lines `<NAME> <line count> <fnv 16 hex>`.
 [[nodiscard]] std::map<std::string, ProbeFingerprint, std::less<>>

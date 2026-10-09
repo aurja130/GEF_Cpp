@@ -1,0 +1,5 @@
+# Patch set "m4-lookups-legacy-f" (M4.6): nuclide lookup functions of the legacy-f nuclide data over a (Z, A) grid. Build with -d GEF_LOOKUPS.
+nucprop-f
+legacy-isosource
+seed
+lookups

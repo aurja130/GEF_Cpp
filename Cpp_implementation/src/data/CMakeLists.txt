@@ -15,6 +15,7 @@ add_library(gef_data STATIC
     generated/variant_legacy_mf.cpp
     generated/variant_legacy_f.cpp
     mass_tables.cpp
+    lookups.cpp
     nuclide_tables.cpp
     program_data.cpp
     tables.cpp)

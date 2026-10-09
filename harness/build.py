@@ -12,7 +12,7 @@ Usage (from the repository root)::
 ``<patchset>`` names ``harness/patchsets/<patchset>.txt``: one patch name per line (without
 ``.patch``), ``#`` comments allowed, in the canonical stacking order: the M4 variant patches
 (``nucprop-*``, ``legacy-isosource``), then ``seed``, ``scope``, ``reseed``, ``rndlog``,
-``probes``, ``datachain``. The set ``none`` is empty (the unmodified source).
+``probes``, ``datachain``, ``lookups``. The set ``none`` is empty (the unmodified source).
 
 The build copies the submodule source to ``build/harness/<build-id>/src/``, applies the
 patches with ``patch -p1 --fuzz=0``, runs ``fbc GEF.bas [-d DEFINE ...]`` with
@@ -94,6 +94,7 @@ CANONICAL_ORDER = (
     "rndlog",
     "probes",
     "datachain",
+    "lookups",
 )
 BINARY_NAME = "GEF"
 BUILD_JSON = "build.json"

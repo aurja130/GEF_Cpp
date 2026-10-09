@@ -122,9 +122,9 @@ std::vector<std::string> const& ProbeDump::lines(std::string_view name) const {
     return found->second;
 }
 
-ProbeFingerprint ProbeDump::fingerprint(std::string_view name) const {
+ProbeFingerprint fingerprint_lines(std::vector<std::string> const& lines) {
     ProbeFingerprint fingerprint;
-    for (std::string const& line : lines(name)) {
+    for (std::string const& line : lines) {
         for (char const ch : line) {
             fnv_step(fingerprint.fnv, static_cast<unsigned char>(ch));
         }
@@ -132,6 +132,10 @@ ProbeFingerprint ProbeDump::fingerprint(std::string_view name) const {
         ++fingerprint.lines;
     }
     return fingerprint;
+}
+
+ProbeFingerprint ProbeDump::fingerprint(std::string_view name) const {
+    return fingerprint_lines(lines(name));
 }
 
 std::map<std::string, ProbeFingerprint, std::less<>> read_fingerprints(std::string_view golden_name,

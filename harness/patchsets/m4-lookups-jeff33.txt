@@ -1,0 +1,3 @@
+# Patch set "m4-lookups-jeff33" (M4.6): nuclide lookup functions of the jeff33 nuclide data over a (Z, A) grid. Build with -d GEF_LOOKUPS.
+seed
+lookups

@@ -1,0 +1,19 @@
+{
+  "kind": "store-derived",
+  "outputs": {
+    "files.txt": "0ae103c9a4829d751e195b104ddaea53b1b587cbc5085dc0d26e83413b8b4ca1"
+  },
+  "sources": [
+    {
+      "capture": "m4-lookups-jeff311",
+      "file": "work/probes/lookups.txt",
+      "sha256": "e74c1f039bbbfbd684bcc4721a55406a86387f41812e086c39d3dc66f8157d1d"
+    },
+    {
+      "capture": "m4-lookups-jeff311",
+      "file": "work/probes/lookups_branch.txt",
+      "sha256": "faf70b30a57b7b0387cc079afaeb5e45d7fef5db20d11654d2ab304f578c6e6b"
+    }
+  ],
+  "tool": "python3 -m harness.probe_fingerprints m4-lookups-jeff311 --name m4-lookups-jeff311 --files work/probes/lookups.txt work/probes/lookups_branch.txt"
+}

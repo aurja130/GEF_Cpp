@@ -1,0 +1,50 @@
+{
+  "created_utc": "2026-10-09T15:40:06Z",
+  "file_count": 13,
+  "files": {
+    "run.json": "81830e30dab1ade4fbeecd33c54597a40c0b4f179e8f307eeb61ac507bf0407d",
+    "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout.log": "7fda417c08bbfcdc2bed6e51b1586c2b4c23a736cf48897532c792261b7d3463",
+    "work/ctl/IMATmax.ctl": "b17a47efaa6f9dbfe0e277d260d8e88b6fb03822d7cfa102c473d1b1248e0e7d",
+    "work/ctl/done.ctl": "7c44d5cc7a4af13a912725d6afe79ed5c00a394cee2967fc688f114343bb0022",
+    "work/ctl/sync.ctl": "ed32f242203b8e7cf7822ab7ed18481d883e3e9d91f4f3b14fcb3e4c674c0037",
+    "work/ctl/thread.ctl": "8f2b62588d6c8cd19bd140c80d0f10566391f42c072e46d992172510682c32bf",
+    "work/file.in": "3a6a34608896cabdf9b34c423fa070cc32321290880d7004325cc62c1f25e6e4",
+    "work/in/m4_t0.in": "a38c770904b9fdcc466f6106dd3c5455d59f710ef6f6906c8dfde1beac4bad6c",
+    "work/out/GEF_98_252_sf.dat": "ae82da2ef64dc2d85f78a77632133fca9b92517597ffa3c7b13c93664dd1a34c",
+    "work/probes/lookups.txt": "f29ddde24999fbba1f624e98d71352843d52edf010d3e922b018f10e78a0f4f6",
+    "work/probes/lookups_branch.txt": "d23d6df2e8d23099b21eb351ec366a00a227cbe29192923fbd082e7dd49bcd00",
+    "work/tmp/ParameterUpdate.dat": "dec3e7d8368a92d09db371cc9f22d07696241fa9f5720e901b5ed7ec4b10b753"
+  },
+  "id": "m4-lookups-nubase2016",
+  "kind": "capture",
+  "note": "M4.6: patch set m4-lookups-nubase2016 (-d GEF_LOOKUPS; seed 12345, input m4_t0.in): nuclide lookup functions over the (Z, A) grid of harness_lookups.bi in a fresh ctl/, Ibranch_for_ZAI after the Branchings.bas loader",
+  "run_json": {
+    "binary": {
+      "build_id": "m4-lookups-nubase2016-adbe496f1e03",
+      "path": "/home/aurja/Programming/GEF_Cpp/build/harness/m4-lookups-nubase2016-adbe496f1e03/GEF",
+      "sha256": "ec1409be8ba26c288b11eb3711b88d8a109fbac47c0fbb91cdacea9d2ca5a594"
+    },
+    "command": [
+      "/home/aurja/Programming/GEF_Cpp/build/harness/m4-lookups-nubase2016-adbe496f1e03/GEF"
+    ],
+    "cwd": "/home/aurja/Programming/GEF_Cpp/build/m4_lookups/nubase2016/work",
+    "end_utc": "2026-10-09T15:38:40+00:00",
+    "env_set": {
+      "GEF_SEED": "12345"
+    },
+    "exit_code": 0,
+    "input": {
+      "name": "m4_t0.in",
+      "sha256": "a38c770904b9fdcc466f6106dd3c5455d59f710ef6f6906c8dfde1beac4bad6c"
+    },
+    "mode": "normal",
+    "reseed": false,
+    "schema": 1,
+    "seed": 12345,
+    "start_utc": "2026-10-09T15:38:31+00:00",
+    "wall_time_s": 9.323
+  },
+  "schema": 1,
+  "total_bytes": 1002640
+}

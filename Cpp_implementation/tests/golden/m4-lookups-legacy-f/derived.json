@@ -1,0 +1,19 @@
+{
+  "kind": "store-derived",
+  "outputs": {
+    "files.txt": "f2f4aad30a003ecf15b1a2964ac7ad71cb1bdb93e66bb98b5fb621bf35c124e5"
+  },
+  "sources": [
+    {
+      "capture": "m4-lookups-legacy-f",
+      "file": "work/probes/lookups.txt",
+      "sha256": "109f6743108c08083048c41e5d889d262bc6ce8f517a04c0dfe436d27665d373"
+    },
+    {
+      "capture": "m4-lookups-legacy-f",
+      "file": "work/probes/lookups_branch.txt",
+      "sha256": "d57b5e6e5f88029cf6807feaf7eec2afd41b3dd884e01960760b25879293477f"
+    }
+  ],
+  "tool": "python3 -m harness.probe_fingerprints m4-lookups-legacy-f --name m4-lookups-legacy-f --files work/probes/lookups.txt work/probes/lookups_branch.txt"
+}

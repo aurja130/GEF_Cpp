@@ -1,0 +1,49 @@
+{
+  "created_utc": "2026-10-09T15:40:06Z",
+  "file_count": 12,
+  "files": {
+    "run.json": "0a3b56700fc05c2066a83a65582cdfb85ba5a66b1f364cc3c93eabfd5147c669",
+    "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout.log": "d412459981b0cbd4995e177965a7ef39ae36888d5e9c945722bc1ff5a63ce9c3",
+    "work/ctl/done.ctl": "7c44d5cc7a4af13a912725d6afe79ed5c00a394cee2967fc688f114343bb0022",
+    "work/ctl/sync.ctl": "ed32f242203b8e7cf7822ab7ed18481d883e3e9d91f4f3b14fcb3e4c674c0037",
+    "work/ctl/thread.ctl": "1238a92cd61add68cd1556d57d1f344b93e9054ddb10d23cf14acfc17e77b76c",
+    "work/file.in": "3a6a34608896cabdf9b34c423fa070cc32321290880d7004325cc62c1f25e6e4",
+    "work/in/m4_t0.in": "a38c770904b9fdcc466f6106dd3c5455d59f710ef6f6906c8dfde1beac4bad6c",
+    "work/out/GEF_98_252_sf.dat": "6d8384a29c73c28a1959da5879103edc82dd1a42d1d5dc3b83f55da8ac8e558a",
+    "work/probes/lookups.txt": "18cb9522ec78092f1b0b2f9322dfb496a14dcbf2eb6d84fd240b02f9cd5750ce",
+    "work/probes/lookups_branch.txt": "0f78ebc7e44991162f1a86a7db9e29c65724223d5d9cf1fa0915ef07a99c93f6",
+    "work/tmp/ParameterUpdate.dat": "6271f66c5be227f390af0815708f312c5f79369dc0accff855014f5974ea22a9"
+  },
+  "id": "m4-lookups-legacy-x",
+  "kind": "capture",
+  "note": "M4.6: patch set m4-lookups-legacy-x (-d GEF_LOOKUPS; seed 12345, input m4_t0.in): nuclide lookup functions over the (Z, A) grid of harness_lookups.bi in a fresh ctl/, Ibranch_for_ZAI after the Branchings.bas loader",
+  "run_json": {
+    "binary": {
+      "build_id": "m4-lookups-legacy-x-ee419f029697",
+      "path": "/home/aurja/Programming/GEF_Cpp/build/harness/m4-lookups-legacy-x-ee419f029697/GEF",
+      "sha256": "fbb2559eca699865dd0e407726798c5222b2c9b4d01bc7694e6b5b3b8af7d82c"
+    },
+    "command": [
+      "/home/aurja/Programming/GEF_Cpp/build/harness/m4-lookups-legacy-x-ee419f029697/GEF"
+    ],
+    "cwd": "/home/aurja/Programming/GEF_Cpp/build/m4_lookups/legacy-x/work",
+    "end_utc": "2026-10-09T15:39:03+00:00",
+    "env_set": {
+      "GEF_SEED": "12345"
+    },
+    "exit_code": 0,
+    "input": {
+      "name": "m4_t0.in",
+      "sha256": "a38c770904b9fdcc466f6106dd3c5455d59f710ef6f6906c8dfde1beac4bad6c"
+    },
+    "mode": "normal",
+    "reseed": false,
+    "schema": 1,
+    "seed": 12345,
+    "start_utc": "2026-10-09T15:38:55+00:00",
+    "wall_time_s": 7.709
+  },
+  "schema": 1,
+  "total_bytes": 879398
+}

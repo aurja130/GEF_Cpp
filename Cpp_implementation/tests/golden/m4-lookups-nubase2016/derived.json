@@ -1,0 +1,24 @@
+{
+  "kind": "store-derived",
+  "outputs": {
+    "files.txt": "72caecd7bde15a24135dc2cac1a629b92f4ef81276e4781741f5458c16db60a7"
+  },
+  "sources": [
+    {
+      "capture": "m4-lookups-nubase2016",
+      "file": "work/probes/lookups.txt",
+      "sha256": "f29ddde24999fbba1f624e98d71352843d52edf010d3e922b018f10e78a0f4f6"
+    },
+    {
+      "capture": "m4-lookups-nubase2016",
+      "file": "work/probes/lookups_branch.txt",
+      "sha256": "d23d6df2e8d23099b21eb351ec366a00a227cbe29192923fbd082e7dd49bcd00"
+    },
+    {
+      "capture": "m4-lookups-nubase2016",
+      "file": "work/ctl/IMATmax.ctl",
+      "sha256": "b17a47efaa6f9dbfe0e277d260d8e88b6fb03822d7cfa102c473d1b1248e0e7d"
+    }
+  ],
+  "tool": "python3 -m harness.probe_fingerprints m4-lookups-nubase2016 --name m4-lookups-nubase2016 --files work/probes/lookups.txt work/probes/lookups_branch.txt work/ctl/IMATmax.ctl"
+}
