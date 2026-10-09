@@ -284,9 +284,9 @@ Tool commands are run from the repository root: `python3 -m tools.fbsrc.fbline <
   - Array `ErotL2dlight` is registered as `"ErotL2dheavy"` (559, GEF.c:26609) and `ErotL2dheavy` as `"ErotL2d"` (577). `Find_IAnl` strips `(...)`, compares names case-insensitively and returns 0 (the default entry) when nothing matches. The dump `"ErotL2dlight(i)"` therefore gets the defaults and `"ErotL2dheavy(i)"` gets the light array's registration.
 - **Effect:** `dmp` header text changes (TITLE, axis labels, line symbol).
 - **Evidence status:** *confirmed in output*
-- **Evidence:** `fbline Spectra.bas:1082-1083`, `fbline Spectra.bas:1090-1091`, `fbline Spectra.bas:559` as quoted. Output `validation/test_run/dmp/Z86_A215_n_E14MeV/Eexc.dmp:11297-11307`: `ANALYZER(ErotL2dlight(0))` with `TITLE()`, `X: Channel`, `Y: Counts`, `Y,HT0`; versus `Eexc.dmp:29497-29504`: `ANALYZER(ErotL2dheavy(0))` with `TITLE(Rotational energy over angular momentum)`, `X: L / hb^`. No `NNCN` dump exists in the recorded `dmp` files, so that part is not visible in output.
+- **Evidence:** `fbline Spectra.bas:1082-1083`, `fbline Spectra.bas:1090-1091`, `fbline Spectra.bas:559` as quoted. Output `validation/test_run/dmp/Z86_A215_n_E14MeV/Eexc.dmp:11297-11307`: `ANALYZER(ErotL2dlight(0))` with `TITLE()`, `X: Channel`, `Y: Counts`, `Y,HT0`; versus `Eexc.dmp:29497-29504`: `ANALYZER(ErotL2dheavy(0))` with `TITLE(Rotational energy over angular momentum)`, `X: L / hb^`. No `NNCN` dump exists in the recorded `dmp` files, so that part is not visible in output; the T0 dump of the registry (M4.5) shows the `NPCNtot` entry in `NNCN`'s slot, and the C++ reproduces every entry.
 - **Fidelity switch:** `fix_analyzer_registry_names`
-- **C++ symbol:** not yet ported
+- **C++ symbol:** `gef::analysis::build_analyzer_registry` (`Cpp_implementation/src/analysis/analyzer_registry.cpp`, M4.5); `Find_IAnl` follows with the writers (M13)
 - **Owning milestone:** M4
 
 ### Q-021 `I_MAT_ENDF` persists state in `ctl/IMATmax.ctl`

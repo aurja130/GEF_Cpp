@@ -29,9 +29,10 @@ inline constexpr bool always_false = false;
 template <typename T>
 struct array_element;
 
-template <typename T, std::size_t rank>
-struct array_element<fb::Array<T, rank>> {
+template <typename T, std::size_t array_rank>
+struct array_element<fb::Array<T, array_rank>> {
     using ElementType = T;
+    static constexpr std::size_t rank = array_rank;
 };
 
 // The type token of an element: S (float), D (double), I (integer), Z (string).
@@ -170,39 +171,51 @@ template <typename Rec, typename Field>
 void ProbeDump::array_field(std::string_view name, fb::Array<Rec, 1> const& records, Field field) {
     using Member = std::remove_cvref_t<std::invoke_result_t<Field&, Rec const&>>;
     using T = detail::array_element<Member>::ElementType;
+    constexpr std::size_t member_rank = detail::array_element<Member>::rank;
     std::vector<std::string>& out = lines_[std::string(name)];
 
     // Every member array has the same bounds (the first record's); the bounds record is
     // written before the elements, so they are checked first.
-    std::int64_t member_lower = 0;
-    std::int64_t member_upper = -1;
+    std::array<std::int64_t, member_rank> member_lower{};
+    std::array<std::int64_t, member_rank> member_upper{};
     bool first = true;
     for (Rec const& record : records.elements()) {
         auto const& member = field(record);
-        if (first) {
-            member_lower = member.lbound();
-            member_upper = member.ubound();
-            first = false;
-        } else if (member.lbound() != member_lower || member.ubound() != member_upper) {
-            throw std::logic_error("probe_dump: " + std::string(name) +
-                                   " has members of different bounds");
+        for (std::size_t d = 0; d < member_rank; ++d) {
+            auto const dimension = static_cast<std::int64_t>(d + 1);
+            if (first) {
+                member_lower.at(d) = member.lbound(dimension);
+                member_upper.at(d) = member.ubound(dimension);
+            } else if (member.lbound(dimension) != member_lower.at(d) ||
+                       member.ubound(dimension) != member_upper.at(d)) {
+                throw std::logic_error("probe_dump: " + std::string(name) +
+                                       " has members of different bounds");
+            }
         }
+        first = false;
+    }
+    std::array<std::int64_t, member_rank> extent{};
+    std::string member_bounds;
+    for (std::size_t d = 0; d < member_rank; ++d) {
+        extent.at(d) = member_upper.at(d) - member_lower.at(d) + 1;
+        member_bounds += "," + detail::range_text(member_lower.at(d), member_upper.at(d));
     }
 
     std::int64_t const lower = records.lbound();
     out.push_back(detail::dump_line(id_, context_, name, "-", "B",
                                     std::string(detail::type_token<T>()) + " " +
-                                        detail::range_text(lower, records.ubound()) + "," +
-                                        detail::range_text(member_lower, member_upper)));
+                                        detail::range_text(lower, records.ubound()) +
+                                        member_bounds));
 
     std::int64_t index = lower;
     for (Rec const& record : records.elements()) {
-        std::int64_t member_index = member_lower;
+        std::size_t position = 0;
         for (T const& value : field(record).elements()) {
-            out.push_back(detail::dump_line(
-                id_, context_, name, std::to_string(index) + "," + std::to_string(member_index),
-                detail::type_token<T>(), detail::element_text(value)));
-            ++member_index;
+            out.push_back(detail::dump_line(id_, context_, name,
+                                            std::to_string(index) + "," +
+                                                detail::index_text(position, member_lower, extent),
+                                            detail::type_token<T>(), detail::element_text(value)));
+            ++position;
         }
         ++index;
     }

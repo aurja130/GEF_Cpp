@@ -1,7 +1,7 @@
 # GEF in C++: Current Project State
 
 **As of:** 2026-10-09
-**Phase:** M0–M3 complete; M4 (static data, parameters and analyzer registry, `MILESTONE_4_PLAN.md`) in progress: M4.1–M4.4 done, M4.5–M4.7 open. No GEF physics has been ported yet; the data layer (tables, parameters) is ported and bit-exact against the BASIC probes.
+**Phase:** M0–M3 complete; M4 (static data, parameters and analyzer registry, `MILESTONE_4_PLAN.md`) in progress: M4.1–M4.5 done, M4.6–M4.7 open. No GEF physics has been ported yet; the data layer (tables, parameters, analyzer registry) is ported and bit-exact against the BASIC probes.
 
 **Decision 2026-10-08 — exact reproduction first** (vision §4.2 and §5, strategy §2.9):
 - **Phase 1 (M3–M16):** the C++ port must reproduce the BASIC arithmetic exactly. A seeded C++ run in exact mode must write the same output bytes as the seeded BASIC reference binary (T3).
@@ -15,7 +15,7 @@
 | Vision | Written: `Planning/GEF_CPP_VISION.md` |
 | Implementation strategy | Written: `Planning/IMPLEMENTATION_STRATEGY.md`, 19 milestones (M0–M18) |
 | Milestone plan files (`Planning/MILESTONE_<n>_PLAN.md`) | M0–M3 complete; M4 written and in progress; M5–M18 not written |
-| C++ implementation (`Cpp_implementation/`) | `gef_fbrt` (namespace `gef::fb`): the FreeBASIC runtime emulation of M3 (conversions, maths, random numbers, `Str`/`Print`/`Print Using`/`Format`, arrays, `DATA`, `Val`/`Input #`, strings and `Line Input`), bit-exact against FreeBASIC drivers. M4: `gef_data` (GEF's `DATA` and table loaders, `gef::data`), `gef_params` (nominal parameters, widths, parameter files, `gef::params`), `gef_util` (GEF's string utilities, `gef::util`). `gef` CLI (`--version`). Catch2 tests; five CMake presets. See §3.6, §3.7 |
+| C++ implementation (`Cpp_implementation/`) | `gef_fbrt` (namespace `gef::fb`): the FreeBASIC runtime emulation of M3 (conversions, maths, random numbers, `Str`/`Print`/`Print Using`/`Format`, arrays, `DATA`, `Val`/`Input #`, strings and `Line Input`), bit-exact against FreeBASIC drivers. M4: `gef_data` (GEF's `DATA` and table loaders, `gef::data`), `gef_params` (nominal parameters, widths, parameter files, `gef::params`), `gef_analysis` (analyzer registry, `gef::analysis`), `gef_util` (GEF's string utilities, `gef::util`). `gef` CLI (`--version`). Catch2 tests; five CMake presets. See §3.6, §3.7 |
 | Python tooling (`tools/`) | Toolchain check and fbc pin, validation-data manifests, BASIC-source tools (`emit_c`, `fbline`, `fbdef`) |
 | Local CI | `scripts/ci.sh` (full) and `scripts/ci.sh --quick` |
 | Reference harness (`harness/`) | Complete (M1). Reference binary `ref-1` (seed patch only), proven byte-identical to `gef_reference` for captured seeds; per-event reseed mode; Rnd draw logs; probes T0/P1/P2/P3; function drivers; clean-run runner; immutable reference store. See §3.4 |
@@ -168,6 +168,7 @@ Decisions taken in M3: NaN results compare equal regardless of sign and payload 
 - **Generated data (M4.2):** `tools/fbsrc/gen_gef_data.py` writes `Cpp_implementation/src/data/generated/` (3 MB, committed; `--check` regenerates and compares) from the C fbc emits, so every item is the one the binary reads; `gef::data::ProgramData` offers labels, `Restore` and `Read`. Every item of every variant equals the BASIC `datachain` dump.
 - **Table loaders (M4.3):** `gef::data::load_tables` builds the `TableSet` (NucTab/Isotab/`MAT_for_ISO`, BranchData/EndA/INlast, BEldmTF, BEexp, DEFOtab, ShellMO, EVOD, CElement, `ENfrvar_lim`) for a variant; each table equals T0 (per-variable fingerprints, committed goldens `m4-t0-<variant>`) in every certified variant. Loader messages go to `TableSet::console`; NUBASE 2020 throws `GefStopped` with GEF's 6,558 lines. Quirks Q-015, Q-017, Q-032–Q-034.
 - **Parameters (M4.4):** `gef::params::Parameters` (111 nominal parameters, `Parameters.bas` ported from the emitted C), `PerturbationWidths` (initial and final `Var_*`, GEF.bas:1348-1394, 2575-2620), descriptor tables (nominal parameters, widths, the 46 perturbed parameters in draw order), `MyparRead`/`FitparRead`/`ReadParameters.mac`, the `tmp/ParameterUpdate.dat` text. Equal to T0, to P1 (first system, `m1-g23-rn215-r-probes`), to a run with a `Fitpar.dat` (capture `m4-t0-fitpar`: T0, P1, console, `ParameterUpdate.dat`). Runtime additions: `fb::trim/ucase/instr/mid`, `InputFile::line_input/eof` (golden `m4-line-input`); GEF's `CC_Count`/`CC_Cut`/`ConvTab` in `gef::util`. Quirk Q-035 (an unterminated `/'` comment hangs GEF; the C++ throws `GefHangs`).
+- **Analyzer registry (M4.5):** `gef::analysis::build_analyzer_registry` (`Anl_Par`, 129 entries, `N_Anl`), transcribed from the emitted C; equal to T0 in every variant. Quirk Q-020 reproduced.
 - **Harness additions:** `harness.run --work-file` (files copied into the working directory, recorded in `run.json`), `harness.probe_fingerprints --context` (one record of P1/P2/P3), `harness.golden copy` (capture files as store-derived goldens).
 
 ## 4. Established findings
@@ -220,5 +221,5 @@ The six planning-session reports are saved in `Planning/code_maps/` (M0.1). Thei
 
 ## 6. Next steps
 
-1. Continue M4 per `MILESTONE_4_PLAN.md`: M4.5 analyzer registry (`Anl_Par` against T0), M4.6 lookup functions (`I_MAT_ENDF` with `IMATmax`, `N_ISO_MAT`, `ISO_for_MAT`, `NStates_for_ZA`, `Ibranch_for_ZAI` against drivers per variant), M4.7 close-out. Open user question (recorded in the plan): whether to make `DCLbranchingJEFF311.bas` compile, which would change its code.
+1. Continue M4 per `MILESTONE_4_PLAN.md`: M4.6 lookup functions (`I_MAT_ENDF` with `IMATmax`, `N_ISO_MAT`, `ISO_for_MAT`, `NStates_for_ZA`, `Ibranch_for_ZAI` against drivers per variant), M4.7 close-out. Open user question (recorded in the plan): whether to make `DCLbranchingJEFF311.bas` compile, which would change its code.
 2. Per the exact-first decision, later milestone plans gate on bit-exact equality with BASIC (T0–T3) and use `compare.exact` and the per-event reseed mode to triage divergences. The Clang Debug test preset skips `[slow]` tests (user, 2026-10-08); work on this machine is limited to 10 cores (`taskset -c 0-9`, `-j 10`) while it is shared.

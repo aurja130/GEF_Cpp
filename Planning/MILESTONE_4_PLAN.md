@@ -69,8 +69,8 @@ Tasks in execution order. Mark each one done here when finished, and update `CUR
 **Done when:** every parameter value is bit-exact.
 
 ### M4.5 Analyzer registry
-- [ ] The `Anl_Par` registry set-up ported line by line, with its naming quirks.
-- [ ] Tests: every field of entries 0…`N_Anl` against T0.
+- [x] The `Anl_Par` registry set-up ported line by line, with its naming quirks. (`src/analysis/analyzer_registry.{hpp,cpp}`, new library `gef_analysis`: `AnalyzerAttributes` (the UDT and its constructor), `build_analyzer_registry` (129 entries; GEF.bas, the `Spectra.bas` and `DCLbranchingJEFF33.bas` sections), transcribed statement by statement from the emitted C, which has no branch in this range; every literal fits its fixed-length field. Q-020 reproduced and annotated. The histogram arrays dimensioned between the entries belong to M13.)
+- [x] Tests: every field of entries 0…`N_Anl` against T0. (`analyzer_registry_test.cpp`: all eight fields and `N_Anl` against the T0 fingerprints of the six certified variants; `ProbeDump::array_field` now handles member arrays of any rank, for `R_ALim(1 To 4, 1 To 3)`.)
 
 ### M4.6 Lookup functions
 - [ ] `I_MAT_ENDF` with explicit `IMATmax` state, `N_ISO_MAT`, `ISO_for_MAT`, `NStates_for_ZA`, `Ibranch_for_ZAI`.

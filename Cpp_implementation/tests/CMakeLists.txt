@@ -18,6 +18,7 @@ include(Catch)
 find_package(Threads REQUIRED)
 
 add_executable(gef_tests
+    analyzer_registry_test.cpp
     array_test.cpp
     conversion_test.cpp
     data_input_test.cpp
@@ -43,7 +44,7 @@ target_include_directories(gef_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
 target_compile_definitions(gef_tests PRIVATE
     GEF_TEST_GOLDEN_DIR="${CMAKE_CURRENT_SOURCE_DIR}/golden"
     GEF_TEST_STORE_CAPTURES_DIR="${PROJECT_SOURCE_DIR}/validation/reference_store/captures")
-target_link_libraries(gef_tests PRIVATE gef_data gef_fbrt gef_params gef_util
+target_link_libraries(gef_tests PRIVATE gef_analysis gef_data gef_fbrt gef_params gef_util
     Catch2::Catch2WithMain Threads::Threads)
 gef_apply_policy(gef_tests)
 
