@@ -1,7 +1,7 @@
 # GEF in C++: Current Project State
 
-**As of:** 2026-10-08
-**Phase:** M0, M1 and M2 complete. Next: M3 (FreeBASIC runtime emulation), which has no plan yet. No GEF physics has been ported yet.
+**As of:** 2026-10-09
+**Phase:** M0–M3 complete. Next: M4 (static data, parameters and analyzer registry), which has no plan yet. No GEF physics has been ported yet; the FreeBASIC runtime layer it will run on is done and proven.
 
 **Decision 2026-10-08 — exact reproduction first** (vision §4.2 and §5, strategy §2.9):
 - **Phase 1 (M3–M16):** the C++ port must reproduce the BASIC arithmetic exactly. A seeded C++ run in exact mode must write the same output bytes as the seeded BASIC reference binary (T3).
@@ -14,15 +14,15 @@
 |---|---|
 | Vision | Written: `Planning/GEF_CPP_VISION.md` |
 | Implementation strategy | Written: `Planning/IMPLEMENTATION_STRATEGY.md`, 19 milestones (M0–M18) |
-| Milestone plan files (`Planning/MILESTONE_<n>_PLAN.md`) | M0, M1 and M2 complete; M3–M18 not written |
-| C++ implementation (`Cpp_implementation/`) | Build skeleton: `gef_fbrt` library (floating-point environment self-check) and `gef` CLI (`--version`); Catch2 tests; four CMake presets |
+| Milestone plan files (`Planning/MILESTONE_<n>_PLAN.md`) | M0–M3 complete; M4–M18 not written |
+| C++ implementation (`Cpp_implementation/`) | `gef_fbrt` (namespace `gef::fb`): the FreeBASIC runtime emulation of M3 (conversions, maths, random numbers, `Str`/`Print`/`Print Using`/`Format`, arrays, `DATA`, `Val`/`Input #`), bit-exact against FreeBASIC drivers. `gef` CLI (`--version`). Catch2 tests; five CMake presets. See §3.6 |
 | Python tooling (`tools/`) | Toolchain check and fbc pin, validation-data manifests, BASIC-source tools (`emit_c`, `fbline`, `fbdef`) |
 | Local CI | `scripts/ci.sh` (full) and `scripts/ci.sh --quick` |
 | Reference harness (`harness/`) | Complete (M1). Reference binary `ref-1` (seed patch only), proven byte-identical to `gef_reference` for captured seeds; per-event reseed mode; Rnd draw logs; probes T0/P1/P2/P3; function drivers; clean-run runner; immutable reference store. See §3.4 |
 | Comparison toolkit (`compare/`) | Complete (M2). Lossless parsers for every output file; exact field-level comparison (the phase-1 acceptance tool); calibrated statistical verdicts, valid for Cf-252 and not for Rn-215 with 20 BASIC runs (re-validated in M17). See §3.5 |
-| Reference store | 81 entries: 18 M1 entries (gate runs, the `ref-1` binary, the golden random stream), 60 M2 ensemble runs and 3 calibrations; about 12 GB, gitignored, manifests committed |
-| Quirk register | `Planning/QUIRKS.md`: 30 quirks (Q-001–Q-030) and 4 build notes (B-001–B-004) |
-| Coverage matrix | `Planning/COVERAGE_MATRIX.md`: 114 rows × T0–T5; no cell covered yet; T4 cells owned by M17 after the exact-first decision; one cell deferred (approved 2026-10-07) |
+| Reference store | 82 entries: 18 M1 entries (gate runs, the `ref-1` binary, the golden random stream), 60 M2 ensemble runs, 3 calibrations, and the M3 stream `m3-rnd-seeds-1e6`; about 12 GB, gitignored, manifests committed. Small M3 driver goldens are committed under `Cpp_implementation/tests/golden/` |
+| Quirk register | `Planning/QUIRKS.md`: 31 quirks (Q-001–Q-031) and 4 build notes (B-001–B-004) |
+| Coverage matrix | `Planning/COVERAGE_MATRIX.md`: 114 rows × T0–T5; 2 cells covered (M3: FreeBASIC numeric semantics at T1, `FbMtRng` at T2); T4 cells owned by M17 after the exact-first decision; one cell deferred (approved 2026-10-07) |
 | Coding standards | `Planning/CODING_STANDARDS.md` |
 | Code maps | `Planning/code_maps/`: the six planning-session reports, with a README listing corrected claims |
 | Version control | `.omp/` and `validation/` (including `validation/reference_store/`) are gitignored; manifests of stored data are committed under `manifests/` |
@@ -80,7 +80,7 @@ Recorded in `manifests/toolchain.txt`; checked by `python3 -m tools.toolchain.ch
 
 **fbc backend (captured with `fbc -v`):** `gcc -m64 -march=x86-64 -S -nostdlib -nostdinc -Wall -Wno-unused -Wno-main -Werror-implicit-function-declaration -O0 -fno-strict-aliasing -frounding-math -fno-math-errno -fwrapv -fno-exceptions -fno-asynchronous-unwind-tables -funwind-tables -Wno-format -masm=intel`, then GNU `as` and `ld` with `-lfb -ltinfo -lm -ldl -lpthread -lgcc -lgcc_eh -lc`.
 
-## 3. What exists after M0–M2
+## 3. What exists after M0–M3
 
 ### 3.1 C++ build
 
@@ -149,6 +149,19 @@ Configuration: `pyproject.toml` (ruff, basedpyright strict over `tools/` and `ha
   - Re-validation with large exact-C++ ensembles is part of M17.
 - **Library check:** the library tape `GEFY_86_214_n.dat` passes against the full 59-energy calibration.
 
+### 3.6 FreeBASIC runtime emulation (M3, `Cpp_implementation/src/fbrt/`, see `MILESTONE_3_PLAN.md`)
+
+Every piece is transcribed from the fbc 1.10.1 runtime sources or GEF's generated C, and proven against FreeBASIC driver programs (`harness/drivers/`, goldens via `harness.golden`) in `dev-gcc`, `dev-clang` and `release-exact` (`-O3`):
+- **fbc arithmetic rules** (`FBC_ARITHMETIC.md`, R1–R10): literal typing, per-operation promotion, reassociation and literal folding of `*`/`+` chains, dropped parentheses, distribution of a literal multiplier.
+- **Conversions and integer arithmetic** (`convert.hpp`): `f2i/f2l/f2ul/d2i/d2l/d2ul`, `fix`, `sgn`, wrapping `add/sub/mul/neg/abs`, `idiv/imod`; exhaustive over all 2³² `Single` inputs.
+- **Maths** (`gef_math.hpp`): GEF's `Min`, `Max`, `Erf`, `Erfc`, `Tanh`, `Coth`, `Log10`, `Floor`, `Ceil`, `Round`, `Modulo`; libm through the `std::` overloads. Exhaustive over `Single` for the one-argument functions.
+- **Random numbers** (`rng.hpp`, `reseed.hpp`): `FbMtRng` and the per-event reseed derivation.
+- **Text** (`text.hpp`, `print_using.cpp`, `format.hpp`): `Str`, `Print #` with zones and `Tab`, `Print Using` (all 39 GEF templates, inventory `TEMPLATES.md`), `Format`.
+- **Arrays** (`array.hpp`, `extend.hpp`): `fb::Array<T, rank>` with FreeBASIC bounds and `ReDim Preserve` semantics, bounds-checked access; GEF's `Extend_*`.
+- **Input** (`data_reader.hpp`, `input.hpp`): `DATA`/`Read`/`Restore`, `Val`/`ValLng`/`ValInt`, `Input #`.
+
+Decisions taken in M3: NaN results compare equal regardless of sign and payload (B-001); array access is always bounds-checked and throws.
+
 ## 4. Established findings
 
 ### 4.1 The test run against the reference library (Rn-215, tape 2 vs `reference/gefy_nfy_ENDF/GEFY_86_214_n.dat`)
@@ -199,15 +212,5 @@ The six planning-session reports are saved in `Planning/code_maps/` (M0.1). Thei
 
 ## 6. Next steps
 
-1. Continue M3 (FreeBASIC runtime emulation) per `MILESTONE_3_PLAN.md`. Done so far (2026-10-08):
-   - M3.1 golden workflow (`harness.golden promote/check`, committed goldens in `Cpp_implementation/tests/golden/`, C++ `support/golden.hpp`);
-   - M3.2 fbc arithmetic rules (`Cpp_implementation/src/fbrt/FBC_ARITHMETIC.md`, probes in `tools/fbsrc/probes/`, driver `arith_rules.bas`, golden `m3-arith-rules`, `fbc_arithmetic_test.cpp`);
-   - M3.5 random numbers (`fb::FbMtRng`, `fb::derive_seed`/`fb::reseed`, bit-exact against 22 edge seeds, 20 stored seeds × 10⁶ draws `m3-rnd-seeds-1e6`, the M1 golden stream and the reseed vectors; driver `rnd_seeds.bas`).
-   - M3.3 conversions and integer semantics (`fbrt/convert.hpp`: `fb::f2i/f2l/f2ul/d2i/d2l/d2ul/fix/sgn`, wrapping `add/sub/mul/neg/abs`, `idiv/imod`; bit-exact against drivers `conv_single.bas` (all 2³² `Single` patterns), `conv_double.bas`, `int_ops.bas`; B-002 resolved for this layer; first B-001 finding: gcc `-O3` folds `x * -1` into a negation, which changes NaN results of `Fix`, fixed in the source).
-   - M3.4 maths (`fbrt/gef_math.hpp`: GEF's `Min`, `Max`, `Erf`, `Erfc`, `Tanh`, `Coth`, `Log10`, `Floor`, `Ceil`, `Round`, `Modulo`; libm intrinsics are called through the `std::` overload of the same type; bit-exact against drivers `math_single.bas` (14 functions × all 2³² `Single`), `math_double.bas`, `gef_math2.bas` in `dev-gcc`, `dev-clang` and `release-exact`; the only differences were NaN sign and payload, which by user decision compare equal (B-001 finding 2)).
-   - M3.6a `Str` and `Print #` (`fbrt/text.hpp`: `fb::str` for `Single`/`Double`/`Integer`, `fb::PrintFile` with zones, `;`, `Tab` and libfb's line-length tracking; bit-exact against drivers `str_single.bas` (all 2³² `Single`), `str_numbers.bas`, `print_file.bas`; new fbc rule R10: `(x - 0.5) * 2000` compiles to `x * 2000 + -1000`).
-   - M3.6b `Print Using` and `Format` (`PrintFile::using_*` from `io_printusg.c`, `fb::format` from `str_format.c`; inventory `fbrt/TEMPLATES.md` from `tools.fbsrc.fb_templates`: 39 templates, 4 patterns; byte-exact against drivers `print_using.bas` (5,719 statements) and `format.bas` (7,271 calls)).
-   - M3.7 arrays (`fbrt/array.hpp` `fb::Array<T, rank>`: `ReDim`, `ReDim Preserve` with FreeBASIC's linear-order semantics, `Erase`, `LBound`/`UBound` including dimension 0 and out-of-range dimensions, bounds-checked element access that throws (user decision 2026-10-09); `fbrt/extend.hpp` GEF's `Extend_1dim/2dim/3dim`; all 56 operations of driver `arrays.bas` reproduced).
-
-   Next: M3.8 `DATA`/input, M3.9 close-out. The Clang Debug test preset skips `[slow]` tests (user, 2026-10-08); work on this machine is limited to 10 cores (`taskset -c 0-9`, `-j 10`) while it is shared.
-2. Per the exact-first decision, later milestone plans gate on bit-exact equality with BASIC (T0–T3) and use `compare.exact` and the per-event reseed mode to triage divergences.
+1. Write `MILESTONE_4_PLAN.md` (static data, parameters and analyzer registry). It uses `fb::DataReader` for GEF's `DATA` tables and must take the item texts from GEF.c: fbc stores unquoted numeric `DATA` items rewritten to 15 significant digits (M3.8). Q-004 and Q-027 (`UBound` with a wrong dimension) are reproduced by `fb::Array::ubound`.
+2. Per the exact-first decision, later milestone plans gate on bit-exact equality with BASIC (T0–T3) and use `compare.exact` and the per-event reseed mode to triage divergences. The Clang Debug test preset skips `[slow]` tests (user, 2026-10-08); work on this machine is limited to 10 cores (`taskset -c 0-9`, `-j 10`) while it is shared.

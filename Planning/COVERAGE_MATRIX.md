@@ -40,6 +40,7 @@ Tiers (vision §4.2, strategy §3 *Conventions*):
 | M0 | 2026-10-06 | Matrix created; no cell covered |
 | M1 | 2026-10-07 | None. M1 builds the BASIC oracle (reference binary, probes, draw logs, drivers), not the port, so no cell can close. Its T0–T3 capture tooling is what the owning milestones' tests will use |
 | M2 | 2026-10-08 | Exact-first decision (strategy §2.9): T3 becomes the integral acceptance tier; every planned T4 cell moves to M17 (99 cells), where T4 compares optimised and parallel C++ against the exact C++ code; the two production-`Fenhance` T3 cells change from n/a to planned (M14). No cell closes in M2 (it builds the comparison toolkit, not the port) |
+| M3 | 2026-10-09 | Two cells covered: FreeBASIC numeric semantics at T1 (`fbrt:` tests in `fbc_arithmetic_test.cpp`, `conversion_test.cpp`, `maths_test.cpp`, `text_test.cpp`, `print_using_test.cpp`, `format_test.cpp`, `array_test.cpp`, `data_input_test.cpp`), and the `FbMtRng` stream and seeding at T2 (`rng_test.cpp`). NaN results compare equal regardless of sign and payload (user decision, `QUIRKS.md` B-001) |
 
 ## Matrix
 
@@ -178,8 +179,8 @@ Tiers (vision §4.2, strategy §3 *Conventions*):
 
 | Cell | T0 | T1 | T2 | T3 | T4 | T5 |
 |---|---|---|---|---|---|---|
-| FreeBASIC numeric semantics (conversions, custom `Erf`/`Min`/`Max`, `Str`, `Print Using`, `Format`) | n/a — no embedded table specific to this cell | planned (M3) | n/a — deterministic | n/a — covered through every T3 run, no own trajectory | n/a — exercised indirectly by every integral run | n/a — exercised indirectly by every integral run |
-| `FbMtRng` stream and seeding (`Randomize s,3`) | n/a — no embedded table specific to this cell | n/a — stochastic; see T2 | planned (M3) | planned (M14) | n/a — exercised indirectly by every integral run | n/a — exercised indirectly by every integral run |
+| FreeBASIC numeric semantics (conversions, custom `Erf`/`Min`/`Max`, `Str`, `Print Using`, `Format`) | n/a — no embedded table specific to this cell | covered (`fbrt:` T1 tests of `conversion_test.cpp`, `maths_test.cpp`, `text_test.cpp`, `print_using_test.cpp`, `format_test.cpp`, `fbc_arithmetic_test.cpp`, `array_test.cpp`, `data_input_test.cpp`) | n/a — deterministic | n/a — covered through every T3 run, no own trajectory | n/a — exercised indirectly by every integral run | n/a — exercised indirectly by every integral run |
+| `FbMtRng` stream and seeding (`Randomize s,3`) | n/a — no embedded table specific to this cell | n/a — stochastic; see T2 | covered (`fbrt: FbMtRng matches FreeBASIC for edge seeds`, `fbrt: FbMtRng matches the stored 10^6-draw FreeBASIC streams`, `fbrt: derive_seed reproduces the RESEED_SPEC vectors`) | planned (M14) | n/a — exercised indirectly by every integral run | n/a — exercised indirectly by every integral run |
 | `PGauss` cached second value across calls | n/a — no embedded table specific to this cell | n/a — stochastic; see T2 | planned (M8) | planned (M10, M14) | n/a — exercised indirectly by every integral run | n/a — exercised indirectly by every integral run |
 | Rejection-loop paths (draw counts depend on data) | n/a — no embedded table specific to this cell | n/a — stochastic; see T2 | planned (M8, M10) | planned (M9, M10) | planned (M17) | planned (M18) |
 | Isomer stop in the gamma cascade | planned (M4) | planned (M5) | planned (M10) | planned (M10) | planned (M17) | planned (M18) |
@@ -213,8 +214,8 @@ Counts by status and tier:
 
 | Status | T0 | T1 | T2 | T3 | T4 | T5 | Total |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| covered | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| planned | 21 | 106 | 50 | 106 | 100 | 43 | 426 |
+| covered | 0 | 1 | 1 | 0 | 0 | 0 | 2 |
+| planned | 21 | 105 | 49 | 106 | 100 | 43 | 424 |
 | uncovered | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | deferred | 0 | 0 | 0 | 0 | 1 | 0 | 1 |
 | n/a | 93 | 8 | 64 | 8 | 13 | 71 | 257 |
@@ -224,4 +225,4 @@ Planned cells by closing milestone (last listed milestone in the cell):
 
 | Closing milestone | M3 | M4 | M5 | M6 | M7 | M8 | M9 | M10 | M11 | M12 | M13 | M14 | M15 | M16 | M17 | M18 |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| Planned cells | 2 | 25 | 3 | 18 | 12 | 3 | 15 | 40 | 27 | 18 | 13 | 59 | 42 | 6 | 100 | 43 |
+| Planned cells | 0 | 25 | 3 | 18 | 12 | 3 | 15 | 40 | 27 | 18 | 13 | 59 | 42 | 6 | 100 | 43 |

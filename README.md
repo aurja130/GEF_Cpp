@@ -11,16 +11,17 @@ Known defects of the original are reproduced by default and documented in a quir
 
 ## Status
 
-**Milestones 0 (Foundations), 1 (Reference harness) and 2 (Comparison toolkit) are complete.** The repository has:
+**Milestones 0 (Foundations), 1 (Reference harness), 2 (Comparison toolkit) and 3 (FreeBASIC runtime emulation) are complete.** The repository has:
 - its build, test, lint and CI infrastructure, and tooling to inspect the BASIC source;
 - a reference harness that turns the original BASIC program into a repeatable, observable test oracle;
-- a comparison toolkit that parses every output file and compares runs field by field, or statistically against seeded ensembles.
+- a comparison toolkit that parses every output file and compares runs field by field, or statistically against seeded ensembles;
+- a C++ emulation of the FreeBASIC runtime GEF depends on (conversions, maths, random numbers, text output, arrays, `DATA` and input), proven bit for bit against programs compiled with the original compiler.
 
-No GEF physics has been ported yet; that starts with M3 (FreeBASIC runtime emulation).
+No GEF physics has been ported yet; that starts with M4 (static data, parameters and analyzer registry).
 
 | Area | State |
 |---|---|
-| C++ build (CMake + Ninja, C++23) | `gef_fbrt` library and `gef` CLI; four presets; Catch2 v3 tests |
+| C++ build (CMake + Ninja, C++23) | `gef_fbrt` library (FreeBASIC runtime emulation) and `gef` CLI; five presets; Catch2 v3 tests |
 | Exact floating-point mode | Flags mirror fbc's gcc backend; checked at run time by `gef --version` |
 | BASIC-source tooling | FreeBASIC → C translation, BASIC line → C lookup, symbol index |
 | Reference harness | Seeded reference binary `ref-1`, proven byte-identical to the original binary; per-event reseed mode; random-draw logs; state probes; function drivers; immutable reference store |
@@ -34,8 +35,10 @@ No GEF physics has been ported yet; that starts with M3 (FreeBASIC runtime emula
 CMakeLists.txt, CMakePresets.json   C++ build (presets dev-gcc, dev-clang, asan-ubsan, tsan, release-exact)
 Cpp_implementation/
   src/app/                          gef CLI
-  src/fbrt/                         FreeBASIC runtime emulation (M0: floating-point environment self-check)
-  tests/                            Catch2 tests, tagged [unit] and [T0]…[T5]
+  src/fbrt/                         FreeBASIC runtime emulation (namespace gef::fb; fbc arithmetic
+                                    rules in FBC_ARITHMETIC.md, template inventory in TEMPLATES.md)
+  tests/                            Catch2 tests, tagged [unit] and [T0]…[T5]; golden/ holds the
+                                    FreeBASIC driver outputs they compare against (harness.golden)
   cmake/                            compiler policy (exact-mode FP flags, warnings), build-time git revision
 tools/
   toolchain/                        toolchain check, fbc locator, validation-data manifests

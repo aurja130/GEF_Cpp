@@ -1,0 +1,25 @@
+{
+  "binary_sha256": "c2f3cb0b7cfe2876eb688759078fc8a339871180f9b7cadc2a4f6ac0490c0a9b",
+  "command": [
+    "data_input"
+  ],
+  "cuts": [],
+  "driver": "data_input",
+  "driver_sha256": "394ebe1aead456a12ef70b835b5fc8063ea855335a5cdb7d5e3324742fce6267",
+  "fbc_version": "1.10.1",
+  "includes": [],
+  "outputs": {
+    "data_chain.txt": "19df6ba8f175c057ffcacc8259defc8edf566e90bb394aa00243b338cbaeff6e",
+    "data_first.txt": "23a7bd9db47afd3636140bbee77c877cde2eff9002d26c168b61953cafe8e10b",
+    "data_items.txt": "79ccbf4553ca6a6b6e47cec4b7b41f74b5172eb268745370836e8c6c3ff82e1c",
+    "data_labels.txt": "f6dbf6cbef9f103fe82f5b8a2b1b115746710d56bcf8c536a9d0c2222e246bd4",
+    "data_values.txt": "99d459000afe5d38bad747047267f4354e5a0034b88d8bc6b9b654c6f154a57b",
+    "input.txt": "4e24b9bc3a4deda19add660952dee802facb23b6fe55bbb2f0d9539ec138b82d",
+    "input_ops.txt": "df6350c941a8dfc20bede095f700338014fe16ddac131ae23e85bf5fbfa75a5b",
+    "input_results.txt": "02435d2971e5ab6327e264ad88f26a66b9c0ae0419e6f7258989caaa0b4a6a6f",
+    "stdout.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "val.txt": "1dd6ee6275e516055379b06e7bb99297591f70f9bea33a50284744e29151d07e"
+  },
+  "returncode": 0,
+  "run_wall_time_s": 0.001
+}

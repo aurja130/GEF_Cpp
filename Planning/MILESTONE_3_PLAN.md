@@ -1,6 +1,6 @@
 # Milestone 3: FreeBASIC Runtime Emulation
 
-**Status:** in progress (M3.1–M3.7 done, 2026-10-09)
+**Status:** complete (2026-10-09)
 **Strategy reference:** `IMPLEMENTATION_STRATEGY.md` §2.2, §2.3, §2.9 and §3, M3
 **Depends on:** M0, M1 (driver framework, `fbmt.py`, reseed vectors), M2 (exact comparison)
 **Unblocks:** M4 (data layer uses `DataReader`, arrays, conversions), M5 (physics functions use the maths intrinsics), M8 (samplers use `FbMtRng`), M13 (writers use the text formatting), and through them every later milestone
@@ -116,17 +116,17 @@ Tasks in execution order. Mark each one done here when finished, and update `CUR
 **Done when:** every sequence matches the driver.
 
 ### M3.8 `DATA` reader and numeric input
-- [ ] `fb::DataReader` over a token stream (D12): `restore(label)`, `read<T>()` for `Single`, `Double`, `Integer` and `String`. Number tokens are converted the way fbc does (`DataReadSingle` narrows from the text, not from a `Double`). Reads cross labels and continue past the end exactly as the driver shows.
-- [ ] `fb::val`, `fb::vallng` and the numeric `Input #` parsing (D11): separators, leading signs and spaces, `d`/`e` exponents, `&H`/`&O`/`&B` prefixes, trailing garbage, empty fields.
-- [ ] Tests: drivers with purpose-written `DATA` blocks and input files, covering each behaviour above, with byte-exact comparison of the read values (hex bit patterns).
+- [x] `fb::DataReader` over a token stream (D12): `restore(label)`, `read<T>()` for `Single`, `Double`, `Integer` and `String`. Number tokens are converted the way fbc does (`DataReadSingle` narrows from the text, not from a `Double`). Reads cross labels and continue past the end exactly as the driver shows. (`fbrt/data_reader.hpp`, from `data.c`, `data_read*.c`. Correction to the plan: `fb_DataReadSingle` parses the text as a `Double` (`fb_hStr2Double`) and then narrows it. Finding for M4: fbc rewrites unquoted numeric `DATA` items at compile time, to 15 significant digits (`1.2345678901234567` is stored as `1.234567890123457`), `1.E-3` as `0.001`, `1D2` as `100`, `&H1F` as `31`; quoted items are kept. M4's converter must take the item texts from GEF.c, not from the BASIC source. The first `Read` without a `Restore` reads the first `DATA` block; past the end every read gives 0 or "".)
+- [x] `fb::val`, `fb::vallng` and the numeric `Input #` parsing (D11): separators, leading signs and spaces, `d`/`e` exponents, `&H`/`&O`/`&B` prefixes, trailing garbage, empty fields. (`fbrt/input.hpp`: `fb::val`, `vallng`, `valint` from `str_convfrom*.c`; `fb::InputFile` with the tokenizer of `file_input_tok.c` (including the putback buffer) and `fb_InputSingle/Double/Longint/String`. Past the end of the file every `Input #` gives 0 or "".)
+- [x] Tests: drivers with purpose-written `DATA` blocks and input files, covering each behaviour above, with byte-exact comparison of the read values (hex bit patterns). (Driver `data_input.bas`: 39 `DATA` items in three chained blocks, 34 `Val` strings, 60 `Input #` operations over a file with CRLF, lone CR, tabs, quotes, `d` exponents, radix prefixes, long integers and an unterminated last token; golden `m3-data-input`; `data_input_test.cpp` passes in `dev-gcc`, `dev-clang` and `release-exact`.)
 
 **Done when:** every driver scenario is reproduced.
 
 ### M3.9 CI, documentation and close-out
-- [ ] All new tests are tagged `[T1]` or `[T2]` and `[fbrt]`; the exhaustive ones are also tagged `[slow]` if over 10 s. CTest labels mirror the tags.
+- [x] All new tests are tagged `[T1]` or `[T2]` and `[fbrt]`; the exhaustive ones are also tagged `[slow]` if over 10 s. CTest labels mirror the tags. (43 test cases; three exhaustive `[slow]` ones.)
 - [x] `scripts/ci.sh` gains a `release-exact` build-and-test step (today it builds `dev-gcc`, `dev-clang`, `asan-ubsan` and `tsan`), so the D7 check runs in CI. The full run includes the store-backed and `[slow]` tests; `--quick` excludes them. (Done in M3.3. `--quick` excludes `[slow]`; store-backed tests stay in, as they take about 2 s. The sanitizer test presets also exclude `[slow]`: the exhaustive `Single` loop is pure arithmetic and already runs in `dev-gcc`, `dev-clang` and `release-exact`. This narrows G1's "all presets" to the three non-sanitizer presets for the `[slow]` tests.)
 - [x] `CODING_STANDARDS.md`: the `gef::fb` helpers become mandatory for conversions (replacing the M0 interim `static_cast` rule), with a pointer to `FBC_ARITHMETIC.md`. (Done in M3.3, §2.4.)
-- [ ] `QUIRKS.md` (B-001, B-002, B-004, plus any new runtime quirk), `COVERAGE_MATRIX.md` (the "FreeBASIC numeric semantics" row and the T2 random-number cells close here), `IMPLEMENTATION_STRATEGY.md` (M3 status and any refinement), `CURRENT_PROJECT_STATE.md`. Mark this plan complete.
+- [x] `QUIRKS.md` (B-001, B-002, B-004, plus any new runtime quirk), `COVERAGE_MATRIX.md` (the "FreeBASIC numeric semantics" row and the T2 random-number cells close here), `IMPLEMENTATION_STRATEGY.md` (M3 status and any refinement), `CURRENT_PROJECT_STATE.md`. Mark this plan complete.
 
 ## 5. Exit gate (all must hold)
 
@@ -162,4 +162,33 @@ Tasks in execution order. Mark each one done here when finished, and update `CUR
 
 ## 8. Completion notes
 
-*(Filled in when M3 closes: dates, exhaustive-run timings, B-001/B-002/B-004 outcomes, template inventory size, deviations from this plan.)*
+**Dates:** 2026-10-08 to 2026-10-09.
+
+**Gates:**
+
+| Gate | Result |
+|---|---|
+| G1 Conversions | Met. `conversion_test.cpp`: all 2³² `Single` inputs (hashed per 2²⁴ block), 57 `Double` grid values, 2²⁰ random `Double` bit patterns, `Integer`/`Long` edge pairs. The exhaustive test runs in `dev-gcc` and `release-exact`; by user decision (2026-10-08) the sanitizer presets and the Clang Debug preset skip `[slow]` tests |
+| G2 Maths | Met with the NaN decision. No non-NaN difference in any preset; NaN sign and payload differ by compiler and optimisation level and compare equal (user decision 2026-10-08, B-001 finding 2) |
+| G3 Random numbers | Met. 22 edge seeds, 20 seeds × 10⁶ draws, the M1 golden stream, all reseed vectors |
+| G4 Text | Met. `Str` of all 2³² `Single`; `Print #` sequence; 5,719 `Print Using` statements over all 39 GEF templates; 7,271 `Format` calls |
+| G5 Arrays | Met. 56 operations of `arrays.bas`, including `UBound`/`LBound` for d = −1…rank+1 |
+| G6 `DATA` and input | Met. 39 `DATA` items, 34 `Val` strings, 60 `Input #` operations |
+| G7 B-002, B-004 | Met. `FBC_ARITHMETIC.md` R1–R10 with probes and driver runs; `asan-ubsan` (UBSan, halting) passes all non-`[slow]` tests |
+| G8 CI | Met. Last full `scripts/ci.sh` run passed every step except one clang-tidy finding (default member initializer in `data_reader.hpp`); after that fix clang-tidy over all sources and the `[fbrt]` tests in `dev-clang` pass. Goldens current |
+
+**Outcomes:**
+- **B-001 (optimisation level):** no wrapper or `-O0` fallback needed for this layer. One source-level fix (`fb::fix`, where gcc `-O3` turned a multiplication by −1 into a negation) and the NaN-equivalence decision.
+- **B-002 (`-fwrapv`):** resolved for the runtime layer by explicit wrapping helpers.
+- **B-004 (reordering):** characterised as R1–R10; two rules were not anticipated by the plan: parentheses in `*`/`+` chains are dropped (R5), and a literal multiplier is distributed over a sum with a literal (R10). R9: `If x <> x` is folded away.
+- **Template inventory:** 39 `Print Using` templates in 130 statements, 4 `Format` patterns (`TEMPLATES.md`). New quirk Q-031 (`GEF.bas:12292` drops a `" "` item).
+- **Findings for M4:** fbc stores unquoted numeric `DATA` items rewritten to 15 significant digits; `fb_DataReadSingle` parses as `Double` and narrows.
+
+**Deviations from this plan:**
+- No intrinsic wrapper layer (D5); the mapping is `FBC_ARITHMETIC.md` R7.
+- Helper names follow the generated C (`fb::f2l`, `fb::d2i`, …) instead of `fb::cint`/`clng`; no `fb::int_` (fbc emits `floorf`/`floor`).
+- `ShellSort1/3` dropped: never called by GEF.
+- `fb::Array` supports rank 1–8 (FreeBASIC's limit) instead of N ≤ 6.
+- Drivers exclude cases where the FreeBASIC runtime reads undefined memory or hangs (`Print Using` with more items than fields or an empty string in `!`/`\ \`; three `Format` inputs); GEF uses none of them except Q-031, whose form is well defined.
+- Work order: M3.5 before M3.2; M3.6 split into M3.6a (`Str`, `Print`) and M3.6b (`Print Using`, `Format`).
+- Timings: exhaustive drivers 6–14 min each (one process); C++ exhaustive tests 30–370 s on all cores; a full CI run takes about 22 min on 10 cores.
