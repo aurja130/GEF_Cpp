@@ -1,0 +1,155 @@
+# Milestone 5: Deterministic Physics Function Library
+
+**Status:** planned (2026-10-12)
+**Strategy reference:** `IMPLEMENTATION_STRATEGY.md` §2.1, §2.2, §2.4, §2.9 and §3, M5
+**Depends on:** M1 (driver framework, patch sets, runner, reference store), M2 (`compare.exact`), M3 (`gef::fb` conversions, maths, `Str`, `fb::Array`), M4 (`TableSet`, `Parameters`, `Isotab`, lookup functions)
+**Unblocks:** M6 (`U_Valid`, the barrier and mass printout, CN kinematics), M7 (the per-nucleus table builder), M8 (`Eva` and the `P_Egamma_low` sampler built on the table), M9 (pre-pass widths), M10 (the E2 cascade inside the gamma stage), M11 (`U_Q_beta_minus` in `Branchings.bas`)
+
+## 1. Goal
+
+Every physics function of GEF that does not consume random numbers exists in C++ and returns, for every input GEF can give it, the same bits as the BASIC program. That covers masses, barriers, level densities, temperatures, yields, deformations, moments of inertia and the GDR helpers. It also covers two deterministic pieces that BASIC has inline or buried in random functions: the `P_Egamma_low` cross-section table and the E2 rotational cascade. After M5, everything in the physics that does not consume random numbers is proven (strategy, M5 exit).
+
+## 2. Decisions taken in this plan
+
+| ID | Topic | Decision | Reason |
+|---|---|---|---|
+| D1 | BASIC oracle | Standalone FreeBASIC drivers (`harness.driver`, `'@cut` of each function's line range, `'@include-source` of `utilities.bi` and the table files), plus an equivalence check: for every cut function, the C fbc emits in the driver must equal the same function in the emitted `GEF.c` after normalising fbc's temporary and label numbering. Any difference fails | User decision (2026-10-12). Drivers allow any input grid and rebuild quickly; the C comparison removes the risk that the driver's surroundings (stubs, include order, declarations) compile the function differently from GEF |
+| D2 | Test inputs | Synthetic grids (all integer (Z, N) inside the tables; structured and seeded random `Single` grids; named edges) **plus** the arguments of real calls: harness patch `arglog` records the arguments, ByRef values and results of the first K calls of every M5 function in reference runs; the drivers and the C++ replay them | User decision (2026-10-12). Real calls reach non-integer A (`Beta_Equi` gets `A1 = Z1/Z·A`), energies from `Single`-stepped loops and the continuation chains of `Beta_Equi`. The logged results also give a second, in-context oracle that checks the drivers |
+| D3 | Table indices outside the bounds | Decided by evidence. The `arglog` replay and an `-exx` (bounds-checked) build of the reference run on the capture inputs show which out-of-range indices GEF reaches. Default: the domain is the table interior and the C++ throws (`fb::Array`). Where GEF reaches an out-of-range index, the C++ reproduces the read explicitly behind a quirk switch | User decision (2026-10-12). fbc builds GEF without `-exx`, so BASIC never checks; coding standards §2.4: an out-of-bounds access found while porting is a quirk to register and reproduce explicitly |
+| D4 | Scope | Add the live functions the strategy list did not name: `U_Valid`, `U_Delta_S0`, `U_Q_beta_minus`, `FEDEFOLys`, `F1`, `F2`, `U_alev_ld`, `E0_GDR`, `Width_GDR`, `Efac_def_GDR`. Do not port the functions without a live caller: `TKE_Viola`, `TFPair`, `Pmass`, `FEDEFOP`, `Beta_opt_light`, `Acentral`, `GgGtot`, `U_Gauss`, `U_Gauss_abs`, `U_Gauss_mod`, `U_Box2`, `U_Even_Odd`, `U_LinGauss`; the strategy's "Not ported" list is amended | User decision (2026-10-12). Callers checked with `tools.fbsrc.fbdef --refs` (2026-10-12); `U_LinGauss` was found while writing this plan and follows the same rule. Code that nothing calls cannot affect output |
+| D5 | `P_Egamma_low` | Split. M5 ports the table builder (`GEF.bas:16980-17037`: `N`, `ReDim sigma(N)`, `Tm`, `betadef`/`gammadef`, both GDR branches, `sigMax`) as a pure function; M8 ports the rejection sampler (`GEF.bas:17048-17053`) on top of it | User decision (2026-10-12). The table is the precision-sensitive part (`Single` `For` loop, `CInt` index collisions); coverage-matrix row "`P_Egamma_low` cross-section table" is T1 in M5 |
+| D6 | E2 cascade | One pure function for the deterministic cascade of one fragment: moment of inertia with the deformation factor, the isomer stop, the gamma energies, `E_E2_tot` and the lmd label `C_iso_lmd`. The histogram fills stay in the event stage (M10), which calls it for both fragments. The BASIC light (`GEF.bas:9309-9368`) and heavy (`9430-9484`) copies are each cut into a driver `Sub` and both are checked against the one C++ function. Nuclide data: JEFF-3.3 `Isotab` plus synthetic `Isotab` entries for spin edge cases | User decision (2026-10-12). No random draws, so T1 applies; the coverage-matrix cell "Isomer stop in the gamma cascade" is T1 in M5; one function for both copies also proves the copies equivalent. JEFF-3.3 only beyond T0, as M4 D4 |
+| D7 | Output written by physics functions | Functions stay pure and return a diagnostic (`U_MASS` with Z < 0 or A < 0, `GEF.bas:16316-16318`; `Beta_Equi` not converged, `GEF.bas:16628`), with the values BASIC prints; the caller writes the text. M5 establishes whether either condition is reachable (grids and `arglog`) and registers a quirk if it is. Routing to `#f` belongs to M7/M13, which own the file state | User decision (2026-10-12). Output order is unchanged: nothing else prints between BASIC's `Print` and the function's return |
+| D8 | C++ API | Free functions in `gef::physics`. Only functions that read tables take `const data::TableSet&`; globals BASIC reads (e.g. `Tscale`, `Econd`, `Etrans` in `P_Egamma_low`) become explicit arguments; ByRef outputs become returned values, and where BASIC leaves a ByRef output unassigned (e.g. `Beta_Equi` without improvement) the incoming value is an explicit argument | User decision (2026-10-12). Explicit data flow, as for `Rng&` (coding standards §2.3) |
+| D9 | Test data | As M3 D1 and M4 D7: fingerprints and small goldens are committed (`harness.golden`); full driver outputs and captures stay in the reference store; tests that need the store skip without it | User decision (2026-10-12) |
+| D10 | Types and arithmetic | Coding standards §2.4 and §5: `Single` → `float`, `Integer` → `std::int64_t`, `Long` → `std::int32_t`; parameters keep their BASIC types and callers convert as the generated C does (`fb::f2i`, `fb::f2l`, …), e.g. `U_levdens(Z As Integer, …)` called with a `Single`; arithmetic follows the `fbline` output (B-004) | Coding standards |
+| D11 | Optimisation level | Every T1 test runs in `dev-gcc`, `dev-clang` and `release-exact` (`-O3`). A non-NaN difference is fixed in the source first (the M3 `fb::fix` precedent); compiling the translation unit at `-O0` is the last resort (M0 plan §2). NaN sign and payload differences are accepted (user decision 2026-10-08, B-001) | M0 plan, B-001 |
+| D12 | A function that cannot be made bit-exact | Needs a written analysis and the user's approval (strategy §2.9). This replaces the "written ULP bound" wording of the strategy's M5 section, which is amended | Strategy §2.9 (decision 2026-10-08) |
+| D13 | `Static` locals | `fgamma` (`U_levdens_FG`, `U_Temp`, `U_Temp2`), the `E0_GDR` constants and `e2`/`u`/`hbarc` in `u_accel` become `constexpr` once the emitted C confirms they are never assigned; `AME2020`'s `Static Izaehl` is never used and is dropped | Coding standards §2.3: no mutable globals; `const`/`constexpr` allowed |
+| D14 | Layout | `Cpp_implementation/src/physics/`, CMake target `gef_physics`, namespace `gef::physics`, one file pair per group of §3 (`masses`, `barriers`, `level_density`, `shape`, `helpers`, `rotation`, `gamma`). Tests `Cpp_implementation/tests/physics_<group>_test.cpp`, tagged `[physics][T1]`, long ones `[slow]` | Strategy §2.8, coding standards §2.1 |
+
+## 3. Scope inventory
+
+Line ranges are `GEF.bas` at `ba9f0aa` unless another file is named.
+
+| Group (file) | Functions |
+|---|---|
+| Masses and energies (`masses`) | `LyMass` 16110-16137, `LyPair` 16140-16151, `FEDEFOLys` 16211-16214, `LDMass` 16217-16236, `AME2020` 16238-16259, `U_SHELL` 16261-16271, `U_SHELL_exp` 16273-16292, `U_SHELL_EO_exp` 16294-16306, `U_MASS` 16310-16323, `ECOUL` 16326-16355, `U_Q_beta_minus` (`DCLbranchingJEFF33.bas:112-115`), `U_Valid` 15814-15832, `U_Delta_S0` 15836-15859 |
+| Barriers (`barriers`) | `BFTF` 17657-17750, `BFTFA` 17752-17773, `BFTFB` 17775-17796 |
+| Level densities and temperatures (`level_density`) | `U_alev_ld` 17173-17177, `U_levdens` 17205-17223, `U_levdens_Egidy` 17225-17259, `U_levdens_FG` 17261-17331, `U_Temp` 17335-17385, `U_Temp2` 17388-17420, `TEgidy` 16072-16095, `TRusanov` 16098-16108 |
+| Shape and yields (`shape`) | `Getyield` 15862-15920, `F1` 15923-15928, `F2` 15929-15934, `Masscurv` 15936-15963, `Masscurv1` 15965-16003, `Masscurv2` 16005-16045, `De_Saddle_Scission` 16047-16063, `beta_light` 16358-16365, `beta_heavy` 16368-16375, `Z_equi` 16379-16426, `Beta_Equi` 16480-16646 |
+| Small helpers (`helpers`) | `Gaussintegral` 17808-17816, `Bell` 17818-17828, `U_Box` 17830-17837, `EVEN_ODD` 17593-17653 |
+| Rotation, GDR, kinematics (`rotation`) | `U_Ired` 17094-17108, `U_IredFF` 17110-17118, `U_I_Shell` 17120-17170, `E0_GDR` 17439-17459, `Width_GDR` 17461-17464, `Efac_def_GDR` 17466-17475, `u_accel` 16907-16959 |
+| Extracted pieces (`gamma`) | `P_Egamma_low` table 16980-17037 (D5); E2 cascade 9309-9368 and 9430-9484 (D6) |
+
+**Not in M5:**
+- Random functions (M8): `Eva`, `P_Egamma_high`, the `P_Egamma_low` sampler, `PBox2`, `PPower_Griffin_v`, `PGauss`, `PLinGauss`, `PExp`, `PMaxwell`, `PMaxwellMod`.
+- Already ported in M3: `Floor`, `Ceil`, `Round`, `Modulo`, and `utilities.bi`'s `Min`/`Max`/`Erf`/`Erfc`/`Tanh`.
+- Analysis and output helpers (M13): `Find_IAnl`, `U_DMP_1D`, `U_DMP_1D_S`, `PLoss`, `Printcomments`.
+- Not ported: dead code (`U_levdens_old`, `E_next`, `Pexplim`, `StoreEgammaA` under `B_EgammaA`), the unused samplers, and the D4 list.
+
+## 4. Facts established while planning (2026-10-12)
+
+| Item | Fact |
+|---|---|
+| Table bounds | `BEldmTF`, `BEexp`, `ShellMO` are `(0 To 203, 0 To 136)` (N, Z), `DEFOtab` is `(0 To 236, 0 To 136)` (`GEF.bas:1222-1255`). fbc compiles GEF without `-exx`; BASIC never checks an index. `U_SHELL_exp` reads `AME2020` at (Z, A ± 1) and (Z ± 1, A ± 1), so its domain is one cell smaller than the table's |
+| Table indices of `Single` type | `LDMass` uses `BEexp(CInt(N), CInt(Z))`; `P_Egamma_low` and the E2 cascade use `DEFOtab(Ai - Zi, Zi)` with `Single` or `Integer` arguments; `Single` indices round half to even |
+| Hidden state | `Beta_Equi` assigns its ByRef outputs only on improvement, so the caller's incoming values pass through; `U_MASS` prints to the console and `Beta_Equi` to `#f` (D7). `f` is a shared file number reassigned by `FreeFile` at `GEF.bas:4150, 4179, 10057`; which file, if any, is open when `Beta_Equi` runs is not established. The `Static` locals are listed in D13 |
+| `Beta_Equi` | `Single` sums; four one-dimensional slope probes of up to `Int(beta/5E-4)` steps; then a diagonal search `N = 1…1000` with an inner loop over `N1 = 1…N`, i.e. up to about 5·10⁵ `LyMass`/`ECOUL` evaluations per call; `Ubest` is not reset between the probes |
+| `P_Egamma_low` | Builds the table on every call: `N = Int(Ei*10 + 0.5)`, `ReDim sigma(N)`, `For Eg = 0.1 To Ei Step 0.1` in `Single`, index `CInt(Eg*10)`. The branch `betadef = 0 And gammadef = 0` cannot be taken (`gammadef = 47.4 − 120·betadef`), so the three-Lorentzian branch with `Efac_def_GDR` always runs. Reads `Tscale`, `Econd`, `Etrans` as globals |
+| E2 cascade | Two near-identical copies (light `9309-9368`, heavy `9430-9484`) with the histogram fills inline. `For J = Jfrag To 2 Step -2` runs on the shared `LongInt` `J` (`GEF.bas:762`) with a `Single` `Jfrag`; the isomer search runs on the shared `K`; `Exit For, For` leaves both loops. `I_DelGam` is `Dim As Integer I_DelGam = 0` (`GEF.bas:876`) and never assigned. Gamma energies go to `Array_Eg2_light/heavy(100)` (`GEF.bas:1342`), without a bounds check in BASIC. `C_iso_lmd` uses `Str(Single)`. Whether later code reads `J` or `K` before reassigning them is not established |
+| `U_Valid` | `I_A / I_Z` is a floating-point division; `I_Z = 0` divides by zero before the `I_Z < 76` test |
+| `U_Delta_S0` | Its body is commented out; it returns 0 for every input |
+| Known edges | `Getyield` divides by zero when `T_high = T_low`; `BFTF` leaves `RF` unassigned at `RX = 30` (a local, so 0) |
+| Code-map correction | `setup_physics.md:620` marks `Efac_def_GDR` as unused; it is called at `GEF.bas:17020` (recorded in `code_maps/README.md`) |
+| Tooling | `harness.driver` compiles with default fbc options and keeps no C; `'@cut` already extracts line ranges. `harness.build` passes only `-d` defines to fbc. `harness.run --work-file` exists. Inputs in `harness/inputs/`: `m1_rn215_short.in`, `m2_rn215_full.in`, `m1_cf252_gs.in`, `m4_t0.in` |
+
+## 5. Work breakdown
+
+Tasks in execution order. Mark each one done here when finished, and update `CURRENT_PROJECT_STATE.md`.
+
+### M5.1 Harness and tooling
+- [ ] `harness.driver`: compile with `-R` and keep the emitted C next to the binary; record its SHA-256 in `build.json`. Add `run --work-file` (as `harness.run`) so drivers can read case files.
+- [ ] `tools/fbsrc/fn_c_equiv.py` (D1): extract one function's C from a driver build and from the emitted `GEF.c`, normalise fbc's temporary (`vr$N`, `tmp$N`) and label (`label$N`) numbering, and compare. A driver `Sub` cut from inline code (D5, D6) is compared statement by statement with the corresponding `#line` range of `GEF.c`. Pytest with a matching and a deliberately altered function.
+- [ ] `harness.build --fbc-option OPT` (repeatable, part of the build id), needed for the `-exx` builds of M5.2.
+- [ ] Patch `arglog` (`-d GEF_ARGLOG`), in the canonical order after `lookups`. It logs, as hex, the arguments, the incoming and outgoing ByRef values and the result of the first `GEF_ARGLOG_MAX` calls (default 10⁵) of every function of §3, and the inputs and outputs of the two extracted pieces at their sites, to `probes/arglog/<name>.txt`. Like every harness patch, it does not shift `GEF.bas` line numbers. Reader `harness.arglog`.
+
+**Done when:** pytest covers `fn_c_equiv` and `harness.arglog`; `arglog` is proven neutral (same seed, byte-identical outputs with timestamps masked) on `m1_rn215_short.in` and `m1_cf252_gs.in`.
+
+### M5.2 Captures (D2, D3)
+- [ ] Inputs: the existing `m1_rn215_short.in` (pre-actinide, n-induced) and `m1_cf252_gs.in` (actinide, sf); new `m5_u235_n.in` (U-235 + n at thermal and at an energy above the second-chance threshold, so the pre-pass calls `U_levdens`/`U_Temp2`) and `m5_superheavy_sf.in` (one sf system with Z ≥ 104 from `validation/reference/gefy_sfy`). `Fenhance` as low as each input allows.
+- [ ] `arglog` captures `m5-arglog-<system>` in the store.
+- [ ] `-exx` builds (`seed` patch set, `--fbc-option -exx`) run on the same inputs, captures `m5-exx-<system>`. A bounds error inside a §3 function is a D3 site. An error elsewhere is recorded in `CURRENT_PROJECT_STATE.md` §5 for its owning milestone. If such an error stops a run early, the `arglog` replay remains the M5 evidence for that system.
+- [ ] Per function: call count, the range of every argument, and whether any table index left the bounds. Recorded in the completion notes; it sets the grids of M5.3.
+
+**Done when:** the captures are stored and the per-function ranges are known.
+
+### M5.3 BASIC drivers and goldens
+- [ ] One driver per group of §3: `m5_masses`, `m5_barriers`, `m5_level_density`, `m5_shape`, `m5_helpers`, `m5_rotation`, `m5_egamma_table` (lines 16980-17037 wrapped in a `Sub` that writes `sigma` and `sigMax`) and `m5_e2_cascade` (the two copies wrapped in two `Sub`s with explicit arguments; JEFF-3.3 `Isotab` through the `NucPropJEFF33.bas` loader, plus synthetic entries). Globals the functions read (`pi`, `Tscale`, `Econd`, `Etrans`, the tables) are declared as GEF declares them.
+- [ ] Each driver evaluates its synthetic grid and replays its functions' `arglog` cases, writing hex results.
+- [ ] Synthetic grids:
+  - Integer (Z, A) over every (Z, N) whose reads stay inside the tables, Z = 1…120; just outside that domain, the C++ is expected to throw (D3 default).
+  - `Single` Z and A on the integer grid plus quarter steps.
+  - Energies from −1 to 100 MeV, 0.01 MeV steps below 10 MeV and 0.1 MeV above, plus ±1 ULP around `Etrans`, `Econd` and the `Eeff0 > 0.5` threshold of `U_Temp`/`U_Temp2`.
+  - Spins 0…80 in steps of 0.5.
+  - 10⁵ seeded random `Single` tuples per function inside the ranges seen in M5.2.
+  - The named edges: `BFTF` `RX = 30`, `Getyield` with `T_high = T_low`, `U_Valid` with `I_Z = 0`.
+  - `Beta_Equi` additionally on the continuation chains GEF runs (`GEF.bas:5697-5873`: `IZ1 = 10…Z−10`, each result the next start) for the four capture systems.
+- [ ] Driver checks (D1):
+  - every driver reproduces the `arglog` results bit for bit;
+  - `fn_c_equiv` passes for every cut function and both extracted pieces.
+- [ ] Goldens (D9): fingerprints committed through `harness.golden`; full outputs in the store as `m5-<driver>`.
+
+**Done when:** every driver builds, passes both checks and has its golden.
+
+### M5.4 C++ port (`gef_physics`)
+- [ ] Port in dependency order, each from its `fbline` output (D10), with provenance comments and the API of D8: helpers → masses → barriers → level densities and temperatures → shape and yields (`Beta_Equi` last) → rotation, GDR and `u_accel` → `p_egamma_low_table` → `e2_cascade`. `e2_cascade` takes the `Isotab` entry the caller found with `n_iso_mat`/`iso_for_mat` (M4); if later BASIC code reads `J` or `K` before reassigning them, it also returns their final values.
+- [ ] Diagnostics of D7 and constants of D13.
+- [ ] Tests (`physics_<group>_test.cpp`): fingerprint against the committed golden. With the store present, every value is compared, and the first difference is reported with ULP distance and the input that produced it. Every `arglog` case is replayed against its logged result. The out-of-domain cases expect the throw (or the reproduced read, for D3 sites).
+
+**Done when:** every test passes in `dev-gcc`, `dev-clang` and `release-exact`; `asan-ubsan` and `tsan` pass without `[slow]`.
+
+### M5.5 Reachability and quirks
+- [ ] D3: for every out-of-range index found in M5.2, establish what BASIC reads, reproduce it behind a quirk switch and register the quirk. If none is found, record that the table interior covers every captured call.
+- [ ] D7: whether `U_MASS`'s negative-input print and `Beta_Equi`'s non-convergence print are reachable in the captures and on the grids; for `Beta_Equi`, what `#f` refers to at its call sites (emitted C and fbc runtime). Register a quirk if a print is reachable.
+- [ ] Register the confirmed quirks among the facts of §4: `Getyield` division by zero, the `BFTF` `RX = 30` hole, the `U_Valid` `I_Z = 0` division, the E2 cascade's ground-state stop (`R_SPI(K) = CInt(J_frag)` at `J = Jfrag`, `event_loop.md`), the unchecked `Array_Eg2_*(100)`, and the `J`/`K` leak if later code reads them.
+
+### M5.6 CI, documentation and close-out
+- [ ] `scripts/ci.sh` covers the new library, tests and pytest; `harness.golden check` covers the M5 goldens.
+- [ ] Update:
+  - `QUIRKS.md`: new quirks; B-001 and B-004 findings for the physics functions.
+  - `COVERAGE_MATRIX.md`: the T1 cells M5 closes ("Isomer stop in the gamma cascade", "Masses and shell/deformation tables", "`P_Egamma_low` cross-section table") and its contributions to "Superheavies", "Q values" and "Prompt-gamma spectra".
+  - `IMPLEMENTATION_STRATEGY.md`: M5 status.
+  - `CODING_STANDARDS.md`: if the physics module adds conventions.
+  - `CURRENT_PROJECT_STATE.md`.
+- [ ] Mark this plan complete with completion notes.
+
+## 6. Exit gate (all must hold)
+
+| Gate | Requirement |
+|---|---|
+| G1 Tooling | Drivers keep their emitted C; `fn_c_equiv` passes for every cut function and both extracted pieces; `arglog` is proven neutral |
+| G2 Captures | `arglog` and `-exx` captures stored for the four systems of M5.2 |
+| G3 Bit-exact | Every function of §3 and both extracted pieces equal BASIC bit for bit on the synthetic grids and on every captured call, in `dev-gcc`, `dev-clang` and `release-exact`; NaN sign and payload excepted (B-001). Any other exception has a written analysis and the user's approval (D12) |
+| G4 Domain | Every out-of-range table access reached in the captures is reproduced explicitly with a quirk entry, or none is reached (D3) |
+| G5 Diagnostics | The `U_MASS` and `Beta_Equi` print conditions are returned as diagnostics, and their reachability is recorded (D7) |
+| G6 CI | `scripts/ci.sh` passes in all presets; clang-tidy, clang-format, ruff and basedpyright clean; goldens current |
+
+## 7. Out of scope (later milestones)
+
+- The random functions, including the `P_Egamma_low` sampler (M8).
+- The pre-pass width block `GEF.bas:4269-4421` (M9), the per-nucleus table builder (M7) and the event stages that call M5 functions, including the cascade's histogram fills (M10).
+- Writing the D7 diagnostics to the console or `#f` (M7, M13).
+- `Branchings.bas` itself (M11); M5 provides `U_Q_beta_minus`.
+
+## 8. Risks and open questions
+
+| Item | Handling |
+|---|---|
+| A driver compiles a function differently from GEF | D1's C comparison, plus each driver reproducing the `arglog` results of the real binary |
+| An `-exx` run stops at an unrelated out-of-bounds access before reaching M5 sites | The `arglog` replay covers every M5 call up to K; the stop is recorded for its owning milestone (M5.2) |
+| `arglog` output too large | K is configurable; the default is set from the first capture, and the size is recorded |
+| `Beta_Equi` grids are slow (up to ≈5·10⁵ evaluations per call) | Grid size bounded by the continuation chains and the captured calls; long tests tagged `[slow]` |
+| `-O3` changes a result | D11 |
+| An expression shape outside `FBC_ARITHMETIC.md` rules R1–R10 | Ported from the `fbline` output; the T1 tests catch any remaining difference (B-004) |
+| The two cascade copies differ in their emitted C | Each copy is checked against the C++ function separately; a difference becomes a parameter of the function and a quirk entry |

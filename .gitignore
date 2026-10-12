@@ -1,8 +1,10 @@
 # Validation data (large; tracked by SHA-256 manifests under manifests/)
 validation/
 
-# omp agent workspace (machine-specific config, sessions)
-.omp/
+# omp agent workspace: sessions and local settings stay untracked; the agent context is tracked
+.omp/*
+!.omp/AGENTS.md
+!.omp/LOCAL_ENVIRONMENT.md
 
 # CMake / build trees
 build/

@@ -61,7 +61,8 @@ flowchart TD
 - the GUI and `Mutex.bas`, screen graphics, the interactive dialogue (`GEF.bas:1909–2517`), `Pfistest.mac` (interactive only);
 - the `ctl/` multi-process locking;
 - dead code: `GEFSUB`/`GEFRESULTS` at `GEF.bas:7514–7919` (inside a nested comment), the NucProp/branching variants that are not included, `ENDF_EOT.bas`, `Extend.bas`, `E_next`, `Pexplim`, `U_levdens_old`, the `B_EgammaA` branch;
-- unused samplers (`PBox`, `PPower`, `PPower_Griffin_E`, `PMaxwellv`).
+- unused samplers (`PBox`, `PPower`, `PPower_Griffin_E`, `PMaxwellv`);
+- physics functions without a live caller (M5 plan D4): `TKE_Viola`, `TFPair`, `Pmass`, `FEDEFOP`, `Beta_opt_light`, `Acentral`, `GgGtot`, `U_Gauss`, `U_Gauss_abs`, `U_Gauss_mod`, `U_Box2`, `U_Even_Odd`, `U_LinGauss`.
 
 ### 1.3 Facts that drive the strategy
 
@@ -454,18 +455,18 @@ Two tracks run in parallel after M5 and meet at M14:
 **Goal:** all pure physics functions, bit-exact.
 
 **Scope:**
-- Masses and energies: `LyMass`, `LyPair`, `LDMass`, `AME2020`, `U_SHELL*`, `U_MASS`, `ECOUL`.
+- Masses and energies: `LyMass`, `LyPair`, `FEDEFOLys`, `LDMass`, `AME2020`, `U_SHELL*`, `U_MASS`, `ECOUL`, `U_Q_beta_minus`, `U_Valid`, `U_Delta_S0` (`FEDEFOLys`, `U_Q_beta_minus`, `U_Valid` and `U_Delta_S0` added by the M5 plan, D4).
 - Barriers: `BFTF`, `BFTFA`, `BFTFB`.
-- Level densities and temperatures: `U_levdens*`, `U_Temp`, `U_Temp2`, `TEgidy`, `TRusanov`.
-- Shape and yields: `Masscurv*`, `Getyield`, `De_Saddle_Scission`, `Z_equi`, `beta_light`, `beta_heavy`, `Beta_Equi` (continuation minimiser with ByRef carry-over).
+- Level densities and temperatures: `U_alev_ld`, `U_levdens*`, `U_Temp`, `U_Temp2`, `TEgidy`, `TRusanov`.
+- Shape and yields: `Masscurv*` (with `F1`, `F2`), `Getyield`, `De_Saddle_Scission`, `Z_equi`, `beta_light`, `beta_heavy`, `Beta_Equi` (continuation minimiser with ByRef carry-over).
 - Small helpers: `Gaussintegral`, `Bell`, `U_Box`, `EVEN_ODD`.
-- Rotation, shells and kinematics: `U_Ired*`, `U_I_Shell`, the GDR helpers, `u_accel` (Single-stepped loops).
-- The `P_Egamma_low` cross-section table builder.
-- The E2-cascade energy function.
+- Rotation, shells and kinematics: `U_Ired*`, `U_I_Shell`, the GDR helpers (`E0_GDR`, `Width_GDR`, `Efac_def_GDR`), `u_accel` (Single-stepped loops).
+- The `P_Egamma_low` cross-section table builder, split from its sampler (M8).
+- The E2-cascade function (moment of inertia, isomer stop, gamma energies), extracted from the two inline copies in the event loop.
 
 **Proven by:**
-- **T1 bit-exact** against FreeBASIC drivers over grids covering Z = 10–120, A up to the table limits, and the energy and spin ranges GEF uses, including edges (e.g. BFTF `RX = 30`, `Getyield` with `Th = Tl`).
-- Any function that cannot be made bit-exact gets a written ULP bound and a quirk-register note explaining why.
+- **T1 bit-exact** against FreeBASIC drivers over grids covering Z = 10–120, A up to the table limits, and the energy and spin ranges GEF uses, including edges (e.g. BFTF `RX = 30`, `Getyield` with `Th = Tl`), and against the arguments and results of real calls logged from reference runs (M5 plan D2).
+- A function that cannot be made bit-exact needs a written analysis and the user's approval (§2.9; amended by the M5 plan, D12).
 
 **Exit:** everything in the physics that does not consume random numbers is proven.
 

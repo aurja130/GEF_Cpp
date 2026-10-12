@@ -1,7 +1,7 @@
 # GEF in C++: Current Project State
 
-**As of:** 2026-10-09
-**Phase:** M0–M4 complete. Next: M5 (deterministic physics functions), which has no plan yet. No GEF physics has been ported yet; the data layer it reads (tables, lookups, parameters, analyzer registry) is ported and bit-exact against the BASIC program.
+**As of:** 2026-10-12
+**Phase:** M0–M4 complete. M5 (deterministic physics functions) is planned (`Planning/MILESTONE_5_PLAN.md`, decisions D1–D9 taken by the user on 2026-10-12); implementation has not started. No GEF physics has been ported yet; the data layer it reads (tables, lookups, parameters, analyzer registry) is ported and bit-exact against the BASIC program.
 
 **Decision 2026-10-08 — exact reproduction first** (vision §4.2 and §5, strategy §2.9):
 - **Phase 1 (M3–M16):** the C++ port must reproduce the BASIC arithmetic exactly. A seeded C++ run in exact mode must write the same output bytes as the seeded BASIC reference binary (T3).
@@ -14,7 +14,7 @@
 |---|---|
 | Vision | Written: `Planning/GEF_CPP_VISION.md` |
 | Implementation strategy | Written: `Planning/IMPLEMENTATION_STRATEGY.md`, 19 milestones (M0–M18) |
-| Milestone plan files (`Planning/MILESTONE_<n>_PLAN.md`) | M0–M4 complete; M5–M18 not written |
+| Milestone plan files (`Planning/MILESTONE_<n>_PLAN.md`) | M0–M4 complete; M5 planned (2026-10-12); M6–M18 not written |
 | C++ implementation (`Cpp_implementation/`) | `gef_fbrt` (namespace `gef::fb`): the FreeBASIC runtime emulation of M3 (conversions, maths, random numbers, `Str`/`Print`/`Print Using`/`Format`, arrays, `DATA`, `Val`/`Input #`, strings and `Line Input`), bit-exact against FreeBASIC drivers. M4: `gef_data` (GEF's `DATA` and table loaders, `gef::data`), `gef_params` (nominal parameters, widths, parameter files, `gef::params`), `gef_analysis` (analyzer registry, `gef::analysis`), `gef_util` (GEF's string utilities, `gef::util`). `gef` CLI (`--version`). Catch2 tests; five CMake presets. See §3.6, §3.7 |
 | Python tooling (`tools/`) | Toolchain check and fbc pin, validation-data manifests, BASIC-source tools (`emit_c`, `fbline`, `fbdef`) |
 | Local CI | `scripts/ci.sh` (full) and `scripts/ci.sh --quick` |
@@ -25,7 +25,7 @@
 | Coverage matrix | `Planning/COVERAGE_MATRIX.md`: 114 rows × T0–T5; 27 cells covered (M3: FreeBASIC numeric semantics at T1, `FbMtRng` at T2; M4: all 21 T0 cells it owned and 4 T1 cells); T4 cells owned by M17 after the exact-first decision; one cell deferred (approved 2026-10-07) |
 | Coding standards | `Planning/CODING_STANDARDS.md` |
 | Code maps | `Planning/code_maps/`: the six planning-session reports, with a README listing corrected claims |
-| Version control | `.omp/` and `validation/` (including `validation/reference_store/`) are gitignored; manifests of stored data are committed under `manifests/` |
+| Version control | `validation/` (including `validation/reference_store/`) and `.omp/` are gitignored, except the agent context `.omp/AGENTS.md` and `.omp/LOCAL_ENVIRONMENT.md`; manifests of stored data are committed under `manifests/` |
 
 ## 2. Repository inventory
 
@@ -208,7 +208,7 @@ Decisions taken in M3: NaN results compare equal regardless of sign and payload 
 
 ### 4.3 Code maps
 
-The six planning-session reports are saved in `Planning/code_maps/` (M0.1). Their README lists three claims corrected since (46 perturbed parameters; `GEFSUB` dead; `ctl/` holds all three control files).
+The six planning-session reports are saved in `Planning/code_maps/` (M0.1). Their README lists four claims corrected since (46 perturbed parameters; `GEFSUB` dead; `ctl/` holds all three control files; `Efac_def_GDR` is live, found while planning M5).
 
 ## 5. Open risks and items
 
@@ -222,5 +222,5 @@ The six planning-session reports are saved in `Planning/code_maps/` (M0.1). Thei
 
 ## 6. Next steps
 
-1. Write and implement the M5 plan (deterministic physics functions: masses, barriers, level densities, …, strategy §3), on the M4 data layer. Open user question (recorded in the M4 plan): whether to make `DCLbranchingJEFF311.bas` compile, which would change its code.
+1. Implement M5 per `Planning/MILESTONE_5_PLAN.md`, starting with M5.1 (driver C retention, `fn_c_equiv`, `harness.build --fbc-option`, the `arglog` patch). The plan amended the strategy: M5 scope additions and the "Not ported" list (D4), non-bit-exact functions need a written analysis and user approval (D12). Open user question (recorded in the M4 plan): whether to make `DCLbranchingJEFF311.bas` compile, which would change its code.
 2. Per the exact-first decision, later milestone plans gate on bit-exact equality with BASIC (T0–T3) and use `compare.exact` and the per-event reseed mode to triage divergences. The Clang Debug test preset skips `[slow]` tests (user, 2026-10-08); work on this machine is limited to 10 cores (`taskset -c 0-9`, `-j 10`) while it is shared.
