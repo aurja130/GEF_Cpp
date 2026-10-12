@@ -29,10 +29,11 @@ Patch sets (`patchsets/<name>.txt`): `none`, `seed`, `seed-rndlog`, `seed-probes
 ```sh
 python3 -m harness.build seed                                   # -> build/harness/seed-<hash>/GEF
 python3 -m harness.build seed-rndlog-probes --define GEF_RNDLOG --define GEF_PROBES
+python3 -m harness.build seed --fbc-option=-g                   # extra fbc flag, after the defines
 python3 -m tools.fbsrc.emit_c --patch-dir build/harness/patchdirs/seed   # C of a patched source
 ```
 
-Builds use plain `fbc GEF.bas` (the options that reproduce `gef_reference`) with `SOURCE_DATE_EPOCH` set to the submodule commit time, and are reproducible.
+Builds use plain `fbc GEF.bas` (the options that reproduce `gef_reference`) with `SOURCE_DATE_EPOCH` set to the submodule commit time, and are reproducible. `--fbc-option=OPT` (repeatable; write it with `=`, because argparse reads a dash-prefixed value after a space as another option) adds an fbc flag after the defines. `-d`, `-o` and `-x` are refused: the harness sets the defines and the output name. The options enter the build id only when given, so builds without them keep their ids.
 
 ## Run-time environment variables
 
@@ -75,9 +76,16 @@ Captures are copied to `validation/reference_store/captures/<id>/` (gitignored, 
 
 ```sh
 python3 -m harness.driver run rnd_stream -- 42 1000000
+python3 -m harness.driver run <name> --work-file PATH [-- ARGS]
 ```
 
-A driver is a FreeBASIC program in `drivers/`. `'@include-source <file>` copies a GEF source file next to it; `'@cut <file>:<first>-<last> as <name>.bi` extracts a line range (e.g. one function) so it can be included. `driver.json` records the source, binary and output hashes and every cut. `rnd_stream` writes the `Randomize s,3` + `Rnd` stream as u32 hex; seed 42 × 10⁶ is stored as `m1-golden-rnd-stream-42` and matches `harness.fbmt`, the Python reference of fbc's generator.
+A driver is a FreeBASIC program in `drivers/`. Three directives (own line, `'` comment) pull files into the build directory so the driver can `#include` them:
+
+- `'@include-source <file>` copies a GEF source file next to it.
+- `'@include-driver <file>` copies a shared helper from `drivers/` (a path relative to it) next to it, so drivers can share it.
+- `'@cut <file>:<first>-<last> as <name>.bi` extracts a line range (e.g. one function) so it can be included.
+
+Builds run `fbc -R`: `<name>.c` is kept, and its SHA-256 is recorded in `build.json` (`c_file`, `c_sha256`); `DriverBuild.c_source` is that file. `driver.json` records the driver, binary and output-file SHA-256s, the fbc version and command, and the `includes`, `driver_includes`, `cuts` and `work_files` records. `--work-file PATH` (repeatable) copies a file into the run directory under its own name before the run, so the driver can open it by name; `work_files` holds its source and SHA-256, and it is not in `outputs`. `harness.golden promote --work-file` leaves the copies out of the golden. `harness.golden check` reports a golden stale when a shared driver file or a work-file source changes or disappears; a `validation/` source that this checkout lacks is skipped with a note. `rnd_stream` writes the `Randomize s,3` + `Rnd` stream as u32 hex; seed 42 × 10⁶ is stored as `m1-golden-rnd-stream-42` and matches `harness.fbmt`, the Python reference of fbc's generator.
 
 ## Logs and probes
 

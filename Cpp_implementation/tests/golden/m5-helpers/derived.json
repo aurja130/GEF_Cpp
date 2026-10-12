@@ -1,0 +1,49 @@
+{
+  "kind": "store-derived",
+  "outputs": {
+    "files.txt": "68c0eaa0b6a9460091a8246ea7fa8a9c93b4f4077d343538dc0f6c51ba01c369"
+  },
+  "sources": [
+    {
+      "capture": "m5-helpers",
+      "file": "Bell_grid.txt",
+      "sha256": "369252e8063b2c47af22a8270d834da18fc34936033ebdf76ced33d6e8e939e3"
+    },
+    {
+      "capture": "m5-helpers",
+      "file": "Bell_random.txt",
+      "sha256": "9850b3fa5a7bc13267c40a96b4aaef0204bd5a8529f52f632b7397eb477230d7"
+    },
+    {
+      "capture": "m5-helpers",
+      "file": "EVEN_ODD_grid.txt",
+      "sha256": "45ec4bed83bf4bccc394b2bd54f2faaa176ace13c324574ff48cb13b80e432fb"
+    },
+    {
+      "capture": "m5-helpers",
+      "file": "EVEN_ODD_random.txt",
+      "sha256": "992d883249d133b1cd7bc07d59e24e24984c7dafa9c51a042aa50267033a4f08"
+    },
+    {
+      "capture": "m5-helpers",
+      "file": "Gaussintegral_grid.txt",
+      "sha256": "1c5e10a4b82a0a55212f3623ede12a92a11859969322db2d8232eb6c66312648"
+    },
+    {
+      "capture": "m5-helpers",
+      "file": "Gaussintegral_random.txt",
+      "sha256": "b8c632df1d856eb99c3f694008e1ad65fe023e1b54b0dc6cd908e04400ae9fe9"
+    },
+    {
+      "capture": "m5-helpers",
+      "file": "U_Box_grid.txt",
+      "sha256": "8538e2de0da90d36587338ea72bd7c9fef1070664ae26de745e4c89a89841ca3"
+    },
+    {
+      "capture": "m5-helpers",
+      "file": "U_Box_random.txt",
+      "sha256": "b325470cc9da288edad7728f2cf53865caa70ce8fd6b7cb8838d0147da927296"
+    }
+  ],
+  "tool": "python3 -m harness.probe_fingerprints m5-helpers --name m5-helpers --files Bell_grid.txt Bell_random.txt EVEN_ODD_grid.txt EVEN_ODD_random.txt Gaussintegral_grid.txt Gaussintegral_random.txt U_Box_grid.txt U_Box_random.txt"
+}

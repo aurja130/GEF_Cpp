@@ -16,13 +16,16 @@ output file. Producers call ``write_derived``.
 
 Usage::
 
-    python3 -m harness.golden promote <driver> --name NAME [--note TEXT] [--replace] [-- args]
+    python3 -m harness.golden promote <driver> --name NAME [--note TEXT] [--replace]
+                                      [--work-file PATH]... [-- args]
     python3 -m harness.golden copy <capture> <file> [<file> ...] --name NAME
     python3 -m harness.golden check     # committed goldens still match their sources
 
-``check`` fails when a driver source, an included or cut GEF source, the fbc version, a
-capture file of a derived golden or a golden file no longer matches its record: such a golden
-is stale and must be produced again.
+``check`` fails when a driver source, a shared driver file (``'@include-driver``), an included
+or cut GEF source, the fbc version, a work file's source (``--work-file``; a source under
+``validation/`` that this checkout lacks is skipped and reported instead), a capture file of a
+derived golden or a golden file no longer matches its record: such a golden is stale and must
+be produced again.
 """
 
 from __future__ import annotations
@@ -33,6 +36,7 @@ import json
 import shutil
 import sys
 import tempfile
+from collections.abc import Sequence
 from pathlib import Path
 
 from harness import driver, store
@@ -52,6 +56,7 @@ GOLDEN_DIR = REPO_ROOT / "Cpp_implementation" / "tests" / "golden"
 MAX_COMMITTED_BYTES = 1_000_000
 DERIVED_JSON = "derived.json"
 STORE_MANIFESTS = REPO_ROOT / "manifests" / "reference_store"
+VALIDATION_DIR = REPO_ROOT / "validation"
 
 
 def promote(
@@ -63,13 +68,20 @@ def promote(
     replace: bool = False,
     golden_dir: Path = GOLDEN_DIR,
     store_paths: store.StorePaths | None = None,
+    work_files: Sequence[Path] = (),
 ) -> Path:
-    """Run ``driver_name`` and keep its outputs as golden ``name``; returns where it went."""
+    """Run ``driver_name`` and keep its outputs as golden ``name``; returns where it went.
+
+    ``work_files`` are copied into the run directory for the run only: the golden does not keep
+    them, and ``driver.json`` records each one (name, source, SHA-256) for ``check``.
+    """
     BUILD_ROOT.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(dir=BUILD_ROOT, prefix="golden-") as tmp:
-        result = driver.run(driver_name, args, out_dir=Path(tmp) / "out")
+        result = driver.run(driver_name, args, out_dir=Path(tmp) / "out", work_files=work_files)
         if result.returncode != 0:
             raise HarnessError(f"driver {driver_name} exited with {result.returncode}")
+        for work in work_files:
+            (result.out_dir / work.name).unlink()
         files = [p for p in result.out_dir.rglob("*") if p.is_file()]
         total = sum(p.stat().st_size for p in files)
         if total > MAX_COMMITTED_BYTES:
@@ -150,6 +162,34 @@ def _check_outputs(path: Path, outputs: dict[str, str], record_name: str) -> lis
     return problems
 
 
+def _work_file_problems(work_files: list[dict[str, str]]) -> list[str]:
+    """Problems with a golden's work files; an absent ``validation/`` source is skipped."""
+    problems: list[str] = []
+    for work in work_files:
+        source = REPO_ROOT / work["source"]
+        if source.is_file():
+            if sha256_file(source) != work["sha256"]:
+                problems.append(f"work file {work['name']} changed: {work['source']}")
+        elif not source.is_relative_to(VALIDATION_DIR):
+            problems.append(f"work file {work['name']} not found: {work['source']}")
+    return problems
+
+
+def skipped_work_files(golden_dir: Path = GOLDEN_DIR) -> list[str]:
+    """Notes for work files whose source under ``validation/`` this checkout lacks."""
+    notes: list[str] = []
+    for record_path in sorted(golden_dir.glob(f"*/{DRIVER_JSON}")):
+        record = json.loads(record_path.read_text(encoding="utf-8"))
+        for work in record.get("work_files", []):
+            source = REPO_ROOT / work["source"]
+            if not source.is_file() and source.is_relative_to(VALIDATION_DIR):
+                notes.append(
+                    f"{record_path.parent.name}: work file {work['name']} skipped, "
+                    f"{work['source']} is not in this checkout"
+                )
+    return notes
+
+
 def check_derived(path: Path) -> list[str]:
     """Problems that make the store-derived golden at ``path`` stale; empty when current."""
     record = json.loads((path / DERIVED_JSON).read_text(encoding="utf-8"))
@@ -188,11 +228,18 @@ def check_golden(path: Path, drivers_dir: Path = DRIVERS_DIR) -> list[str]:
         src = GEF_SOURCE_DIR / inc["file"]
         if not src.is_file() or sha256_file(src) != inc["sha256"]:
             problems.append(f"included source {inc['file']} changed")
+    for inc in record.get("driver_includes", []):
+        src = drivers_dir / inc["file"]
+        if not src.is_file():
+            problems.append(f"driver include {inc['file']} not found")
+        elif sha256_file(src) != inc["sha256"]:
+            problems.append(f"driver include {inc['file']} changed")
     for cut in record["cuts"]:
         src = GEF_SOURCE_DIR / cut["file"]
         data = cut_lines(src, cut["first"], cut["last"]) if src.is_file() else b""
         if hashlib.sha256(data).hexdigest() != cut["cut_sha256"]:
             problems.append(f"cut {cut['file']}:{cut['first']}-{cut['last']} changed")
+    problems += _work_file_problems(record.get("work_files", []))
     problems += _check_outputs(path, record["outputs"], DRIVER_JSON)
     return [f"{path.name}: {p}" for p in problems]
 
@@ -216,6 +263,13 @@ def main(argv: list[str] | None = None) -> int:
     p_promote.add_argument("--name", required=True, help="golden directory or store capture id")
     p_promote.add_argument("--note", default="", help="note for a store capture")
     p_promote.add_argument("--replace", action="store_true", help="overwrite a committed golden")
+    p_promote.add_argument(
+        "--work-file",
+        action="append",
+        type=Path,
+        metavar="PATH",
+        help="copy this file into the run directory first (repeatable; not kept in the golden)",
+    )
     p_promote.add_argument("args", nargs="*", help="driver arguments, after --")
     sub.add_parser("check", help="verify committed goldens against their drivers")
     p_copy = sub.add_parser("copy", help="copy capture files into a store-derived golden")
@@ -225,7 +279,14 @@ def main(argv: list[str] | None = None) -> int:
     ns = parser.parse_args(argv)
     try:
         if ns.cmd == "promote":
-            where = promote(ns.driver, ns.args, ns.name, note=ns.note, replace=ns.replace)
+            where = promote(
+                ns.driver,
+                ns.args,
+                ns.name,
+                note=ns.note,
+                replace=ns.replace,
+                work_files=ns.work_file or [],
+            )
             print(where.relative_to(REPO_ROOT) if where.is_relative_to(REPO_ROOT) else where)
             return 0
         if ns.cmd == "copy":
@@ -236,6 +297,8 @@ def main(argv: list[str] | None = None) -> int:
     except HarnessError as exc:
         print(f"harness.golden: {exc}", file=sys.stderr)
         return 2
+    for note in skipped_work_files():
+        print(f"skipped: {note}")
     for problem in problems:
         print(problem)
     print("goldens OK" if not problems else f"{len(problems)} stale golden problem(s)")
