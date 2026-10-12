@@ -1,0 +1,89 @@
+{
+  "kind": "store-derived",
+  "outputs": {
+    "files.txt": "a55eeaf6269e07b64ebc78c09597000b0405ed02a5337c3bc220008f38a436b9"
+  },
+  "sources": [
+    {
+      "capture": "m5-level_density",
+      "file": "TEgidy_grid.txt",
+      "sha256": "09541f0217ab0f9c0d5d4cafe0203b2053e5865e6d42f9d5121740beb596d3ab"
+    },
+    {
+      "capture": "m5-level_density",
+      "file": "TEgidy_random.txt",
+      "sha256": "d93ea5fa38745c28751a9d1cb4fc20fadbde628336088c19268e0db88bc7d53e"
+    },
+    {
+      "capture": "m5-level_density",
+      "file": "TRusanov_grid.txt",
+      "sha256": "8e2739d2eb2004e218851a5d866291423145e3c440bcbeff918ecdd77684186e"
+    },
+    {
+      "capture": "m5-level_density",
+      "file": "TRusanov_random.txt",
+      "sha256": "b43880702353dccda04b5c2c86d936df714fb148cf3c8617ecd99728b72b9b73"
+    },
+    {
+      "capture": "m5-level_density",
+      "file": "U_alev_ld_grid.txt",
+      "sha256": "6a0a5b2d30cb15961257dea0c02502b3e4eb502269f0fa604d42c6aba5fac19a"
+    },
+    {
+      "capture": "m5-level_density",
+      "file": "U_alev_ld_random.txt",
+      "sha256": "c1083e06cb930c8c034806947918ca830fad7306bf13a0ec884581e0b1f206f5"
+    },
+    {
+      "capture": "m5-level_density",
+      "file": "U_levdens_Egidy_grid.txt",
+      "sha256": "7738cbc61acfb8cf6918da2d29d1cfc87c3188d4a23c819f9e14e129a7fc8f9e"
+    },
+    {
+      "capture": "m5-level_density",
+      "file": "U_levdens_Egidy_random.txt",
+      "sha256": "6478ad161f784d28a21f0e48920a5dce52444036292a85f4450f00b36f2dbc44"
+    },
+    {
+      "capture": "m5-level_density",
+      "file": "U_levdens_FG_grid.txt",
+      "sha256": "30ca9356f3e971b09f9611016ba6a679d51513d6e58a4cdd2d77a6bdf054d491"
+    },
+    {
+      "capture": "m5-level_density",
+      "file": "U_levdens_FG_random.txt",
+      "sha256": "7df597573c3f7499dfadaf2eec907856447ca89b204a975ccb956a366da303e5"
+    },
+    {
+      "capture": "m5-level_density",
+      "file": "U_levdens_grid.txt",
+      "sha256": "fbecd2ff81a73069ef254205322e53b88fd7da1371c0af7c73707afa3f5e29ff"
+    },
+    {
+      "capture": "m5-level_density",
+      "file": "U_levdens_random.txt",
+      "sha256": "3c4de8b7c81ef077fa9fb0645fa936ae6a6b863accc1c45b9add33b21f582e5e"
+    },
+    {
+      "capture": "m5-level_density",
+      "file": "U_Temp2_grid.txt",
+      "sha256": "a9d78e9bf373d92146fd2936cde8c5df5f51237ed8e9fb3c6f555d2f6c996756"
+    },
+    {
+      "capture": "m5-level_density",
+      "file": "U_Temp2_random.txt",
+      "sha256": "2ca47b507b5e5e802d27b80d0d8818806afd86ae865bf3f4365c3de8507e50c3"
+    },
+    {
+      "capture": "m5-level_density",
+      "file": "U_Temp_grid.txt",
+      "sha256": "6a7ac6b12c9424dba542f2b23ea1a149e60aa2b1040c450b3a2955af04146943"
+    },
+    {
+      "capture": "m5-level_density",
+      "file": "U_Temp_random.txt",
+      "sha256": "d17833b1f6f5edc70ec71544ffac9e51525bb1fe1d43d794682c5893a3b20f55"
+    }
+  ],
+  "tool": "python3 -m harness.probe_fingerprints m5-level_density --name m5-level_density --files TEgidy_grid.txt TEgidy_random.txt TRusanov_grid.txt TRusanov_random.txt U_alev_ld_grid.txt U_alev_ld_random.txt U_levdens_Egidy_grid.txt U_levdens_Egidy_random.txt U_levdens_FG_grid.txt U_levdens_FG_random.txt U_levdens_grid.txt U_levdens_random.txt U_Temp2_grid.txt U_Temp2_random.txt U_Temp_grid.txt U_Temp_random.txt"
+}
