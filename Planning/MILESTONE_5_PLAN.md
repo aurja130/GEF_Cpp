@@ -69,18 +69,18 @@ Line ranges are `GEF.bas` at `ba9f0aa` unless another file is named.
 Tasks in execution order. Mark each one done here when finished, and update `CURRENT_PROJECT_STATE.md`.
 
 ### M5.1 Harness and tooling
-- [ ] `harness.driver`: compile with `-R` and keep the emitted C next to the binary; record its SHA-256 in `build.json`. Add `run --work-file` (as `harness.run`) so drivers can read case files.
-- [ ] `tools/fbsrc/fn_c_equiv.py` (D1): extract one function's C from a driver build and from the emitted `GEF.c`, normalise fbc's temporary (`vr$N`, `tmp$N`) and label (`label$N`) numbering, and compare. A driver `Sub` cut from inline code (D5, D6) is compared statement by statement with the corresponding `#line` range of `GEF.c`. Pytest with a matching and a deliberately altered function.
-- [ ] `harness.build --fbc-option OPT` (repeatable, part of the build id), needed for the `-exx` builds of M5.2.
-- [ ] Patch `arglog` (`-d GEF_ARGLOG`), in the canonical order after `lookups`. It logs, as hex, the arguments, the incoming and outgoing ByRef values and the result of the first `GEF_ARGLOG_MAX` calls (default 10⁵) of every function of §3, and the inputs and outputs of the two extracted pieces at their sites, to `probes/arglog/<name>.txt`. Like every harness patch, it does not shift `GEF.bas` line numbers. Reader `harness.arglog`.
+- [x] `harness.driver`: compile with `-R` and keep the emitted C next to the binary; record its SHA-256 in `build.json`. Add `run --work-file` (as `harness.run`) so drivers can read case files.
+- [x] `tools/fbsrc/fn_c_equiv.py` (D1): extract one function's C from a driver build and from the emitted `GEF.c`, normalise fbc's temporary (`vr$N`, `tmp$N`) and label (`label$N`) numbering, and compare. A driver `Sub` cut from inline code (D5, D6) is compared statement by statement with the corresponding `#line` range of `GEF.c`. Pytest with a matching and a deliberately altered function.
+- [x] `harness.build --fbc-option OPT` (repeatable, part of the build id), needed for the `-exx` builds of M5.2.
+- [x] Patch `arglog` (`-d GEF_ARGLOG`), in the canonical order after `lookups`. It logs, as hex, the arguments, the incoming and outgoing ByRef values and the result of the first `GEF_ARGLOG_MAX` calls (default 10⁵) of every function of §3, and the inputs and outputs of the two extracted pieces at their sites, to `probes/arglog/<name>.txt`. Like every harness patch, it does not shift `GEF.bas` line numbers. Reader `harness.arglog`.
 
 **Done when:** pytest covers `fn_c_equiv` and `harness.arglog`; `arglog` is proven neutral (same seed, byte-identical outputs with timestamps masked) on `m1_rn215_short.in` and `m1_cf252_gs.in`.
 
 ### M5.2 Captures (D2, D3)
-- [ ] Inputs: the existing `m1_rn215_short.in` (pre-actinide, n-induced) and `m1_cf252_gs.in` (actinide, sf); new `m5_u235_n.in` (U-235 + n at thermal and at an energy above the second-chance threshold, so the pre-pass calls `U_levdens`/`U_Temp2`) and `m5_superheavy_sf.in` (one sf system with Z ≥ 104 from `validation/reference/gefy_sfy`). `Fenhance` as low as each input allows.
-- [ ] `arglog` captures `m5-arglog-<system>` in the store.
-- [ ] `-exx` builds (`seed` patch set, `--fbc-option -exx`) run on the same inputs, captures `m5-exx-<system>`. A bounds error inside a §3 function is a D3 site. An error elsewhere is recorded in `CURRENT_PROJECT_STATE.md` §5 for its owning milestone. If such an error stops a run early, the `arglog` replay remains the M5 evidence for that system.
-- [ ] Per function: call count, the range of every argument, and whether any table index left the bounds. Recorded in the completion notes; it sets the grids of M5.3.
+- [x] Inputs: the existing `m1_rn215_short.in` (pre-actinide, n-induced) and `m1_cf252_gs.in` (actinide, sf); new `m5_u235_n.in` (U-235 + n at thermal and at an energy above the second-chance threshold, so the pre-pass calls `U_levdens`/`U_Temp2`) and `m5_superheavy_sf.in` (one sf system with Z ≥ 104 from `validation/reference/gefy_sfy`). `Fenhance` as low as each input allows.
+- [x] `arglog` captures `m5-arglog-<system>` in the store.
+- [x] `-exx` builds (`seed` patch set, `--fbc-option -exx`) run on the same inputs, captures `m5-exx-<system>`. A bounds error inside a §3 function is a D3 site. An error elsewhere is recorded in `CURRENT_PROJECT_STATE.md` §5 for its owning milestone. If such an error stops a run early, the `arglog` replay remains the M5 evidence for that system.
+- [x] Per function: call count, the range of every argument, and whether any table index left the bounds. Recorded in the completion notes; it sets the grids of M5.3.
 
 **Done when:** the captures are stored and the per-function ranges are known.
 
@@ -153,3 +153,71 @@ Tasks in execution order. Mark each one done here when finished, and update `CUR
 | `-O3` changes a result | D11 |
 | An expression shape outside `FBC_ARITHMETIC.md` rules R1–R10 | Ported from the `fbline` output; the T1 tests catch any remaining difference (B-004) |
 | The two cascade copies differ in their emitted C | Each copy is checked against the C++ function separately; a difference becomes a parameter of the function and a quirk entry |
+
+## 9. Completion notes
+
+### M5.1 (2026-10-12)
+
+- **Driver tooling.** `harness.driver` compiles with `fbc -R` and keeps `<name>.c` (`c_file`, `c_sha256` in `build.json`, `DriverBuild.c_source`); `run --work-file`; directive `'@include-driver <file>` (shared driver helpers such as `harness/drivers/m5_common.bi`, hashed into the build key and checked by `harness.golden check`). `harness.build --fbc-option=OPT` (in the build id when present).
+- **`fn_c_equiv`** (`tools/fbsrc/fn_c_equiv.py`, 24 pytest cases): function mode compares one function's C after dropping `#line`/source-echo lines and renumbering `label$N`, `vrN`, `tmpN`, `TMP$N$M`; piece mode re-emits the driver with `-g`, checks that this C equals the kept C, and compares GEF.c and driver statements per source line, with scope suffixes dropped. First result: `Gaussintegral`, `Bell`, `U_Box`, `EVEN_ODD`, `Floor` of `m5_helpers` equal GEF.c. Limitation found while testing: a loop at module level gives fbc an extra label at `Next`, so a piece should be compared with a reference inside a procedure (relevant for the E2 cascade, which is module-level code).
+- **`arglog`** (`harness/ARGLOG.md`): generated by `python3 -m harness.arglog_patch` (`--check`). Wrappers `hlog_<name>` behind function-like macros, with `#undef`/`#define` around every definition (fbc refuses a `#define` of a declared procedure; `#undef` removes the symbol). Site logs for `e2_light`, `e2_heavy`, `pegl_table`. POSIX I/O and static buffers (no FreeBASIC file numbers, no heap). Deviation from the text above, decided while building it: after the first K calls (`GEF_ARGLOG_MAX`, default 10⁵) the patch also logs every 2^j-th call in the j-th doubling of the call count (`GEF_ARGLOG_SPREAD=1`, default), about K/2 more records per doubling, so that the logs cover the whole run and not only its first calls. `Beta_Equi` additionally logs `global.f`.
+- **Line numbers.** Without `-d GEF_ARGLOG` the emitted C of `m5-arglog` equals the `seed`+`scope` emission apart from source-echo comments. Found on the way: after an `#endif`, fbc's `#line N` numbers the next line N + 1 (after an `#include` it does not; the existing patches use the latter form and are correct, as their rndlog site tags show).
+- **Neutrality (gate G1).** Same seed as the stored seed runs, `GEF_ARGLOG_MAX=20000`: Rn-215 short (seed 20261007) identical to `m1-g23-rn215-n-a` over 244 files, Cf-252 (seed 20261008) identical to `m1-g4-cf252-ref1-independent` over 42 files (`harness.compare_runs`, timestamps masked, `probes/` allowed only in the arglog run). These runs are the captures `m5-arglog-rn215` and `m5-arglog-cf252`.
+- **Correction of §4:** the cascade's `J`, `K` are `Single` scope locals (row "E2 cascade" amended).
+
+### M5.2 (2026-10-12)
+
+- **Inputs.** `harness/inputs/m5_u235_n.in` (CN 92/236, `EN`, 0.0253 eV and 14 MeV, `Fenhance` 1) and `harness/inputs/m5_superheavy_sf.in` (Sg-264 `GS`, `Fenhance` 1). `Fenhance` 1 rather than lower: with it each run takes under two minutes and every function is still called (U-235 at 14 MeV reaches the pre-pass level densities).
+- **Captures** (store, `GEF_ARGLOG_MAX=20000`, spread on): `m5-arglog-rn215` (549 MB), `m5-arglog-cf252` (381 MB), `m5-arglog-u235` (seed 20261012, 365 MB), `m5-arglog-sh264` (seed 20261013, 192 MB). Every log holds exactly the calls the sampling rule selects (`harness.arglog summary`: `complete=True` for all 49 files of all four).
+- **`-exx` runs** (`seed` patch set, `--fbc-option=-exx`, build `seed-1a1bb1c529a8`, which links `fb_ArrayBoundChk`): all four systems ran to the end with exit 0 and no runtime error; Rn-215 and Cf-252 outputs are byte-identical to the unchecked reference runs. Captures `m5-exx-rn215`, `m5-exx-cf252`, `m5-exx-u235`, `m5-exx-sh264`. **D3 result: GEF indexes no array out of bounds in these four runs** (not only in the §3 functions), so the C++ keeps the default (throw outside the table) and no D3 quirk is needed for the captured systems.
+- **Calls per function** (calls, logged records in parentheses). Argument ranges: `python3 -m harness.arglog summary <capture>/work/probes/arglog`.
+
+| Function | Rn-215 | Cf-252 | U-236 | Sg-264 |
+|---|---|---|---|---|
+| LyMass | 1934867593 (184761) | 1044409971 (175936) | 378137675 (161539) | 16055767 (115679) |
+| LyPair | 1151756962 (177574) | 917427757 (173998) | 97496639 (141901) | 7402319 (104457) |
+| FEDEFOLys | 804875586 (172281) | 458989468 (164007) | 36423642 (127784) | 3379136 (93199) |
+| LDMass | 805218454 (172286) | 470279916 (164351) | 36717118 (127928) | 3446486 (93462) |
+| AME2020 | 659485119 (170062) | 352835708 (160767) | 30379976 (124833) | 2907809 (91358) |
+| U_SHELL | 1095794581 (176720) | 1032418492 (175753) | 91071742 (141117) | 8215869 (106046) |
+| U_SHELL_exp | 42568526 (130392) | 2 (2) | 2659545 (90388) | 2 (2) |
+| U_SHELL_EO_exp | 67069631 (136374) | 411 (411) | 4078864 (95933) | 47 (47) |
+| U_MASS | 287384354 (157540) | 232834746 (154211) | 12138206 (111853) | 1707742 (83341) |
+| ECOUL | 89358514 (140908) | 17457244 (117048) | 149533574 (148253) | 4201582 (96412) |
+| U_Q_beta_minus | 118656 (44832) | 58028 (34507) | 17940 (17940) | 4068 (4068) |
+| U_Valid | 1 (1) | 1 (1) | 1 (1) | 1 (1) |
+| U_Delta_S0 | 0 | 0 | 0 | 0 |
+| BFTF | 41705955 (130182) | 615 (615) | 2594690 (90135) | 71 (71) |
+| BFTFA | 13900663 (113574) | 104 (104) | 863484 (73491) | 12 (12) |
+| BFTFB | 13903289 (113577) | 307 (307) | 866303 (73535) | 34 (34) |
+| U_alev_ld | 811966826 (172389) | 794974377 (172130) | 79095573 (139310) | 6477195 (102650) |
+| U_levdens | 22907827 (121185) | 0 | 1403549 (80965) | 0 |
+| U_levdens_Egidy | 22907827 (121185) | 0 | 1403549 (80965) | 0 |
+| U_levdens_FG | 10652219 (110402) | 0 | 714518 (71164) | 0 |
+| U_Temp | 794364933 (172121) | 794974377 (172130) | 77950019 (139030) | 6477195 (102650) |
+| U_Temp2 | 6949674 (103573) | 0 | 431036 (63469) | 0 |
+| TEgidy | 813898292 (172419) | 795484124 (172138) | 85438894 (140429) | 6535352 (102764) |
+| TRusanov | 1313 (1313) | 101 (101) | 1409 (1409) | 11 (11) |
+| Getyield | 10504 (10504) | 808 (808) | 11272 (11272) | 88 (88) |
+| F1, F2 | 6565 (6565) | 505 (505) | 7045 (7045) | 55 (55) |
+| Masscurv | 1313 (1313) | 101 (101) | 1409 (1409) | 11 (11) |
+| Masscurv1, Masscurv2 | 2626 (2626) | 202 (202) | 2818 (2818) | 22 (22) |
+| De_Saddle_Scission | 57019449 (133920) | 60001515 (134648) | 2121003 (86570) | 600165 (68755) |
+| beta_light | 527826 (66494) | 47874 (31968) | 617142 (69285) | 5742 (5742) |
+| beta_heavy | 175942 (50996) | 15958 (15958) | 205714 (52857) | 1914 (1914) |
+| Z_equi | 1537764 (82013) | 141198 (47649) | 1824456 (84253) | 16170 (16170) |
+| Beta_Equi | 87971 (40996) | 7979 (7979) | 102857 (42857) | 957 (957) |
+| Gaussintegral | 31519613 (125390) | 227000 (54187) | 2955937 (91546) | 26402 (23201) |
+| Bell | 512588 (66018) | 47066 (31766) | 608152 (69004) | 5390 (5390) |
+| U_Box | 1313 (1313) | 101 (101) | 1409 (1409) | 11 (11) |
+| EVEN_ODD | 37999836 (128554) | 40000000 (129531) | 1399912 (80936) | 400000 (62500) |
+| U_Ired | 82949346 (140125) | 80000000 (139531) | 3230860 (92620) | 800000 (72500) |
+| U_IredFF | 37999836 (128554) | 40000000 (129531) | 1399912 (80936) | 400000 (62500) |
+| U_I_Shell | 86016992 (140500) | 98538238 (142028) | 3387295 (93231) | 849213 (73268) |
+| E0_GDR, Width_GDR | 895779709 (173668) | 857072654 (173077) | 32269123 (125756) | 8859394 (107303) |
+| Efac_def_GDR | 893706759 (173636) | 856968906 (173076) | 32192211 (125718) | 8850171 (107285) |
+| u_accel | 25667127 (122532) | 36100145 (127627) | 973534 (75211) | 125238 (45654) |
+| site e2_light, e2_heavy | 18999918 (118554) | 20000000 (119531) | 699956 (70936) | 200000 (52500) |
+| site pegl_table | 297902253 (158182) | 285656302 (157435) | 10730737 (110479) | 2950057 (91523) |
+
+`U_Delta_S0` is never called in these runs (it would return 0 anyway); `U_Valid` once per system. At every logged `Beta_Equi` call `f = 0`, i.e. a non-convergence message would go to the console (`Print #0`).
