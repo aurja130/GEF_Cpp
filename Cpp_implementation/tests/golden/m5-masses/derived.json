@@ -1,0 +1,139 @@
+{
+  "kind": "store-derived",
+  "outputs": {
+    "files.txt": "ddae3b6af76b52bce1e8c079c8e94c37b0ec6963b50df18f79f64da5359c9c0e"
+  },
+  "sources": [
+    {
+      "capture": "m5-masses",
+      "file": "AME2020_grid.txt",
+      "sha256": "49ed057d6b4e697f033b76960ed08a42200faa43b1854e40be6e6d8de277b96f"
+    },
+    {
+      "capture": "m5-masses",
+      "file": "AME2020_random.txt",
+      "sha256": "2a679a0d20bd0f56f344115d34e5e2486f2ba5fc556fc86f6df146859b10d338"
+    },
+    {
+      "capture": "m5-masses",
+      "file": "ECOUL_grid.txt",
+      "sha256": "dcc2405f3c98f06843c9b416f9d316a03a638fb543646ca55324f32bb2c18b31"
+    },
+    {
+      "capture": "m5-masses",
+      "file": "ECOUL_random.txt",
+      "sha256": "f72e465e8d84e861e0ff704b5b156a07532004b503143eb3ff6281dc7c5a2001"
+    },
+    {
+      "capture": "m5-masses",
+      "file": "FEDEFOLys_grid.txt",
+      "sha256": "cdf69620f30b3eaa4ffc280002b4a047124f07d32d6e5db20f184068ac407d0f"
+    },
+    {
+      "capture": "m5-masses",
+      "file": "FEDEFOLys_random.txt",
+      "sha256": "10747d15f1fb912eafe0633761592f878cff53ac1f9940a74b0e7beeb792ce6c"
+    },
+    {
+      "capture": "m5-masses",
+      "file": "LDMass_grid.txt",
+      "sha256": "53be59db6bf9354748ca65025bced6ac0da784213949219ea3c96b50cc0f1ba5"
+    },
+    {
+      "capture": "m5-masses",
+      "file": "LDMass_random.txt",
+      "sha256": "4df118e69e7688dbed54cc64e5f5dcf694f5ba39cfc08a54bde2d7a71d370fa1"
+    },
+    {
+      "capture": "m5-masses",
+      "file": "LyMass_grid.txt",
+      "sha256": "373efa4b34a56a2b346d5b7b77eae3ee1f889abf78bf1eadeaf510ce39caf02e"
+    },
+    {
+      "capture": "m5-masses",
+      "file": "LyMass_random.txt",
+      "sha256": "0633e26a020662ea6a8d80d8a74cb6b345338a8b826e8f82b7e75dad72944a42"
+    },
+    {
+      "capture": "m5-masses",
+      "file": "LyPair_grid.txt",
+      "sha256": "5d7952f70ceaeb60ba54e44d7e1b92e0da5c7f6e1680ce1dc79581a074b541cd"
+    },
+    {
+      "capture": "m5-masses",
+      "file": "LyPair_random.txt",
+      "sha256": "790baec0d4ff47420082c2005ffaa5acfc26f3b65cae6778d3d651f6929e4799"
+    },
+    {
+      "capture": "m5-masses",
+      "file": "U_Delta_S0_grid.txt",
+      "sha256": "c49a1d56f03399f86e872018e32b3926e373f6899dc0009bd61fd8ff05814b39"
+    },
+    {
+      "capture": "m5-masses",
+      "file": "U_Delta_S0_random.txt",
+      "sha256": "25bbb0e95a0c98d1cec62ed1011de5c3d18d4064eec113b42288da12a66c562c"
+    },
+    {
+      "capture": "m5-masses",
+      "file": "U_MASS_grid.txt",
+      "sha256": "3bdd106e7cdc6eaca91e218fb188c0b4bd4b46aeaad8fed01d7d61237b220902"
+    },
+    {
+      "capture": "m5-masses",
+      "file": "U_MASS_random.txt",
+      "sha256": "553d816e0177b24a4f7b6e3c705409248e0723ab741b2403dd3efce82483ea4d"
+    },
+    {
+      "capture": "m5-masses",
+      "file": "U_Q_beta_minus_grid.txt",
+      "sha256": "94861943d20469f7f8d5b9c5c1d16440be55cab812a08a55af402028dba18d52"
+    },
+    {
+      "capture": "m5-masses",
+      "file": "U_Q_beta_minus_random.txt",
+      "sha256": "7bfcbd746bbcddd71196c4f5adaa03e197b323cd1e1a1d85548f2f9f17d999fc"
+    },
+    {
+      "capture": "m5-masses",
+      "file": "U_SHELL_EO_exp_grid.txt",
+      "sha256": "02b97ccfa43fc0b6d292094fe8ac9afe6876027be891d1c12225e591c7a8a57f"
+    },
+    {
+      "capture": "m5-masses",
+      "file": "U_SHELL_EO_exp_random.txt",
+      "sha256": "93f48be74b5eae3ba11ba855efec2828f2a021cb14be4df80015bd17b70658a6"
+    },
+    {
+      "capture": "m5-masses",
+      "file": "U_SHELL_exp_grid.txt",
+      "sha256": "cdd614a3c5531b3e53259f40d467dbeedc4628c917bc38a428bf765205b5a684"
+    },
+    {
+      "capture": "m5-masses",
+      "file": "U_SHELL_exp_random.txt",
+      "sha256": "5450e6585bc0e550488e56835d43c0e3c5219ff4c4e9ed7f3206562a88ef7671"
+    },
+    {
+      "capture": "m5-masses",
+      "file": "U_SHELL_grid.txt",
+      "sha256": "72263e71cc74a7150972cf23c2673dc6d87ec1239132fc57bca60e23fe40c7f7"
+    },
+    {
+      "capture": "m5-masses",
+      "file": "U_SHELL_random.txt",
+      "sha256": "ce9985d3a067b31c8c4368b5b5b485534dce5a0b545e70554e870a369667d796"
+    },
+    {
+      "capture": "m5-masses",
+      "file": "U_Valid_grid.txt",
+      "sha256": "21c5017a7e24e0a112b33ff9dd4d44d38d42ee9a10a9804a57c58c1176bda94f"
+    },
+    {
+      "capture": "m5-masses",
+      "file": "U_Valid_random.txt",
+      "sha256": "f1361b41b32e67a961a8f1bef56f21527f639304989d2ab1bfae18d00f121d3c"
+    }
+  ],
+  "tool": "python3 -m harness.probe_fingerprints m5-masses --name m5-masses --files AME2020_grid.txt AME2020_random.txt ECOUL_grid.txt ECOUL_random.txt FEDEFOLys_grid.txt FEDEFOLys_random.txt LDMass_grid.txt LDMass_random.txt LyMass_grid.txt LyMass_random.txt LyPair_grid.txt LyPair_random.txt U_Delta_S0_grid.txt U_Delta_S0_random.txt U_MASS_grid.txt U_MASS_random.txt U_Q_beta_minus_grid.txt U_Q_beta_minus_random.txt U_SHELL_EO_exp_grid.txt U_SHELL_EO_exp_random.txt U_SHELL_exp_grid.txt U_SHELL_exp_random.txt U_SHELL_grid.txt U_SHELL_random.txt U_Valid_grid.txt U_Valid_random.txt"
+}

@@ -31,6 +31,7 @@ add_executable(gef_tests
     nuclide_tables_test.cpp
     params_test.cpp
     physics_helpers_test.cpp
+    physics_masses_test.cpp
     print_using_test.cpp
     probe_dump_test.cpp
     program_data_test.cpp
