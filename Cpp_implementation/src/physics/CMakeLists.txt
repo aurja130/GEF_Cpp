@@ -5,6 +5,7 @@
 # GEF's deterministic physics functions (M5, namespace gef::physics).
 add_library(gef_physics STATIC
     helpers.cpp
+    rotation.cpp
     level_density.cpp
     masses.cpp)
 target_include_directories(gef_physics PUBLIC "${PROJECT_SOURCE_DIR}/Cpp_implementation/src")
