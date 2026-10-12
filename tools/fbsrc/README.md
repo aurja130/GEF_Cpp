@@ -251,9 +251,10 @@ print(piece.summary)  # "ok: ..." or "MISMATCH: ...", with piece.diff as the rep
 
 ### Limits
 
-- Piece mode compares code in procedure context. The driver's piece is in a `Sub`, so GEF's
-  code must be inside a procedure too. The same loop at module level gave an extra label at
-  `Next` (observed while writing the tests), which the check reports as a mismatch.
+- Keep the piece inside a procedure on both sides. A module-level loop in the reference gave an
+  extra label at `Next` against a driver piece in a `Sub` (observed in the tests). The tests use
+  `Sub` on both sides; in a synthetic check, `Sub`- and `Function`-wrapped driver pieces both
+  matched a `Function`-wrapped reference.
 - Piece mapping uses `#line`, so it has the one-BASIC-line granularity described under Known
   limitations.
 - The consistency check fixes the fbc options to `-gen gcc -R -g -c`. Kept C from other
@@ -271,7 +272,7 @@ build/fbsrc/
     src/                      copy of Reference/GEF_code/source/ + GEF.c + GEF.o
   <rev>-p<hash12>/            one directory per distinct patch directory
   ctags/index.json            fbdef symbol index
-  fn_c_equiv/                 scratch for piece-mode re-emission, removed after use
+  fn_c_equiv/                 scratch copies for piece-mode re-emission, each removed after use
 ```
 
 Everything under `build/` is generated and gitignored. Old emissions are not pruned;
