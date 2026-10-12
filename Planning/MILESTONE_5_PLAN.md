@@ -220,4 +220,4 @@ Tasks in execution order. Mark each one done here when finished, and update `CUR
 | site e2_light, e2_heavy | 18999918 (118554) | 20000000 (119531) | 699956 (70936) | 200000 (52500) |
 | site pegl_table | 297902253 (158182) | 285656302 (157435) | 10730737 (110479) | 2950057 (91523) |
 
-`U_Delta_S0` is never called in these runs (it would return 0 anyway); `U_Valid` once per system. At every logged `Beta_Equi` call `f = 0`, i.e. a non-convergence message would go to the console (`Print #0`).
+`U_Delta_S0` is never called in these runs (it would return 0 anyway); `U_Valid` once per system. At the logged `Beta_Equi` calls `f` is 0 or 1 (`global.f` in all four captures): file number 0 is the console; what #1 refers to at those calls is established in M5.5 (D7).
