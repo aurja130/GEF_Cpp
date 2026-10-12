@@ -469,6 +469,17 @@ Tool commands are run from the repository root: `python3 -m tools.fbsrc.fbline <
 - **C++ symbol:** `gef::data::i_mat_endf`, `gef::data::r_awr_endf` (`Cpp_implementation/src/data/lookups.cpp`)
 - **Owning milestone:** M4
 
+### Q-037 The fission barrier RF has no value at RX exactly 30
+
+- **BASIC location:** `GEF.bas:17679-17690` (the four `If` tests on `RX` that set `RF`; `BFTF` spans `GEF.bas:17657-17750`)
+- **Mechanism:** The tests are `RX < 30` (RF = 1E10), `RX > RX0` (RF = 0), `RX < RX1 And RX > 30` (linear) and `RX >= RX1 And RX <= RX0` (cubic). `RX` exactly 30 satisfies none of them, so `RF` keeps its `Dim` value 0 and `RB = RF * RS` is 0.
+- **Effect:** At RZ = 60, RA = 120, `RI = 0`, so `RX = RZ^2 / RA = 30` exactly. Any input whose float `RX` is exactly 30 gets `RF = 0` and therefore `RB = 0`. `I_Switch` 0 then returns exactly 0, and `I_Switch` 1–5 add their shell and pairing terms to that zero base. `I_Switch` 6 also returns 0 at this point: `Max(RB + LYPAIR(60,120) * 2/12, 0)` clamps a negative pairing term (`LYPAIR(60,120)` ≈ −2.19, inferred from the grid values for `I_Switch` 1, 3 and 5).
+- **Evidence status:** *confirmed by fbc C*
+- **Evidence:** GEF.c 17263-17314 (the guarded RF assignments between the `#line 17679` and `#line 17690` markers) has no branch for RX = 30. Driver output `BFTF_grid.txt:83841` of store capture `m5-barriers` (RZ 60, RA 120, I_Switch 0) is `00000000`; I_Switch 1 at the same point (line 83842) is `bebaf111`. Reproduced by the C++ (`physics: BFTF/BFTFA/BFTFB equals BASIC on the driver grids`). Not reached in the M5.2 captures: every captured call has RX between about 35 and 43 [from the barriers replay].
+- **Fidelity switch:** `fix_bftf_rx30_hole`
+- **C++ symbol:** `gef::physics::bftf` (`Cpp_implementation/src/physics/barriers.cpp`)
+- **Owning milestone:** M5
+
 ## 5. Build notes (not GEF quirks)
 
 These describe how the toolchain, not GEF, can make the C++ results differ from the reference binary. They have no fidelity switch.
@@ -549,6 +560,7 @@ These describe how the toolchain, not GEF, can make the C++ results differ from 
 | Q-034 | JEFF-3.1.1 table 9 records shorter than `N_MAT_MAX` | `NucPropJEFF311.bas:47-57, 90, 94` | confirmed in output | — | M4 |
 | Q-035 | Unterminated `/'` in a parameter file hangs GEF | `ReadParameters.mac:1-8` | confirmed in output | — | M4 |
 | Q-036 | Legacy NucProp files map missing nuclides to the last entry | `NucPropx.bas:157-188` (and mf, f) | confirmed in output | — | M4 |
+| Q-037 | BFTF RF has no value at RX = 30 | `GEF.bas:17679-17690` | confirmed by fbc C | `fix_bftf_rx30_hole` | M5 |
 | B-001 | Optimisation level vs fbc `-O0` | (toolchain) | open risk | — | M3, M5 |
 | B-002 | fbc gcc passes `-fwrapv -fno-strict-aliasing` | (toolchain) | resolved for the runtime layer (M3.3) | — | M3 |
 | B-003 | `Compilationstamp` needs `SOURCE_DATE_EPOCH` | `GEF.bas:17` | handled (M1) | — | M1 |
