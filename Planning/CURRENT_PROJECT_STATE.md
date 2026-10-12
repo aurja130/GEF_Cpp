@@ -25,7 +25,7 @@
 | Coverage matrix | `Planning/COVERAGE_MATRIX.md`: 114 rows × T0–T5; 27 cells covered (M3: FreeBASIC numeric semantics at T1, `FbMtRng` at T2; M4: all 21 T0 cells it owned and 4 T1 cells); T4 cells owned by M17 after the exact-first decision; one cell deferred (approved 2026-10-07) |
 | Coding standards | `Planning/CODING_STANDARDS.md` |
 | Code maps | `Planning/code_maps/`: the six planning-session reports, with a README listing corrected claims |
-| Version control | `validation/` (including `validation/reference_store/`) and `.omp/` are gitignored, except the agent context `.omp/AGENTS.md` and `.omp/LOCAL_ENVIRONMENT.md`; manifests of stored data are committed under `manifests/` |
+| Version control | `validation/` (including `validation/reference_store/`) and `.omp/` are gitignored, except the agent context `.omp/AGENTS.md`, `.omp/LOCAL_ENVIRONMENT.md` and the model routing `.omp/config.yml`; manifests of stored data are committed under `manifests/` |
 
 ## 2. Repository inventory
 
@@ -109,6 +109,7 @@ Recorded in `manifests/toolchain.txt`; checked by `python3 -m tools.toolchain.ch
 | `python3 -m tools.fbsrc.emit_c [--patch-dir DIR] [--force]` | Translate the BASIC source to C in `build/fbsrc/<rev>[-p<hash>]/` (`fbc -gen gcc -R -g -c GEF.bas`, `SOURCE_DATE_EPOCH` = submodule commit time, so output is deterministic). Patch dirs hold unified diffs applied with `patch -p1` |
 | `python3 -m tools.fbsrc.fbline <file>:<line>[-<line>] [--context N] [--raw] [--symbols]` | BASIC line(s) and the C generated from them; works for included files |
 | `python3 -m tools.fbsrc.fbdef <name> [--refs]` | Case-insensitive definition lookup (ctags index corrected for `Static`, `ReDim`, `#Define`) and whole-word references outside comments |
+| `python3 -m tools.agent.wait_for_usage [--dry-run]` | Agent workflow (`.omp/AGENTS.md`): sleep until a usage window over 90 % used resets, if every such window resets within an hour; otherwise return at once |
 
 Configuration: `pyproject.toml` (ruff, basedpyright strict over `tools/` and `harness/`, pytest markers `fbc`, `slow`, `gdb`, `validation`). Details: `tools/fbsrc/README.md`, `Planning/CODING_STANDARDS.md` §3.
 

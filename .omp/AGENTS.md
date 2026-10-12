@@ -19,6 +19,10 @@ Models come from the user's session choice, otherwise `.omp/config.yml` (`task.a
 - **Reviewers**: `reviewer`, in a context of its own, read-only, judging against the authorities above. A worker never approves its own patch.
 - Workers and reviewers do not build or test. The orchestrator verifies each integrated batch; review approval is not runtime proof. Mechanical or documentation-only changes need no review panel.
 
+### Usage limits
+
+At each batch boundary (before delegating a batch, before a review round), the orchestrator runs `python3 -m tools.agent.wait_for_usage` with bash `timeout: 0`. If a usage window is over 90 % used and resets within an hour, it sleeps until the reset and returns; otherwise it returns at once and work continues until the allowance is used up, since waiting longer gains nothing.
+
 ### Review cycle
 
 1. Freeze the scope and acceptance criteria; every reviewer gets the same ones.
