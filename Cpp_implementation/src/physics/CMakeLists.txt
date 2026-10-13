@@ -4,6 +4,7 @@
 
 # GEF's deterministic physics functions (M5, namespace gef::physics).
 add_library(gef_physics STATIC
+    e2_cascade.cpp
     helpers.cpp
     shape.cpp
     gamma_table.cpp

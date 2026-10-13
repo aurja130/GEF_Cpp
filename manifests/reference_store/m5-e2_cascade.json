@@ -1,0 +1,86 @@
+{
+  "created_utc": "2026-10-13T09:37:41Z",
+  "driver_json": {
+    "binary_sha256": "25f8b9fd91f39f019c42dd10263f42cb0d6b18aa22fbe9df39d69004654ed4f0",
+    "command": [
+      "m5_e2_cascade"
+    ],
+    "cuts": [
+      {
+        "as": "gef_rotation.bi",
+        "cut_sha256": "493f70deccf1c75a04112f3fbd53337902f4e0f548c0e3a9e850c102eefb0850",
+        "file": "GEF.bas",
+        "first": 17094,
+        "last": 17170,
+        "source_sha256": "055c0a17124e88390d749527b4d21ca238a0e42da1df1ca1d7a3633febe3a4cc"
+      },
+      {
+        "as": "e2_light.bi",
+        "cut_sha256": "f24545b6e21603dfec47a0f7f11b00bb9f5ad37cb238fc9074debb64f3b27685",
+        "file": "GEF.bas",
+        "first": 9309,
+        "last": 9368,
+        "source_sha256": "055c0a17124e88390d749527b4d21ca238a0e42da1df1ca1d7a3633febe3a4cc"
+      },
+      {
+        "as": "e2_heavy.bi",
+        "cut_sha256": "1aea567563d11d81e93b4e360f9322b657c7bfb9984e76a87e75fc05cab7aca4",
+        "file": "GEF.bas",
+        "first": 9430,
+        "last": 9484,
+        "source_sha256": "055c0a17124e88390d749527b4d21ca238a0e42da1df1ca1d7a3633febe3a4cc"
+      }
+    ],
+    "driver": "m5_e2_cascade",
+    "driver_includes": [
+      {
+        "file": "m5_common.bi",
+        "sha256": "6109ea0abed2fd32783b22868093a241a7282a04b420dbbb5cbc956f714d1d6e"
+      }
+    ],
+    "driver_sha256": "55ba9c16b5afc83fdcc08d6ab1730354df0eda375374454cfda31060b5cd45af",
+    "fbc_version": "1.10.1",
+    "includes": [
+      {
+        "file": "utilities.bi",
+        "sha256": "0a16dfd28006bdf1aa512ce380a814e9132e24f79e951e9946e08701c449fa46"
+      },
+      {
+        "file": "DEFO.bas",
+        "sha256": "eb5edfafe4fa5fbc4eab1ee8f3de28314de7428eeb7de4596b8c14e8ef12cc7e"
+      },
+      {
+        "file": "NucPropJEFF33.bas",
+        "sha256": "6d0ed6e5d899ba985a51e1b211385a770825f0660fed3c0c0547a06fa77e4eb1"
+      },
+      {
+        "file": "NucProp_Functions.mac",
+        "sha256": "936bbc6d4e2c7c1d6f68241733ca2d193252f34875d501aec9e636c531d2a3d4"
+      }
+    ],
+    "outputs": {
+      "e2_heavy_grid.txt": "b001562055daa980eab0eb07d199344f8103e4ce525fea0789684a087d0469fb",
+      "e2_heavy_random.txt": "392260574cf677e0f87d4e43a51cd807b75f02f04c1071719e47f14d20954c5c",
+      "e2_light_grid.txt": "760f505e8390c54aee3454175cb3f8a7e7d478730fe9b06f44e217466c9fd775",
+      "e2_light_random.txt": "7595d7c84905fead9b22d35c8b16242a50ff089bb7c50c8b43fce3dd95b29be9",
+      "stdout.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "returncode": 0,
+    "run_wall_time_s": 2.297,
+    "work_files": []
+  },
+  "file_count": 6,
+  "files": {
+    "driver.json": "7b694079440dec3f38177e39d997c323d1abb12e855d249370be6d783b59835a",
+    "e2_heavy_grid.txt": "b001562055daa980eab0eb07d199344f8103e4ce525fea0789684a087d0469fb",
+    "e2_heavy_random.txt": "392260574cf677e0f87d4e43a51cd807b75f02f04c1071719e47f14d20954c5c",
+    "e2_light_grid.txt": "760f505e8390c54aee3454175cb3f8a7e7d478730fe9b06f44e217466c9fd775",
+    "e2_light_random.txt": "7595d7c84905fead9b22d35c8b16242a50ff089bb7c50c8b43fce3dd95b29be9",
+    "stdout.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "id": "m5-e2_cascade",
+  "kind": "driver",
+  "note": "M5.3 driver m5_e2_cascade: synthetic grids (harness/drivers/M5_DRIVERS.md)",
+  "schema": 1,
+  "total_bytes": 129439845
+}

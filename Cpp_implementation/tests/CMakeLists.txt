@@ -30,6 +30,7 @@ add_executable(gef_tests
     maths_test.cpp
     nuclide_tables_test.cpp
     params_test.cpp
+    physics_e2_cascade_test.cpp
     physics_helpers_test.cpp
     physics_shape_test.cpp
     physics_egamma_table_test.cpp
