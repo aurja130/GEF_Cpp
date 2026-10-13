@@ -1,6 +1,6 @@
 # Milestone 5: Deterministic Physics Function Library
 
-**Status:** planned (2026-10-12)
+**Status:** complete (2026-10-13); planned 2026-10-12
 **Strategy reference:** `IMPLEMENTATION_STRATEGY.md` §2.1, §2.2, §2.4, §2.9 and §3, M5
 **Depends on:** M1 (driver framework, patch sets, runner, reference store), M2 (`compare.exact`), M3 (`gef::fb` conversions, maths, `Str`, `fb::Array`), M4 (`TableSet`, `Parameters`, `Isotab`, lookup functions)
 **Unblocks:** M6 (`U_Valid`, the barrier and mass printout, CN kinematics), M7 (the per-nucleus table builder), M8 (`Eva` and the `P_Egamma_low` sampler built on the table), M9 (pre-pass widths), M10 (the E2 cascade inside the gamma stage), M11 (`U_Q_beta_minus` in `Branchings.bas`)
@@ -85,9 +85,9 @@ Tasks in execution order. Mark each one done here when finished, and update `CUR
 **Done when:** the captures are stored and the per-function ranges are known.
 
 ### M5.3 BASIC drivers and goldens
-- [ ] One driver per group of §3: `m5_masses`, `m5_barriers`, `m5_level_density`, `m5_shape`, `m5_helpers`, `m5_rotation`, `m5_egamma_table` (lines 16980-17037 wrapped in a `Sub` that writes `sigma` and `sigMax`) and `m5_e2_cascade` (the two copies wrapped in two `Sub`s with explicit arguments; JEFF-3.3 `Isotab` through the `NucPropJEFF33.bas` loader, plus synthetic entries). Globals the functions read (`pi`, `Tscale`, `Econd`, `Etrans`, the tables) are declared as GEF declares them.
-- [ ] Each driver evaluates its synthetic grid and replays its functions' `arglog` cases, writing hex results.
-- [ ] Synthetic grids:
+- [x] One driver per group of §3: `m5_masses`, `m5_barriers`, `m5_level_density`, `m5_shape`, `m5_helpers`, `m5_rotation`, `m5_egamma_table` (lines 16980-17037 wrapped in a `Sub` that writes `sigma` and `sigMax`) and `m5_e2_cascade` (the two copies wrapped in two `Sub`s with explicit arguments; JEFF-3.3 `Isotab` through the `NucPropJEFF33.bas` loader, plus synthetic entries). Globals the functions read (`pi`, `Tscale`, `Econd`, `Etrans`, the tables) are declared as GEF declares them.
+- [x] Each driver evaluates its synthetic grid and replays its functions' `arglog` cases, writing hex results.
+- [x] Synthetic grids:
   - Integer (Z, A) over every (Z, N) whose reads stay inside the tables, Z = 1…120; just outside that domain, the C++ is expected to throw (D3 default).
   - `Single` Z and A on the integer grid plus quarter steps.
   - Energies from −1 to 100 MeV, 0.01 MeV steps below 10 MeV and 0.1 MeV above, plus ±1 ULP around `Etrans`, `Econd` and the `Eeff0 > 0.5` threshold of `U_Temp`/`U_Temp2`.
@@ -95,34 +95,34 @@ Tasks in execution order. Mark each one done here when finished, and update `CUR
   - 10⁵ seeded random `Single` tuples per function inside the ranges seen in M5.2.
   - The named edges: `BFTF` `RX = 30`, `Getyield` with `T_high = T_low`, `U_Valid` with `I_Z = 0`.
   - `Beta_Equi` additionally on the continuation chains GEF runs (`GEF.bas:5697-5873`: `IZ1 = 10…Z−10`, each result the next start) for the four capture systems.
-- [ ] Driver checks (D1):
+- [x] Driver checks (D1):
   - every driver reproduces the `arglog` results bit for bit;
   - `fn_c_equiv` passes for every cut function and both extracted pieces.
-- [ ] Goldens (D9): fingerprints committed through `harness.golden`; full outputs in the store as `m5-<driver>`.
+- [x] Goldens (D9): fingerprints committed through `harness.golden`; full outputs in the store as `m5-<driver>`.
 
 **Done when:** every driver builds, passes both checks and has its golden.
 
 ### M5.4 C++ port (`gef_physics`)
-- [ ] Port in dependency order, each from its `fbline` output (D10), with provenance comments and the API of D8: helpers → masses → barriers → level densities and temperatures → shape and yields (`Beta_Equi` last) → rotation, GDR and `u_accel` → `p_egamma_low_table` → `e2_cascade`. `e2_cascade` takes the `Isotab` entry the caller found with `n_iso_mat`/`iso_for_mat` (M4); if later BASIC code reads `J` or `K` before reassigning them, it also returns their final values.
-- [ ] Diagnostics of D7 and constants of D13.
-- [ ] Tests (`physics_<group>_test.cpp`): fingerprint against the committed golden. With the store present, every value is compared, and the first difference is reported with ULP distance and the input that produced it. Every `arglog` case is replayed against its logged result. The out-of-domain cases expect the throw (or the reproduced read, for D3 sites).
+- [x] Port in dependency order, each from its `fbline` output (D10), with provenance comments and the API of D8: helpers → masses → barriers → level densities and temperatures → shape and yields (`Beta_Equi` last) → rotation, GDR and `u_accel` → `p_egamma_low_table` → `e2_cascade`. `e2_cascade` takes the `Isotab` entry the caller found with `n_iso_mat`/`iso_for_mat` (M4); if later BASIC code reads `J` or `K` before reassigning them, it also returns their final values.
+- [x] Diagnostics of D7 and constants of D13.
+- [x] Tests (`physics_<group>_test.cpp`): fingerprint against the committed golden. With the store present, every value is compared, and the first difference is reported with ULP distance and the input that produced it. Every `arglog` case is replayed against its logged result. The out-of-domain cases expect the throw (or the reproduced read, for D3 sites).
 
 **Done when:** every test passes in `dev-gcc`, `dev-clang` and `release-exact`; `asan-ubsan` and `tsan` pass without `[slow]`.
 
 ### M5.5 Reachability and quirks
-- [ ] D3: for every out-of-range index found in M5.2, establish what BASIC reads, reproduce it behind a quirk switch and register the quirk. If none is found, record that the table interior covers every captured call.
-- [ ] D7: whether `U_MASS`'s negative-input print and `Beta_Equi`'s non-convergence print are reachable in the captures and on the grids; for `Beta_Equi`, what `#f` refers to at its call sites (emitted C and fbc runtime). Register a quirk if a print is reachable.
-- [ ] Register the confirmed quirks among the facts of §4: `Getyield` division by zero, the `BFTF` `RX = 30` hole, the `U_Valid` `I_Z = 0` division, the E2 cascade's ground-state stop (`R_SPI(K) = CInt(J_frag)` at `J = Jfrag`, `event_loop.md`), the unchecked `Array_Eg2_*(100)`, and the `J`/`K` leak if later code reads them.
+- [x] D3: for every out-of-range index found in M5.2, establish what BASIC reads, reproduce it behind a quirk switch and register the quirk. If none is found, record that the table interior covers every captured call.
+- [x] D7: whether `U_MASS`'s negative-input print and `Beta_Equi`'s non-convergence print are reachable in the captures and on the grids; for `Beta_Equi`, what `#f` refers to at its call sites (emitted C and fbc runtime). Register a quirk if a print is reachable.
+- [x] Register the confirmed quirks among the facts of §4: `Getyield` division by zero, the `BFTF` `RX = 30` hole, the `U_Valid` `I_Z = 0` division, the E2 cascade's ground-state stop (`R_SPI(K) = CInt(J_frag)` at `J = Jfrag`, `event_loop.md`), the unchecked `Array_Eg2_*(100)`, and the `J`/`K` leak if later code reads them.
 
 ### M5.6 CI, documentation and close-out
-- [ ] `scripts/ci.sh` covers the new library, tests and pytest; `harness.golden check` covers the M5 goldens.
-- [ ] Update:
+- [x] `scripts/ci.sh` covers the new library, tests and pytest; `harness.golden check` covers the M5 goldens.
+- [x] Update:
   - `QUIRKS.md`: new quirks; B-001 and B-004 findings for the physics functions.
   - `COVERAGE_MATRIX.md`: the T1 cells M5 closes ("Isomer stop in the gamma cascade", "Masses and shell/deformation tables", "`P_Egamma_low` cross-section table") and its contributions to "Superheavies", "Q values" and "Prompt-gamma spectra".
   - `IMPLEMENTATION_STRATEGY.md`: M5 status.
   - `CODING_STANDARDS.md`: if the physics module adds conventions.
   - `CURRENT_PROJECT_STATE.md`.
-- [ ] Mark this plan complete with completion notes.
+- [x] Mark this plan complete with completion notes.
 
 ## 6. Exit gate (all must hold)
 
@@ -245,14 +245,32 @@ Drivers, C++ port and tests were built group by group (each driver replayed agai
 - **Tooling fixes found on the way:** `fn_c_equiv` piece mode re-emitted the driver with `-c` only, which makes fbc emit the module-level code as a constructor; it now passes `-m <stem>` (README: `emit_c`'s `GEF.c` has the same property, which does not affect procedure bodies). `NucPropJEFF33.bas` reads its first `DATA` without a `Restore`, so a driver must include it before any other file with `DATA` (as GEF does).
 - **Worker substitution (disclosure):** the group workers ran on the `task` role (`anthropic/claude-haiku-5-5`); two of them stopped on that model's rate limit, and the remaining work of the shape C++ port, the `P_Egamma_low` integration and the whole E2 cascade (driver, C++, test) was done in the orchestrator session.
 
-- **Grid coverage beyond the plan's list (review notes, accepted):** `Beta_Equi`'s continuation chains (M5.3) are covered by the replay, not by a separate grid: the first 20,000 calls of each capture are complete chains (a chain is IZ1 = 10 … Z − 10, i.e. Z − 19 calls: 298 complete chains for Rn-215, 273 for U-236, all 101 for Cf-252 and all 11 for Sg-264), each start the previous result. `Masscurv*`, `De_Saddle_Scission` and the `P_Egamma_low` table take continuous Single Z/A and read at most DEFOtab; their structured grids cover integer Z/A around the fission range and the random tuples the rest. The masses quarter-step block steps N by 0.5 (the round-half-to-even ties); `ECOUL` has no quarter-step block (its random tuples are continuous).
+- **Grid coverage beyond the plan's list (review notes, accepted):** `Beta_Equi`'s continuation chains (M5.3) are covered by the replay, not by a separate grid: the first 20,000 calls of each capture are complete chains (a chain is IZ1 = 10 … Z − 10, i.e. Z − 19 calls: 298 complete chains for Rn-215, 273 for U-236, all 101 for Cf-252 and all 11 for Sg-264), each start the previous result. `Masscurv*`, `De_Saddle_Scission` and the `P_Egamma_low` table take continuous Single Z/A and read at most DEFOtab; their structured grids cover integer Z/A around the fission range and the random tuples the rest. The masses quarter-step block steps N by 0.5 (the round-half-to-even ties); `ECOUL` has no quarter-step block (its random tuples are continuous). The barriers integer grid uses N = 1 … 202 for every switch (the single-cell reads of `I_Switch` 1 and 3 are not evaluated at N = 0 and 203), and its quarter-step block covers RZ 84–96 × RA 225–245; the random tuples cover the captured RZ 84–107 × RA 210–265.
 
 ### Review round 1 (2026-10-13)
 
-Three reviewers (`reviewer` role, `anthropic/claude-opus-5-5`) on snapshot `d8da542`, with one frozen brief. Port fidelity: one defect (`EVEN_ODD` took the 1E-3 test in positive form, so a NaN `R_EVEN_ODD` went to the other branch; fixed to the compiled `!(... >= 1E-3)`, NaN added to the grid). Test gaps fixed: print flags asserted and printed lines compared (U_MASS, BFTF, Beta_Equi), `Beta_Equi` pass-through (D8) and N around the threshold, throw/no-throw pairs for masses, the `P_Egamma_low` table and the E2 cascade, the barriers random tuples widened to the captured ranges, `replay-check --require` reports logs without a replay. Quirks added: Q-040, Q-041; Q-037/Q-038 texts corrected. Documented, not changed: the `arglog` spread sample is not uniform (first K records are; `ARGLOG.md` Limits), `AME2020` calls inside `U_Q_beta_minus` are not logged, call sites are the last line of a continued call. The regenerated goldens have new store ids `m5-helpers-2`, `m5-masses-2`, `m5-barriers-2`, `m5-shape-2`; the superseded captures stay in the store (captures never change).
+Three reviewers (`reviewer` role, `anthropic/claude-opus-5-5`) on snapshot `d8da542`, with one frozen brief. Round 2 on `226d7e8`: every finding resolved or closed by a recorded decision, no new blocker; all three approve (harness and tooling; masses, barriers, level densities, helpers; shape, rotation, the `P_Egamma_low` table, the E2 cascade). Port fidelity: one defect (`EVEN_ODD` took the 1E-3 test in positive form, so a NaN `R_EVEN_ODD` went to the other branch; fixed to the compiled `!(... >= 1E-3)`, NaN added to the grid). Test gaps fixed: print flags asserted and printed lines compared (U_MASS, BFTF, Beta_Equi), `Beta_Equi` pass-through (D8) and N around the threshold, throw/no-throw pairs for masses, the `P_Egamma_low` table and the E2 cascade, the barriers random tuples widened to the captured ranges, `replay-check --require` reports logs without a replay. Quirks added: Q-040, Q-041; Q-037/Q-038 texts corrected. Documented, not changed: the `arglog` spread sample is not uniform (first K records are; `ARGLOG.md` Limits), `AME2020` calls inside `U_Q_beta_minus` are not logged, call sites are the last line of a continued call. The regenerated goldens have new store ids `m5-helpers-2`, `m5-masses-2`, `m5-barriers-2`, `m5-shape-2`; the superseded captures stay in the store (captures never change).
 
 ### M5.5 (2026-10-13)
 
 - **D3:** the `-exx` runs of the four systems raise no bound error (M5.2), so no table index of a §3 function, nor anything else in GEF, leaves its array in these runs. The C++ throws `std::out_of_range` outside the tables; every group that reads a table tests throw/no-throw pairs at the table edges (masses, barriers, level densities, the `P_Egamma_low` table, the E2 cascade). The one unchecked write found while porting, `Array_Eg2_*(100)`, is Q-039 (largest Ig2 in the captures: 17).
 - **D7:** none of the print conditions is reached in the captures: `U_MASS` gets Z ≥ 26, A ≥ 63; `BFTF*` get `I_Switch` 0–5; the C++ replay of 92,789 `Beta_Equi` calls asserts that none would print. On the grids each is reached: `U_MASS` for four negative inputs, `BFTF*` for `I_Switch` −1 and 7 (18 lines), `Beta_Equi` for 696 + 3 grid and 1,712 random inputs (all unphysical Z/A splits except the three threshold rows). The tests assert each flag on every grid line and rebuild the printed lines with `gef::fb::PrintFile` against the driver's `stdout.txt` / `Beta_Equi_print.txt` (fingerprinted in the goldens); `Beta_Equi`'s returned N is checked at N = 996 … 1001 around the `N > 998` threshold. `f` is 0 or 1 at the `Beta_Equi` calls (console, or file number 1: the `pfis`/`ptb` files are opened with `FreeFile` at `GEF.bas:4150, 4179, 10057`); since no captured call prints, which file #1 is at those calls has no effect on the captured output and is left to M7/M13, which own the file state. The `U_MASS` and `BFTF` prints go to the console and are the intended diagnostics; no quirk. `Beta_Equi`'s destination, the shared `f`, is Q-041.
 - **Quirks:** Q-037 (`BFTF` RF hole at RX = 30, confirmed by fbc C; RX 36.3–46.6 in every captured call), Q-040 (`TRusanov` computes a pairing floor and does not use it; found by the review), Q-041 (`Beta_Equi` prints to the shared file number `f`), Q-038 (the E2 cascade stops before its first gamma when any state has spin `CInt(J_frag)`; confirmed in output: 248–1,036 cascades per copy and capture), Q-039 (`Array_Eg2_*(100)` without bound). Assessed and not registered: `Getyield` with `T_high = T_low` gives an infinite effective temperature, a Fermi factor of 1/2 and a finite yield (0 or exp(…)/2 on the grid), not reached (T_high ≥ 0.426 > T_low ≤ 0.420 in the captures); `U_Valid` with `I_Z = 0` divides by zero, but the `I_Z < 76` test sets the result to 0 anyway (0 for all such grid rows), so it has no effect.
+
+### M5.6 and exit gate (2026-10-13)
+
+- **CI:** `scripts/ci.sh` covers `gef_physics` and its tests through the CMake presets, and the M5 goldens through pytest (`harness/tests/test_golden.py::test_committed_goldens_are_current` runs `harness.golden check`). Full run on `226d7e8`: PASS in every step (toolchain; build and test `dev-gcc` 888 s, `dev-clang` 161 s, `asan-ubsan` 705 s and `tsan` 1026 s without `[slow]`, `release-exact` 375 s; clang-tidy; clang-format; ruff; basedpyright; pytest 344 s; validation manifests; reference store). The toolchain manifest was refreshed for Python 3.14.8.
+- **Documents:** `QUIRKS.md` (Q-037–Q-041; B-001 finding 3; B-004 M5 result), `COVERAGE_MATRIX.md` (3 T1 cells closed; contributions to Superheavies, Q values, Prompt-gamma spectra), `IMPLEMENTATION_STRATEGY.md` (M5 status), `CODING_STANDARDS.md` (canonical patch order), `CURRENT_PROJECT_STATE.md`.
+- **Exit gate:**
+
+| Gate | Result |
+|---|---|
+| G1 Tooling | Drivers keep their C; `fn_c_equiv` ok for all 79 cut functions and the three pieces; `arglog` neutral on Rn-215 (244 files) and Cf-252 (42 files) |
+| G2 Captures | `m5-arglog-{rn215,cf252,u235,sh264}` and `m5-exx-{rn215,cf252,u235,sh264}` stored |
+| G3 Bit-exact | Every §3 function and both pieces equal BASIC on the grids and every captured call in `dev-gcc`, `dev-clang`, `release-exact`; no NaN-only or other exception, so no D12 analysis |
+| G4 Domain | No out-of-range access in the `-exx` runs; C++ throws outside the tables (tested at the table edges) |
+| G5 Diagnostics | U_MASS, BFTF and Beta_Equi print conditions returned as flags, asserted, and their printed lines rebuilt; reachability recorded (none in the captures; all on the grids) |
+| G6 CI | `scripts/ci.sh` passes in all presets; tidy, format, ruff, basedpyright clean; goldens current |
+
+- **Review:** approved by all three reviewers in round 2. After the approved snapshot only documentation changed (these notes, `QUIRKS.md` Q-041 counts, `CURRENT_PROJECT_STATE.md`, the strategy status) and the header comments of two test files (golden names), which `clang-format` checked.
+

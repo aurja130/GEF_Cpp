@@ -3,7 +3,7 @@
 // Licensed under the GNU GPL v3 or later, WITHOUT ANY WARRANTY; see LICENSE.txt.
 
 // T1 tests of physics/barriers (BFTF, BFTFA, BFTFB) against the driver m5_barriers (golden
-// m5-barriers) and the arglog captures. The grids repeat the driver's
+// m5-barriers-2) and the arglog captures. The grids repeat the driver's
 // (harness/drivers/m5_barriers.bas).
 
 #include "data/program_data.hpp"

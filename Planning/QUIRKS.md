@@ -517,7 +517,7 @@ Tool commands are run from the repository root: `python3 -m tools.fbsrc.fbline <
 
 - **BASIC location:** `GEF.bas:16628`; `f` is `Dim Shared As Integer f` (`GEF.bas:1768`), set by `f = FreeFile` at `GEF.bas:4150, 4179, 10057`
 - **Mechanism:** `If N > 998 Then Print #f,"Beta_Equi not converged: ",Z1,N` uses the shared file number of the `pfis`/`ptb` output files (GEF.c:13801-13814), which is 0 (the console) or 1 at the logged calls (arglog field `global.f`); it is not opened for this message.
-- **Effect:** not reached in the captured runs: the C++ replay of all 92,789 logged `Beta_Equi` calls asserts that none would print. It is reached for unphysical inputs: 696 of 972 grid and 1,712 of 2,000 random inputs of driver `m5_shape` do not converge (each prints once, with N = 1001). Where the line would go when it is reached (console, an open `ptb`/`pfis` file, or a closed file number) depends on the file state, which M7/M13 own.
+- **Effect:** not reached in the captured runs: the C++ replay of all 92,789 logged `Beta_Equi` calls asserts that none would print. It is reached on the grids of driver `m5_shape`: 699 of 979 structured rows (696 unphysical Z/A splits with N = 1001, and the threshold rows exiting at N = 999 and 1000) and 1,712 of 2,000 random inputs print once each. Where the line would go when it is reached (console, an open `ptb`/`pfis` file, or a closed file number) depends on the file state, which M7/M13 own.
 - **Evidence status:** *read only* for the destination; the message and its condition are *confirmed by fbc C*
 - **Evidence:** `python3 -m tools.fbsrc.fbline GEF.bas:16628`; driver output `Beta_Equi_print.txt` of store golden `m5-shape-2`, rebuilt by `physics: Beta_Equi equals BASIC on the driver grids`; `physics: Beta_Equi replays the captured GEF calls`.
 - **Fidelity switch:** none yet (the C++ returns the condition as `BetaEquiResult::print_not_converged` with N, plan D7; the caller decides the destination in M7/M13)
@@ -535,7 +535,8 @@ These describe how the toolchain, not GEF, can make the C++ results differ from 
 - **Status:** open risk, measured per function by the M3/M5 T1 bit-exact tests, which run in `release-exact` (`-O3`) as well. Fallback: compile the affected translation units at `-O0`.
 - **Finding 1 (M3.3, 2026-10-08):** `fb::fix` written as libfb computes it, `trunc(|x|) * sgn(x)`, differs at `-O3` for NaN inputs. Without `-fsignaling-nans`, gcc folds the multiplication by −1 into a negation, which keeps the NaN's sign and does not quiet a signalling NaN; libfb (and our `-O0` builds) return `|x|` quieted. Fixed in the source rather than by flags: `fix` handles NaN with explicit bit operations and the other cases with `t`/`-t`/`0`, which no optimisation can change. Lesson for later ports: a multiplication by a literal −1 (or by a sign) can lose its NaN behaviour at `-O3`.
 - **Finding 2 (M3.4, 2026-10-08):** across all libm intrinsics GEF uses and GEF's own maths helpers, every remaining difference between the C++ builds and the fbc-compiled drivers is a NaN result whose sign or payload differs; no non-NaN value differs in any preset. Examples: g++ expands `std::floor(float)` inline even in Debug, where fbc's C calls glibc `floorf`, which quiets a signalling NaN; clang rewrites `-a + 1` as `1 - a`, which keeps the NaN's sign; gcc `-O3` does the same inside `Erfc` and inlines `floor(double)`. IEEE 754 leaves the sign of most NaN results unspecified, so compilers may do this. **Decision (user, 2026-10-08): bit-exact comparisons treat every NaN as equal to every NaN.** The M3.4 drivers hash NaN results as the canonical NaN, and the tests accept any NaN where the driver printed one. A NaN that reaches a GEF output file would still show up in `compare.exact` (`nan` vs `-nan`). (`fb::fix`, written before this decision, reproduces libfb's NaN bits anyway.)
-- **Owning milestone:** M3, M5
+- **Finding 3 (M5, 2026-10-13):** no difference between `release-exact` (`-O3`) and the Debug presets in any physics test (61 test cases, about 14.8 million comparisons each), so no translation unit needs `-O0`.
+- **Owning milestone:** M3, M5 (done)
 
 ### B-002 fbc's backend gcc also passes `-fwrapv -fno-strict-aliasing`
 
@@ -561,8 +562,8 @@ These describe how the toolchain, not GEF, can make the C++ results differ from 
   - Literals never move across `/` or a subtracted non-literal.
   - `Double` chains are affected most: `d * 0.1 * e` differs from left-to-right evaluation for 824 of 2,000 random inputs, `s * (t * u)` for 714.
   - `1.0 - 2.0 * rnd` at `GEF.bas:9680` becomes `-(vr1 * 2) + 1`, which is exact-equivalent.
-- **Status:** confirmed by fbc C and by a run: driver `arith_rules.bas`, golden `m3-arith-rules`, reproduced bit for bit by `fbc_arithmetic_test.cpp` in `dev-gcc`, `dev-clang` and `release-exact`. Coding rule unchanged: port arithmetic from the `fbline` output, not from the BASIC text (coding standards §5). M5 T1 bit-exact tests catch any remaining order differences.
-- **Owning milestone:** M3 (rules, done), M5
+- **Status:** confirmed by fbc C and by a run: driver `arith_rules.bas`, golden `m3-arith-rules`, reproduced bit for bit by `fbc_arithmetic_test.cpp` in `dev-gcc`, `dev-clang` and `release-exact`. Coding rule unchanged: port arithmetic from the `fbline` output, not from the BASIC text (coding standards §5). **M5 (2026-10-13):** all physics functions ported from the `fbline` output are bit-exact on their grids and every logged call in the three presets; the shapes met there (folded constants such as `0.08*(Z²/A^⅓ + E) − 93`, `1.7*(4 − d)` → `−d*1.7 + 6.8`, literal multipliers moved behind `/`) are covered by the rules. One review finding was a comparison polarity (`EVEN_ODD`'s `If Abs(x) < 1E-3` compiled as `if (... >= 1E-3) goto`), which differs only for NaN: port each comparison in the polarity the C tests.
+- **Owning milestone:** M3 (rules), M5 (done)
 
 ## 6. Summary
 

@@ -4,7 +4,7 @@
 
 // T1 tests of physics/shape (Getyield, F1, F2, Masscurv, Masscurv1, Masscurv2,
 // De_Saddle_Scission, beta_light, beta_heavy, Z_equi, Beta_Equi) against the driver m5_shape
-// (golden m5-shape) and the arglog captures. The grids repeat the driver's
+// (golden m5-shape-2) and the arglog captures. The grids repeat the driver's
 // (harness/drivers/m5_shape.bas).
 
 #include "fbrt/convert.hpp"
