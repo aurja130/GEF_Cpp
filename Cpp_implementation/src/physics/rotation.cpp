@@ -17,11 +17,11 @@ namespace {
 
 // fbc folds `0.666667 * pi` and `sqr(5/(4*pi))` into the emitted C (GEF.c:16718), with pi the
 // Single 3.14159 (GEF.bas:760). Hex, because std::sqrt is not constexpr.
-constexpr double kC1 = 0x1.0C151E1E2BCF9p+1; // 0.666667 * (double)3.14159F
-constexpr double kC2 = 0x1.42F60A3305EC5p-1; // sqrt(5.0 / (4.0 * (double)3.14159F))
+constexpr double c_gamma = 0x1.0C151E1E2BCF9p+1; // 0.666667 * (double)3.14159F
+constexpr double c_beta = 0x1.42F60A3305EC5p-1;  // sqrt(5.0 / (4.0 * (double)3.14159F))
 
 // GEF.bas:16914 (GEF.c:14678): static Single, never reassigned.
-constexpr float kE2 = 0x1.70A3D8p+0F; // 1.44 (Single)
+constexpr float e2_coulomb = 0x1.70A3D8p+0F; // 1.44 (Single)
 
 // State carried across the three time segments of u_accel (GEF.c:14698-14731).
 struct AccelState {
@@ -42,23 +42,25 @@ struct Segment {
 };
 
 // GEF.bas:16935-16955 (GEF.c:14768-14942): three loops, in this order.
-constexpr std::array<Segment, 3> kAccelSegments{{
-    {0.0F, 0x1.47AE14p-7F, 1.0F},            // GEF.bas:16935-16936 (dt 0.01)
-    {0x1.19999Ap+0F, 0x1.99999Ap-4F, 10.0F}, // GEF.bas:16942-16943 (1.1, dt 0.1)
-    {11.0F, 1.0F, 100.0F},                   // GEF.bas:16949-16950
+constexpr std::array<Segment, 3> accel_segments{{
+    {.start = 0.0F, .dt = 0x1.47AE14p-7F, .end = 1.0F},            // GEF.bas:16935-16936 (dt 0.01)
+    {.start = 0x1.19999Ap+0F, .dt = 0x1.99999Ap-4F, .end = 10.0F}, // GEF.bas:16942-16943 (1.1)
+    {.start = 11.0F, .dt = 1.0F, .end = 100.0F},                   // GEF.bas:16949-16950
 }};
 
 // One loop of u_accel. Returns true when the BASIC `Goto match` fires (t >= Tn), leaving s.v as
 // the value reached so far.
 bool accel_segment(AccelState& s, Segment const& seg) noexcept {
-    for (float t = seg.start; t <= seg.end; t = t + seg.dt) {
+    // The loop runs on a Single counter, as compiled.
+    float t = seg.start;
+    while (t <= seg.end) {
         // GEF.bas:16937 `if t >= Tn Then Goto match`, emitted as !(t < Tn) (GEF.c:14788), so a
         // NaN Tn takes the match branch.
         if (!(t < s.tn)) {
             return true;
         }
         // GEF.bas:16938 (GEF.c:14797): E = E0 + e2*Z1*Z2*(1/d0 - 1/d), Double arithmetic.
-        float const e =
+        auto const e =
             static_cast<float>(static_cast<double>(s.e0) +
                                (static_cast<double>(s.ez) * ((1.0 / static_cast<double>(s.d0)) -
                                                              (1.0 / static_cast<double>(s.d)))));
@@ -66,6 +68,7 @@ bool accel_segment(AccelState& s, Segment const& seg) noexcept {
         s.v = std::sqrt(static_cast<float>(static_cast<double>(e) / static_cast<double>(s.ared)));
         // GEF.bas:16940 (GEF.c:14803): d = d + v*14*dt
         s.d = s.d + ((s.v * seg.dt) * 14.0F);
+        t = t + seg.dt;
     }
     return false;
 }
@@ -75,7 +78,7 @@ bool accel_segment(AccelState& s, Segment const& seg) noexcept {
 // GEF.bas:16907-16959 (GEF.c:14667-14957): fragment acceleration.
 float u_accel(float a1, float z1, float a2, float z2, float tke, float e0, float tn) noexcept {
     // GEF.bas:16923 (GEF.c:14734): the product A1*A2 is Single; the quotient is Double.
-    float const ared =
+    auto const ared =
         static_cast<float>(static_cast<double>(a1 * a2) / static_cast<double>(a1 + a2));
     // GEF.bas:16924 (GEF.c:14737): vinf = sqr(TKE/Ared)
     float const vinf =
@@ -87,12 +90,11 @@ float u_accel(float a1, float z1, float a2, float z2, float tke, float e0, float
         v = vinf; // GEF.bas:16926
     } else {
         // GEF.bas:16930 (GEF.c:14756): d0 = e2*Z1*Z2/(TKE-E0), Single products, Double quotient.
-        float const ez = (kE2 * z1) * z2;
-        float const d0 =
-            static_cast<float>(static_cast<double>(ez) / static_cast<double>(tke - e0));
+        float const ez = (e2_coulomb * z1) * z2;
+        auto const d0 = static_cast<float>(static_cast<double>(ez) / static_cast<double>(tke - e0));
         // GEF.bas:16933-16934: d = d0, v = 0
-        AccelState s{ared, ez, e0, d0, tn, d0, 0.0F};
-        for (Segment const& seg : kAccelSegments) {
+        AccelState s{.ared = ared, .ez = ez, .e0 = e0, .d0 = d0, .tn = tn, .d = d0, .v = 0.0F};
+        for (Segment const& seg : accel_segments) {
             if (accel_segment(s, seg)) {
                 break;
             }
@@ -106,22 +108,22 @@ float u_accel(float a1, float z1, float a2, float z2, float tke, float e0, float
 // GEF.bas:17120-17170 (GEF.c:15554-15774): U_I_shell, the shell-correction factor.
 float u_i_shell(float z, float a) noexcept {
     // GEF.bas:17121, 17129-17134 (GEF.c:15628-15643): N_shells(1..6), zero-based here.
-    constexpr std::array<float, 6> kNShells{20.0F, 28.0F, 50.0F, 82.0F, 126.0F, 56.0F};
+    constexpr std::array<float, 6> n_shells{20.0F, 28.0F, 50.0F, 82.0F, 126.0F, 56.0F};
     // GEF.bas:17135-17136 (GEF.c:15646-15649). dNsubmin = 100 (GEF.bas:17137, GEF.c:15650) is
     // overwritten at GEF.bas:17146 before any read and is not reproduced.
     float dnmin = 100.0F;
     float dzmin = 100.0F;
     // GEF.bas:17138-17141 (GEF.c:15655-15676): dZmin = Min(dZmin, Abs(N_shells(I) - Z)), I = 1..5
     for (std::size_t i = 0; i < 5; ++i) {
-        dzmin = fb::min(dzmin, std::fabs(kNShells[i] - z));
+        dzmin = fb::min(dzmin, std::fabs(n_shells.at(i) - z));
     }
     // GEF.bas:17142-17145 (GEF.c:15680-15701): dNmin = Min(dNmin, Abs(N_shells(I) - (A-Z))),
     // emitted as (N - A) + Z in Single (GEF.c:15687).
     for (std::size_t i = 0; i < 5; ++i) {
-        dnmin = fb::min(dnmin, std::fabs((kNShells[i] - a) + z));
+        dnmin = fb::min(dnmin, std::fabs((n_shells.at(i) - a) + z));
     }
     // GEF.bas:17146 (GEF.c:15705): dNsubmin = Abs(N_shells(6) - (A-Z))
-    float const dnsubmin = std::fabs((kNShells[5] - a) + z);
+    float const dnsubmin = std::fabs((n_shells.at(5) - a) + z);
     // GEF.c:15714: sqr(A/140.0) in Double
     double const sa = std::sqrt(static_cast<double>(a) / 140.0);
     // GEF.bas:17126-17128 (GEF.c:15613-15625)
@@ -169,7 +171,7 @@ float u_ired([[maybe_unused]] float z, float a) noexcept {
     // GEF.bas:17100 (GEF.c:15513-15515): IU_rigid_spher = 1.16^2 * A^1.6667 / 103.8415, with
     // 1.16^2 folded by fbc (0x1.58793DD97F62Bp+0).
     double const vr4 = std::pow(static_cast<double>(a), 0x1.AAACD9E83E426p+0); // 1.6667
-    float const iu =
+    auto const iu =
         static_cast<float>((vr4 * 0x1.58793DD97F62Bp+0) / 0x1.9F5DB22D0E56p+6); // 103.8415
     // GEF.bas:17104 (GEF.c:15518): IfragEff = 0.45 * IU_rigid_spher (superfluidity)
     return static_cast<float>(static_cast<double>(iu) * 0x1.CCCCCCCCCCCCDp-2); // 0.45
@@ -199,17 +201,17 @@ float width_gdr(float e0) noexcept {
 }
 
 // GEF.bas:17466-17475 (GEF.c:16693-16728): Efac_def_GDR
-float efac_def_gdr(float beta, float gv, float k) noexcept {
+float efac_def_gdr(float beta, float gamma_def, float k) noexcept {
     // GEF.bas:17470-17471 (GEF.c:16704-16708): if beta = 0 and gamma = 0 then 1
-    if (beta == 0.0F && gv == 0.0F) {
+    if (beta == 0.0F && gamma_def == 0.0F) {
         return 1.0F;
     }
     // GEF.bas:17473 (GEF.c:16718): 1/exp(sqr(5/(4*pi))*Beta*cos(gamma - 0.666667*(K-2)*pi)).
     // K-2 is Single (`K + -2.0f`); the cos argument and the rest are Double.
     double const arg =
         ((static_cast<double>(beta) *
-          std::cos(static_cast<double>(gv) - (static_cast<double>(k - 2.0F) * kC1))) *
-         kC2);
+          std::cos(static_cast<double>(gamma_def) - (static_cast<double>(k - 2.0F) * c_gamma))) *
+         c_beta);
     return static_cast<float>(1.0 / std::exp(arg));
 }
 

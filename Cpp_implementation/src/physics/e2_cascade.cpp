@@ -56,6 +56,7 @@ E2Cascade e2_cascade(data::TableSet const& tables, std::int64_t i_z_sci, std::in
                 float const spin = iso.r_spi(fb::f2l(k));
                 // GEF.bas:9330-9333: at the first J, a state with spin CInt(J_frag) stops the
                 // cascade (ground-state stop).
+                // QUIRK(Q-038): the comparison is with CInt(J_frag), not CInt(J_frag + Spin_gs).
                 if (j == jfrag && spin == static_cast<float>(fb::f2l(j_frag))) {
                     stop = true;
                     break;
@@ -101,6 +102,7 @@ E2Cascade e2_cascade(data::TableSet const& tables, std::int64_t i_z_sci, std::in
         out.e_e2_tot = out.e_e2_tot + eg;
         // GEF.bas:9352-9353: Array_Eg2_<side>(Ig2) is ReDim (100) (GEF.bas:1342); BASIC does not
         // check the index. Not reached in the M5 captures (-exx runs, MILESTONE_5_PLAN.md M5.2).
+        // QUIRK(Q-039): Array_Eg2_<side>(100) has no bound check in BASIC.
         if (out.gammas.size() >= 100) {
             throw std::out_of_range("Array_Eg2 index above 100 (GEF.bas:9353, 9469)");
         }

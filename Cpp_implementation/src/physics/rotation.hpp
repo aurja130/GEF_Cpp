@@ -18,7 +18,7 @@ namespace gef::physics {
 // E0_GDR (GEF.bas:17439-17459), Width_GDR (17461-17464), Efac_def_GDR (17466-17475).
 [[nodiscard]] float e0_gdr(float z, float a) noexcept;
 [[nodiscard]] float width_gdr(float e0) noexcept;
-[[nodiscard]] float efac_def_gdr(float beta, float gamma, float k) noexcept;
+[[nodiscard]] float efac_def_gdr(float beta, float gamma_def, float k) noexcept;
 
 // u_accel (GEF.bas:16907-16959): fragment acceleration.
 [[nodiscard]] float u_accel(float a1, float z1, float a2, float z2, float tke, float e0,

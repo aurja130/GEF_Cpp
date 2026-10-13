@@ -44,8 +44,8 @@ PEgammaLowTable p_egamma_low_table(data::TableSet const& tables, float zi, float
     // float(-120 * betadef) equals -47.4 as a Double, and no Single does.
     if (out.betadef == 0.0F && out.gammadef == 0.0F) {
         // GEF.bas:16998-16999
-        out.e0[2] = e0_gdr(zi, ai);
-        out.g0[2] = width_gdr(out.e0[2]);
+        out.e0.at(2) = e0_gdr(zi, ai);
+        out.g0.at(2) = width_gdr(out.e0.at(2));
         // GEF.bas:17002
         out.sig_max = 0.0F;
         // GEF.bas:17003-17011: For Eg = 0.1 To Ei Step 0.1; Eg is Single and steps by Single 0.1.
@@ -55,17 +55,16 @@ PEgammaLowTable p_egamma_low_table(data::TableSet const& tables, float zi, float
             // GEF.bas:17006: Eg^3 and (Eg^2 - E0^2)^2 through pow in Double (exponents 3 and 2).
             double const vr52 = std::pow(static_cast<double>(out.eg), 3.0);
             double const vr60 = std::pow(static_cast<double>(out.eg * out.eg) -
-                                             static_cast<double>(out.e0[2] * out.e0[2]),
+                                             static_cast<double>(out.e0.at(2) * out.e0.at(2)),
                                          2.0);
             // exp(-Eg/Tm) is Single; numerator (exp*Eg^3)*(G0*Eg), denominator
             // (Eg^2-E0^2)^2 + G0^2*E0^2, in Double; the stored value is Single.
             auto const ex = static_cast<double>(std::exp(
                 static_cast<float>(static_cast<double>(-out.eg) / static_cast<double>(out.tm))));
-            double const num = (ex * vr52) * static_cast<double>(out.g0[2] * out.eg);
-            double const den =
-                vr60 +
-                ((static_cast<double>(out.g0[2] * out.g0[2]) * static_cast<double>(out.e0[2])) *
-                 static_cast<double>(out.e0[2]));
+            double const num = (ex * vr52) * static_cast<double>(out.g0.at(2) * out.eg);
+            double const den = vr60 + ((static_cast<double>(out.g0.at(2) * out.g0.at(2)) *
+                                        static_cast<double>(out.e0.at(2))) *
+                                       static_cast<double>(out.e0.at(2)));
             out.sigma(out.n) = static_cast<float>(num / den);
             // GEF.bas:17010
             if (!(out.sigma(out.n) <= out.sig_max)) {
@@ -81,8 +80,8 @@ PEgammaLowTable p_egamma_low_table(data::TableSet const& tables, float zi, float
             // GEF.bas:17020-17021: E0(I) = E0_GDR(Zi,Ai) * Efac_def_GDR(betadef,gammadef,I); G0(I)
             float const gdr = e0_gdr(zi, ai);
             float const efac = efac_def_gdr(out.betadef, out.gammadef, static_cast<float>(out.i));
-            out.e0[k] = gdr * efac;
-            out.g0[k] = width_gdr(out.e0[k]);
+            out.e0.at(k) = gdr * efac;
+            out.g0.at(k) = width_gdr(out.e0.at(k));
             // GEF.bas:17023-17035: For Eg = 0.1 To Ei Step 0.1 (restarted for each I)
             for (out.eg = 0.1F; out.eg <= ei; out.eg += 0.1F) {
                 // GEF.bas:17024
@@ -90,16 +89,16 @@ PEgammaLowTable p_egamma_low_table(data::TableSet const& tables, float zi, float
                 // GEF.bas:17028: the same pow exponents as the first branch.
                 double const vr94 = std::pow(static_cast<double>(out.eg), 3.0);
                 double const vr104 = std::pow(static_cast<double>(out.eg * out.eg) -
-                                                  static_cast<double>(out.e0[k] * out.e0[k]),
+                                                  static_cast<double>(out.e0.at(k) * out.e0.at(k)),
                                               2.0);
                 auto const ex = static_cast<double>(std::exp(static_cast<float>(
                     static_cast<double>(-out.eg) / static_cast<double>(out.tm))));
                 // The quotient (G0*Eg)/(...) is formed first and then multiplied by exp*Eg^3
                 // (GEF.c:15243); the first branch divides the whole product instead.
-                double const quot = static_cast<double>(out.g0[k] * out.eg) /
-                                    (vr104 + ((static_cast<double>(out.g0[k] * out.g0[k]) *
-                                               static_cast<double>(out.e0[k])) *
-                                              static_cast<double>(out.e0[k])));
+                double const quot = static_cast<double>(out.g0.at(k) * out.eg) /
+                                    (vr104 + ((static_cast<double>(out.g0.at(k) * out.g0.at(k)) *
+                                               static_cast<double>(out.e0.at(k))) *
+                                              static_cast<double>(out.e0.at(k))));
                 float& s = out.sigma(out.n);
                 s = static_cast<float>(static_cast<double>(s) + ((ex * vr94) * quot));
                 // GEF.bas:17034

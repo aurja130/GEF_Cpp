@@ -48,14 +48,14 @@ struct PEgammaLowTable {
 // caller (M10), which walks `gammas` in order.
 struct E2Cascade {
     float e_e2_tot = 0.0F;
-    float ifrag_eff = 0.0F;   // IfragEff_<side>
-    float beta1 = 0.0F;       // beta1 (DEFOtab of the fragment)
+    float ifrag_eff = 0.0F; // IfragEff_<side>
+    float beta1 = 0.0F;     // beta1 (DEFOtab of the fragment)
     float alph = 0.0F;
-    std::string c_iso_lmd;    // C_iso_lmd_<side>: "GS" or "M(<spin>/<energy>)"
+    std::string c_iso_lmd;     // C_iso_lmd_<side>: "GS" or "M(<spin>/<energy>)"
     std::vector<float> gammas; // Array_Eg2_<side>(1 To Ig2_<side>)
 };
 [[nodiscard]] E2Cascade e2_cascade(data::TableSet const& tables, std::int64_t i_z_sci,
-                                   std::int64_t i_a_post, float jfrag, float j_frag,
-                                   float spin_gs, std::int64_t n_iso, std::int64_t i_iso);
+                                   std::int64_t i_a_post, float jfrag, float j_frag, float spin_gs,
+                                   std::int64_t n_iso, std::int64_t i_iso);
 
 } // namespace gef::physics

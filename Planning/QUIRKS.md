@@ -480,6 +480,28 @@ Tool commands are run from the repository root: `python3 -m tools.fbsrc.fbline <
 - **C++ symbol:** `gef::physics::bftf` (`Cpp_implementation/src/physics/barriers.cpp`)
 - **Owning milestone:** M5
 
+### Q-038 The E2 cascade stops before its first gamma when any state has spin CInt(J_frag)
+
+- **BASIC location:** `GEF.bas:9330-9333` (light fragment), `GEF.bas:9447-9450` (heavy fragment)
+- **Mechanism:** At the first J of `For J = Jfrag To 2 Step -2`, the isomer loop compares every state of the nucleus, the ground state (K = 1) included, with the fragment's total spin: `If Isotab(I_iso).R_SPI(K) = Cint(J_frag_light) Then Exit For, For`. A match leaves both loops before any gamma is stored, and `C_iso_lmd` stays `"GS"`. The line above it, commented out (`GEF.bas:9331`, `9448`), compares with `Cint(J_frag_light + Spin_gs_light)`. `CInt` rounds half to even (`fb_F2L`, GEF.c:68762). Generated C: `if( R_SPI(K) != (float)fb_F2L( J_FRAG_LIGHT$19 ) ) goto …; goto label$4263;` (label 4263 is after the J loop).
+- **Effect:** the fragment emits no E2 gamma at all (no `EgammaE2`, `E_E2_tot` = 0, no rotational gammas in `Egamma`, `EgammaL`/`EgammaH`, `Ngamma*`), although its rotational band lies above the state, whenever the rounded total spin equals the spin of the ground state or of an isomer.
+- **Evidence status:** *confirmed in output*
+- **Evidence:** the arglog site logs of the M5.2 captures: records with Jfrag ≥ 2 and N_iso > 0 that end with label `GS` and no stored gamma (only this stop gives that outcome): light/heavy 248/318 (`m5-arglog-rn215`), 756/1036 (`m5-arglog-cf252`), 570/727 (`m5-arglog-u235`), 307/857 (`m5-arglog-sh264`), out of 7754–20853 such records per copy. Reproduced by `physics::e2_cascade` in `physics: E2 cascade replays the captured light and heavy cascades` and on the synthetic Isotab patterns of `physics: E2 cascade equals the light copy on the driver grids` (and the heavy copy).
+- **Fidelity switch:** `fix_e2_ground_state_stop` (the corrected comparison would be the commented-out one; which test the authors intended is a fix decision)
+- **C++ symbol:** `gef::physics::e2_cascade` (`Cpp_implementation/src/physics/e2_cascade.cpp`)
+- **Owning milestone:** M5 (function), M10 (event stage that calls it)
+
+### Q-039 `Array_Eg2_light/heavy(100)` is written without a bound
+
+- **BASIC location:** `GEF.bas:9352-9353` (light), `GEF.bas:9468-9469` (heavy); array `GEF.bas:1342-1343`
+- **Mechanism:** `Ig2_light = Ig2_light + 1 : Array_Eg2_light(Ig2_light) = Eg`, one element per gamma of the cascade; the array is `ReDim Shared … (100)` and nothing limits Ig2. fbc builds GEF without `-exx`: GEF.c:68875 `*(float*)((IG2_LIGHT$0 << 2) + *(int64*)&ARRAY_EG2_LIGHT$) = EG$20;` writes past the array for Ig2 > 100, i.e. for Jfrag ≥ 202.
+- **Effect:** none in the captured runs: the largest Ig2 in the M5.2 captures is 17 (heavy, Rn-215 and Sg-264; Jfrag ≤ 34), and the `-exx` runs of the same systems (`m5-exx-*`) raise no bound error. Beyond 100 the BASIC behaviour is undefined (heap corruption).
+- **Evidence status:** *confirmed by fbc C*
+- **Evidence:** `python3 -m tools.fbsrc.fbline GEF.bas:9353`; capture ranges from `python3 -m harness.arglog summary`, MILESTONE_5_PLAN.md M5.5 notes.
+- **Fidelity switch:** none. Plan D3 default: the C++ throws `std::out_of_range` for a 101st gamma (`physics: E2 cascade throws beyond Array_Eg2(100)`); undefined behaviour is not reproduced.
+- **C++ symbol:** `gef::physics::e2_cascade`
+- **Owning milestone:** M5
+
 ## 5. Build notes (not GEF quirks)
 
 These describe how the toolchain, not GEF, can make the C++ results differ from the reference binary. They have no fidelity switch.
@@ -561,6 +583,8 @@ These describe how the toolchain, not GEF, can make the C++ results differ from 
 | Q-035 | Unterminated `/'` in a parameter file hangs GEF | `ReadParameters.mac:1-8` | confirmed in output | — | M4 |
 | Q-036 | Legacy NucProp files map missing nuclides to the last entry | `NucPropx.bas:157-188` (and mf, f) | confirmed in output | — | M4 |
 | Q-037 | BFTF RF has no value at RX = 30 | `GEF.bas:17679-17690` | confirmed by fbc C | `fix_bftf_rx30_hole` | M5 |
+| Q-038 | E2 cascade stops before its first gamma when a state has spin CInt(J_frag) | `GEF.bas:9330-9333, 9447-9450` | confirmed in output | `fix_e2_ground_state_stop` | M5, M10 |
+| Q-039 | `Array_Eg2_*(100)` written without a bound | `GEF.bas:9353, 9469` | confirmed by fbc C | — | M5 |
 | B-001 | Optimisation level vs fbc `-O0` | (toolchain) | open risk | — | M3, M5 |
 | B-002 | fbc gcc passes `-fwrapv -fno-strict-aliasing` | (toolchain) | resolved for the runtime layer (M3.3) | — | M3 |
 | B-003 | `Compilationstamp` needs `SOURCE_DATE_EPOCH` | `GEF.bas:17` | handled (M1) | — | M1 |

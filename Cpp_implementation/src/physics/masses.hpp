@@ -38,8 +38,7 @@ namespace gef::physics {
 [[nodiscard]] float u_shell_exp(data::TableSet const& tables, std::int64_t iz, std::int64_t ia);
 
 // U_SHELL_EO_exp (GEF.bas:16294-16306).
-[[nodiscard]] float u_shell_eo_exp(data::TableSet const& tables, std::int64_t iz,
-                                   std::int64_t ia);
+[[nodiscard]] float u_shell_eo_exp(data::TableSet const& tables, std::int64_t iz, std::int64_t ia);
 
 // U_MASS (GEF.bas:16310-16323). With Z < 0 or A < 0 BASIC first prints
 // `Print "U_Mass: Z, A",Z,A` to the console (GEF.bas:16316); here the function only reports
@@ -55,8 +54,7 @@ struct UMassResult {
                           float d) noexcept;
 
 // U_Q_beta_minus (DCLbranchingJEFF33.bas:112-115).
-[[nodiscard]] float u_q_beta_minus(data::TableSet const& tables, std::int64_t iz,
-                                   std::int64_t ia);
+[[nodiscard]] float u_q_beta_minus(data::TableSet const& tables, std::int64_t iz, std::int64_t ia);
 
 // U_Valid (GEF.bas:15814-15832). BASIC returns a UByte.
 [[nodiscard]] std::uint8_t u_valid(data::TableSet const& tables, std::int64_t i_z,

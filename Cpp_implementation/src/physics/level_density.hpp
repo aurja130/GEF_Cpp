@@ -21,10 +21,9 @@ namespace gef::physics {
 [[nodiscard]] double u_levdens(data::TableSet const& tables, std::int64_t z, std::int64_t a,
                                float e, std::int64_t ishell, std::int64_t ipair, float tscale,
                                float econd, float etrans, float af_an);
-[[nodiscard]] double u_levdens_egidy(data::TableSet const& tables, std::int64_t z,
-                                     std::int64_t a, float e, std::int64_t ishell,
-                                     std::int64_t ipair, float tscale, float econd, float etrans,
-                                     float af_an);
+[[nodiscard]] double u_levdens_egidy(data::TableSet const& tables, std::int64_t z, std::int64_t a,
+                                     float e, std::int64_t ishell, std::int64_t ipair, float tscale,
+                                     float econd, float etrans, float af_an);
 [[nodiscard]] double u_levdens_fg(data::TableSet const& tables, std::int64_t z, std::int64_t a,
                                   float e, std::int64_t ishell, std::int64_t ipair, float tscale,
                                   float econd, float etrans, float af_an);

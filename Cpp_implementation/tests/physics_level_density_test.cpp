@@ -331,7 +331,8 @@ void temp_block3(m5::GridFile& grid, gef::data::TableSet const& tables,
     for (std::size_t ip = 0; ip < temp_pz.size(); ++ip) {
         for (std::int64_t ish = 0; ish <= 1; ++ish) {
             for (std::int64_t ipr = 0; ipr <= 2; ++ipr) {
-                temp_sweep(grid, tables, temp_pz[ip], temp_pa[ip], ish, ipr, 1.0F, 2.0F, 9.5F, ea);
+                temp_sweep(grid, tables, temp_pz.at(ip), temp_pa.at(ip), ish, ipr, 1.0F, 2.0F, 9.5F,
+                           ea);
             }
         }
     }
@@ -355,7 +356,7 @@ void temp_block4(m5::GridFile& grid, gef::data::TableSet const& tables) {
         for (float const ts : tsv_list) {
             for (float const co : cov_list) {
                 for (float const et : temp_etv) {
-                    temp_block4_inner(grid, tables, temp_pz[ip], temp_pa[ip], ts, co, et);
+                    temp_block4_inner(grid, tables, temp_pz.at(ip), temp_pa.at(ip), ts, co, et);
                 }
             }
         }
@@ -427,7 +428,7 @@ void temp2_block3(m5::GridFile& grid, std::vector<float> const& ea) {
     for (std::size_t ip = 0; ip < temp_pz.size(); ++ip) {
         for (float const rs : temp2_rsv) {
             for (float const rp : temp2_rpv) {
-                temp2_sweep(grid, temp_pz[ip], temp_pa[ip], rs, rp, 1.0F, 2.0F, 9.5F, ea);
+                temp2_sweep(grid, temp_pz.at(ip), temp_pa.at(ip), rs, rp, 1.0F, 2.0F, 9.5F, ea);
             }
         }
     }
@@ -449,7 +450,7 @@ void temp2_block4(m5::GridFile& grid) {
     for (std::size_t ip = 0; ip < temp_pz.size(); ++ip) {
         for (float const ts : tsv_list) {
             for (float const co : cov_list) {
-                temp2_block4_inner(grid, temp_pz[ip], temp_pa[ip], ts, co);
+                temp2_block4_inner(grid, temp_pz.at(ip), temp_pa.at(ip), ts, co);
             }
         }
     }
@@ -486,7 +487,7 @@ void temp2_random(m5::GridFile& random_grid, gef::fb::FbMtRng& rng) {
 void trusanov_block1(m5::GridFile& grid, std::vector<float> const& ea) {
     for (std::int64_t ai = 1; ai <= 240; ++ai) {
         for (std::size_t ie = 0; ie <= 2000; ++ie) {
-            grid.add(line_trusanov(ea[ie], static_cast<float>(ai)));
+            grid.add(line_trusanov(ea.at(ie), static_cast<float>(ai)));
         }
     }
 }
@@ -500,7 +501,7 @@ void trusanov_block2(m5::GridFile& grid, std::vector<float> const& ea) {
         }
         float const a = m5::axis(1.0, 0.25, j);
         for (std::size_t ime = 0; ime <= 100; ++ime) {
-            grid.add(line_trusanov(ea[20 * ime], a));
+            grid.add(line_trusanov(ea.at(20 * ime), a));
         }
     }
 }
@@ -523,15 +524,15 @@ TEST_CASE("physics: U_alev_ld equals BASIC on the driver grids", "[T1][physics][
 }
 
 TEST_CASE("physics: U_levdens equals BASIC on the driver grids", "[T1][physics][slow]") {
-    check_ld_grid(ld_cases[0]);
+    check_ld_grid(ld_cases.at(0));
 }
 
 TEST_CASE("physics: U_levdens_Egidy equals BASIC on the driver grids", "[T1][physics][slow]") {
-    check_ld_grid(ld_cases[1]);
+    check_ld_grid(ld_cases.at(1));
 }
 
 TEST_CASE("physics: U_levdens_FG equals BASIC on the driver grids", "[T1][physics][slow]") {
-    check_ld_grid(ld_cases[2]);
+    check_ld_grid(ld_cases.at(2));
 }
 
 TEST_CASE("physics: U_Temp equals BASIC on the driver grids", "[T1][physics][slow]") {

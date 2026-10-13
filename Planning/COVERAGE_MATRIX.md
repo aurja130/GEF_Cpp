@@ -42,6 +42,7 @@ Tiers (vision §4.2, strategy §3 *Conventions*):
 | M2 | 2026-10-08 | Exact-first decision (strategy §2.9): T3 becomes the integral acceptance tier; every planned T4 cell moves to M17 (99 cells), where T4 compares optimised and parallel C++ against the exact C++ code; the two production-`Fenhance` T3 cells change from n/a to planned (M14). No cell closes in M2 (it builds the comparison toolkit, not the port) |
 | M3 | 2026-10-09 | Two cells covered: FreeBASIC numeric semantics at T1 (`fbrt:` tests in `fbc_arithmetic_test.cpp`, `conversion_test.cpp`, `maths_test.cpp`, `text_test.cpp`, `print_using_test.cpp`, `format_test.cpp`, `array_test.cpp`, `data_input_test.cpp`), and the `FbMtRng` stream and seeding at T2 (`rng_test.cpp`). NaN results compare equal regardless of sign and payload (user decision, `QUIRKS.md` B-001) |
 | M4 | 2026-10-09 | 25 cells covered, every cell M4 closes: all 21 `planned (M4)` T0 cells (system families, isomer targets, missing nuclides, `ERR`, ENDF MAT numbering, analyzer files, isomer stop, persisting state, and the six embedded-data rows) by the T0 table, parameter and registry tests; T1 of NucTab/Isotab (lookup functions), ElmtNames/DCLplotting/`ENfrvar_lim`, the parameter registry and `Anl_Par`. M4 contributes to, but does not close, T1 of "Nuclide missing from NucTab/Isotab" (M11), "ENDF MAT numbering" (M13) and BranchData (M11) (`MILESTONE_4_PLAN.md` §8) |
+| M5 | 2026-10-13 | 3 T1 cells closed, every cell M5 closes: "Isomer stop in the gamma cascade" (the E2 cascade of both fragments, Q-038), "Masses and shell/deformation tables", "`P_Egamma_low` cross-section table". M5 contributes T1 evidence to, but does not close, "Superheavies" (Sg-264 capture and Z up to 120–136 in the grids; closed by M7), "Q values" (`U_Q_beta_minus`, `AME2020`; M11) and "Prompt-gamma spectra" (the E2 cascade and the `P_Egamma_low` table; M11) (`MILESTONE_5_PLAN.md` §9) |
 
 ## Matrix
 
@@ -184,7 +185,7 @@ Tiers (vision §4.2, strategy §3 *Conventions*):
 | `FbMtRng` stream and seeding (`Randomize s,3`) | n/a — no embedded table specific to this cell | n/a — stochastic; see T2 | covered (`fbrt: FbMtRng matches FreeBASIC for edge seeds`, `fbrt: FbMtRng matches the stored 10^6-draw FreeBASIC streams`, `fbrt: derive_seed reproduces the RESEED_SPEC vectors`) | planned (M14) | n/a — exercised indirectly by every integral run | n/a — exercised indirectly by every integral run |
 | `PGauss` cached second value across calls | n/a — no embedded table specific to this cell | n/a — stochastic; see T2 | planned (M8) | planned (M10, M14) | n/a — exercised indirectly by every integral run | n/a — exercised indirectly by every integral run |
 | Rejection-loop paths (draw counts depend on data) | n/a — no embedded table specific to this cell | n/a — stochastic; see T2 | planned (M8, M10) | planned (M9, M10) | planned (M17) | planned (M18) |
-| Isomer stop in the gamma cascade | covered ("NucTab, MAT_for_ISO and Isotab match the BASIC dump, jeff33" [T0][data], one per certified variant) | planned (M5) | planned (M10) | planned (M10) | planned (M17) | planned (M18) |
+| Isomer stop in the gamma cascade | covered ("NucTab, MAT_for_ISO and Isotab match the BASIC dump, jeff33" [T0][data], one per certified variant) | covered ("physics: E2 cascade equals the light copy on the driver grids" [T1][physics]; "physics: E2 cascade equals the heavy copy on the driver grids" [T1][physics]; "physics: E2 cascade replays the captured light and heavy cascades" [T1][physics]) | planned (M10) | planned (M10) | planned (M17) | planned (M18) |
 | `J_attempt` retry and double histogram fill | n/a — no embedded table specific to this cell | n/a — stochastic; see T2 | planned (M10) | planned (M10) | planned (M17) | n/a — exercised indirectly by every integral run |
 | `Static Ntimes` negative-TKE guard (99 events) | n/a — no embedded table specific to this cell | n/a — stochastic trigger; see T2 | planned (M10) | planned (M15) | deferred (approved 2026-10-07) — no statistical comparison exists for a run that stops; revisit later. The guard itself is still ported and replicated (M10 scope) | n/a — not triggered by reference systems |
 | `Eva` `Static E_MIN` carry-over | n/a — no embedded table specific to this cell | n/a — stochastic; see T2 | planned (M8) | planned (M10) | n/a — exercised indirectly by every integral run | n/a — exercised indirectly by every integral run |
@@ -203,11 +204,11 @@ Tiers (vision §4.2, strategy §3 *Conventions*):
 |---|---|---|---|---|---|---|
 | NucTab / Isotab (incl. spin-sorted `R_lim` windows) | covered ("NucTab, MAT_for_ISO and Isotab match the BASIC dump, jeff33" [T0][data], one per certified variant) | covered ("Lookups of JEFF-3.3 equal the BASIC run" [data][T1], one per certified variant) | n/a — static data, no random draws | n/a — static data, no trajectory | n/a — exercised indirectly by every integral run | n/a — exercised indirectly by every integral run |
 | BranchData / EndA / INlast (incl. Ra-234 loading stop) | covered ("T0 probe tables match the BASIC dump, jeff33" [T0][data], one per certified variant) | planned (M4, M11) | n/a — static data, no random draws | n/a — static data, no trajectory | n/a — exercised indirectly by every integral run | n/a — exercised indirectly by every integral run |
-| Masses and shell/deformation tables (BEldmTF, BEexp, DEFOtab, ShellMO) | covered ("T0 probe tables match the BASIC dump, jeff33" [T0][data], one per certified variant) | planned (M5) | n/a — static data, no random draws | n/a — static data, no trajectory | n/a — exercised indirectly by every integral run | n/a — exercised indirectly by every integral run |
+| Masses and shell/deformation tables (BEldmTF, BEexp, DEFOtab, ShellMO) | covered ("T0 probe tables match the BASIC dump, jeff33" [T0][data], one per certified variant) | covered ("physics: LDMass equals BASIC on the driver grids" [T1][physics]; "physics: AME2020 equals BASIC on the driver grids" [T1][physics]; "physics: U_SHELL equals BASIC on the driver grids" [T1][physics]; "physics: U_MASS equals BASIC on the driver grids" [T1][physics]; "physics: masses replay the captured GEF calls" [T1][physics]; "physics: P_Egamma_low table equals BASIC on the driver grids" [T1][physics] for DEFOtab) | n/a — static data, no random draws | n/a — static data, no trajectory | n/a — exercised indirectly by every integral run | n/a — exercised indirectly by every integral run |
 | ElmtNames, DCLplotting evaluation tables, `ENfrvar_lim` | covered ("T0 probe tables match the BASIC dump, jeff33" [T0][data], one per certified variant; "ProgramData items match the datachain golden per variant" [T0][data]) | covered ("T0 probe tables match the BASIC dump, jeff33" [T0][data], one per certified variant; "ProgramData items match the datachain golden per variant" [T0][data]) | n/a — static data, no random draws | n/a — static data, no trajectory | n/a — exercised indirectly by every integral run | n/a — exercised indirectly by every integral run |
 | Parameter registry (nominal values, `Var_*`, 46 perturbed in draw order) | covered ("Nominal parameters and initial widths equal T0" [params][T0]; "Fitpar.dat at start-up equals T0 and the console" [params][T0]) | covered ("Final widths and per-system parameters equal P1" [params][T0]; "Fitpar.dat again at GEF.bas:2555 equals P1 and the console" [params][T0]) | n/a — static data, no random draws | planned (M12) | n/a — exercised indirectly by every integral run | n/a — exercised indirectly by every integral run |
 | `Anl_Par` analyzer registry (incl. naming quirks) | covered ("Analyzer registry equals T0" [analysis][T0]) | covered ("Analyzer registry equals T0" [analysis][T0]) | n/a — static data, no random draws | n/a — static data, no trajectory | n/a — exercised indirectly by every integral run | n/a — exercised indirectly by every integral run |
-| `P_Egamma_low` cross-section table | n/a — built at run time, not embedded | planned (M5) | planned (M8) | n/a — static data, no trajectory | n/a — exercised indirectly by every integral run | n/a — exercised indirectly by every integral run |
+| `P_Egamma_low` cross-section table | n/a — built at run time, not embedded | covered ("physics: P_Egamma_low table equals BASIC on the driver grids" [T1][physics]; "physics: P_Egamma_low table replays the captured GEF calls" [T1][physics]) | planned (M8) | n/a — static data, no trajectory | n/a — exercised indirectly by every integral run | n/a — exercised indirectly by every integral run |
 
 ## Summary
 
@@ -215,8 +216,8 @@ Counts by status and tier:
 
 | Status | T0 | T1 | T2 | T3 | T4 | T5 | Total |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| covered | 21 | 5 | 1 | 0 | 0 | 0 | 27 |
-| planned | 0 | 101 | 49 | 106 | 100 | 43 | 399 |
+| covered | 21 | 8 | 1 | 0 | 0 | 0 | 30 |
+| planned | 0 | 98 | 49 | 106 | 100 | 43 | 396 |
 | uncovered | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | deferred | 0 | 0 | 0 | 0 | 1 | 0 | 1 |
 | n/a | 93 | 8 | 64 | 8 | 13 | 71 | 257 |
@@ -226,4 +227,4 @@ Planned cells by closing milestone (last listed milestone in the cell):
 
 | Closing milestone | M3 | M4 | M5 | M6 | M7 | M8 | M9 | M10 | M11 | M12 | M13 | M14 | M15 | M16 | M17 | M18 |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| Planned cells | 0 | 0 | 3 | 18 | 12 | 3 | 15 | 40 | 27 | 18 | 13 | 59 | 42 | 6 | 100 | 43 |
+| Planned cells | 0 | 0 | 0 | 18 | 12 | 3 | 15 | 40 | 27 | 18 | 13 | 59 | 42 | 6 | 100 | 43 |

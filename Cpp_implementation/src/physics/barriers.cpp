@@ -86,7 +86,8 @@ BftfResult bftf(data::TableSet const& tables, float rz, float ra, std::int64_t i
         static_cast<float>(static_cast<double>(rz * rz) / (static_cast<double>(ra) * factor));
 
     // GEF.bas:17679-17690: the four range tests on RX, each emitted as a skip (see
-    // corrected_rb). RX = 30 exactly satisfies none of them, so RF stays 0 (quirk Q-037).
+    // corrected_rb).
+    // QUIRK(Q-037): RX = 30 exactly satisfies none of the tests, so RF stays 0.
     float rf = 0.0F;
     if (!(rx >= 0x1.Ep+4F)) {
         rf = 0x1.2A05F2p+33F; // 1E10

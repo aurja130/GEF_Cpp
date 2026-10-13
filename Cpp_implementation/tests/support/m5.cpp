@@ -31,7 +31,7 @@ namespace {
 std::string hex(std::uint64_t v, int digits) {
     std::string out(static_cast<std::size_t>(digits), '0');
     for (int i = digits - 1; i >= 0; --i) {
-        out[static_cast<std::size_t>(i)] = "0123456789abcdef"[v & 0xFU];
+        out.at(static_cast<std::size_t>(i)) = std::string_view("0123456789abcdef").at(v & 0xFU);
         v >>= 4U;
     }
     return out;
@@ -49,8 +49,8 @@ std::vector<std::string> field_types(std::string_view header) {
     std::vector<std::string> types;
     auto const parts = split(header);
     for (std::size_t i = 4; i < parts.size(); ++i) {
-        auto const colon = parts[i].rfind(':');
-        types.push_back(colon == std::string::npos ? std::string() : parts[i].substr(colon + 1));
+        auto const colon = parts.at(i).rfind(':');
+        types.push_back(colon == std::string::npos ? std::string() : parts.at(i).substr(colon + 1));
     }
     return types;
 }
@@ -87,11 +87,11 @@ bool same_tokens(std::vector<std::string> const& types, std::vector<std::string>
     }
     bool same = true;
     for (std::size_t i = 0; i < a.size(); ++i) {
-        if (a[i] == b[i]) {
+        if (a.at(i) == b.at(i)) {
             continue;
         }
-        std::string const& type = i < types.size() ? types[i] : std::string();
-        if (is_nan_token(type, a[i]) && is_nan_token(type, b[i])) {
+        std::string const& type = i < types.size() ? types.at(i) : std::string();
+        if (is_nan_token(type, a.at(i)) && is_nan_token(type, b.at(i))) {
             continue;
         }
         same = false;
@@ -105,10 +105,10 @@ std::string describe(std::vector<std::string> const& names, std::vector<std::str
                      std::vector<std::string> const& got) {
     std::ostringstream out;
     for (std::size_t i = 0; i < std::max(expected.size(), got.size()); ++i) {
-        std::string const e = i < expected.size() ? expected[i] : "<none>";
-        std::string const g = i < got.size() ? got[i] : "<none>";
-        std::string const& type = i < types.size() ? types[i] : std::string();
-        out << "\n  " << (i < names.size() ? names[i] : "?") << ": BASIC " << e << ", C++ " << g;
+        std::string const e = i < expected.size() ? expected.at(i) : "<none>";
+        std::string const g = i < got.size() ? got.at(i) : "<none>";
+        std::string const& type = i < types.size() ? types.at(i) : std::string();
+        out << "\n  " << (i < names.size() ? names.at(i) : "?") << ": BASIC " << e << ", C++ " << g;
         if (e != g && (type == "f32" || type == "f64") && !is_nan_token(type, e) &&
             !is_nan_token(type, g) && e.size() == g.size()) {
             out << " (" << ulp_distance(type, e, g) << " ULP)";
@@ -123,7 +123,7 @@ std::vector<std::string> field_names(std::string_view header) {
     std::vector<std::string> names;
     auto const parts = split(header);
     for (std::size_t i = 4; i < parts.size(); ++i) {
-        names.push_back(parts[i].substr(0, parts[i].rfind(':')));
+        names.push_back(parts.at(i).substr(0, parts.at(i).rfind(':')));
     }
     return names;
 }
@@ -159,9 +159,11 @@ std::string str(std::string_view s) {
 
 std::string f32_list(std::span<float const> v) {
     std::string out = std::to_string(v.size());
-    for (std::size_t i = 0; i < v.size(); ++i) {
-        out += (i == 0 ? ':' : ',');
-        out += f32(v[i]);
+    char sep = ':';
+    for (float const x : v) {
+        out += sep;
+        out += f32(x);
+        sep = ',';
     }
     return out;
 }
@@ -265,8 +267,8 @@ void check_grid(std::string_view golden, GridFile const& grid) {
             FAIL("BASIC wrote " << expected.size() << " lines, C++ " << all.size());
         }
         for (std::size_t i = 1; i < all.size(); ++i) {
-            auto const e = split(expected[i]);
-            auto const g = split(all[i]);
+            auto const e = split(expected.at(i));
+            auto const g = split(all.at(i));
             if (!same_tokens(types, e, g, nan_only)) {
                 FAIL("first difference at line " << i + 1 << describe(names, types, e, g));
             }
@@ -302,11 +304,11 @@ std::optional<std::vector<ArglogRecord>> read_arglog(std::string_view capture, s
     std::vector<ArglogRecord> records;
     records.reserve(lines.size() - 1);
     for (std::size_t i = 1; i < lines.size(); ++i) {
-        auto parts = split(lines[i]);
+        auto parts = split(lines.at(i));
         REQUIRE(parts.size() == n_fields + 5);
         ArglogRecord rec;
-        rec.seq = std::stoll(parts[0]);
-        rec.site = parts[4];
+        rec.seq = std::stoll(parts.at(0));
+        rec.site = parts.at(4);
         rec.tokens.assign(parts.begin() + 5, parts.end());
         records.push_back(std::move(rec));
     }

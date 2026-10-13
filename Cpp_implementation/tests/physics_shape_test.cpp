@@ -176,46 +176,55 @@ TEST_CASE("physics: F1 and F2 equal BASIC on the driver grids", "[T1][physics]")
     m5::check_grid(golden, r2);
 }
 
-TEST_CASE("physics: Masscurv, Masscurv1, Masscurv2 equal BASIC on the driver grids",
-          "[T1][physics]") {
+namespace {
+
+// One of Masscurv (0), Masscurv1 (1), Masscurv2 (2): the driver's GridMasscurv.
+void check_masscurv(int which) {
     std::array<float, 3> const rlv = {sg(0), sg(3.5), sg(5.3)};
     std::array<float, 2> const kv = {sg(0), sg(0.3)};
     std::array<float, 2> const k4v = {sg(0), sg(0.05)};
     std::array<float, 3> const edv = {sg(0), sg(1), sg(2)};
     constexpr std::array<std::string_view, 3> names = {"Masscurv", "Masscurv1", "Masscurv2"};
-    for (int which = 0; which < 3; ++which) {
-        std::string const name(names.at(static_cast<std::size_t>(which)));
-        m5::GridFile grid(name + "_grid.txt", name, s_masscurv);
-        for (std::int64_t j = 0; j <= 50; ++j) {
-            for (std::int64_t i = 0; i <= 100; ++i) {
-                for (float const rl : rlv) {
-                    for (float const k : kv) {
-                        for (float const k4 : k4v) {
-                            grid.add(line_masscurv(which, m5::axis(60, 1, j), m5::axis(150, 1, i),
-                                                   rl, k, k4));
-                        }
+    std::string const name(names.at(static_cast<std::size_t>(which)));
+    m5::GridFile grid(name + "_grid.txt", name, s_masscurv);
+    for (std::int64_t j = 0; j <= 50; ++j) {
+        for (std::int64_t i = 0; i <= 100; ++i) {
+            for (float const rl : rlv) {
+                for (float const k : kv) {
+                    for (float const k4 : k4v) {
+                        grid.add(line_masscurv(which, m5::axis(60, 1, j), m5::axis(150, 1, i), rl,
+                                               k, k4));
                     }
                 }
             }
         }
-        for (float const z : edv) {
-            for (float const a : edv) {
-                grid.add(line_masscurv(which, z, a, sg(3.5), sg(0.3), sg(0.05)));
-            }
+    }
+    for (float const z : edv) {
+        for (float const a : edv) {
+            grid.add(line_masscurv(which, z, a, sg(3.5), sg(0.3), sg(0.05)));
         }
-        m5::check_grid(golden, grid);
+    }
+    m5::check_grid(golden, grid);
 
-        fb::FbMtRng rng(6004 + which);
-        m5::GridFile random(name + "_random.txt", name, s_masscurv);
-        for (int i = 0; i < n_random; ++i) {
-            float const z = m5::draw(rng, 1, 120);
-            float const a = m5::draw(rng, 1, 280);
-            float const rl = m5::draw(rng, 0, 8);
-            float const kappa = m5::draw(rng, -1, 1);
-            float const kappa4 = m5::draw(rng, -0.1, 0.1);
-            random.add(line_masscurv(which, z, a, rl, kappa, kappa4));
-        }
-        m5::check_grid(golden, random);
+    fb::FbMtRng rng(6004 + which);
+    m5::GridFile random(name + "_random.txt", name, s_masscurv);
+    for (int i = 0; i < n_random; ++i) {
+        float const z = m5::draw(rng, 1, 120);
+        float const a = m5::draw(rng, 1, 280);
+        float const rl = m5::draw(rng, 0, 8);
+        float const kappa = m5::draw(rng, -1, 1);
+        float const kappa4 = m5::draw(rng, -0.1, 0.1);
+        random.add(line_masscurv(which, z, a, rl, kappa, kappa4));
+    }
+    m5::check_grid(golden, random);
+}
+
+} // namespace
+
+TEST_CASE("physics: Masscurv, Masscurv1, Masscurv2 equal BASIC on the driver grids",
+          "[T1][physics]") {
+    for (int which = 0; which < 3; ++which) {
+        check_masscurv(which);
     }
 }
 
@@ -305,27 +314,35 @@ TEST_CASE("physics: Z_equi equals BASIC on the driver grids", "[T1][physics]") {
     m5::check_grid(golden, random);
 }
 
-TEST_CASE("physics: Beta_Equi equals BASIC on the driver grids", "[T1][physics][slow]") {
+namespace {
+
+// The driver's structured Beta_Equi grid.
+void add_beta_equi_grid(m5::GridFile& grid) {
     std::array<float, 9> const z1v = {sg(10), sg(20), sg(30), sg(40), sg(46),
                                       sg(52), sg(62), sg(72), sg(82)};
     std::array<float, 6> const a1v = {sg(25), sg(60), sg(100), sg(140), sg(180), sg(210)};
     std::array<float, 3> const pb1v = {sg(0.3), sg(0.45), sg(0.584)};
     std::array<float, 3> const pb2v = {sg(0.3), sg(0.5), sg(0.583)};
-    m5::GridFile grid("Beta_Equi_grid.txt", "Beta_Equi", s_beta_equi_grid);
     for (float const z1 : z1v) {
         for (float const a1 : a1v) {
             for (float const b1p : pb1v) {
                 for (float const b2p : pb2v) {
-                    for (int iv = 0; iv < 2; ++iv) {
-                        float const b1i = iv == 0 ? b1p : 0.0F;
-                        float const b2i = iv == 0 ? b2p : 0.0F;
-                        grid.add(line_beta_equi_grid(a1, 236.0F - a1, z1, 92.0F - z1, sg(1.0), b1p,
-                                                     b2p, b1i, b2i));
-                    }
+                    // Opt-in variant 0: the previous values; variant 1: (0, 0).
+                    grid.add(line_beta_equi_grid(a1, 236.0F - a1, z1, 92.0F - z1, sg(1.0), b1p, b2p,
+                                                 b1p, b2p));
+                    grid.add(line_beta_equi_grid(a1, 236.0F - a1, z1, 92.0F - z1, sg(1.0), b1p, b2p,
+                                                 0.0F, 0.0F));
                 }
             }
         }
     }
+}
+
+} // namespace
+
+TEST_CASE("physics: Beta_Equi equals BASIC on the driver grids", "[T1][physics][slow]") {
+    m5::GridFile grid("Beta_Equi_grid.txt", "Beta_Equi", s_beta_equi_grid);
+    add_beta_equi_grid(grid);
     m5::check_grid(golden, grid);
 
     fb::FbMtRng rng(6011);
@@ -345,37 +362,60 @@ TEST_CASE("physics: Beta_Equi equals BASIC on the driver grids", "[T1][physics][
     m5::check_grid(golden, random);
 }
 
-TEST_CASE("physics: shape functions replay the captured GEF calls", "[T1][physics]") {
-    using Tokens = std::vector<std::string>;
-    auto const f32 = [](Tokens const& t, std::size_t i) { return m5::parse_f32(t.at(i)); };
-    auto const i64 = [](Tokens const& t, std::size_t i) { return m5::parse_i64(t.at(i)); };
+namespace {
+
+using Tokens = std::vector<std::string>;
+
+float tf32(Tokens const& t, std::size_t i) {
+    return m5::parse_f32(t.at(i));
+}
+std::int64_t ti64(Tokens const& t, std::size_t i) {
+    return m5::parse_i64(t.at(i));
+}
+
+// Getyield, F1, F2, De_Saddle_Scission.
+std::size_t replay_scalars() {
     std::size_t n = 0;
-    n += m5::check_replay("Getyield", s_getyield, [&](Tokens const& t) {
-        return line_getyield(f32(t, 0), f32(t, 1), f32(t, 2), f32(t, 3), f32(t, 4), f32(t, 5),
-                             f32(t, 6), i64(t, 7));
+    n += m5::check_replay("Getyield", s_getyield, [](Tokens const& t) {
+        return line_getyield(tf32(t, 0), tf32(t, 1), tf32(t, 2), tf32(t, 3), tf32(t, 4), tf32(t, 5),
+                             tf32(t, 6), ti64(t, 7));
     });
-    n += m5::check_replay("F1", s_f, [&](Tokens const& t) { return line_f1(f32(t, 0)); });
-    n += m5::check_replay("F2", s_f, [&](Tokens const& t) { return line_f2(f32(t, 0)); });
+    n += m5::check_replay("F1", s_f, [](Tokens const& t) { return line_f1(tf32(t, 0)); });
+    n += m5::check_replay("F2", s_f, [](Tokens const& t) { return line_f2(tf32(t, 0)); });
+    n += m5::check_replay("De_Saddle_Scission", s_de_saddle, [](Tokens const& t) {
+        return line_de_saddle(tf32(t, 0), tf32(t, 1), tf32(t, 2));
+    });
+    return n;
+}
+
+// Masscurv, Masscurv1, Masscurv2, beta_light, beta_heavy, Z_equi.
+std::size_t replay_shapes() {
+    std::size_t n = 0;
     constexpr std::array<std::string_view, 3> names = {"Masscurv", "Masscurv1", "Masscurv2"};
     for (int which = 0; which < 3; ++which) {
-        n += m5::check_replay(
-            names.at(static_cast<std::size_t>(which)), s_masscurv, [&](Tokens const& t) {
-                return line_masscurv(which, f32(t, 0), f32(t, 1), f32(t, 2), f32(t, 3), f32(t, 4));
-            });
+        n += m5::check_replay(names.at(static_cast<std::size_t>(which)), s_masscurv,
+                              [which](Tokens const& t) {
+                                  return line_masscurv(which, tf32(t, 0), tf32(t, 1), tf32(t, 2),
+                                                       tf32(t, 3), tf32(t, 4));
+                              });
     }
-    n += m5::check_replay("De_Saddle_Scission", s_de_saddle, [&](Tokens const& t) {
-        return line_de_saddle(f32(t, 0), f32(t, 1), f32(t, 2));
+    n += m5::check_replay("beta_light", s_beta_light, [](Tokens const& t) {
+        return line_beta(false, ti64(t, 0), tf32(t, 1), tf32(t, 2));
     });
-    n += m5::check_replay("beta_light", s_beta_light, [&](Tokens const& t) {
-        return line_beta(false, i64(t, 0), f32(t, 1), f32(t, 2));
+    n += m5::check_replay("beta_heavy", s_beta_heavy, [](Tokens const& t) {
+        return line_beta(true, ti64(t, 0), tf32(t, 1), tf32(t, 2));
     });
-    n += m5::check_replay("beta_heavy", s_beta_heavy, [&](Tokens const& t) {
-        return line_beta(true, i64(t, 0), f32(t, 1), f32(t, 2));
+    n += m5::check_replay("Z_equi", s_z_equi, [](Tokens const& t) {
+        return line_z_equi(ti64(t, 0), ti64(t, 1), ti64(t, 2), tf32(t, 3), tf32(t, 4), tf32(t, 5),
+                           ti64(t, 6));
     });
-    n += m5::check_replay("Z_equi", s_z_equi, [&](Tokens const& t) {
-        return line_z_equi(i64(t, 0), i64(t, 1), i64(t, 2), f32(t, 3), f32(t, 4), f32(t, 5),
-                           i64(t, 6));
-    });
+    return n;
+}
+
+} // namespace
+
+TEST_CASE("physics: shape functions replay the captured GEF calls", "[T1][physics]") {
+    std::size_t const n = replay_scalars() + replay_shapes();
     if (n == 0) {
         SKIP("reference store with the M5 arglog captures not available");
     }
