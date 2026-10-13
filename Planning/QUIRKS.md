@@ -475,19 +475,19 @@ Tool commands are run from the repository root: `python3 -m tools.fbsrc.fbline <
 - **Mechanism:** The tests are `RX < 30` (RF = 1E10), `RX > RX0` (RF = 0), `RX < RX1 And RX > 30` (linear) and `RX >= RX1 And RX <= RX0` (cubic). `RX` exactly 30 satisfies none of them, so `RF` keeps its `Dim` value 0 and `RB = RF * RS` is 0.
 - **Effect:** At RZ = 60, RA = 120, `RI = 0`, so `RX = RZ^2 / RA = 30` exactly. Any input whose float `RX` is exactly 30 gets `RF = 0` and therefore `RB = 0`. `I_Switch` 0 then returns exactly 0, and `I_Switch` 1–5 add their shell and pairing terms to that zero base. `I_Switch` 6 also returns 0 at this point: `Max(RB + LYPAIR(60,120) * 2/12, 0)` clamps a negative pairing term (`LYPAIR(60,120)` ≈ −2.19, inferred from the grid values for `I_Switch` 1, 3 and 5).
 - **Evidence status:** *confirmed by fbc C*
-- **Evidence:** GEF.c 17263-17314 (the guarded RF assignments between the `#line 17679` and `#line 17690` markers) has no branch for RX = 30. Driver output `BFTF_grid.txt:83841` of store capture `m5-barriers` (RZ 60, RA 120, I_Switch 0) is `00000000`; I_Switch 1 at the same point (line 83842) is `bebaf111`. Reproduced by the C++ (`physics: BFTF/BFTFA/BFTFB equals BASIC on the driver grids`). Not reached in the M5.2 captures: every captured call has RX between about 35 and 43 [from the barriers replay].
-- **Fidelity switch:** `fix_bftf_rx30_hole`
+- **Evidence:** GEF.c 17263-17314 (the guarded RF assignments between the `#line 17679` and `#line 17690` markers) has no branch for RX = 30. Driver output `BFTF_grid.txt:83841` of store capture `m5-barriers` (RZ 60, RA 120, I_Switch 0) is `00000000`; I_Switch 1 at the same point (line 83842) is `bebaf111`. Reproduced by the C++ (`physics: BFTF/BFTFA/BFTFB equals BASIC on the driver grids`). Not reached in the M5.2 captures: RX is 36.29–37.66 (Rn-215), 39.33–39.97 (U-236), 42.61 (Cf-252) and 46.62 (Sg-264) in every captured call (recomputed from the arglog records by the M5 review).
+- **Fidelity switch:** `fix_bftf_rx30_hole`; the switch comes with a later fix decision (strategy §2.1); the C++ has no `Fidelity` configuration yet
 - **C++ symbol:** `gef::physics::bftf` (`Cpp_implementation/src/physics/barriers.cpp`)
 - **Owning milestone:** M5
 
 ### Q-038 The E2 cascade stops before its first gamma when any state has spin CInt(J_frag)
 
 - **BASIC location:** `GEF.bas:9330-9333` (light fragment), `GEF.bas:9447-9450` (heavy fragment)
-- **Mechanism:** At the first J of `For J = Jfrag To 2 Step -2`, the isomer loop compares every state of the nucleus, the ground state (K = 1) included, with the fragment's total spin: `If Isotab(I_iso).R_SPI(K) = Cint(J_frag_light) Then Exit For, For`. A match leaves both loops before any gamma is stored, and `C_iso_lmd` stays `"GS"`. The line above it, commented out (`GEF.bas:9331`, `9448`), compares with `Cint(J_frag_light + Spin_gs_light)`. `CInt` rounds half to even (`fb_F2L`, GEF.c:68762). Generated C: `if( R_SPI(K) != (float)fb_F2L( J_FRAG_LIGHT$19 ) ) goto …; goto label$4263;` (label 4263 is after the J loop).
+- **Mechanism:** At the first J of `For J = Jfrag To 2 Step -2`, the isomer loop compares every state of the nucleus, the ground state included (Isotab holds the states in ascending spin order, `NucPropJEFF33.bas:143-155`, so K = 1 is the lowest-spin state, an isomer for e.g. Tc-99, In-115, Ir-192), with the fragment's total spin: `If Isotab(I_iso).R_SPI(K) = Cint(J_frag_light) Then Exit For, For`. A match leaves both loops before any gamma is stored and `C_iso_lmd` stays `"GS"`; if an earlier state K lies in the isomer window (lines 9335-9339), the cascade stops there instead with `"M(…)"` and also without a gamma. The line above it, commented out (`GEF.bas:9331`, `9448`), compares with `Cint(J_frag_light + Spin_gs_light)`. `CInt` rounds half to even (`fb_F2L`, GEF.c:68762). Generated C: `if( R_SPI(K) != (float)fb_F2L( J_FRAG_LIGHT$19 ) ) goto …; goto label$4263;` (label 4263 is after the J loop).
 - **Effect:** the fragment emits no E2 gamma at all (no `EgammaE2`, `E_E2_tot` = 0, no rotational gammas in `Egamma`, `EgammaL`/`EgammaH`, `Ngamma*`), although its rotational band lies above the state, whenever the rounded total spin equals the spin of the ground state or of an isomer.
 - **Evidence status:** *confirmed in output*
 - **Evidence:** the arglog site logs of the M5.2 captures: records with Jfrag ≥ 2 and N_iso > 0 that end with label `GS` and no stored gamma (only this stop gives that outcome): light/heavy 248/318 (`m5-arglog-rn215`), 756/1036 (`m5-arglog-cf252`), 570/727 (`m5-arglog-u235`), 307/857 (`m5-arglog-sh264`), out of 7754–20853 such records per copy. Reproduced by `physics::e2_cascade` in `physics: E2 cascade replays the captured light and heavy cascades` and on the synthetic Isotab patterns of `physics: E2 cascade equals the light copy on the driver grids` (and the heavy copy).
-- **Fidelity switch:** `fix_e2_ground_state_stop` (the corrected comparison would be the commented-out one; which test the authors intended is a fix decision)
+- **Fidelity switch:** `fix_e2_ground_state_stop`, with a later fix decision (the corrected comparison would be the commented-out one; which test the authors intended is part of that decision); the C++ has no `Fidelity` configuration yet
 - **C++ symbol:** `gef::physics::e2_cascade` (`Cpp_implementation/src/physics/e2_cascade.cpp`)
 - **Owning milestone:** M5 (function), M10 (event stage that calls it)
 
@@ -497,10 +497,32 @@ Tool commands are run from the repository root: `python3 -m tools.fbsrc.fbline <
 - **Mechanism:** `Ig2_light = Ig2_light + 1 : Array_Eg2_light(Ig2_light) = Eg`, one element per gamma of the cascade; the array is `ReDim Shared … (100)` and nothing limits Ig2. fbc builds GEF without `-exx`: GEF.c:68875 `*(float*)((IG2_LIGHT$0 << 2) + *(int64*)&ARRAY_EG2_LIGHT$) = EG$20;` writes past the array for Ig2 > 100, i.e. for Jfrag ≥ 202.
 - **Effect:** none in the captured runs: the largest Ig2 in the M5.2 captures is 17 (heavy, Rn-215 and Sg-264; Jfrag ≤ 34), and the `-exx` runs of the same systems (`m5-exx-*`) raise no bound error. Beyond 100 the BASIC behaviour is undefined (heap corruption).
 - **Evidence status:** *confirmed by fbc C*
-- **Evidence:** `python3 -m tools.fbsrc.fbline GEF.bas:9353`; capture ranges from `python3 -m harness.arglog summary`, MILESTONE_5_PLAN.md M5.5 notes.
+- **Evidence:** `python3 -m tools.fbsrc.fbline GEF.bas:9353`; capture ranges from `python3 -m harness.arglog summary`; `MILESTONE_5_PLAN.md` §9, M5.5.
 - **Fidelity switch:** none. Plan D3 default: the C++ throws `std::out_of_range` for a 101st gamma (`physics: E2 cascade throws beyond Array_Eg2(100)`); undefined behaviour is not reproduced.
 - **C++ symbol:** `gef::physics::e2_cascade`
 - **Owning milestone:** M5
+
+### Q-040 TRusanov computes a pairing floor for E and does not use it
+
+- **BASIC location:** `GEF.bas:16100-16107`
+- **Mechanism:** `If E < Emin Then Eeff = Emin Else Eeff = E` ("Introduced Sept. 2021", Emin = 8), then `TRusanov = sqr(E / (0.094E0 * A))`: the result uses E, not Eeff. GEF.c:12017-12038: `EEFF$1` is assigned on both paths and never read; the return is `__builtin_sqrt( (double)E$1 / ((double)A$1 * 0x1.810624DD2F1AAp-4) )`.
+- **Effect:** the temperature has no floor at the critical pairing energy. In the M5.2 captures E < 8 in 1375 of 1409 calls (U-236), 101 of 101 (Cf-252), 11 of 11 (Sg-264); Rn-215's smallest E is 0.1 (found by the M5 review; code-map candidate #10, `code_maps/setup_physics.md:737`).
+- **Evidence status:** *confirmed by fbc C*
+- **Evidence:** `python3 -m tools.fbsrc.fbline GEF.bas:16098-16108`; reproduced by `physics: TRusanov equals BASIC on the driver grids` and `physics: level_density replays the captured GEF calls`.
+- **Fidelity switch:** `fix_trusanov_pairing_floor`, with a later fix decision; the C++ has no `Fidelity` configuration yet
+- **C++ symbol:** `gef::physics::trusanov` (`Cpp_implementation/src/physics/level_density.cpp`)
+- **Owning milestone:** M5
+
+### Q-041 Beta_Equi prints its non-convergence message to whatever file number f holds
+
+- **BASIC location:** `GEF.bas:16628`; `f` is `Dim Shared As Integer f` (`GEF.bas:1768`), set by `f = FreeFile` at `GEF.bas:4150, 4179, 10057`
+- **Mechanism:** `If N > 998 Then Print #f,"Beta_Equi not converged: ",Z1,N` uses the shared file number of the `pfis`/`ptb` output files (GEF.c:13801-13814), which is 0 (the console) or 1 at the logged calls (arglog field `global.f`); it is not opened for this message.
+- **Effect:** not reached in the captured runs: the C++ replay of all 92,789 logged `Beta_Equi` calls asserts that none would print. It is reached for unphysical inputs: 696 of 972 grid and 1,712 of 2,000 random inputs of driver `m5_shape` do not converge (each prints once, with N = 1001). Where the line would go when it is reached (console, an open `ptb`/`pfis` file, or a closed file number) depends on the file state, which M7/M13 own.
+- **Evidence status:** *read only* for the destination; the message and its condition are *confirmed by fbc C*
+- **Evidence:** `python3 -m tools.fbsrc.fbline GEF.bas:16628`; driver output `Beta_Equi_print.txt` of store golden `m5-shape-2`, rebuilt by `physics: Beta_Equi equals BASIC on the driver grids`; `physics: Beta_Equi replays the captured GEF calls`.
+- **Fidelity switch:** none yet (the C++ returns the condition as `BetaEquiResult::print_not_converged` with N, plan D7; the caller decides the destination in M7/M13)
+- **C++ symbol:** `gef::physics::beta_equi` (`Cpp_implementation/src/physics/shape.cpp`)
+- **Owning milestone:** M5 (condition), M7/M13 (destination)
 
 ## 5. Build notes (not GEF quirks)
 
@@ -585,6 +607,8 @@ These describe how the toolchain, not GEF, can make the C++ results differ from 
 | Q-037 | BFTF RF has no value at RX = 30 | `GEF.bas:17679-17690` | confirmed by fbc C | `fix_bftf_rx30_hole` | M5 |
 | Q-038 | E2 cascade stops before its first gamma when a state has spin CInt(J_frag) | `GEF.bas:9330-9333, 9447-9450` | confirmed in output | `fix_e2_ground_state_stop` | M5, M10 |
 | Q-039 | `Array_Eg2_*(100)` written without a bound | `GEF.bas:9353, 9469` | confirmed by fbc C | — | M5 |
+| Q-040 | TRusanov computes a pairing floor and does not use it | `GEF.bas:16100-16107` | confirmed by fbc C | `fix_trusanov_pairing_floor` | M5 |
+| Q-041 | Beta_Equi prints to whatever file number `f` holds | `GEF.bas:16628` | read only (destination) | — | M5, M7/M13 |
 | B-001 | Optimisation level vs fbc `-O0` | (toolchain) | open risk | — | M3, M5 |
 | B-002 | fbc gcc passes `-fwrapv -fno-strict-aliasing` | (toolchain) | resolved for the runtime layer (M3.3) | — | M3 |
 | B-003 | `Compilationstamp` needs `SOURCE_DATE_EPOCH` | `GEF.bas:17` | handled (M1) | — | M1 |

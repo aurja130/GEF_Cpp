@@ -25,6 +25,12 @@ Each definition is bracketed by `#undef <name>` and `#undef`/`#define <name>`, s
 
 Wrappers take the parameters with the declared types, so a call converts its arguments exactly as the direct call does (e.g. `U_levdens(Z As Integer, …)` called with a `Single`); the log shows the converted values.
 
+## Limits
+
+- **Spread records are not a uniform sample.** Beyond the first K calls, call n is kept when n is a multiple of 2^j. A statement that calls a function an even number of times per pass (e.g. `Beta_Equi`'s two `LyMass` calls at `GEF.bas:16614-16615`, `FEDEFOLys`'s two calls at 16213) then keeps almost only one of them: after the first 20,000 calls the two `LyMass` sites of `Beta_Equi` are logged 26,206 : 994 times (Rn-215). The first K records are complete and unbiased; argument ranges taken from the spread records (`summary`) are a lower bound of what GEF reaches.
+- **Calls made before `GEF.bas:1820` are not logged.** `DCLbranchingJEFF33.bas` (included at `GEF.bas:1284`) calls `AME2020` twice inside `U_Q_beta_minus` (line 113); those calls bypass the `AME2020` wrapper, so `AME2020.txt` and its count in `_counts.txt` leave them out (2 × 118,656 calls in Rn-215). `U_Q_beta_minus` itself is logged.
+- **Call-site line.** `__LINE__` is the line where the call's argument list closes, so a call continued over several lines is logged at its last line (e.g. `De_Saddle_Scission` at `GEF.bas:6318-6319` as 6319). Files included more than once (`Branchings.bas`, `Plotting.bas`) give the same call site for every inclusion.
+
 ## Sites
 
 | Site | Entry (blank line replaced by an include) | Exit | Logged |

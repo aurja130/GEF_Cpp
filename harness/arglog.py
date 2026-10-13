@@ -321,9 +321,16 @@ def main(argv: list[str] | None = None) -> int:
     p_rep = sub.add_parser("replay-check", help="compare driver replays with the logs")
     p_rep.add_argument("arglog_dir", type=Path)
     p_rep.add_argument("replay_dir", type=Path)
+    p_rep.add_argument(
+        "--require",
+        action="append",
+        default=[],
+        metavar="NAME",
+        help="a log NAME.txt with records must have a replay file (repeatable)",
+    )
     ns = parser.parse_args(argv)
     if ns.cmd == "replay-check":
-        return _replay_main(ns.arglog_dir, ns.replay_dir)
+        return _replay_main(ns.arglog_dir, ns.replay_dir, ns.require)
     path: Path = ns.path
     try:
         result = summarize(path)
@@ -341,8 +348,22 @@ def main(argv: list[str] | None = None) -> int:
     return 0
 
 
-def _replay_main(arglog_dir: Path, replay_dir: Path) -> int:
-    """Exit 0 if every replay file matches its log, 1 otherwise."""
+def missing_replays(arglog_dir: Path, replay_dir: Path, required: list[str]) -> list[str]:
+    """The required names whose log has records but which have no replay file."""
+    missing: list[str] = []
+    for name in required:
+        log = arglog_dir / f"{name}.txt"
+        if (
+            not (replay_dir / f"{name}.txt").is_file()
+            and log.is_file()
+            and read_arglog(log).records
+        ):
+            missing.append(name)
+    return missing
+
+
+def _replay_main(arglog_dir: Path, replay_dir: Path, required: list[str]) -> int:
+    """Exit 0 if every replay file matches its log and no required replay is missing, else 1."""
     try:
         replays = sorted(replay_dir.glob("*.txt"))
         if not replays:
@@ -356,6 +377,9 @@ def _replay_main(arglog_dir: Path, replay_dir: Path) -> int:
             if res.first is not None:
                 print(f"  first: {res.first}")
                 bad += 1
+        for name in missing_replays(arglog_dir, replay_dir, required):
+            print(f"NOT REPLAYED {name}: the log has records but there is no replay file")
+            bad += 1
     except (HarnessError, OSError) as exc:
         print(f"harness.arglog: {exc}", file=sys.stderr)
         return 2

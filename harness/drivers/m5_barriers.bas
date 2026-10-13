@@ -120,22 +120,25 @@ Sub Structured(ByVal F As Long, ByVal Which As Long)
   Next
 End Sub
 
-' Random tuples of function Which: Randomize Seed, 3; per tuple, in this order: RZ = M5_Draw(91, 92),
-' RA = M5_Draw(233, 236), then I_Switch = ILo + Int(Rnd * INum), with the I_Switch range of
-' the u235 captures: BFTF 0..3, BFTFA 1..3, BFTFB 0..3 (the structured grids cover 0..6, -1, 7).
+' Random tuples of function Which: Randomize Seed, 3; per tuple, in this order: RZ = M5_Draw(84, 107),
+' RA = M5_Draw(210, 265) (the ranges of the four M5.2 captures), then I_Switch = ILo + Int(Rnd * INum)
+' over the captured I_Switch range: BFTF 0..5, BFTFA 1..3, BFTFB 0..3 (the structured grids cover
+' 0..6, -1, 7).
 Sub Randoms(ByVal Which As Long, ByVal Seed As Long, ByRef Cfn As String)
-  Dim As Long ILo = 0, INum = 4
+  Dim As Long ILo = 0, INum = 6
   If Which = 1 Then
     ILo = 1
     INum = 3
+  ElseIf Which = 2 Then
+    INum = 4
   End If
   Dim As String Cname = Cfn & "_random.txt"
   Dim As Long F
   Randomize Seed, 3
   F = M5_OpenGrid(Cname, Cfn, S_BARRIER)
   For I As Long = 1 To N_RANDOM
-    Dim As Single RZ = M5_Draw(91, 92)
-    Dim As Single RA = M5_Draw(233, 236)
+    Dim As Single RZ = M5_Draw(84, 107)
+    Dim As Single RA = M5_Draw(210, 265)
     Dim As Integer ISW = ILo + CLng(Int(Rnd * INum))
     Print #F, LineOf(Which, RZ, RA, ISW)
   Next

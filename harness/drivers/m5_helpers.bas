@@ -115,12 +115,16 @@ Sub Grids()
   Close #F
 
   ' EVEN_ODD: R_ORIGIN = -2 .. 130 step 0.01 times the R_EVEN_ODD list (edges of the 1E-3
-  ' threshold, of Min(., 1) and of the 0.01 floor of Max); random R_ORIGIN in [0, 130),
+  ' threshold, of Min(., 1) and of the 0.01 floor of Max, and a NaN); random R_ORIGIN in [0, 130),
   ' R_EVEN_ODD in [-1.5, 1.5).
-  Dim As Single EO(0 To 13) = {0, 1E-3, -1E-3, 9.99E-4, -9.99E-4, 0.1, 0.3, -0.3, 0.99, 1, 2, _
-                               -0.99, -1, -2}
+  Dim As Single EO(0 To 14) = {0, 1E-3, -1E-3, 9.99E-4, -9.99E-4, 0.1, 0.3, -0.3, 0.99, 1, 2, _
+                               -0.99, -1, -2, 0}
+  ' EO(14) is a NaN (bits 7FC00000): Min keeps it and the 1E-3 test is compiled as
+  ' `If Abs(x) >= 1E-3 Then (even-odd branch)`, so a NaN takes the plain Floor branch.
+  Dim As ULong NanBits = &h7FC00000
+  EO(14) = *Cast(Single Ptr, @NanBits)
   F = M5_OpenGrid("EVEN_ODD_grid.txt", "EVEN_ODD", S_EO)
-  For J As Long = 0 To 13
+  For J As Long = 0 To 14
     For I As Long = 0 To 13200
       Print #F, LineEO(M5_Axis(-2, 0.01, I), EO(J))
     Next

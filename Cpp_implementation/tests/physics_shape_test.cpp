@@ -10,6 +10,7 @@
 #include "fbrt/convert.hpp"
 #include "fbrt/gef_math.hpp"
 #include "fbrt/rng.hpp"
+#include "fbrt/text.hpp"
 #include "physics/shape.hpp"
 #include "support/m5.hpp"
 
@@ -44,7 +45,7 @@ constexpr std::string_view s_beta_equi_grid =
     "beta1opt.out:f32 beta2opt.in:f32 beta2opt.out:f32 printed:i64";
 constexpr int n_random = 100000;
 constexpr int n_beta_random = 2000;
-constexpr std::string_view golden = "m5-shape";
+constexpr std::string_view golden = "m5-shape-2";
 
 // A BASIC decimal literal assigned to a Single: the Double literal narrowed.
 float sg(double x) noexcept {
@@ -103,17 +104,28 @@ std::string line_z_equi(std::int64_t zcn, std::int64_t a1, std::int64_t a2, floa
 
 // The driver's LineBetaEquiGrid (last token: 1 if the call printed) and LineBetaEquiReplay
 // (last token: the logged global.f, echoed).
-std::string line_beta_equi(float a1, float a2, float z1, float z2, float d, float b1p, float b2p,
-                           float b1i, float b2i, std::string const& last) {
-    auto const r = physics::beta_equi(a1, a2, z1, z2, d, b1p, b2p, b1i, b2i);
+std::string line_beta_equi(physics::BetaEquiResult const& r, float a1, float a2, float z1, float z2,
+                           float d, float b1p, float b2p, float b1i, float b2i,
+                           std::string const& last) {
     return m5::join({m5::f32(a1), m5::f32(a2), m5::f32(z1), m5::f32(z2), m5::f32(d), m5::f32(b1p),
                      m5::f32(b2p), m5::f32(b1i), m5::f32(r.beta1opt), m5::f32(b2i),
                      m5::f32(r.beta2opt), last});
 }
 
-std::string line_beta_equi_grid(float a1, float a2, float z1, float z2, float d, float b1p,
-                                float b2p, float b1i, float b2i) {
+// The driver's LineBetaEquiGrid. When the search does not converge, BASIC prints
+// `Print #f,"Beta_Equi not converged: ",Z1,N` (GEF.c:13806-13814) to the driver's
+// Beta_Equi_print.txt; the same line goes to `print_file`.
+std::string line_beta_equi_grid(fb::PrintFile& print_file, float a1, float a2, float z1, float z2,
+                                float d, float b1p, float b2p, float b1i, float b2i) {
     auto const r = physics::beta_equi(a1, a2, z1, z2, d, b1p, b2p, b1i, b2i);
+    if (r.print_not_converged != (r.n > 998)) {
+        FAIL("Beta_Equi print flag " << r.print_not_converged << " with N " << r.n);
+    }
+    if (r.print_not_converged) {
+        print_file.print("Beta_Equi not converged: ", fb::PrintEnd::Pad);
+        print_file.print(z1, fb::PrintEnd::Pad);
+        print_file.print(r.n, fb::PrintEnd::Newline);
+    }
     return m5::join({m5::f32(a1), m5::f32(a2), m5::f32(z1), m5::f32(z2), m5::f32(d), m5::f32(b1p),
                      m5::f32(b2p), m5::f32(b1i), m5::f32(r.beta1opt), m5::f32(b2i),
                      m5::f32(r.beta2opt), m5::i64(r.print_not_converged ? 1 : 0)});
@@ -317,7 +329,7 @@ TEST_CASE("physics: Z_equi equals BASIC on the driver grids", "[T1][physics]") {
 namespace {
 
 // The driver's structured Beta_Equi grid.
-void add_beta_equi_grid(m5::GridFile& grid) {
+void add_beta_equi_grid(m5::GridFile& grid, fb::PrintFile& print_file) {
     std::array<float, 9> const z1v = {sg(10), sg(20), sg(30), sg(40), sg(46),
                                       sg(52), sg(62), sg(72), sg(82)};
     std::array<float, 6> const a1v = {sg(25), sg(60), sg(100), sg(140), sg(180), sg(210)};
@@ -328,21 +340,41 @@ void add_beta_equi_grid(m5::GridFile& grid) {
             for (float const b1p : pb1v) {
                 for (float const b2p : pb2v) {
                     // Opt-in variant 0: the previous values; variant 1: (0, 0).
-                    grid.add(line_beta_equi_grid(a1, 236.0F - a1, z1, 92.0F - z1, sg(1.0), b1p, b2p,
-                                                 b1p, b2p));
-                    grid.add(line_beta_equi_grid(a1, 236.0F - a1, z1, 92.0F - z1, sg(1.0), b1p, b2p,
-                                                 0.0F, 0.0F));
+                    grid.add(line_beta_equi_grid(print_file, a1, 236.0F - a1, z1, 92.0F - z1,
+                                                 sg(1.0), b1p, b2p, b1p, b2p));
+                    grid.add(line_beta_equi_grid(print_file, a1, 236.0F - a1, z1, 92.0F - z1,
+                                                 sg(1.0), b1p, b2p, 0.0F, 0.0F));
                 }
             }
         }
+    }
+    // Edge rows: (a) no improvement, the incoming opt values pass through (D8); (b) exits at
+    // N = 996 .. 1001 around the print condition N > 998.
+    float const p1 = m5::parse_f32("3f0c28f6");
+    float const p2 = m5::parse_f32("3f0c6a7f");
+    auto const r = physics::beta_equi(118, 118, 46, 46, 1, p1, p2, 0.25F, 0.75F);
+    CHECK(r.beta1opt == 0.25F);
+    CHECK(r.beta2opt == 0.75F);
+    grid.add(
+        line_beta_equi_grid(print_file, 118, 118, 46, 46, sg(1.0), p1, p2, sg(0.25), sg(0.75)));
+    constexpr std::array<std::string_view, 6> edge_p2 = {"3e77ced8", "3e774bc6", "3e76c8b4",
+                                                         "3e7645a0", "3e75c28e", "3e753f7c"};
+    std::int64_t expected_n = 996;
+    for (std::string_view const t : edge_p2) {
+        float const b1p = m5::parse_f32("3eb70a3e");
+        float const b2p = m5::parse_f32(t);
+        CHECK(physics::beta_equi(118, 118, 46, 46, 1, b1p, b2p, b1p, b2p).n == expected_n);
+        ++expected_n;
+        grid.add(line_beta_equi_grid(print_file, 118, 118, 46, 46, sg(1.0), b1p, b2p, b1p, b2p));
     }
 }
 
 } // namespace
 
 TEST_CASE("physics: Beta_Equi equals BASIC on the driver grids", "[T1][physics][slow]") {
+    fb::PrintFile print_file;
     m5::GridFile grid("Beta_Equi_grid.txt", "Beta_Equi", s_beta_equi_grid);
-    add_beta_equi_grid(grid);
+    add_beta_equi_grid(grid, print_file);
     m5::check_grid(golden, grid);
 
     fb::FbMtRng rng(6011);
@@ -357,9 +389,10 @@ TEST_CASE("physics: Beta_Equi equals BASIC on the driver grids", "[T1][physics][
         float const b2p = m5::draw(rng, 0.1, 0.9);
         float const b1i = m5::draw(rng, 0, 1);
         float const b2i = m5::draw(rng, 0, 1);
-        random.add(line_beta_equi_grid(a1, a2, z1, z2, d, b1p, b2p, b1i, b2i));
+        random.add(line_beta_equi_grid(print_file, a1, a2, z1, z2, d, b1p, b2p, b1i, b2i));
     }
     m5::check_grid(golden, random);
+    m5::check_text(golden, "Beta_Equi_print.txt", m5::text_lines(print_file.text()));
 }
 
 namespace {
@@ -429,7 +462,8 @@ TEST_CASE("physics: Beta_Equi replays the captured GEF calls", "[T1][physics]") 
             auto const r = physics::beta_equi(f(0), f(1), f(2), f(3), f(4), f(5), f(6), f(7), f(9));
             printed += r.print_not_converged ? 1U : 0U;
             // global.f is echoed: it is an input the function only prints to.
-            return line_beta_equi(f(0), f(1), f(2), f(3), f(4), f(5), f(6), f(7), f(9), t.at(11));
+            return line_beta_equi(r, f(0), f(1), f(2), f(3), f(4), f(5), f(6), f(7), f(9),
+                                  t.at(11));
         });
     if (n == 0) {
         SKIP("reference store with the M5 arglog captures not available");

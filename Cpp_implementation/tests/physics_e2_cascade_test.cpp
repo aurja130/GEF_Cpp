@@ -301,6 +301,16 @@ TEST_CASE("physics: E2 cascade replays the captured light and heavy cascades", "
     }
 }
 
+TEST_CASE("physics: E2 cascade reads outside DEFOtab throw", "[T1][physics]") {
+    data::TableSet const& tables = jeff33();
+    // DEFOtab is (N 0..236) x (Z 0..136).
+    REQUIRE_THROWS_AS(physics::e2_cascade(tables, 137, 250, 4.0F, 4.0F, 0.0F, 0, 0),
+                      std::out_of_range);
+    REQUIRE_THROWS_AS(physics::e2_cascade(tables, 50, 287, 4.0F, 4.0F, 0.0F, 0, 0),
+                      std::out_of_range);
+    REQUIRE_NOTHROW(physics::e2_cascade(tables, 136, 372, 4.0F, 4.0F, 0.0F, 0, 0));
+}
+
 TEST_CASE("physics: E2 cascade throws beyond Array_Eg2(100)", "[T1][physics]") {
     data::TableSet const& tables = jeff33();
     // Jfrag = 202 would store gamma 101 (J = 202 .. 2): beyond Array_Eg2_<side>(100).

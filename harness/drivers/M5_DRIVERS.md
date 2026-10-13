@@ -16,6 +16,12 @@ One driver per group: `m5_masses`, `m5_barriers`, `m5_level_density`, `m5_shape`
 
 Every function and site has one schema, the field list of its `arglog` header (`harness/ARGLOG.md`): parameters in order (ByRef ones as `<name>.in`, `<name>.out`), `result`, `global.<name>`; sites `in.<expr>` / `out.<expr>`. Tokens are the `arglog` tokens (`f32` 8 hex, `f64` 16, `i64` 16, `u8` 2, `str` hex bytes or `-`, `f32[]`, `f32hash`), written with the `M5_*` functions of `m5_common.bi`. A driver's schema string must equal the `arglog` header text, or the replay stops.
 
+### Exceptions to the one-schema rule
+
+- `m5_shape`: the `Beta_Equi` grids end with `printed:i64` (1 if the call wrote its non-convergence line to `Beta_Equi_print.txt`) instead of the arglog's `global.f:i64`, which the replay echoes.
+- `m5_e2_cascade`: the grids use their own schemas (`S_GRID_LIGHT`, `S_GRID_HEAVY`: the inputs and the live outputs); the replay echoes the five dead scope locals `out.J`, `out.K`, `out.RJeff`, `out.Eg`, `out.Nspectrum` (written before read on every path, invisible after `GEF.bas:9486`) and recomputes every other token.
+- `m5_masses`, `m5_barriers`: the console lines the cut code prints (`U_Mass: Z, A`, `Undefined option in BFTF`) are the driver's `stdout.txt`, which is part of the golden; `m5_shape` writes `Beta_Equi`'s prints to `Beta_Equi_print.txt`, also part of the golden. The C++ tests rebuild them with `gef::fb::PrintFile` (`m5::check_text`).
+
 ## Grid files
 
 `<fn>_grid.txt` (structured grid) and `<fn>_random.txt` (seeded random tuples), in the working directory:
@@ -33,8 +39,8 @@ Rules, so that the C++ test can regenerate every input exactly:
 
 ## Replay
 
-`m5_<group> replay <dir>`: for each function or site of the group whose log `<dir>/<fn>.txt` exists, the driver reads every record (`M5_ReplayOpen`/`M5_ReplayNext`), recomputes the call from the logged inputs and writes `replay/<fn>.txt`: `<seq> <tokens>` with all fields (inputs echoed, outputs recomputed). `python3 -m harness.arglog replay-check <dir> replay` must report every file `OK`: the driver computes what GEF computed in context.
+`m5_<group> replay <dir>`: for each function or site of the group whose log `<dir>/<fn>.txt` exists, the driver reads every record (`M5_ReplayOpen`/`M5_ReplayNext`), recomputes the call from the logged inputs and writes `replay/<fn>.txt`: `<seq> <tokens>` with all fields (inputs echoed, outputs recomputed). `python3 -m harness.arglog replay-check <dir> replay --require <fn> ...` (every function and site of the group) must report every file `OK` and none `NOT REPLAYED`: the driver computes what GEF computed in context.
 
 ## Goldens
 
-The full grid outputs go to the reference store as capture `m5-<group>` (`harness.golden promote`, kind `driver`, larger than the committed limit); their whole-file fingerprints (`python3 -m harness.probe_fingerprints m5-<group> --name m5-<group> --files ...`) are committed under `Cpp_implementation/tests/golden/m5-<group>/files.txt`. The C++ test regenerates every line, compares the fingerprint, and with the store present compares line by line.
+The full grid outputs go to the reference store as capture `m5-<group>` (a regenerated golden gets a new id, `m5-<group>-2`, since captures never change) (`harness.golden promote`, kind `driver`, larger than the committed limit); their whole-file fingerprints (`python3 -m harness.probe_fingerprints m5-<group> --name m5-<group> --files ...`) are committed under `Cpp_implementation/tests/golden/m5-<group>/files.txt`. The C++ test regenerates every line, compares the fingerprint, and with the store present compares line by line.

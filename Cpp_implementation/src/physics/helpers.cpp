@@ -55,8 +55,9 @@ std::int64_t even_odd(float r_origin, float r_even_odd) noexcept {
     r_even_odd = fb::min(r_even_odd, 1.0F);
     auto const r_in = static_cast<float>(static_cast<double>(r_origin) + 0.5);
     float const r_floor = fb::floor(r_in);
-    // GEF.bas:17634: Abs in Single, compared in Double with 1.E-3.
-    if (static_cast<double>(std::fabs(r_even_odd)) < 1.0E-3) {
+    // GEF.bas:17634: Abs in Single, compared in Double with 1.E-3; compiled as
+    // `if (... >= 1E-3) goto else-branch`, so a NaN R_EVEN_ODD takes this branch.
+    if (!(static_cast<double>(std::fabs(r_even_odd)) >= 1.0E-3)) {
         // GEF.bas:17635
         return fb::f2l(r_floor);
     }

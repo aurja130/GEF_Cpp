@@ -3,7 +3,7 @@
 // Licensed under the GNU GPL v3 or later, WITHOUT ANY WARRANTY; see LICENSE.txt.
 
 // T1 tests of physics/helpers (Gaussintegral, Bell, U_Box, EVEN_ODD) against the driver
-// m5_helpers (golden m5-helpers) and the arglog captures. The grids repeat the driver's
+// m5_helpers (golden m5-helpers-2) and the arglog captures. The grids repeat the driver's
 // (harness/drivers/m5_helpers.bas).
 
 #include "fbrt/rng.hpp"
@@ -13,6 +13,7 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include <array>
+#include <bit>
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -55,7 +56,7 @@ TEST_CASE("physics: Gaussintegral equals BASIC on the driver grids", "[T1][physi
             grid.add(line_gauss(m5::axis(-10, 0.01, i), s));
         }
     }
-    m5::check_grid("m5-helpers", grid);
+    m5::check_grid("m5-helpers-2", grid);
 
     gef::fb::FbMtRng rng(5001);
     m5::GridFile random("Gaussintegral_random.txt", "Gaussintegral", s_gauss);
@@ -64,7 +65,7 @@ TEST_CASE("physics: Gaussintegral equals BASIC on the driver grids", "[T1][physi
         float const s = m5::draw(rng, 0, 6);
         random.add(line_gauss(x, s));
     }
-    m5::check_grid("m5-helpers", random);
+    m5::check_grid("m5-helpers-2", random);
 }
 
 TEST_CASE("physics: Bell equals BASIC on the driver grids", "[T1][physics]") {
@@ -76,7 +77,7 @@ TEST_CASE("physics: Bell equals BASIC on the driver grids", "[T1][physics]") {
             grid.add(line_bell(m5::axis(-5, 0.05, i), bl.at(j), br.at(j)));
         }
     }
-    m5::check_grid("m5-helpers", grid);
+    m5::check_grid("m5-helpers-2", grid);
 
     gef::fb::FbMtRng rng(5002);
     m5::GridFile random("Bell_random.txt", "Bell", s_bell);
@@ -87,7 +88,7 @@ TEST_CASE("physics: Bell equals BASIC on the driver grids", "[T1][physics]") {
         auto const r = static_cast<float>(static_cast<double>(l) + (20.0 * rng.rnd()));
         random.add(line_bell(x, l, r));
     }
-    m5::check_grid("m5-helpers", random);
+    m5::check_grid("m5-helpers-2", random);
 }
 
 TEST_CASE("physics: U_Box equals BASIC on the driver grids", "[T1][physics]") {
@@ -99,7 +100,7 @@ TEST_CASE("physics: U_Box equals BASIC on the driver grids", "[T1][physics]") {
             grid.add(line_box(m5::axis(-50, 0.05, i), xs.at(j), xw.at(j)));
         }
     }
-    m5::check_grid("m5-helpers", grid);
+    m5::check_grid("m5-helpers-2", grid);
 
     gef::fb::FbMtRng rng(5003);
     m5::GridFile random("U_Box_random.txt", "U_Box", s_box);
@@ -109,19 +110,22 @@ TEST_CASE("physics: U_Box equals BASIC on the driver grids", "[T1][physics]") {
         float const w = m5::draw(rng, 0, 20);
         random.add(line_box(x, s, w));
     }
-    m5::check_grid("m5-helpers", random);
+    m5::check_grid("m5-helpers-2", random);
 }
 
 TEST_CASE("physics: EVEN_ODD equals BASIC on the driver grids", "[T1][physics]") {
-    constexpr std::array<float, 14> eo = {0.0F,  1E-3F, -1E-3F, 9.99E-4F, -9.99E-4F, 0.1F,  0.3F,
-                                          -0.3F, 0.99F, 1.0F,   2.0F,     -0.99F,    -1.0F, -2.0F};
+    // The driver's list; the last entry is the NaN with bits 7FC00000.
+    std::array<float, 15> const eo = {
+        0.0F, 1E-3F,  -1E-3F, 9.99E-4F, -9.99E-4F,
+        0.1F, 0.3F,   -0.3F,  0.99F,    1.0F,
+        2.0F, -0.99F, -1.0F,  -2.0F,    std::bit_cast<float>(0x7FC00000U)};
     m5::GridFile grid("EVEN_ODD_grid.txt", "EVEN_ODD", s_eo);
     for (float const e : eo) {
         for (std::int64_t i = 0; i <= 13200; ++i) {
             grid.add(line_eo(m5::axis(-2, 0.01, i), e));
         }
     }
-    m5::check_grid("m5-helpers", grid);
+    m5::check_grid("m5-helpers-2", grid);
 
     gef::fb::FbMtRng rng(5004);
     m5::GridFile random("EVEN_ODD_random.txt", "EVEN_ODD", s_eo);
@@ -130,7 +134,7 @@ TEST_CASE("physics: EVEN_ODD equals BASIC on the driver grids", "[T1][physics]")
         float const e = m5::draw(rng, -1.5, 1.5);
         random.add(line_eo(x, e));
     }
-    m5::check_grid("m5-helpers", random);
+    m5::check_grid("m5-helpers-2", random);
 }
 
 TEST_CASE("physics: helpers replay the captured GEF calls", "[T1][physics]") {

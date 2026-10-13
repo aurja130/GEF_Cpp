@@ -291,6 +291,48 @@ void check_grid(std::string_view golden, GridFile const& grid) {
     CHECK(actual == it->second);
 }
 
+void check_text(std::string_view golden, std::string_view file,
+                std::vector<std::string> const& lines) {
+    INFO("golden " << golden << ", file " << file);
+    char const* const local =
+        std::getenv("GEF_TEST_M5_DIR"); // NOLINT(concurrency-mt-unsafe): read-only
+    std::optional<std::filesystem::path> const path =
+        local != nullptr ? std::optional(std::filesystem::path(local) / golden / file)
+                         : store_file(golden, file);
+    if (path) {
+        auto const expected = read_lines(*path);
+        for (std::size_t i = 0; i < std::min(expected.size(), lines.size()); ++i) {
+            if (expected.at(i) != lines.at(i)) {
+                FAIL("first difference at line " << i + 1 << ": BASIC '" << expected.at(i)
+                                                 << "', C++ '" << lines.at(i) << "'");
+            }
+        }
+        REQUIRE(expected.size() == lines.size());
+    }
+    if (local != nullptr) {
+        return;
+    }
+    auto const committed = read_fingerprints(golden, "files.txt");
+    auto const it = committed.find(file);
+    REQUIRE(it != committed.end());
+    CHECK(fingerprint_lines(lines) == it->second);
+}
+
+std::vector<std::string> text_lines(std::string const& text) {
+    std::vector<std::string> out;
+    std::size_t start = 0;
+    while (start < text.size()) {
+        std::size_t const lf = text.find('\n', start);
+        if (lf == std::string::npos) {
+            out.push_back(text.substr(start));
+            break;
+        }
+        out.push_back(text.substr(start, lf - start));
+        start = lf + 1;
+    }
+    return out;
+}
+
 std::optional<std::vector<ArglogRecord>> read_arglog(std::string_view capture, std::string_view fn,
                                                      std::string_view schema) {
     auto const path = store_file(capture, "work/probes/arglog/" + std::string(fn) + ".txt");

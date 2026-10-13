@@ -4,12 +4,13 @@
 
 // T1 tests of physics/masses (LyMass, LyPair, FEDEFOLys, LDMass, AME2020, U_SHELL, U_SHELL_exp,
 // U_SHELL_EO_exp, U_MASS, ECOUL, U_Valid, U_Delta_S0, U_Q_beta_minus) against the driver
-// m5_masses (golden m5-masses) and the arglog captures. The grids repeat the driver's
+// m5_masses (golden m5-masses-2) and the arglog captures. The grids repeat the driver's
 // (harness/drivers/m5_masses.bas).
 
 #include "data/program_data.hpp"
 #include "data/tables.hpp"
 #include "fbrt/rng.hpp"
+#include "fbrt/text.hpp"
 #include "physics/masses.hpp"
 #include "support/m5.hpp"
 
@@ -94,8 +95,20 @@ std::string line_u_shell_eo_exp(gef::data::TableSet const& tables, std::int64_t 
     return m5::join({m5::i64(z), m5::i64(a), m5::f32(physics::u_shell_eo_exp(tables, z, a))});
 }
 
-std::string line_u_mass(gef::data::TableSet const& tables, float z, float a) {
-    return m5::join({m5::f32(z), m5::f32(a), m5::f32(physics::u_mass(tables, z, a).value)});
+// One U_MASS line. The flag must be set exactly when BASIC prints (GEF.bas:16315); the print
+// itself, `Print "U_Mass: Z, A",Z,A` (GEF.c:12736-12742), goes to `console` when given.
+std::string line_u_mass(gef::data::TableSet const& tables, float z, float a,
+                        gef::fb::PrintFile* console = nullptr) {
+    auto const r = physics::u_mass(tables, z, a);
+    if (r.print_negative_input != (z < 0.0F || a < 0.0F)) {
+        FAIL("U_MASS print flag " << r.print_negative_input << " for Z " << z << ", A " << a);
+    }
+    if (r.print_negative_input && console != nullptr) {
+        console->print("U_Mass: Z, A", gef::fb::PrintEnd::Pad);
+        console->print(z, gef::fb::PrintEnd::Pad);
+        console->print(a, gef::fb::PrintEnd::Newline);
+    }
+    return m5::join({m5::f32(z), m5::f32(a), m5::f32(r.value)});
 }
 
 std::string line_ecoul(float z1, float a1, float beta1, float z2, float a2, float beta2, float d) {
@@ -137,7 +150,7 @@ TEST_CASE("physics: LyMass equals BASIC on the driver grids", "[T1][physics]") {
             grid.add(line_ly_mass(z, z + n, 0.25F));
         }
     }
-    m5::check_grid("m5-masses", grid);
+    m5::check_grid("m5-masses-2", grid);
 
     gef::fb::FbMtRng rng(6009);
     m5::GridFile random("LyMass_random.txt", "LyMass", s_lymass);
@@ -147,7 +160,7 @@ TEST_CASE("physics: LyMass equals BASIC on the driver grids", "[T1][physics]") {
         float const b = m5::draw(rng, -0.5, 2.5);
         random.add(line_ly_mass(z, z + n, b));
     }
-    m5::check_grid("m5-masses", random);
+    m5::check_grid("m5-masses-2", random);
 }
 
 TEST_CASE("physics: LyPair equals BASIC on the driver grids", "[T1][physics]") {
@@ -157,7 +170,7 @@ TEST_CASE("physics: LyPair equals BASIC on the driver grids", "[T1][physics]") {
             grid.add(line_ly_pair(zi, zi + ni));
         }
     }
-    m5::check_grid("m5-masses", grid);
+    m5::check_grid("m5-masses-2", grid);
 
     gef::fb::FbMtRng rng(6002);
     m5::GridFile random("LyPair_random.txt", "LyPair", s_lypair);
@@ -166,7 +179,7 @@ TEST_CASE("physics: LyPair equals BASIC on the driver grids", "[T1][physics]") {
         std::int64_t const a = rand_int(rng, 20, 265);
         random.add(line_ly_pair(z, a));
     }
-    m5::check_grid("m5-masses", random);
+    m5::check_grid("m5-masses-2", random);
 }
 
 TEST_CASE("physics: FEDEFOLys equals BASIC on the driver grids", "[T1][physics]") {
@@ -187,7 +200,7 @@ TEST_CASE("physics: FEDEFOLys equals BASIC on the driver grids", "[T1][physics]"
             grid.add(line_fedefo_lys(z, z + n, 0.25F));
         }
     }
-    m5::check_grid("m5-masses", grid);
+    m5::check_grid("m5-masses-2", grid);
 
     gef::fb::FbMtRng rng(6010);
     m5::GridFile random("FEDEFOLys_random.txt", "FEDEFOLys", s_fedefolys);
@@ -197,7 +210,7 @@ TEST_CASE("physics: FEDEFOLys equals BASIC on the driver grids", "[T1][physics]"
         float const b = m5::draw(rng, -0.5, 2.5);
         random.add(line_fedefo_lys(z, z + n, b));
     }
-    m5::check_grid("m5-masses", random);
+    m5::check_grid("m5-masses-2", random);
 }
 
 TEST_CASE("physics: LDMass equals BASIC on the driver grids", "[T1][physics]") {
@@ -219,7 +232,7 @@ TEST_CASE("physics: LDMass equals BASIC on the driver grids", "[T1][physics]") {
             grid.add(line_ld_mass(tables, z, z + n, 0.25F));
         }
     }
-    m5::check_grid("m5-masses", grid);
+    m5::check_grid("m5-masses-2", grid);
 
     gef::fb::FbMtRng rng(6011);
     m5::GridFile random("LDMass_random.txt", "LDMass", s_ldmass);
@@ -229,7 +242,7 @@ TEST_CASE("physics: LDMass equals BASIC on the driver grids", "[T1][physics]") {
         float const b = m5::draw(rng, -0.5, 2.5);
         random.add(line_ld_mass(tables, z, z + n, b));
     }
-    m5::check_grid("m5-masses", random);
+    m5::check_grid("m5-masses-2", random);
 }
 
 TEST_CASE("physics: AME2020 equals BASIC on the driver grids", "[T1][physics]") {
@@ -240,7 +253,7 @@ TEST_CASE("physics: AME2020 equals BASIC on the driver grids", "[T1][physics]") 
             grid.add(line_ame2020(tables, zi, zi + ni));
         }
     }
-    m5::check_grid("m5-masses", grid);
+    m5::check_grid("m5-masses-2", grid);
 
     gef::fb::FbMtRng rng(6001);
     m5::GridFile random("AME2020_random.txt", "AME2020", s_ame2020);
@@ -249,7 +262,7 @@ TEST_CASE("physics: AME2020 equals BASIC on the driver grids", "[T1][physics]") 
         std::int64_t const n = rand_int(rng, 0, 203);
         random.add(line_ame2020(tables, z, z + n));
     }
-    m5::check_grid("m5-masses", random);
+    m5::check_grid("m5-masses-2", random);
 }
 
 TEST_CASE("physics: U_SHELL equals BASIC on the driver grids", "[T1][physics]") {
@@ -260,7 +273,7 @@ TEST_CASE("physics: U_SHELL equals BASIC on the driver grids", "[T1][physics]") 
             grid.add(line_u_shell(tables, zi, zi + ni));
         }
     }
-    m5::check_grid("m5-masses", grid);
+    m5::check_grid("m5-masses-2", grid);
 
     gef::fb::FbMtRng rng(6003);
     m5::GridFile random("U_SHELL_random.txt", "U_SHELL", s_u_shell);
@@ -269,7 +282,7 @@ TEST_CASE("physics: U_SHELL equals BASIC on the driver grids", "[T1][physics]") 
         std::int64_t const n = rand_int(rng, 0, 203);
         random.add(line_u_shell(tables, z, z + n));
     }
-    m5::check_grid("m5-masses", random);
+    m5::check_grid("m5-masses-2", random);
 }
 
 TEST_CASE("physics: U_SHELL_exp equals BASIC on the driver grids", "[T1][physics]") {
@@ -280,7 +293,7 @@ TEST_CASE("physics: U_SHELL_exp equals BASIC on the driver grids", "[T1][physics
             grid.add(line_u_shell_exp(tables, zi, zi + ni));
         }
     }
-    m5::check_grid("m5-masses", grid);
+    m5::check_grid("m5-masses-2", grid);
 
     gef::fb::FbMtRng rng(6005);
     m5::GridFile random("U_SHELL_exp_random.txt", "U_SHELL_exp", s_u_shell_exp);
@@ -289,7 +302,7 @@ TEST_CASE("physics: U_SHELL_exp equals BASIC on the driver grids", "[T1][physics
         std::int64_t const n = rand_int(rng, 127, 173);
         random.add(line_u_shell_exp(tables, z, z + n));
     }
-    m5::check_grid("m5-masses", random);
+    m5::check_grid("m5-masses-2", random);
 }
 
 TEST_CASE("physics: U_SHELL_EO_exp equals BASIC on the driver grids", "[T1][physics]") {
@@ -300,7 +313,7 @@ TEST_CASE("physics: U_SHELL_EO_exp equals BASIC on the driver grids", "[T1][phys
             grid.add(line_u_shell_eo_exp(tables, zi, zi + ni));
         }
     }
-    m5::check_grid("m5-masses", grid);
+    m5::check_grid("m5-masses-2", grid);
 
     gef::fb::FbMtRng rng(6004);
     m5::GridFile random("U_SHELL_EO_exp_random.txt", "U_SHELL_EO_exp", s_u_shell_eo_exp);
@@ -309,7 +322,7 @@ TEST_CASE("physics: U_SHELL_EO_exp equals BASIC on the driver grids", "[T1][phys
         std::int64_t const n = rand_int(rng, 127, 173);
         random.add(line_u_shell_eo_exp(tables, z, z + n));
     }
-    m5::check_grid("m5-masses", random);
+    m5::check_grid("m5-masses-2", random);
 }
 
 TEST_CASE("physics: U_MASS equals BASIC on the driver grids", "[T1][physics]") {
@@ -327,7 +340,15 @@ TEST_CASE("physics: U_MASS equals BASIC on the driver grids", "[T1][physics]") {
             grid.add(line_u_mass(tables, static_cast<float>(zi), static_cast<float>(zi + ni)));
         }
     }
-    m5::check_grid("m5-masses", grid);
+    // Negative inputs: U_MASS prints; these are the driver's only console lines (stdout.txt).
+    constexpr std::array<float, 4> neg_z = {-0.25F, 0.0F, -0.25F, -0.5F};
+    constexpr std::array<float, 4> neg_a = {10.0F, -0.25F, -0.25F, 0.5F};
+    gef::fb::PrintFile console;
+    for (std::size_t i = 0; i < neg_z.size(); ++i) {
+        grid.add(line_u_mass(tables, neg_z.at(i), neg_a.at(i), &console));
+    }
+    m5::check_grid("m5-masses-2", grid);
+    m5::check_text("m5-masses-2", "stdout.txt", m5::text_lines(console.text()));
 
     gef::fb::FbMtRng rng(6012);
     m5::GridFile random("U_MASS_random.txt", "U_MASS", s_u_mass);
@@ -336,7 +357,7 @@ TEST_CASE("physics: U_MASS equals BASIC on the driver grids", "[T1][physics]") {
         float const n = m5::draw(rng, 0, 203);
         random.add(line_u_mass(tables, z, z + n));
     }
-    m5::check_grid("m5-masses", random);
+    m5::check_grid("m5-masses-2", random);
 }
 
 TEST_CASE("physics: ECOUL equals BASIC on the driver grids", "[T1][physics]") {
@@ -360,7 +381,7 @@ TEST_CASE("physics: ECOUL equals BASIC on the driver grids", "[T1][physics]") {
             }
         }
     }
-    m5::check_grid("m5-masses", grid);
+    m5::check_grid("m5-masses-2", grid);
 
     gef::fb::FbMtRng rng(6013);
     m5::GridFile random("ECOUL_random.txt", "ECOUL", s_ecoul);
@@ -374,7 +395,7 @@ TEST_CASE("physics: ECOUL equals BASIC on the driver grids", "[T1][physics]") {
         float const d = m5::draw(rng, 0, 10);
         random.add(line_ecoul(z1, z1 + n1, b1, z2, z2 + n2, b2, d));
     }
-    m5::check_grid("m5-masses", random);
+    m5::check_grid("m5-masses-2", random);
 }
 
 TEST_CASE("physics: U_Valid equals BASIC on the driver grids", "[T1][physics]") {
@@ -385,7 +406,7 @@ TEST_CASE("physics: U_Valid equals BASIC on the driver grids", "[T1][physics]") 
             grid.add(line_u_valid(tables, zi, zi + ni));
         }
     }
-    m5::check_grid("m5-masses", grid);
+    m5::check_grid("m5-masses-2", grid);
 
     gef::fb::FbMtRng rng(6007);
     m5::GridFile random("U_Valid_random.txt", "U_Valid", s_u_valid);
@@ -394,7 +415,7 @@ TEST_CASE("physics: U_Valid equals BASIC on the driver grids", "[T1][physics]") 
         std::int64_t const n = rand_int(rng, 1, 203);
         random.add(line_u_valid(tables, iz, iz + n));
     }
-    m5::check_grid("m5-masses", random);
+    m5::check_grid("m5-masses-2", random);
 }
 
 TEST_CASE("physics: U_Delta_S0 equals BASIC on the driver grids", "[T1][physics]") {
@@ -404,7 +425,7 @@ TEST_CASE("physics: U_Delta_S0 equals BASIC on the driver grids", "[T1][physics]
             grid.add(line_u_delta_s0(zi, zi + ni));
         }
     }
-    m5::check_grid("m5-masses", grid);
+    m5::check_grid("m5-masses-2", grid);
 
     gef::fb::FbMtRng rng(6008);
     m5::GridFile random("U_Delta_S0_random.txt", "U_Delta_S0", s_u_delta_s0);
@@ -413,7 +434,7 @@ TEST_CASE("physics: U_Delta_S0 equals BASIC on the driver grids", "[T1][physics]
         std::int64_t const ia = rand_int(rng, 1, 300);
         random.add(line_u_delta_s0(iz, ia));
     }
-    m5::check_grid("m5-masses", random);
+    m5::check_grid("m5-masses-2", random);
 }
 
 TEST_CASE("physics: U_Q_beta_minus equals BASIC on the driver grids", "[T1][physics]") {
@@ -424,7 +445,7 @@ TEST_CASE("physics: U_Q_beta_minus equals BASIC on the driver grids", "[T1][phys
             grid.add(line_u_q_beta_minus(tables, iz, iz + n));
         }
     }
-    m5::check_grid("m5-masses", grid);
+    m5::check_grid("m5-masses-2", grid);
 
     gef::fb::FbMtRng rng(6006);
     m5::GridFile random("U_Q_beta_minus_random.txt", "U_Q_beta_minus", s_u_q_beta_minus);
@@ -433,7 +454,7 @@ TEST_CASE("physics: U_Q_beta_minus equals BASIC on the driver grids", "[T1][phys
         std::int64_t const n = rand_int(rng, 1, 203);
         random.add(line_u_q_beta_minus(tables, iz, iz + n));
     }
-    m5::check_grid("m5-masses", random);
+    m5::check_grid("m5-masses-2", random);
 }
 
 TEST_CASE("physics: masses replay the captured GEF calls", "[T1][physics]") {
@@ -494,4 +515,21 @@ TEST_CASE("physics: mass table reads outside the tables throw", "[T1][physics]")
     REQUIRE_THROWS_AS(physics::ame2020(tables, 137, 137), std::out_of_range);
     REQUIRE_THROWS_AS(physics::ame2020(tables, 1, 300), std::out_of_range);
     REQUIRE_THROWS_AS(physics::u_shell(tables, 1, 300), std::out_of_range);
+    // LDMass reads BEexp(CInt(A - Z), CInt(Z)): N = 203.5 rounds to 204 (half to even), 203.25
+    // to 203.
+    REQUIRE_THROWS_AS(physics::ld_mass(tables, 1.0F, 204.5F, 0.0F), std::out_of_range);
+    REQUIRE_NOTHROW(physics::ld_mass(tables, 1.0F, 204.25F, 0.0F));
+    // U_SHELL_exp reads AME2020 at (Z, A +- 1) and (Z +- 1, A +- 1): one cell inside the tables.
+    REQUIRE_THROWS_AS(physics::u_shell_exp(tables, 50, 50), std::out_of_range);
+    REQUIRE_THROWS_AS(physics::u_shell_exp(tables, 50, 253), std::out_of_range);
+    REQUIRE_THROWS_AS(physics::u_shell_exp(tables, 0, 100), std::out_of_range);
+    REQUIRE_NOTHROW(physics::u_shell_exp(tables, 50, 51));
+    REQUIRE_NOTHROW(physics::u_shell_exp(tables, 50, 252));
+    // U_MASS: LDMass uses CInt(A - Z), U_SHELL CInt(A) - CInt(Z). At Z = 2.5, A = 205.5 the first
+    // is 203 (inside) and the second 206 - 2 = 204 (outside ShellMO).
+    REQUIRE_THROWS_AS(physics::u_mass(tables, 2.5F, 205.5F), std::out_of_range);
+    REQUIRE_NOTHROW(physics::u_mass(tables, 2.5F, 205.25F));
+    REQUIRE_THROWS_AS(physics::u_valid(tables, 80, 80), std::out_of_range);
+    REQUIRE_THROWS_AS(physics::u_q_beta_minus(tables, 50, 50), std::out_of_range);
+    REQUIRE_THROWS_AS(physics::u_shell_eo_exp(tables, 1, 205), std::out_of_range);
 }

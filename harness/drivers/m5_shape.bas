@@ -378,6 +378,20 @@ Sub GridBetaEqui()
       Next
     Next
   Next
+  ' Edge rows, Z1 = Z2 = 46, A1 = A2 = 118, d = 1 (bit patterns found with the C++ port):
+  ' (a) the start is the optimum of a converged search and opt-in (0.25, 0.75) differs from it:
+  '     no improvement, so beta1opt/beta2opt keep their incoming values (D8);
+  ' (b) beta1prev = 3eb70a3e and the beta2prev of EdgeP2 exit the N loop at N = 996 .. 1001,
+  '     around the print condition N > 998 (GEF.bas:16628); opt-in = prev.
+  Print #G, LineBetaEquiGrid(118, 118, 46, 46, 1.0, M5_ParseF32("3f0c28f6"), _
+                             M5_ParseF32("3f0c6a7f"), 0.25, 0.75)
+  Dim As String EdgeP2(0 To 5) = {"3e77ced8", "3e774bc6", "3e76c8b4", "3e7645a0", "3e75c28e", _
+                                  "3e753f7c"}
+  For IE As Long = 0 To 5
+    Dim As Single B1P = M5_ParseF32("3eb70a3e")
+    Dim As Single B2P = M5_ParseF32(EdgeP2(IE))
+    Print #G, LineBetaEquiGrid(118, 118, 46, 46, 1.0, B1P, B2P, B1P, B2P)
+  Next
   Close #G
   ' Random draws in order: A1 in [20, 215), A2 in [20, 215), Z1 and Z2 (Integer 8..84),
   ' d in [0.8, 1.2), beta1prev, beta2prev in [0.1, 0.9), beta1opt.in, beta2opt.in in [0, 1); seed 6011.

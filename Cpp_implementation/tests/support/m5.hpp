@@ -70,6 +70,15 @@ struct GridFile {
 // not checked.
 void check_grid(std::string_view golden, GridFile const& grid);
 
+// A text file a driver writes besides its grids (its stdout.txt, Beta_Equi_print.txt), split
+// into lines: compared line by line with the store golden (or $GEF_TEST_M5_DIR, as check_grid),
+// and with its committed fingerprint.
+void check_text(std::string_view golden, std::string_view file,
+                std::vector<std::string> const& lines);
+
+// The lines of a PrintFile's text (LF-terminated; a last line without LF is kept).
+[[nodiscard]] std::vector<std::string> text_lines(std::string const& text);
+
 // --- arglog replay --------------------------------------------------------------------------
 
 struct ArglogRecord {

@@ -220,6 +220,7 @@ float tegidy(float a, float du, float fred) noexcept {
 }
 
 // GEF.bas:16098-16108. EMIN and EEFF do not feed the result and are not computed.
+// QUIRK(Q-040): the pairing floor Eeff = Max(E, Emin) is computed in BASIC but the result uses E.
 float trusanov(float e, float a) noexcept {
     return static_cast<float>(
         std::sqrt(static_cast<double>(e) / (static_cast<double>(a) * trusanov_coeff)));

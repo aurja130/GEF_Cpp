@@ -1,0 +1,200 @@
+{
+  "created_utc": "2026-10-13T11:41:17Z",
+  "driver_json": {
+    "binary_sha256": "0bb76433ce894cec15a66787528f7ee97661b73c601543e5afef6db18be3e4ea",
+    "command": [
+      "m5_shape"
+    ],
+    "cuts": [
+      {
+        "as": "gef_pi.bi",
+        "cut_sha256": "486808e4058ba22865dca8fbd95babdcfa09a10c61d7bb045f56de78c2b9dd5f",
+        "file": "GEF.bas",
+        "first": 760,
+        "last": 760,
+        "source_sha256": "055c0a17124e88390d749527b4d21ca238a0e42da1df1ca1d7a3633febe3a4cc"
+      },
+      {
+        "as": "gef_lymass.bi",
+        "cut_sha256": "a48a95a49e7a12ad22b98b941266ea2dfcc0caeff8af37074e8bd52e3d2224ab",
+        "file": "GEF.bas",
+        "first": 16110,
+        "last": 16137,
+        "source_sha256": "055c0a17124e88390d749527b4d21ca238a0e42da1df1ca1d7a3633febe3a4cc"
+      },
+      {
+        "as": "gef_ecoul.bi",
+        "cut_sha256": "b2c96b98dccc63abd8a2491aaa9188266404e6d3d53ecb26dc389c347de51c26",
+        "file": "GEF.bas",
+        "first": 16326,
+        "last": 16355,
+        "source_sha256": "055c0a17124e88390d749527b4d21ca238a0e42da1df1ca1d7a3633febe3a4cc"
+      },
+      {
+        "as": "gef_getyield.bi",
+        "cut_sha256": "fbc713f02532681eb1b7be0aff052d797b72e2c8aa649df387708d56255a55e7",
+        "file": "GEF.bas",
+        "first": 15862,
+        "last": 15920,
+        "source_sha256": "055c0a17124e88390d749527b4d21ca238a0e42da1df1ca1d7a3633febe3a4cc"
+      },
+      {
+        "as": "gef_f1.bi",
+        "cut_sha256": "e345ab50b6b708a3b79e0548843a3f9572e8faf348aacdfa9fef7e9ec1991d9e",
+        "file": "GEF.bas",
+        "first": 15923,
+        "last": 15928,
+        "source_sha256": "055c0a17124e88390d749527b4d21ca238a0e42da1df1ca1d7a3633febe3a4cc"
+      },
+      {
+        "as": "gef_f2.bi",
+        "cut_sha256": "ed03a8913babf80239c0ea046ed3bdc6f0160f8b353593110dd3fef59bc94b8f",
+        "file": "GEF.bas",
+        "first": 15929,
+        "last": 15934,
+        "source_sha256": "055c0a17124e88390d749527b4d21ca238a0e42da1df1ca1d7a3633febe3a4cc"
+      },
+      {
+        "as": "gef_masscurv.bi",
+        "cut_sha256": "d465b0322ec5a35c5b107cf0b9a536bd256a41c99b663baaac7fb8744d675126",
+        "file": "GEF.bas",
+        "first": 15936,
+        "last": 15963,
+        "source_sha256": "055c0a17124e88390d749527b4d21ca238a0e42da1df1ca1d7a3633febe3a4cc"
+      },
+      {
+        "as": "gef_masscurv1.bi",
+        "cut_sha256": "66476c9ce6cf2670c2183a76296d8f2ead2475f710d78281a59397d63c14b9e1",
+        "file": "GEF.bas",
+        "first": 15965,
+        "last": 16003,
+        "source_sha256": "055c0a17124e88390d749527b4d21ca238a0e42da1df1ca1d7a3633febe3a4cc"
+      },
+      {
+        "as": "gef_masscurv2.bi",
+        "cut_sha256": "46ecd4a893f9f06dfae5af01da480dce8d1d7aaf9911e37c547cb0e2a3a43bdf",
+        "file": "GEF.bas",
+        "first": 16005,
+        "last": 16045,
+        "source_sha256": "055c0a17124e88390d749527b4d21ca238a0e42da1df1ca1d7a3633febe3a4cc"
+      },
+      {
+        "as": "gef_de_saddle.bi",
+        "cut_sha256": "1ee7883572415097d5752d81c6f3f6f8a9bd0406675869ca2acb08a3102920fa",
+        "file": "GEF.bas",
+        "first": 16047,
+        "last": 16063,
+        "source_sha256": "055c0a17124e88390d749527b4d21ca238a0e42da1df1ca1d7a3633febe3a4cc"
+      },
+      {
+        "as": "gef_beta_light.bi",
+        "cut_sha256": "6c749323ac0623112c005f5b181ae4b89052ac56a020e35f07bf84b9ea180a1b",
+        "file": "GEF.bas",
+        "first": 16358,
+        "last": 16365,
+        "source_sha256": "055c0a17124e88390d749527b4d21ca238a0e42da1df1ca1d7a3633febe3a4cc"
+      },
+      {
+        "as": "gef_beta_heavy.bi",
+        "cut_sha256": "ad5397e1c676ec28577ae103630de3e50320674febc7e3e6e2eafa27289b99fa",
+        "file": "GEF.bas",
+        "first": 16368,
+        "last": 16375,
+        "source_sha256": "055c0a17124e88390d749527b4d21ca238a0e42da1df1ca1d7a3633febe3a4cc"
+      },
+      {
+        "as": "gef_z_equi.bi",
+        "cut_sha256": "d453f98e81c04e06f40a3921794f6539003c484ac8d422d7232a9d16b07c3e19",
+        "file": "GEF.bas",
+        "first": 16379,
+        "last": 16426,
+        "source_sha256": "055c0a17124e88390d749527b4d21ca238a0e42da1df1ca1d7a3633febe3a4cc"
+      },
+      {
+        "as": "gef_beta_equi.bi",
+        "cut_sha256": "184bd04a1fa413df60881d1f419a14768067fe234b5844807eaa9bf3bba32e6a",
+        "file": "GEF.bas",
+        "first": 16480,
+        "last": 16646,
+        "source_sha256": "055c0a17124e88390d749527b4d21ca238a0e42da1df1ca1d7a3633febe3a4cc"
+      }
+    ],
+    "driver": "m5_shape",
+    "driver_includes": [
+      {
+        "file": "m5_common.bi",
+        "sha256": "6109ea0abed2fd32783b22868093a241a7282a04b420dbbb5cbc956f714d1d6e"
+      }
+    ],
+    "driver_sha256": "eb535725abf02999e85e6762b74644acaf1a2ddc5f7284ca64a6a70875897b3d",
+    "fbc_version": "1.10.1",
+    "includes": [
+      {
+        "file": "utilities.bi",
+        "sha256": "0a16dfd28006bdf1aa512ce380a814e9132e24f79e951e9946e08701c449fa46"
+      }
+    ],
+    "outputs": {
+      "Beta_Equi_grid.txt": "2d94339fd7cb023053ba3a85a968b05d5953e5461c80ae883b72e6a95a8192ca",
+      "Beta_Equi_print.txt": "d13a94a870d547b83d4c4794945ae15b020dff5d6c4b096a8bfa02d7749aa100",
+      "Beta_Equi_random.txt": "9fce0620e74577e8cb452ee2f4d5831b0a04cdca0da6991ad7c1e80a79e1b982",
+      "De_Saddle_Scission_grid.txt": "eb8b04dd19fc33ab2fb93d9a68c142f81a04d04b6b2101a50e640799b3aca65e",
+      "De_Saddle_Scission_random.txt": "e3edc28ed0e3729eaf96779e583d228d96a68bc4c92e262d007bf7770265f895",
+      "F1_grid.txt": "1a430e8ef68191a695bcad2191b52f29e62f4ca9d7ded62f158ca61df22370a1",
+      "F1_random.txt": "58cd04ced7f236ad321577b3762eca0441a68ad70a6d3b3d00958064f99d5a40",
+      "F2_grid.txt": "d462c6d836c35aa8976ca029948aa15101e456528d471c486aa173c802d4100e",
+      "F2_random.txt": "bf2628a2a0d265b82db562a01fb52b73c33f95f562e3c38c9be26e94fe74b1f0",
+      "Getyield_grid.txt": "bef58e715514bbe3acccd3ba873a5e9a0d19e431dfd8dc783865e9866b0d9685",
+      "Getyield_random.txt": "6223c66cfdd321b77f3e26b05418d7e1d6251a1a3213d558ac6017f346213f50",
+      "Masscurv1_grid.txt": "153c1dfc3f7cbe31f3c0daa9bf82b74835381769de97f65082e8ac6b6eb2b278",
+      "Masscurv1_random.txt": "1d32f0539327a5137bb4bffd00b3b60f9e33deb1b73aa72256799af997b888f9",
+      "Masscurv2_grid.txt": "ef6a32d204f1098a97ba223ae0e46e5f1e3f404baa8b53633e072c49b7a0612c",
+      "Masscurv2_random.txt": "55a35d708cad1d33c76fa411a404c4a1be589d36d5c1920d1bab157840e1a7bc",
+      "Masscurv_grid.txt": "2087e4e15e066776360c8b7205b49d5c3f47a64f5227c07302c84fb7f0709e64",
+      "Masscurv_random.txt": "cc8f749cd5208726991ecf6d0c91b5dbd395bac40f8124d6d17528b50cb353a8",
+      "Z_equi_grid.txt": "be7044e46bc74cdae3ed4f75b527b1eb91ad912ca9a966c8cc130d4d13290b22",
+      "Z_equi_random.txt": "4187f8337accffcf16d9d864b154245a4f8b122050e39ceda73e47b25f6a8414",
+      "beta_heavy_grid.txt": "3476cc30341dc7cd527efa3ed6a04239dd070b59ef06c512e2a9d794d93c4880",
+      "beta_heavy_random.txt": "382a594d76893ddc01caac48824d1cefd825025355724f7a83cb33e6da0d672e",
+      "beta_light_grid.txt": "98465f036d3b21ad14063b3af7b8c413f141f5c95d3f001e2863b4cf872ca176",
+      "beta_light_random.txt": "047130f31dc132174b3e58aeedbf5f3584dbf9c1b1eb37178ef01ecabb5d8af8",
+      "stdout.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "returncode": 0,
+    "run_wall_time_s": 130.73,
+    "work_files": []
+  },
+  "file_count": 25,
+  "files": {
+    "Beta_Equi_grid.txt": "2d94339fd7cb023053ba3a85a968b05d5953e5461c80ae883b72e6a95a8192ca",
+    "Beta_Equi_print.txt": "d13a94a870d547b83d4c4794945ae15b020dff5d6c4b096a8bfa02d7749aa100",
+    "Beta_Equi_random.txt": "9fce0620e74577e8cb452ee2f4d5831b0a04cdca0da6991ad7c1e80a79e1b982",
+    "De_Saddle_Scission_grid.txt": "eb8b04dd19fc33ab2fb93d9a68c142f81a04d04b6b2101a50e640799b3aca65e",
+    "De_Saddle_Scission_random.txt": "e3edc28ed0e3729eaf96779e583d228d96a68bc4c92e262d007bf7770265f895",
+    "F1_grid.txt": "1a430e8ef68191a695bcad2191b52f29e62f4ca9d7ded62f158ca61df22370a1",
+    "F1_random.txt": "58cd04ced7f236ad321577b3762eca0441a68ad70a6d3b3d00958064f99d5a40",
+    "F2_grid.txt": "d462c6d836c35aa8976ca029948aa15101e456528d471c486aa173c802d4100e",
+    "F2_random.txt": "bf2628a2a0d265b82db562a01fb52b73c33f95f562e3c38c9be26e94fe74b1f0",
+    "Getyield_grid.txt": "bef58e715514bbe3acccd3ba873a5e9a0d19e431dfd8dc783865e9866b0d9685",
+    "Getyield_random.txt": "6223c66cfdd321b77f3e26b05418d7e1d6251a1a3213d558ac6017f346213f50",
+    "Masscurv1_grid.txt": "153c1dfc3f7cbe31f3c0daa9bf82b74835381769de97f65082e8ac6b6eb2b278",
+    "Masscurv1_random.txt": "1d32f0539327a5137bb4bffd00b3b60f9e33deb1b73aa72256799af997b888f9",
+    "Masscurv2_grid.txt": "ef6a32d204f1098a97ba223ae0e46e5f1e3f404baa8b53633e072c49b7a0612c",
+    "Masscurv2_random.txt": "55a35d708cad1d33c76fa411a404c4a1be589d36d5c1920d1bab157840e1a7bc",
+    "Masscurv_grid.txt": "2087e4e15e066776360c8b7205b49d5c3f47a64f5227c07302c84fb7f0709e64",
+    "Masscurv_random.txt": "cc8f749cd5208726991ecf6d0c91b5dbd395bac40f8124d6d17528b50cb353a8",
+    "Z_equi_grid.txt": "be7044e46bc74cdae3ed4f75b527b1eb91ad912ca9a966c8cc130d4d13290b22",
+    "Z_equi_random.txt": "4187f8337accffcf16d9d864b154245a4f8b122050e39ceda73e47b25f6a8414",
+    "beta_heavy_grid.txt": "3476cc30341dc7cd527efa3ed6a04239dd070b59ef06c512e2a9d794d93c4880",
+    "beta_heavy_random.txt": "382a594d76893ddc01caac48824d1cefd825025355724f7a83cb33e6da0d672e",
+    "beta_light_grid.txt": "98465f036d3b21ad14063b3af7b8c413f141f5c95d3f001e2863b4cf872ca176",
+    "beta_light_random.txt": "047130f31dc132174b3e58aeedbf5f3584dbf9c1b1eb37178ef01ecabb5d8af8",
+    "driver.json": "159c744466821eaefbadd6edd7815d620d79052a82d5627ca95efb8ceece886a",
+    "stdout.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "id": "m5-shape-2",
+  "kind": "driver",
+  "note": "M5.3 driver m5_shape after review round 1 (supersedes m5-shape)",
+  "schema": 1,
+  "total_bytes": 86801782
+}

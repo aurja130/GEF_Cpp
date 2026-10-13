@@ -22,6 +22,7 @@ from harness.arglog import (
     read_counts,
     summarize,
 )
+from harness.arglog import main as arglog_main
 from harness.arglog_patch import FUNCTIONS, PATCH_FILE, SITES, discover, generate
 from harness.common import GEF_SOURCE_DIR, PATCHES_DIR, PATCHSETS_DIR, HarnessError
 
@@ -185,3 +186,24 @@ def test_patch_set_applies_and_keeps_other_lines(tmp_path: Path) -> None:
     assert all(before[i - 1].strip() == "" for i in changed)
     assert (src / "harness_arglog.bi").is_file()
     assert (src / "harness_arglog_wrappers.bi").is_file()
+
+
+def test_replay_check_reports_required_logs_without_replay(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    logs, replays = tmp_path / "arglog", tmp_path / "replay"
+    logs.mkdir()
+    replays.mkdir()
+    header = "# arglog 1 F1 Z_S_A:f32 result:f32\n"
+    record = "1 1 0 0 GEF.bas:15959 40000000 3f800000\n"
+    (logs / "F1.txt").write_text(header + record, encoding="ascii")
+    (logs / "F2.txt").write_text(header.replace("F1", "F2") + record, encoding="ascii")
+    (logs / "F3.txt").write_text(header.replace("F1", "F3"), encoding="ascii")  # no records
+    (replays / "F1.txt").write_text("1 40000000 3f800000\n", encoding="ascii")
+    assert arglog_main(["replay-check", str(logs), str(replays)]) == 0
+    assert arglog_main(["replay-check", str(logs), str(replays), "--require", "F3"]) == 0
+    assert arglog_main(["replay-check", str(logs), str(replays), "--require", "F2"]) == 1
+    assert "NOT REPLAYED F2" in capsys.readouterr().out
+    # A wrong token is a mismatch.
+    (replays / "F1.txt").write_text("1 40000000 3f800001\n", encoding="ascii")
+    assert arglog_main(["replay-check", str(logs), str(replays)]) == 1

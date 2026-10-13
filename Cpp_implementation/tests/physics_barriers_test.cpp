@@ -9,6 +9,7 @@
 #include "data/program_data.hpp"
 #include "data/tables.hpp"
 #include "fbrt/rng.hpp"
+#include "fbrt/text.hpp"
 #include "physics/barriers.hpp"
 #include "support/m5.hpp"
 
@@ -47,8 +48,13 @@ gef::data::TableSet barrier_tables() {
 // One line of the driver's LineOf: the inputs echoed, then the result recomputed.
 std::string line_barrier(BarrierFn barrier, gef::data::TableSet const& tables, float rz, float ra,
                          std::int64_t i_switch) {
-    float const result = barrier(tables, rz, ra, i_switch).value;
-    return m5::join({m5::f32(rz), m5::f32(ra), m5::i64(i_switch), m5::f32(result)});
+    auto const r = barrier(tables, rz, ra, i_switch);
+    // GEF.bas:17730-17731: `Case Else` prints "Undefined option in BFTF" (I_Switch outside 0..6);
+    // BFTFA and BFTFB pass the switch to BFTF unchanged.
+    if (r.print_undefined_option != (i_switch < 0 || i_switch > 6)) {
+        FAIL("BFTF print flag " << r.print_undefined_option << " for I_Switch " << i_switch);
+    }
+    return m5::join({m5::f32(rz), m5::f32(ra), m5::i64(i_switch), m5::f32(r.value)});
 }
 
 // The driver's Structured, in its loop order: the integer grid, the undefined options, the quarter
@@ -91,14 +97,14 @@ void add_structured(m5::GridFile& grid, BarrierFn barrier, gef::data::TableSet c
     }
 }
 
-// The driver's Randoms: Randomize Seed, 3; per tuple RZ = M5_Draw(91, 92), RA = M5_Draw(233, 236),
-// then I_Switch = ILo + Int(Rnd * INum) over the u235 capture range (i_lo, i_count).
+// The driver's Randoms: Randomize Seed, 3; per tuple RZ = M5_Draw(84, 107), RA = M5_Draw(210, 265),
+// then I_Switch = ILo + Int(Rnd * INum) over the captured range (i_lo, i_count).
 void add_random(m5::GridFile& random, BarrierFn barrier, gef::data::TableSet const& tables,
                 int seed, std::int64_t i_lo, std::int64_t i_count) {
     gef::fb::FbMtRng rng(seed);
     for (int i = 0; i < n_random; ++i) {
-        float const rz = m5::draw(rng, 91, 92);
-        float const ra = m5::draw(rng, 233, 236);
+        float const rz = m5::draw(rng, 84, 107);
+        float const ra = m5::draw(rng, 210, 265);
         auto const pick =
             static_cast<std::int64_t>(std::floor(rng.rnd() * static_cast<double>(i_count)));
         random.add(line_barrier(barrier, tables, rz, ra, i_lo + pick));
@@ -111,33 +117,49 @@ TEST_CASE("physics: BFTF equals BASIC on the driver grids", "[T1][physics]") {
     auto const tables = barrier_tables();
     m5::GridFile grid("BFTF_grid.txt", "BFTF", s_barrier);
     add_structured(grid, &physics::bftf, tables);
-    m5::check_grid("m5-barriers", grid);
+    m5::check_grid("m5-barriers-2", grid);
 
     m5::GridFile random("BFTF_random.txt", "BFTF", s_barrier);
-    add_random(random, &physics::bftf, tables, 5101, 0, 4);
-    m5::check_grid("m5-barriers", random);
+    add_random(random, &physics::bftf, tables, 5101, 0, 6);
+    m5::check_grid("m5-barriers-2", random);
 }
 
 TEST_CASE("physics: BFTFA equals BASIC on the driver grids", "[T1][physics]") {
     auto const tables = barrier_tables();
     m5::GridFile grid("BFTFA_grid.txt", "BFTFA", s_barrier);
     add_structured(grid, &physics::bftfa, tables);
-    m5::check_grid("m5-barriers", grid);
+    m5::check_grid("m5-barriers-2", grid);
 
     m5::GridFile random("BFTFA_random.txt", "BFTFA", s_barrier);
     add_random(random, &physics::bftfa, tables, 5102, 1, 3);
-    m5::check_grid("m5-barriers", random);
+    m5::check_grid("m5-barriers-2", random);
 }
 
 TEST_CASE("physics: BFTFB equals BASIC on the driver grids", "[T1][physics]") {
     auto const tables = barrier_tables();
     m5::GridFile grid("BFTFB_grid.txt", "BFTFB", s_barrier);
     add_structured(grid, &physics::bftfb, tables);
-    m5::check_grid("m5-barriers", grid);
+    m5::check_grid("m5-barriers-2", grid);
 
     m5::GridFile random("BFTFB_random.txt", "BFTFB", s_barrier);
     add_random(random, &physics::bftfb, tables, 5103, 0, 4);
-    m5::check_grid("m5-barriers", random);
+    m5::check_grid("m5-barriers-2", random);
+}
+
+TEST_CASE("physics: BFTF prints for undefined options as BASIC does", "[T1][physics]") {
+    // The driver's console output: the structured grids of BFTF, BFTFA, BFTFB in that order, of
+    // which only the undefined options print `Print "Undefined option in BFTF"` (GEF.bas:17731).
+    auto const tables = barrier_tables();
+    gef::fb::PrintFile console;
+    for (BarrierFn const barrier : {&physics::bftf, &physics::bftfa, &physics::bftfb}) {
+        for (auto const& [rz, ra] : undefined_points) {
+            for (std::int64_t const isw : undefined_switches) {
+                REQUIRE(barrier(tables, rz, ra, isw).print_undefined_option);
+                console.print("Undefined option in BFTF", gef::fb::PrintEnd::Newline);
+            }
+        }
+    }
+    m5::check_text("m5-barriers-2", "stdout.txt", m5::text_lines(console.text()));
 }
 
 TEST_CASE("physics: barriers replay the captured GEF calls", "[T1][physics]") {

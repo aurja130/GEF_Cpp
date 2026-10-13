@@ -1,0 +1,44 @@
+{
+  "kind": "store-derived",
+  "outputs": {
+    "files.txt": "6bcb57af184214a704633dbf1857bce78c4d8673526e6f58869d36a5c6464fab"
+  },
+  "sources": [
+    {
+      "capture": "m5-barriers-2",
+      "file": "BFTFA_grid.txt",
+      "sha256": "d01947f7945f66f61858a2df2ef3a79939fee01269c011185c8e2154ae3f7885"
+    },
+    {
+      "capture": "m5-barriers-2",
+      "file": "BFTFA_random.txt",
+      "sha256": "4cc571306d4d6aa18dbffce5a5d2f91aefeb233ee320b0b1ecad19471c77be68"
+    },
+    {
+      "capture": "m5-barriers-2",
+      "file": "BFTFB_grid.txt",
+      "sha256": "f9244eec34f4463679a5995bda4f59ee3ad59bd142d2579fd161e8585ef573b5"
+    },
+    {
+      "capture": "m5-barriers-2",
+      "file": "BFTFB_random.txt",
+      "sha256": "d6d108564df77071f6cb0140557dcdf26aeb2944bd6079978e7c827f7347ec8c"
+    },
+    {
+      "capture": "m5-barriers-2",
+      "file": "BFTF_grid.txt",
+      "sha256": "77eb9b954fb5088bc2ccb73e409be9761733eca0ee51bbbf50cbe5eab6e171b4"
+    },
+    {
+      "capture": "m5-barriers-2",
+      "file": "BFTF_random.txt",
+      "sha256": "bf0328e922cbd1a344e6a7d9889a8130ed5fd9f374885affae6fd28b2a2e1be1"
+    },
+    {
+      "capture": "m5-barriers-2",
+      "file": "stdout.txt",
+      "sha256": "573f43e2f36132ba98f454dbf49cfa8b261c7f5ebfe0eba04291baa9f3c86bb0"
+    }
+  ],
+  "tool": "python3 -m harness.probe_fingerprints m5-barriers-2 --name m5-barriers-2 --files BFTFA_grid.txt BFTFA_random.txt BFTFB_grid.txt BFTFB_random.txt BFTF_grid.txt BFTF_random.txt stdout.txt"
+}

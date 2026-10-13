@@ -334,7 +334,8 @@ Sub GridUShellEoExp()
 End Sub
 
 ' U_MASS: quarter grid Z = 1 + 0.25 k (k 0..476) x N = 0.25 j (j 0..811), A = Z + N, then the
-' integer grid Z 1..120 x N 0..203 (both as Single); random Z in [29,93), N in [0,203).
+' integer grid Z 1..120 x N 0..203 (both as Single), then four negative inputs (Z, A) =
+' (-0.25, 10), (0, -0.25), (-0.25, -0.25), (-0.5, 0.5); random Z in [29,93), N in [0,203).
 Sub GridUMass()
   Dim As Long F = M5_OpenGrid("U_MASS_grid.txt", "U_MASS", S_U_MASS)
   For K As Long = 0 To 476
@@ -348,6 +349,13 @@ Sub GridUMass()
     For Ni As Long = 0 To 203
       Print #F, LineUMass(CSng(Zi), CSng(Zi + Ni))
     Next
+  Next
+  ' Z < 0 or A < 0: U_MASS prints "U_Mass: Z, A" to the console (GEF.bas:16316; stdout.txt).
+  ' CInt keeps every table index inside the tables for these four.
+  Dim As Single NegZ(0 To 3) = {-0.25, 0, -0.25, -0.5}
+  Dim As Single NegA(0 To 3) = {10, -0.25, -0.25, 0.5}
+  For I As Long = 0 To 3
+    Print #F, LineUMass(NegZ(I), NegA(I))
   Next
   Close #F
   Randomize 6012, 3

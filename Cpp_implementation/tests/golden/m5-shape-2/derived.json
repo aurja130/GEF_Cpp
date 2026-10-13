@@ -1,119 +1,124 @@
 {
   "kind": "store-derived",
   "outputs": {
-    "files.txt": "bbf1421b7625435acebc90b25fedb2855d18ef0dbac81d77fbc690e46a36eb84"
+    "files.txt": "19d7095da4b4ba29fe3559213ebc0d086d2d0d0ebb3ca33c0f841b34edf798ea"
   },
   "sources": [
     {
-      "capture": "m5-shape",
+      "capture": "m5-shape-2",
       "file": "Beta_Equi_grid.txt",
-      "sha256": "cade194cdf27393edc1a61dbecd0c98525ff08851e15218689540e058eff0eb8"
+      "sha256": "2d94339fd7cb023053ba3a85a968b05d5953e5461c80ae883b72e6a95a8192ca"
     },
     {
-      "capture": "m5-shape",
+      "capture": "m5-shape-2",
       "file": "Beta_Equi_random.txt",
       "sha256": "9fce0620e74577e8cb452ee2f4d5831b0a04cdca0da6991ad7c1e80a79e1b982"
     },
     {
-      "capture": "m5-shape",
-      "file": "beta_heavy_grid.txt",
-      "sha256": "3476cc30341dc7cd527efa3ed6a04239dd070b59ef06c512e2a9d794d93c4880"
-    },
-    {
-      "capture": "m5-shape",
-      "file": "beta_heavy_random.txt",
-      "sha256": "382a594d76893ddc01caac48824d1cefd825025355724f7a83cb33e6da0d672e"
-    },
-    {
-      "capture": "m5-shape",
-      "file": "beta_light_grid.txt",
-      "sha256": "98465f036d3b21ad14063b3af7b8c413f141f5c95d3f001e2863b4cf872ca176"
-    },
-    {
-      "capture": "m5-shape",
-      "file": "beta_light_random.txt",
-      "sha256": "047130f31dc132174b3e58aeedbf5f3584dbf9c1b1eb37178ef01ecabb5d8af8"
-    },
-    {
-      "capture": "m5-shape",
+      "capture": "m5-shape-2",
       "file": "De_Saddle_Scission_grid.txt",
       "sha256": "eb8b04dd19fc33ab2fb93d9a68c142f81a04d04b6b2101a50e640799b3aca65e"
     },
     {
-      "capture": "m5-shape",
+      "capture": "m5-shape-2",
       "file": "De_Saddle_Scission_random.txt",
       "sha256": "e3edc28ed0e3729eaf96779e583d228d96a68bc4c92e262d007bf7770265f895"
     },
     {
-      "capture": "m5-shape",
+      "capture": "m5-shape-2",
       "file": "F1_grid.txt",
       "sha256": "1a430e8ef68191a695bcad2191b52f29e62f4ca9d7ded62f158ca61df22370a1"
     },
     {
-      "capture": "m5-shape",
+      "capture": "m5-shape-2",
       "file": "F1_random.txt",
       "sha256": "58cd04ced7f236ad321577b3762eca0441a68ad70a6d3b3d00958064f99d5a40"
     },
     {
-      "capture": "m5-shape",
+      "capture": "m5-shape-2",
       "file": "F2_grid.txt",
       "sha256": "d462c6d836c35aa8976ca029948aa15101e456528d471c486aa173c802d4100e"
     },
     {
-      "capture": "m5-shape",
+      "capture": "m5-shape-2",
       "file": "F2_random.txt",
       "sha256": "bf2628a2a0d265b82db562a01fb52b73c33f95f562e3c38c9be26e94fe74b1f0"
     },
     {
-      "capture": "m5-shape",
+      "capture": "m5-shape-2",
       "file": "Getyield_grid.txt",
       "sha256": "bef58e715514bbe3acccd3ba873a5e9a0d19e431dfd8dc783865e9866b0d9685"
     },
     {
-      "capture": "m5-shape",
+      "capture": "m5-shape-2",
       "file": "Getyield_random.txt",
       "sha256": "6223c66cfdd321b77f3e26b05418d7e1d6251a1a3213d558ac6017f346213f50"
     },
     {
-      "capture": "m5-shape",
+      "capture": "m5-shape-2",
       "file": "Masscurv1_grid.txt",
       "sha256": "153c1dfc3f7cbe31f3c0daa9bf82b74835381769de97f65082e8ac6b6eb2b278"
     },
     {
-      "capture": "m5-shape",
+      "capture": "m5-shape-2",
       "file": "Masscurv1_random.txt",
       "sha256": "1d32f0539327a5137bb4bffd00b3b60f9e33deb1b73aa72256799af997b888f9"
     },
     {
-      "capture": "m5-shape",
+      "capture": "m5-shape-2",
       "file": "Masscurv2_grid.txt",
       "sha256": "ef6a32d204f1098a97ba223ae0e46e5f1e3f404baa8b53633e072c49b7a0612c"
     },
     {
-      "capture": "m5-shape",
+      "capture": "m5-shape-2",
       "file": "Masscurv2_random.txt",
       "sha256": "55a35d708cad1d33c76fa411a404c4a1be589d36d5c1920d1bab157840e1a7bc"
     },
     {
-      "capture": "m5-shape",
+      "capture": "m5-shape-2",
       "file": "Masscurv_grid.txt",
       "sha256": "2087e4e15e066776360c8b7205b49d5c3f47a64f5227c07302c84fb7f0709e64"
     },
     {
-      "capture": "m5-shape",
+      "capture": "m5-shape-2",
       "file": "Masscurv_random.txt",
       "sha256": "cc8f749cd5208726991ecf6d0c91b5dbd395bac40f8124d6d17528b50cb353a8"
     },
     {
-      "capture": "m5-shape",
+      "capture": "m5-shape-2",
       "file": "Z_equi_grid.txt",
       "sha256": "be7044e46bc74cdae3ed4f75b527b1eb91ad912ca9a966c8cc130d4d13290b22"
     },
     {
-      "capture": "m5-shape",
+      "capture": "m5-shape-2",
       "file": "Z_equi_random.txt",
       "sha256": "4187f8337accffcf16d9d864b154245a4f8b122050e39ceda73e47b25f6a8414"
+    },
+    {
+      "capture": "m5-shape-2",
+      "file": "beta_heavy_grid.txt",
+      "sha256": "3476cc30341dc7cd527efa3ed6a04239dd070b59ef06c512e2a9d794d93c4880"
+    },
+    {
+      "capture": "m5-shape-2",
+      "file": "beta_heavy_random.txt",
+      "sha256": "382a594d76893ddc01caac48824d1cefd825025355724f7a83cb33e6da0d672e"
+    },
+    {
+      "capture": "m5-shape-2",
+      "file": "beta_light_grid.txt",
+      "sha256": "98465f036d3b21ad14063b3af7b8c413f141f5c95d3f001e2863b4cf872ca176"
+    },
+    {
+      "capture": "m5-shape-2",
+      "file": "beta_light_random.txt",
+      "sha256": "047130f31dc132174b3e58aeedbf5f3584dbf9c1b1eb37178ef01ecabb5d8af8"
+    },
+    {
+      "capture": "m5-shape-2",
+      "file": "Beta_Equi_print.txt",
+      "sha256": "d13a94a870d547b83d4c4794945ae15b020dff5d6c4b096a8bfa02d7749aa100"
     }
   ],
-  "tool": "python3 -m harness.probe_fingerprints m5-shape --name m5-shape --files Beta_Equi_grid.txt Beta_Equi_random.txt beta_heavy_grid.txt beta_heavy_random.txt beta_light_grid.txt beta_light_random.txt De_Saddle_Scission_grid.txt De_Saddle_Scission_random.txt F1_grid.txt F1_random.txt F2_grid.txt F2_random.txt Getyield_grid.txt Getyield_random.txt Masscurv1_grid.txt Masscurv1_random.txt Masscurv2_grid.txt Masscurv2_random.txt Masscurv_grid.txt Masscurv_random.txt Z_equi_grid.txt Z_equi_random.txt"
+  "tool": "python3 -m harness.probe_fingerprints m5-shape-2 --name m5-shape-2 --files Beta_Equi_grid.txt Beta_Equi_random.txt De_Saddle_Scission_grid.txt De_Saddle_Scission_random.txt F1_grid.txt F1_random.txt F2_grid.txt F2_random.txt Getyield_grid.txt Getyield_random.txt Masscurv1_grid.txt Masscurv1_random.txt Masscurv2_grid.txt Masscurv2_random.txt Masscurv_grid.txt Masscurv_random.txt Z_equi_grid.txt Z_equi_random.txt beta_heavy_grid.txt beta_heavy_random.txt beta_light_grid.txt beta_light_random.txt Beta_Equi_print.txt"
 }
