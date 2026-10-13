@@ -235,10 +235,11 @@ def _canonical(groups: dict[int, list[str]]) -> dict[int, list[str]]:
 
 
 def _fbc_debug_c(driver_bas: Path) -> list[str]:
-    """``driver_bas`` compiled with ``fbc -gen gcc -R -g -c``, as lines of C.
+    """``driver_bas`` compiled with ``fbc -gen gcc -R -g -c -m <stem>``, as lines of C.
 
     Runs in a scratch copy of the driver's directory (kept ``.c`` and ``.o`` files left out),
-    so the driver's own build products are never touched.
+    so the driver's own build products are never touched. ``-m`` keeps the driver the main
+    module: with ``-c`` alone fbc emits its module-level code as a constructor, not as ``main``.
     """
     fbc = resolve_fbc()
     FN_EQUIV_BUILD_DIR.mkdir(parents=True, exist_ok=True)
@@ -247,7 +248,7 @@ def _fbc_debug_c(driver_bas: Path) -> list[str]:
         shutil.copytree(driver_bas.parent, work, ignore=shutil.ignore_patterns("*.c", "*.o"))
         try:
             proc = subprocess.run(
-                [str(fbc), *_FBC_ARGS, driver_bas.name],
+                [str(fbc), *_FBC_ARGS, "-m", driver_bas.stem, driver_bas.name],
                 cwd=work,
                 capture_output=True,
                 text=True,

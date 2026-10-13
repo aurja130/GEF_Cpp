@@ -1,0 +1,19 @@
+{
+  "kind": "store-derived",
+  "outputs": {
+    "files.txt": "e56fd055a5c290be2c7ccbbae614c302aa5e3f966d41258bfa02a30a67a5b0b5"
+  },
+  "sources": [
+    {
+      "capture": "m5-egamma_table",
+      "file": "pegl_table_grid.txt",
+      "sha256": "af78ea96a1cb3d915d97639bc1344e0559dc1b73ec15e8a0e171d1d3c9f10866"
+    },
+    {
+      "capture": "m5-egamma_table",
+      "file": "pegl_table_random.txt",
+      "sha256": "a7ef0dab50f68d9ce9cf10b8de676819dafea6359f54cec45ea7d735965eedd9"
+    }
+  ],
+  "tool": "python3 -m harness.probe_fingerprints m5-egamma_table --name m5-egamma_table --files pegl_table_grid.txt pegl_table_random.txt"
+}

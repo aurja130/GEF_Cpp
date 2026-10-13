@@ -5,6 +5,7 @@
 # GEF's deterministic physics functions (M5, namespace gef::physics).
 add_library(gef_physics STATIC
     helpers.cpp
+    gamma_table.cpp
     barriers.cpp
     rotation.cpp
     level_density.cpp

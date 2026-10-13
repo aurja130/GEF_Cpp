@@ -257,8 +257,12 @@ print(piece.summary)  # "ok: ..." or "MISMATCH: ...", with piece.diff as the rep
   matched a `Function`-wrapped reference.
 - Piece mapping uses `#line`, so it has the one-BASIC-line granularity described under Known
   limitations.
-- The consistency check fixes the fbc options to `-gen gcc -R -g -c`. Kept C from other
-  options is reported as a mismatch when it differs.
+- The consistency check re-emits with `-gen gcc -R -g -c -m <stem>`. `-m` matters: with `-c`
+  alone fbc emits the module-level code of the file as a constructor (`fb_ctor__<stem>`) instead
+  of `main`, which differs from a `harness.driver` build. The same holds for `emit_c`'s
+  `GEF.c` (no `main`; the program body is in `fb_ctor__GEF`): procedure bodies are identical to
+  those of the linked GEF binary, and only the entry and exit of the module-level code
+  (`fb_Init`, `fb_End`) differ. Kept C from other options is reported as a mismatch.
 - Tests: `tools/fbsrc/tests/test_fn_c_equiv.py`. They need fbc and the GEF source under
   `Reference/GEF_code/`; the real U_SHELL case is marked `slow`.
 

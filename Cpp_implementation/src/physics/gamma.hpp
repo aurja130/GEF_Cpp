@@ -10,6 +10,7 @@
 #pragma once
 
 #include "data/tables.hpp"
+#include "fbrt/array.hpp"
 
 #include <array>
 #include <cstdint>
@@ -20,23 +21,23 @@ namespace gef::physics {
 
 // P_Egamma_low table (GEF.bas:16980-17037): built on every call of P_Egamma_low before its
 // rejection sampler (M8). Tscale, Econd and Etrans are GEF's shared variables, passed
-// explicitly (plan D8). `sigma` holds sigma(0..UBound); the remaining fields are the values the
-// locals have after GEF.bas:17037 (the arglog site pegl_table logs them).
+// explicitly (plan D8). `sigma` holds sigma(0 To UBound), zero-filled by the ReDim; the
+// remaining fields are the values the locals have after GEF.bas:17037 (the arglog site
+// pegl_table logs them).
 struct PEgammaLowTable {
-    std::int64_t n = 0;       // N
-    std::vector<float> sigma; // sigma(0 To UBound)
-    float sig_max = 0.0F;     // sigMax
-    float tm = 0.0F;          // Tm
+    std::int64_t n = 0;        // N
+    fb::Array<float, 1> sigma; // sigma(0 To UBound)
+    float sig_max = 0.0F;      // sigMax
+    float tm = 0.0F;           // Tm
     float betadef = 0.0F;
     float gammadef = 0.0F;
-    float eg = 0.0F;     // Eg after the last For loop
-    std::int64_t i = 0;  // I after For I = 1 To 3
+    float eg = 0.0F;           // Eg after its For loop (the first value past Ei)
+    std::int64_t i = 0;        // I after For I = 1 To 3 (4; 0 on the unreachable branch)
     std::array<float, 4> e0{}; // E0(0 To 3)
     std::array<float, 4> g0{}; // G0(0 To 3)
 };
 [[nodiscard]] PEgammaLowTable p_egamma_low_table(data::TableSet const& tables, float zi, float ai,
-                                                 float ei, float tscale, float econd,
-                                                 float etrans);
+                                                 float ei, float tscale, float econd, float etrans);
 
 // E2 rotational cascade of one fragment (light copy GEF.bas:9309-9368, heavy copy 9430-9484;
 // both are checked against this function). Inputs: the fragment's Z at scission and A after

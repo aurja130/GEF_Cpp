@@ -118,11 +118,12 @@ def _put(path: Path, text: str) -> Path:
 
 def _build(fbc: Path, directory: Path, stem: str, text: str, *flags: str) -> Path:
     """Write ``stem.bas`` into ``directory``, compile it with ``fbc -gen gcc -R``, and return
-    the kept C path. ``flags`` are added to the command (``-g`` adds line directives)."""
+    the kept C path. ``flags`` are added to the command (``-g`` adds line directives). ``-m``
+    keeps the program a main module, as a ``harness.driver`` build is."""
     directory.mkdir(parents=True, exist_ok=True)
     _put(directory / f"{stem}.bas", text)
     proc = subprocess.run(
-        [str(fbc), "-gen", "gcc", "-R", *flags, "-c", f"{stem}.bas"],
+        [str(fbc), "-gen", "gcc", "-R", *flags, "-c", "-m", stem, f"{stem}.bas"],
         cwd=directory,
         capture_output=True,
         text=True,
