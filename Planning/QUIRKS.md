@@ -469,6 +469,61 @@ Tool commands are run from the repository root: `python3 -m tools.fbsrc.fbline <
 - **C++ symbol:** `gef::data::i_mat_endf`, `gef::data::r_awr_endf` (`Cpp_implementation/src/data/lookups.cpp`)
 - **Owning milestone:** M4
 
+### Q-037 The fission barrier RF has no value at RX exactly 30
+
+- **BASIC location:** `GEF.bas:17679-17690` (the four `If` tests on `RX` that set `RF`; `BFTF` spans `GEF.bas:17657-17750`)
+- **Mechanism:** The tests are `RX < 30` (RF = 1E10), `RX > RX0` (RF = 0), `RX < RX1 And RX > 30` (linear) and `RX >= RX1 And RX <= RX0` (cubic). `RX` exactly 30 satisfies none of them, so `RF` keeps its `Dim` value 0 and `RB = RF * RS` is 0.
+- **Effect:** At RZ = 60, RA = 120, `RI = 0`, so `RX = RZ^2 / RA = 30` exactly. Any input whose float `RX` is exactly 30 gets `RF = 0` and therefore `RB = 0`. `I_Switch` 0 then returns exactly 0, and `I_Switch` 1–5 add their shell and pairing terms to that zero base. `I_Switch` 6 also returns 0 at this point: `Max(RB + LYPAIR(60,120) * 2/12, 0)` clamps a negative pairing term (`LYPAIR(60,120)` ≈ −2.19, inferred from the grid values for `I_Switch` 1, 3 and 5).
+- **Evidence status:** *confirmed by fbc C*
+- **Evidence:** GEF.c 17263-17314 (the guarded RF assignments between the `#line 17679` and `#line 17690` markers) has no branch for RX = 30. Driver output `BFTF_grid.txt:83841` of store capture `m5-barriers` (RZ 60, RA 120, I_Switch 0) is `00000000`; I_Switch 1 at the same point (line 83842) is `bebaf111`. Reproduced by the C++ (`physics: BFTF/BFTFA/BFTFB equals BASIC on the driver grids`). Not reached in the M5.2 captures: RX is 36.29–37.66 (Rn-215), 39.33–39.97 (U-236), 42.61 (Cf-252) and 46.62 (Sg-264) in every captured call (recomputed from the arglog records by the M5 review).
+- **Fidelity switch:** `fix_bftf_rx30_hole`; the switch comes with a later fix decision (strategy §2.1); the C++ has no `Fidelity` configuration yet
+- **C++ symbol:** `gef::physics::bftf` (`Cpp_implementation/src/physics/barriers.cpp`)
+- **Owning milestone:** M5
+
+### Q-038 The E2 cascade stops before its first gamma when any state has spin CInt(J_frag)
+
+- **BASIC location:** `GEF.bas:9330-9333` (light fragment), `GEF.bas:9447-9450` (heavy fragment)
+- **Mechanism:** At the first J of `For J = Jfrag To 2 Step -2`, the isomer loop compares every state of the nucleus, the ground state included (Isotab holds the states in ascending spin order, `NucPropJEFF33.bas:143-155`, so K = 1 is the lowest-spin state, an isomer for e.g. Tc-99, In-115, Ir-192), with the fragment's total spin: `If Isotab(I_iso).R_SPI(K) = Cint(J_frag_light) Then Exit For, For`. A match leaves both loops before any gamma is stored and `C_iso_lmd` stays `"GS"`; if an earlier state K lies in the isomer window (lines 9335-9339), the cascade stops there instead with `"M(…)"` and also without a gamma. The line above it, commented out (`GEF.bas:9331`, `9448`), compares with `Cint(J_frag_light + Spin_gs_light)`. `CInt` rounds half to even (`fb_F2L`, GEF.c:68762). Generated C: `if( R_SPI(K) != (float)fb_F2L( J_FRAG_LIGHT$19 ) ) goto …; goto label$4263;` (label 4263 is after the J loop).
+- **Effect:** the fragment emits no E2 gamma at all (no `EgammaE2`, `E_E2_tot` = 0, no rotational gammas in `Egamma`, `EgammaL`/`EgammaH`, `Ngamma*`), although its rotational band lies above the state, whenever the rounded total spin equals the spin of the ground state or of an isomer.
+- **Evidence status:** *confirmed in output*
+- **Evidence:** the arglog site logs of the M5.2 captures: records with Jfrag ≥ 2 and N_iso > 0 that end with label `GS` and no stored gamma (only this stop gives that outcome): light/heavy 248/318 (`m5-arglog-rn215`), 756/1036 (`m5-arglog-cf252`), 570/727 (`m5-arglog-u235`), 307/857 (`m5-arglog-sh264`), out of 7754–20853 such records per copy. Reproduced by `physics::e2_cascade` in `physics: E2 cascade replays the captured light and heavy cascades` and on the synthetic Isotab patterns of `physics: E2 cascade equals the light copy on the driver grids` (and the heavy copy).
+- **Fidelity switch:** `fix_e2_ground_state_stop`, with a later fix decision (the corrected comparison would be the commented-out one; which test the authors intended is part of that decision); the C++ has no `Fidelity` configuration yet
+- **C++ symbol:** `gef::physics::e2_cascade` (`Cpp_implementation/src/physics/e2_cascade.cpp`)
+- **Owning milestone:** M5 (function), M10 (event stage that calls it)
+
+### Q-039 `Array_Eg2_light/heavy(100)` is written without a bound
+
+- **BASIC location:** `GEF.bas:9352-9353` (light), `GEF.bas:9468-9469` (heavy); array `GEF.bas:1342-1343`
+- **Mechanism:** `Ig2_light = Ig2_light + 1 : Array_Eg2_light(Ig2_light) = Eg`, one element per gamma of the cascade; the array is `ReDim Shared … (100)` and nothing limits Ig2. fbc builds GEF without `-exx`: GEF.c:68875 `*(float*)((IG2_LIGHT$0 << 2) + *(int64*)&ARRAY_EG2_LIGHT$) = EG$20;` writes past the array for Ig2 > 100, i.e. for Jfrag ≥ 202.
+- **Effect:** none in the captured runs: the largest Ig2 in the M5.2 captures is 17 (heavy, Rn-215 and Sg-264; Jfrag ≤ 34), and the `-exx` runs of the same systems (`m5-exx-*`) raise no bound error. Beyond 100 the BASIC behaviour is undefined (heap corruption).
+- **Evidence status:** *confirmed by fbc C*
+- **Evidence:** `python3 -m tools.fbsrc.fbline GEF.bas:9353`; capture ranges from `python3 -m harness.arglog summary`; `MILESTONE_5_PLAN.md` §9, M5.5.
+- **Fidelity switch:** none. Plan D3 default: the C++ throws `std::out_of_range` for a 101st gamma (`physics: E2 cascade throws beyond Array_Eg2(100)`); undefined behaviour is not reproduced.
+- **C++ symbol:** `gef::physics::e2_cascade`
+- **Owning milestone:** M5
+
+### Q-040 TRusanov computes a pairing floor for E and does not use it
+
+- **BASIC location:** `GEF.bas:16100-16107`
+- **Mechanism:** `If E < Emin Then Eeff = Emin Else Eeff = E` ("Introduced Sept. 2021", Emin = 8), then `TRusanov = sqr(E / (0.094E0 * A))`: the result uses E, not Eeff. GEF.c:12017-12038: `EEFF$1` is assigned on both paths and never read; the return is `__builtin_sqrt( (double)E$1 / ((double)A$1 * 0x1.810624DD2F1AAp-4) )`.
+- **Effect:** the temperature has no floor at the critical pairing energy. In the M5.2 captures E < 8 in 1375 of 1409 calls (U-236), 101 of 101 (Cf-252), 11 of 11 (Sg-264); Rn-215's smallest E is 0.1 (found by the M5 review; code-map candidate #10, `code_maps/setup_physics.md:737`).
+- **Evidence status:** *confirmed by fbc C*
+- **Evidence:** `python3 -m tools.fbsrc.fbline GEF.bas:16098-16108`; reproduced by `physics: TRusanov equals BASIC on the driver grids` and `physics: level_density replays the captured GEF calls`.
+- **Fidelity switch:** `fix_trusanov_pairing_floor`, with a later fix decision; the C++ has no `Fidelity` configuration yet
+- **C++ symbol:** `gef::physics::trusanov` (`Cpp_implementation/src/physics/level_density.cpp`)
+- **Owning milestone:** M5
+
+### Q-041 Beta_Equi prints its non-convergence message to whatever file number f holds
+
+- **BASIC location:** `GEF.bas:16628`; `f` is `Dim Shared As Integer f` (`GEF.bas:1768`), set by `f = FreeFile` at `GEF.bas:4150, 4179, 10057`
+- **Mechanism:** `If N > 998 Then Print #f,"Beta_Equi not converged: ",Z1,N` uses the shared file number of the `pfis`/`ptb` output files (GEF.c:13801-13814), which is 0 (the console) or 1 at the logged calls (arglog field `global.f`); it is not opened for this message.
+- **Effect:** not reached in the captured runs: the C++ replay of all 92,789 logged `Beta_Equi` calls asserts that none would print. It is reached on the grids of driver `m5_shape`: 699 of 979 structured rows (696 unphysical Z/A splits with N = 1001, and the threshold rows exiting at N = 999 and 1000) and 1,712 of 2,000 random inputs print once each. Where the line would go when it is reached (console, an open `ptb`/`pfis` file, or a closed file number) depends on the file state, which M7/M13 own.
+- **Evidence status:** *read only* for the destination; the message and its condition are *confirmed by fbc C*
+- **Evidence:** `python3 -m tools.fbsrc.fbline GEF.bas:16628`; driver output `Beta_Equi_print.txt` of store golden `m5-shape-2`, rebuilt by `physics: Beta_Equi equals BASIC on the driver grids`; `physics: Beta_Equi replays the captured GEF calls`.
+- **Fidelity switch:** none yet (the C++ returns the condition as `BetaEquiResult::print_not_converged` with N, plan D7; the caller decides the destination in M7/M13)
+- **C++ symbol:** `gef::physics::beta_equi` (`Cpp_implementation/src/physics/shape.cpp`)
+- **Owning milestone:** M5 (condition), M7/M13 (destination)
+
 ## 5. Build notes (not GEF quirks)
 
 These describe how the toolchain, not GEF, can make the C++ results differ from the reference binary. They have no fidelity switch.
@@ -480,7 +535,8 @@ These describe how the toolchain, not GEF, can make the C++ results differ from 
 - **Status:** open risk, measured per function by the M3/M5 T1 bit-exact tests, which run in `release-exact` (`-O3`) as well. Fallback: compile the affected translation units at `-O0`.
 - **Finding 1 (M3.3, 2026-10-08):** `fb::fix` written as libfb computes it, `trunc(|x|) * sgn(x)`, differs at `-O3` for NaN inputs. Without `-fsignaling-nans`, gcc folds the multiplication by −1 into a negation, which keeps the NaN's sign and does not quiet a signalling NaN; libfb (and our `-O0` builds) return `|x|` quieted. Fixed in the source rather than by flags: `fix` handles NaN with explicit bit operations and the other cases with `t`/`-t`/`0`, which no optimisation can change. Lesson for later ports: a multiplication by a literal −1 (or by a sign) can lose its NaN behaviour at `-O3`.
 - **Finding 2 (M3.4, 2026-10-08):** across all libm intrinsics GEF uses and GEF's own maths helpers, every remaining difference between the C++ builds and the fbc-compiled drivers is a NaN result whose sign or payload differs; no non-NaN value differs in any preset. Examples: g++ expands `std::floor(float)` inline even in Debug, where fbc's C calls glibc `floorf`, which quiets a signalling NaN; clang rewrites `-a + 1` as `1 - a`, which keeps the NaN's sign; gcc `-O3` does the same inside `Erfc` and inlines `floor(double)`. IEEE 754 leaves the sign of most NaN results unspecified, so compilers may do this. **Decision (user, 2026-10-08): bit-exact comparisons treat every NaN as equal to every NaN.** The M3.4 drivers hash NaN results as the canonical NaN, and the tests accept any NaN where the driver printed one. A NaN that reaches a GEF output file would still show up in `compare.exact` (`nan` vs `-nan`). (`fb::fix`, written before this decision, reproduces libfb's NaN bits anyway.)
-- **Owning milestone:** M3, M5
+- **Finding 3 (M5, 2026-10-13):** no difference between `release-exact` (`-O3`) and the Debug presets in any physics test (61 test cases, about 14.8 million comparisons each), so no translation unit needs `-O0`.
+- **Owning milestone:** M3, M5 (done)
 
 ### B-002 fbc's backend gcc also passes `-fwrapv -fno-strict-aliasing`
 
@@ -506,8 +562,8 @@ These describe how the toolchain, not GEF, can make the C++ results differ from 
   - Literals never move across `/` or a subtracted non-literal.
   - `Double` chains are affected most: `d * 0.1 * e` differs from left-to-right evaluation for 824 of 2,000 random inputs, `s * (t * u)` for 714.
   - `1.0 - 2.0 * rnd` at `GEF.bas:9680` becomes `-(vr1 * 2) + 1`, which is exact-equivalent.
-- **Status:** confirmed by fbc C and by a run: driver `arith_rules.bas`, golden `m3-arith-rules`, reproduced bit for bit by `fbc_arithmetic_test.cpp` in `dev-gcc`, `dev-clang` and `release-exact`. Coding rule unchanged: port arithmetic from the `fbline` output, not from the BASIC text (coding standards §5). M5 T1 bit-exact tests catch any remaining order differences.
-- **Owning milestone:** M3 (rules, done), M5
+- **Status:** confirmed by fbc C and by a run: driver `arith_rules.bas`, golden `m3-arith-rules`, reproduced bit for bit by `fbc_arithmetic_test.cpp` in `dev-gcc`, `dev-clang` and `release-exact`. Coding rule unchanged: port arithmetic from the `fbline` output, not from the BASIC text (coding standards §5). **M5 (2026-10-13):** all physics functions ported from the `fbline` output are bit-exact on their grids and every logged call in the three presets; the shapes met there (folded constants such as `0.08*(Z²/A^⅓ + E) − 93`, `1.7*(4 − d)` → `−d*1.7 + 6.8`, literal multipliers moved behind `/`) are covered by the rules. One review finding was a comparison polarity (`EVEN_ODD`'s `If Abs(x) < 1E-3` compiled as `if (... >= 1E-3) goto`), which differs only for NaN: port each comparison in the polarity the C tests.
+- **Owning milestone:** M3 (rules), M5 (done)
 
 ## 6. Summary
 
@@ -549,6 +605,11 @@ These describe how the toolchain, not GEF, can make the C++ results differ from 
 | Q-034 | JEFF-3.1.1 table 9 records shorter than `N_MAT_MAX` | `NucPropJEFF311.bas:47-57, 90, 94` | confirmed in output | — | M4 |
 | Q-035 | Unterminated `/'` in a parameter file hangs GEF | `ReadParameters.mac:1-8` | confirmed in output | — | M4 |
 | Q-036 | Legacy NucProp files map missing nuclides to the last entry | `NucPropx.bas:157-188` (and mf, f) | confirmed in output | — | M4 |
+| Q-037 | BFTF RF has no value at RX = 30 | `GEF.bas:17679-17690` | confirmed by fbc C | `fix_bftf_rx30_hole` | M5 |
+| Q-038 | E2 cascade stops before its first gamma when a state has spin CInt(J_frag) | `GEF.bas:9330-9333, 9447-9450` | confirmed in output | `fix_e2_ground_state_stop` | M5, M10 |
+| Q-039 | `Array_Eg2_*(100)` written without a bound | `GEF.bas:9353, 9469` | confirmed by fbc C | — | M5 |
+| Q-040 | TRusanov computes a pairing floor and does not use it | `GEF.bas:16100-16107` | confirmed by fbc C | `fix_trusanov_pairing_floor` | M5 |
+| Q-041 | Beta_Equi prints to whatever file number `f` holds | `GEF.bas:16628` | read only (destination) | — | M5, M7/M13 |
 | B-001 | Optimisation level vs fbc `-O0` | (toolchain) | open risk | — | M3, M5 |
 | B-002 | fbc gcc passes `-fwrapv -fno-strict-aliasing` | (toolchain) | resolved for the runtime layer (M3.3) | — | M3 |
 | B-003 | `Compilationstamp` needs `SOURCE_DATE_EPOCH` | `GEF.bas:17` | handled (M1) | — | M1 |

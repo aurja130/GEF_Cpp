@@ -1,6 +1,6 @@
 # tools/fbsrc — BASIC-source tooling
 
-Three tools for working out what a GEF BASIC line computes. Run them from the repository
+Four tools for working out what a GEF BASIC line computes. Run them from the repository
 root:
 
 | Tool | Purpose |
@@ -8,6 +8,7 @@ root:
 | `python3 -m tools.fbsrc.emit_c` | Translate the BASIC source to C with the pinned fbc |
 | `python3 -m tools.fbsrc.fbline` | Show BASIC line(s) next to the C generated from them |
 | `python3 -m tools.fbsrc.fbdef` | Find where a symbol is defined, and optionally every reference |
+| `python3 -m tools.fbsrc.fn_c_equiv` | Check that a standalone driver's C equals GEF's C |
 
 Requirements: fbc 1.10.1 (found through `GEF_FBC` or the default path, see
 `tools/toolchain/fbc.py`), Universal Ctags, `git`, and GNU `patch` for `--patch-dir`.
@@ -185,6 +186,86 @@ comments removed:
 nested multi-line `/' ... '/` blocks. The comment scanner follows FreeBASIC's string
 rules (`""` inside `"..."`, backslash escapes inside `!"..."`).
 
+## fn_c_equiv
+
+Checks that a standalone driver compiles to the same C as GEF for the same code (Milestone 5,
+D1). The driver's C as kept by `fbc -R` is compared with GEF.c.
+
+```
+python3 -m tools.fbsrc.fn_c_equiv --driver-c PATH [--driver-bas PATH] [--gef-c PATH]
+    [--function NAME]... [--piece CUTFILE=SRCFILE:FIRST-LAST]...
+```
+
+- `--driver-c PATH`: the driver's C as kept by `fbc -R`. Required.
+- `--driver-bas PATH`: the driver's `.bas`, or a directory holding `<driver-c stem>.bas`. Needed
+  by `--piece`; default: the `.bas` next to `--driver-c`.
+- `--gef-c PATH`: the GEF C to compare with. Default: the current emission, built if needed
+  (see `emit_c`).
+- `--function NAME` and `--piece CUTFILE=SRCFILE:FIRST-LAST` repeat. At least one is required.
+
+Exit status: 0 all equivalent; 1 a difference was found (the report is printed); 2 the check
+could not run (a message on stderr, or a usage error).
+
+### Function mode
+
+`--function NAME` compares the definition of NAME, from its header through the column-0 closing
+brace. Directives and `//` lines are ignored, so kept C from `-R` and from `-R -g` both work.
+Temporaries (`vr$N`, `tmp$N`, `tmp$N$M`, `TMP$N$M`) and labels (`label$N`) are renumbered in
+order of first appearance on each side, because their numbers depend on the rest of each file.
+Other names must match exactly: both functions are module-level, so their scope suffixes agree.
+
+### Piece mode
+
+`--piece CUTFILE=SRCFILE:FIRST-LAST` compares a driver piece with GEF.c's statements for BASIC
+lines FIRST..LAST of SRCFILE. The driver has the piece in a `Sub`, included from CUTFILE; line k
+of CUTFILE is line FIRST+k-1 of SRCFILE. Statements are grouped by the BASIC line they come from,
+and each group must equal GEF.c's group for that line. Bare `{` and `}` lines are not statements.
+
+- The driver's statements are mapped to BASIC lines by re-emitting the driver with
+  `fbc -gen gcc -R -g -c` in a scratch copy of its directory (`*.c` and `*.o` left out). The
+  scratch copy is created under `build/fbsrc/fn_c_equiv/` and removed afterwards.
+- The kept C must equal that re-emission once `#line`, `//` and blank lines are dropped.
+  Otherwise the mapping would describe other code: the result is a mismatch with 0 statements
+  compared, and the report shows the difference.
+- Locals are renamed per base name in order of first appearance (`NAME@k`), because a Sub's
+  scope suffixes differ from module level. Globals (`NAME$`) are compared by name. Temporaries
+  and labels are renumbered as in function mode.
+
+### Python interface
+
+```python
+from pathlib import Path
+
+from tools.fbsrc.fn_c_equiv import compare_function, compare_piece, parse_piece
+
+gef_c = Path("build/fbsrc/ba9f0aa/src/GEF.c")
+result = compare_function(Path("drv.c"), gef_c, "MYFUNC")
+piece = compare_piece(
+    Path("drv.c"), Path("drv.bas"), gef_c, parse_piece("piece.bi=GEF.bas:16261-16271")
+)
+print(piece.summary)  # "ok: ..." or "MISMATCH: ...", with piece.diff as the report
+```
+
+`EquivResult` has `ok`, `compared`, `unit`, `diff` and `summary`. The functions raise
+`FbsrcError` or `FbcError` when the check cannot run.
+
+### Limits
+
+- Keep the piece inside a procedure on both sides. A module-level loop in the reference gave an
+  extra label at `Next` against a driver piece in a `Sub` (observed in the tests). The tests use
+  `Sub` on both sides; in a synthetic check, `Sub`- and `Function`-wrapped driver pieces both
+  matched a `Function`-wrapped reference.
+- Piece mapping uses `#line`, so it has the one-BASIC-line granularity described under Known
+  limitations.
+- The consistency check re-emits with `-gen gcc -R -g -c -m <stem>`. `-m` matters: with `-c`
+  alone fbc emits the module-level code of the file as a constructor (`fb_ctor__<stem>`) instead
+  of `main`, which differs from a `harness.driver` build. The same holds for `emit_c`'s
+  `GEF.c` (no `main`; the program body is in `fb_ctor__GEF`): procedure bodies are identical to
+  those of the linked GEF binary, and only the entry and exit of the module-level code
+  (`fb_Init`, `fb_End`) differ. Kept C from other options is reported as a mismatch.
+- Tests: `tools/fbsrc/tests/test_fn_c_equiv.py`. They need fbc and the GEF source under
+  `Reference/GEF_code/`; the real U_SHELL case is marked `slow`.
+
 ## build/ layout
 
 ```
@@ -195,6 +276,7 @@ build/fbsrc/
     src/                      copy of Reference/GEF_code/source/ + GEF.c + GEF.o
   <rev>-p<hash12>/            one directory per distinct patch directory
   ctags/index.json            fbdef symbol index
+  fn_c_equiv/                 scratch copies for piece-mode re-emission, each removed after use
 ```
 
 Everything under `build/` is generated and gitignored. Old emissions are not pruned;

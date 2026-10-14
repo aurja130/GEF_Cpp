@@ -1,7 +1,7 @@
 # GEF in C++: Current Project State
 
-**As of:** 2026-10-12
-**Phase:** M0–M4 complete. M5 (deterministic physics functions) is planned (`Planning/MILESTONE_5_PLAN.md`, decisions D1–D9 taken by the user on 2026-10-12); implementation has not started. No GEF physics has been ported yet; the data layer it reads (tables, lookups, parameters, analyzer registry) is ported and bit-exact against the BASIC program.
+**As of:** 2026-10-13
+**Phase:** M0–M5 complete. M5 ported every deterministic physics function of GEF (masses, barriers, level densities, temperatures, yields, deformations, moments of inertia, GDR helpers, the `P_Egamma_low` cross-section table and the E2 rotational cascade) bit-exact against the BASIC program, on synthetic grids and on every logged call of four reference runs. M6 (input parsing, run planning, system/step setup) is next; its plan is not written.
 
 **Decision 2026-10-08 — exact reproduction first** (vision §4.2 and §5, strategy §2.9):
 - **Phase 1 (M3–M16):** the C++ port must reproduce the BASIC arithmetic exactly. A seeded C++ run in exact mode must write the same output bytes as the seeded BASIC reference binary (T3).
@@ -14,15 +14,15 @@
 |---|---|
 | Vision | Written: `Planning/GEF_CPP_VISION.md` |
 | Implementation strategy | Written: `Planning/IMPLEMENTATION_STRATEGY.md`, 19 milestones (M0–M18) |
-| Milestone plan files (`Planning/MILESTONE_<n>_PLAN.md`) | M0–M4 complete; M5 planned (2026-10-12); M6–M18 not written |
-| C++ implementation (`Cpp_implementation/`) | `gef_fbrt` (namespace `gef::fb`): the FreeBASIC runtime emulation of M3 (conversions, maths, random numbers, `Str`/`Print`/`Print Using`/`Format`, arrays, `DATA`, `Val`/`Input #`, strings and `Line Input`), bit-exact against FreeBASIC drivers. M4: `gef_data` (GEF's `DATA` and table loaders, `gef::data`), `gef_params` (nominal parameters, widths, parameter files, `gef::params`), `gef_analysis` (analyzer registry, `gef::analysis`), `gef_util` (GEF's string utilities, `gef::util`). `gef` CLI (`--version`). Catch2 tests; five CMake presets. See §3.6, §3.7 |
+| Milestone plan files (`Planning/MILESTONE_<n>_PLAN.md`) | M0–M5 complete; M6–M18 not written |
+| C++ implementation (`Cpp_implementation/`) | `gef_fbrt` (namespace `gef::fb`): the FreeBASIC runtime emulation of M3 (conversions, maths, random numbers, `Str`/`Print`/`Print Using`/`Format`, arrays, `DATA`, `Val`/`Input #`, strings and `Line Input`), bit-exact against FreeBASIC drivers. M4: `gef_data` (GEF's `DATA` and table loaders, `gef::data`), `gef_params` (nominal parameters, widths, parameter files, `gef::params`), `gef_analysis` (analyzer registry, `gef::analysis`), `gef_util` (GEF's string utilities, `gef::util`). M5: `gef_physics` (`gef::physics`, the deterministic physics functions, §3.8). `gef` CLI (`--version`). Catch2 tests; five CMake presets. See §3.6, §3.7 |
 | Python tooling (`tools/`) | Toolchain check and fbc pin, validation-data manifests, BASIC-source tools (`emit_c`, `fbline`, `fbdef`) |
 | Local CI | `scripts/ci.sh` (full) and `scripts/ci.sh --quick` |
 | Reference harness (`harness/`) | Complete (M1). Reference binary `ref-1` (seed patch only), proven byte-identical to `gef_reference` for captured seeds; per-event reseed mode; Rnd draw logs; probes T0/P1/P2/P3; function drivers; clean-run runner; immutable reference store. See §3.4 |
 | Comparison toolkit (`compare/`) | Complete (M2). Lossless parsers for every output file; exact field-level comparison (the phase-1 acceptance tool); calibrated statistical verdicts, valid for Cf-252 and not for Rn-215 with 20 BASIC runs (re-validated in M17). See §3.5 |
-| Reference store | 97 entries: 18 M1 entries (gate runs, the `ref-1` binary, the golden random stream), 60 M2 ensemble runs, 3 calibrations, the M3 stream `m3-rnd-seeds-1e6`, and 15 M4 captures (T0 per nuclide-data variant, the NUBASE 2020 stop, its `DATA` chain, the `Fitpar.dat` run, the lookup grids per variant); about 12 GB, gitignored, manifests committed. Small driver goldens and store-derived goldens (fingerprints, copied files) are committed under `Cpp_implementation/tests/golden/` |
-| Quirk register | `Planning/QUIRKS.md`: 36 quirks (Q-001–Q-036) and 4 build notes (B-001–B-004) |
-| Coverage matrix | `Planning/COVERAGE_MATRIX.md`: 114 rows × T0–T5; 27 cells covered (M3: FreeBASIC numeric semantics at T1, `FbMtRng` at T2; M4: all 21 T0 cells it owned and 4 T1 cells); T4 cells owned by M17 after the exact-first decision; one cell deferred (approved 2026-10-07) |
+| Reference store | 117 entries: the M1–M4 entries (97; §3.4–3.7) and 20 M5 entries: four `arglog` captures (`m5-arglog-rn215`, `-cf252`, `-u235`, `-sh264`), four `-exx` runs (`m5-exx-*`), and the driver goldens `m5-<group>` (the round-1 regenerations `m5-helpers-2`, `m5-masses-2`, `m5-barriers-2`, `m5-shape-2` supersede the first versions, which stay); about 15 GB, gitignored, manifests committed. Small driver goldens and store-derived goldens (fingerprints, copied files) are committed under `Cpp_implementation/tests/golden/` |
+| Quirk register | `Planning/QUIRKS.md`: 41 quirks (Q-001–Q-041; M5 added Q-037–Q-041) and 4 build notes (B-001–B-004) |
+| Coverage matrix | `Planning/COVERAGE_MATRIX.md`: 114 rows × T0–T5; 30 cells covered (M3: FreeBASIC numeric semantics at T1, `FbMtRng` at T2; M4: all 21 T0 cells it owned and 4 T1 cells; M5: the 3 T1 cells it owned); T4 cells owned by M17 after the exact-first decision; one cell deferred (approved 2026-10-07) |
 | Coding standards | `Planning/CODING_STANDARDS.md` |
 | Code maps | `Planning/code_maps/`: the six planning-session reports, with a README listing corrected claims |
 | Version control | `validation/` (including `validation/reference_store/`) and `.omp/` are gitignored, except the agent context `.omp/AGENTS.md`, `.omp/LOCAL_ENVIRONMENT.md` and the model routing `.omp/config.yml`; manifests of stored data are committed under `manifests/` |
@@ -173,6 +173,14 @@ Decisions taken in M3: NaN results compare equal regardless of sign and payload 
 - **Lookup functions (M4.6):** `gef::data::i_mat_endf` (with `MatNumberState`: `I_message` and `ctl/IMATmax.ctl`), `n_iso_mat`, `r_awr_endf`, `iso_for_mat`, `iso_for_za`, `nstates_for_za`, `ibranch_for_zai`, in the three forms the variant files define. Equal, over a (Z, A) grid in a fresh `ctl/`, to the harness patch `lookups` run in every certified variant (captures `m4-lookups-<variant>`). Quirk Q-036 (legacy files: missing nuclides get the last table entry); Q-021 confirmed in output.
 - **Harness additions:** `harness.run --work-file` (files copied into the working directory, recorded in `run.json`), `harness.probe_fingerprints --context` (one record of P1/P2/P3) and `--files` (whole-file fingerprints), `harness.golden copy` (capture files as store-derived goldens), patch `lookups`.
 
+### 3.8 Deterministic physics functions (M5, `MILESTONE_5_PLAN.md`)
+
+- **`gef_physics`** (`Cpp_implementation/src/physics/`, namespace `gef::physics`): `masses` (LyMass, LyPair, FEDEFOLys, LDMass, AME2020, U_SHELL, U_SHELL_exp, U_SHELL_EO_exp, U_MASS, ECOUL, U_Q_beta_minus, U_Valid, U_Delta_S0), `barriers` (BFTF, BFTFA, BFTFB), `level_density` (U_alev_ld, U_levdens, U_levdens_Egidy, U_levdens_FG, U_Temp, U_Temp2, TEgidy, TRusanov), `shape` (Getyield, F1, F2, Masscurv, Masscurv1, Masscurv2, De_Saddle_Scission, beta_light, beta_heavy, Z_equi, Beta_Equi), `helpers` (Gaussintegral, Bell, U_Box, EVEN_ODD), `rotation` (U_Ired, U_IredFF, U_I_Shell, E0_GDR, Width_GDR, Efac_def_GDR, u_accel), `gamma` (`p_egamma_low_table`, `e2_cascade` for both fragments). Ported statement by statement from the emitted C. Prints of BASIC are returned as flags (`UMassResult`, `BftfResult`, `BetaEquiResult`); table reads outside the tables throw.
+- **Oracle:** FreeBASIC drivers `harness/drivers/m5_<group>.bas` (conventions `M5_DRIVERS.md`), whose cut functions and pieces compile to the same C as in `GEF.c` (`tools.fbsrc.fn_c_equiv`); the harness patch `arglog` (`harness/ARGLOG.md`, patch set `m5-arglog`, proven neutral) logs real calls of four reference runs (Rn-215 n-induced, Cf-252 sf, U-236 n-induced at thermal and 14 MeV, Sg-264 sf); every driver replays every logged record exactly (`harness.arglog replay-check`).
+- **Tests:** `physics_<group>_test.cpp`, 61 test cases `[T1][physics]`, about 14.8 million assertions, bit-exact in `dev-gcc`, `dev-clang` and `release-exact`; no ULP or NaN-only difference anywhere, so no `-O0` fallback and no D12 exception.
+- **Bounds:** bounds-checked (`-exx`) runs of the four systems reach no out-of-bounds index anywhere in GEF.
+- **Quirks found:** Q-037 (BFTF RX = 30 hole), Q-038 (the E2 cascade stops before its first gamma when a state has spin CInt(J_frag)), Q-039 (`Array_Eg2_*(100)` unchecked), Q-040 (TRusanov's unused pairing floor), Q-041 (Beta_Equi prints to the shared file number `f`).
+
 ## 4. Established findings
 
 ### 4.1 The test run against the reference library (Rn-215, tape 2 vs `reference/gefy_nfy_ENDF/GEFY_86_214_n.dat`)
@@ -213,8 +221,8 @@ The six planning-session reports are saved in `Planning/code_maps/` (M0.1). Thei
 
 ## 5. Open risks and items
 
-1. **Optimisation level vs fbc's `-O0`** (`QUIRKS.md` B-001): measured per function by the M3 T1 tests in `release-exact`. So far: no non-NaN difference; NaN sign/payload differences are accepted by user decision (2026-10-08). M5 extends the check to the physics functions.
-2. **fbc expression reordering** (B-004): characterised in M3.2 and M3.6a (`FBC_ARITHMETIC.md`, rules R1–R10, verified by driver runs in all presets including `-O3`). The remaining risk is a GEF expression shape the probes did not cover; the porting rule (follow the generated C) and the M5 T1 tests cover it.
+1. **Optimisation level vs fbc's `-O0`** (`QUIRKS.md` B-001): measured per function by the M3 T1 tests in `release-exact`. No non-NaN difference in M3 or in M5's physics functions (`release-exact` at `-O3`, about 14.8 million bit-exact comparisons); NaN sign/payload differences are accepted by user decision (2026-10-08).
+2. **fbc expression reordering** (B-004): characterised in M3.2 and M3.6a (`FBC_ARITHMETIC.md`, rules R1–R10, verified by driver runs in all presets including `-O3`). The remaining risk is a GEF expression shape the probes did not cover; the porting rule (follow the generated C) covers it; M5 ported about 60 functions this way with no remaining difference.
 3. **`-fwrapv` in the fbc backend** (B-002): resolved for the runtime layer by the `fb::add/sub/mul/neg/abs` helpers (M3.3); ported code must use them where `Integer`/`Long` arithmetic can overflow.
 4. **Statistical calibration of Rn-215-like inputs** (M2): 20 BASIC runs cannot calibrate the extreme per-family tails a full-output comparison needs. Rare pre-pass regimes (one run in 20 at 18.5 MeV gets a second-chance split), sparse bursts and row churn exceed the model. Irrelevant for phase 1 (exact equality). In phase 2, large exact-C++ ensembles are needed; detection power for single-nuclide shifts also needs several candidate runs.
 5. **Deferred coverage cell:** the `Static Ntimes` negative-TKE guard at T4 cannot be checked statistically. Deferral approved by the user on 2026-10-07, to be revisited later (`COVERAGE_MATRIX.md`). The guard is still ported faithfully in M10 and checked at T2 (M10) and T3 (M15).
@@ -223,5 +231,5 @@ The six planning-session reports are saved in `Planning/code_maps/` (M0.1). Thei
 
 ## 6. Next steps
 
-1. Implement M5 per `Planning/MILESTONE_5_PLAN.md`, starting with M5.1 (driver C retention, `fn_c_equiv`, `harness.build --fbc-option`, the `arglog` patch). The plan amended the strategy: M5 scope additions and the "Not ported" list (D4), non-bit-exact functions need a written analysis and user approval (D12). Open user question (recorded in the M4 plan): whether to make `DCLbranchingJEFF311.bas` compile, which would change its code.
+1. Plan M6 (input parsing, run planning and system/step setup, strategy §3), which calls the M5 functions (`U_Valid`, the barrier and mass printout, CN kinematics). Open from M5 for later milestones: where Beta_Equi's message goes when it is reached (Q-041, M7/M13); the `arglog` spread sample is biased for paired calls (`ARGLOG.md`). Open user question (recorded in the M4 plan): whether to make `DCLbranchingJEFF311.bas` compile, which would change its code.
 2. Per the exact-first decision, later milestone plans gate on bit-exact equality with BASIC (T0–T3) and use `compare.exact` and the per-event reseed mode to triage divergences. The Clang Debug test preset skips `[slow]` tests (user, 2026-10-08); work on this machine is limited to 10 cores (`taskset -c 0-9`, `-j 10`) while it is shared.

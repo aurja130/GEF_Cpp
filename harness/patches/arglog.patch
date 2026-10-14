@@ -1,0 +1,2129 @@
+--- a/GEF.bas
++++ b/GEF.bas
+@@ -693,5 +693,5 @@
+ 
+ /'>'/   
+-
++#include "harness_arglog.bi"
+   Dim Shared As Double Timeoffset = 0
+   Declare Sub await (Ithread As Integer,Ithreadmax As Integer) 
+@@ -1818,5 +1818,5 @@
+     This.Rval = 0
+   End Constructor  
+-
++#include "harness_arglog_wrappers.bi"
+   If Fileexists("file.in") Then
+     Bfilein = -1
+@@ -9306,5 +9306,5 @@
+                         Wend
+            
+-          
++#include "harness_arglog_e2_light_in.bi"
+             '           Rotational band (note that Erest is counted above the yrast line!)
+                         Dim As Single E_E2_tot 
+@@ -9367,5 +9367,5 @@
+                           End If      
+                         Next J   
+-           
++#include "harness_arglog_e2_light_out.bi"
+       '                 2nd (heavy) fragment   
+         
+@@ -9427,5 +9427,5 @@
+                           Erest = Erest - Eg  '  in MeV units
+                         Wend 
+-    
++#include "harness_arglog_e2_heavy_in.bi"
+           '             Rotational band (note that Erest is counted above the yrast line!)
+                         E_E2_tot = 0      
+@@ -9483,5 +9483,5 @@
+                           End If      
+                         Next J 
+-        
++#include "harness_arglog_e2_heavy_out.bi"
+                       End Scope
+     '                 sleep  
+@@ -15812,4 +15812,8 @@
+ 
+ /'<'/
++#ifdef GEF_ARGLOG
++#undef U_Valid
++#endif
++#line 15813
+    Function U_Valid(I_Z As Integer,I_A As Integer) As Ubyte
+      Dim As Ubyte Ivalid
+@@ -15831,7 +15835,16 @@
+ ' U_Valid = 1
+    End Function     
++#ifdef GEF_ARGLOG
++#undef U_Valid
++#define U_Valid(hl_a1, hl_a2) hlog_U_Valid(__FILE__, __LINE__, hl_a1, hl_a2)
++#endif
++#line 15832
+ 
+ 
+    ' I_Z and I_A refer to the fissioning nucleus
++#ifdef GEF_ARGLOG
++#undef U_Delta_S0
++#endif
++#line 15835
+    Function U_Delta_S0(I_Z As Integer,I_A As Integer) As Single
+      Dim As Single Delta
+@@ -15858,6 +15871,15 @@
+      U_Delta_S0 = Delta    
+    End Function       
+-
+-
++#ifdef GEF_ARGLOG
++#undef U_Delta_S0
++#define U_Delta_S0(hl_a1, hl_a2) hlog_U_Delta_S0(__FILE__, __LINE__, hl_a1, hl_a2)
++#endif
++#line 15859
++
++
++#ifdef GEF_ARGLOG
++#undef Getyield
++#endif
++#line 15861
+   Function Getyield(E_rel As Single,E_ref As Single,E_shell As Single, dE_defo As Single, _
+                    T_low As Single,T_high As Single, T_high_mac As Single,I_Mode As Integer) As Single
+@@ -15919,6 +15941,15 @@
+ 
+   End Function
+-
+-
++#ifdef GEF_ARGLOG
++#undef Getyield
++#define Getyield(hl_a1, hl_a2, hl_a3, hl_a4, hl_a5, hl_a6, hl_a7, hl_a8) hlog_Getyield(__FILE__, __LINE__, hl_a1, hl_a2, hl_a3, hl_a4, hl_a5, hl_a6, hl_a7, hl_a8)
++#endif
++#line 15920
++
++
++#ifdef GEF_ARGLOG
++#undef F1
++#endif
++#line 15922
+     Function F1(Z_S_A As Single) As Single
+       /' Fit to the lower part of the data '/
+@@ -15927,4 +15958,13 @@
+       F1 = Result
+     End Function
++#ifdef GEF_ARGLOG
++#undef F1
++#define F1(hl_a1) hlog_F1(__FILE__, __LINE__, hl_a1)
++#endif
++#line 15928
++#ifdef GEF_ARGLOG
++#undef F2
++#endif
++#line 15928
+     Function F2(Z_S_A As Single) As Single
+       /' Fit to the upper part of the data '/
+@@ -15933,5 +15973,14 @@
+       F2 = Result
+     End Function
+-
++#ifdef GEF_ARGLOG
++#undef F2
++#define F2(hl_a1) hlog_F2(__FILE__, __LINE__, hl_a1)
++#endif
++#line 15934
++
++#ifdef GEF_ARGLOG
++#undef Masscurv
++#endif
++#line 15935
+   Function Masscurv(Z As Single, A As Single, RL As Single, kappa As Single, _
+                        kappa4 As Single) As Single
+@@ -15962,5 +16011,14 @@
+     Masscurv = Result
+   End Function
+-
++#ifdef GEF_ARGLOG
++#undef Masscurv
++#define Masscurv(hl_a1, hl_a2, hl_a3, hl_a4, hl_a5) hlog_Masscurv(__FILE__, __LINE__, hl_a1, hl_a2, hl_a3, hl_a4, hl_a5)
++#endif
++#line 15963
++
++#ifdef GEF_ARGLOG
++#undef Masscurv1
++#endif
++#line 15964
+   Function Masscurv1(Z As Single, A As Single, RL As Single, kappa As Single, _
+                kappa4 As Single) As Single
+@@ -16002,5 +16060,14 @@
+     Masscurv1 = Result 
+   End Function 
+-
++#ifdef GEF_ARGLOG
++#undef Masscurv1
++#define Masscurv1(hl_a1, hl_a2, hl_a3, hl_a4, hl_a5) hlog_Masscurv1(__FILE__, __LINE__, hl_a1, hl_a2, hl_a3, hl_a4, hl_a5)
++#endif
++#line 16003
++
++#ifdef GEF_ARGLOG
++#undef Masscurv2
++#endif
++#line 16004
+   Function Masscurv2(Z As Single, A As Single, RL As Single, kappa As Single, _
+                kappa4 As Single) As Single
+@@ -16044,5 +16111,14 @@
+     Masscurv2 = Result 
+   End Function 
+-
++#ifdef GEF_ARGLOG
++#undef Masscurv2
++#define Masscurv2(hl_a1, hl_a2, hl_a3, hl_a4, hl_a5) hlog_Masscurv2(__FILE__, __LINE__, hl_a1, hl_a2, hl_a3, hl_a4, hl_a5)
++#endif
++#line 16045
++
++#ifdef GEF_ARGLOG
++#undef De_Saddle_Scission
++#endif
++#line 16046
+   Function De_Saddle_Scission(Z_CN_in As Single,A_CN_in As Single, _
+        ESHIFTSASCI As Single) As Single
+@@ -16062,4 +16138,9 @@
+     De_Saddle_Scission = Result
+   End Function
++#ifdef GEF_ARGLOG
++#undef De_Saddle_Scission
++#define De_Saddle_Scission(hl_a1, hl_a2, hl_a3) hlog_De_Saddle_Scission(__FILE__, __LINE__, hl_a1, hl_a2, hl_a3)
++#endif
++#line 16063
+ 
+   Function TKE_Viola(Z_CN As Single, A_CN As Single) As Single
+@@ -16070,4 +16151,8 @@
+   End Function
+ 
++#ifdef GEF_ARGLOG
++#undef TEgidy
++#endif
++#line 16071
+   Function TEgidy(A As Single,DU As Single,Fred As Single) As Single
+     /' Temperature parameter of the constant-temperature formula for the
+@@ -16094,6 +16179,15 @@
+     TEgidy = Temp
+   End Function
+-
+-
++#ifdef GEF_ARGLOG
++#undef TEgidy
++#define TEgidy(hl_a1, hl_a2, hl_a3) hlog_TEgidy(__FILE__, __LINE__, hl_a1, hl_a2, hl_a3)
++#endif
++#line 16095
++
++
++#ifdef GEF_ARGLOG
++#undef TRusanov
++#endif
++#line 16097
+   Function TRusanov(E As Single, A As Single) As Single
+      /' Fermi-gas level density, parameterisation of Rusanov et al. '/
+@@ -16107,5 +16201,14 @@
+        TRusanov = sqr(E / (0.094E0 * A) )
+   End Function
+-
++#ifdef GEF_ARGLOG
++#undef TRusanov
++#define TRusanov(hl_a1, hl_a2) hlog_TRusanov(__FILE__, __LINE__, hl_a1, hl_a2)
++#endif
++#line 16108
++
++#ifdef GEF_ARGLOG
++#undef LyMass
++#endif
++#line 16109
+   Function LyMass(Z As Single,A As Single,beta As Single) As Single
+ 
+@@ -16136,6 +16239,15 @@
+      LyMass = EL
+    END Function
+-
+-
++#ifdef GEF_ARGLOG
++#undef LyMass
++#define LyMass(hl_a1, hl_a2, hl_a3) hlog_LyMass(__FILE__, __LINE__, hl_a1, hl_a2, hl_a3)
++#endif
++#line 16137
++
++
++#ifdef GEF_ARGLOG
++#undef LyPair
++#endif
++#line 16139
+    Function LyPair(Z As Integer,A As Integer) As Single
+      /' Calculates pairing energy '/
+@@ -16150,4 +16262,9 @@
+      Lypair = E_PAIR
+    END Function
++#ifdef GEF_ARGLOG
++#undef LyPair
++#define LyPair(hl_a1, hl_a2) hlog_LyPair(__FILE__, __LINE__, hl_a1, hl_a2)
++#endif
++#line 16151
+ 
+ 
+@@ -16209,10 +16326,23 @@
+ 
+    
++#ifdef GEF_ARGLOG
++#undef FEDEFOLys
++#endif
++#line 16210
+    Function FEDEFOLys(Z As Single,A As Single,beta As Single) As Single
+        /'<FO REAL*4 LYMASS FO>'/
+        FEDEFOLys = Lymass(Z,A,beta) - Lymass(Z,A,0.0)
+    End Function
+-
+-
++#ifdef GEF_ARGLOG
++#undef FEDEFOLys
++#define FEDEFOLys(hl_a1, hl_a2, hl_a3) hlog_FEDEFOLys(__FILE__, __LINE__, hl_a1, hl_a2, hl_a3)
++#endif
++#line 16214
++
++
++#ifdef GEF_ARGLOG
++#undef LDMass
++#endif
++#line 16216
+    Function LDMass(Z As Single,A As Single,beta As Single) As Single
+      Dim As Single N,BEtab
+@@ -16235,5 +16365,14 @@
+        LDMass = Betab
+    End Function
+-
++#ifdef GEF_ARGLOG
++#undef LDMass
++#define LDMass(hl_a1, hl_a2, hl_a3) hlog_LDMass(__FILE__, __LINE__, hl_a1, hl_a2, hl_a3)
++#endif
++#line 16236
++
++#ifdef GEF_ARGLOG
++#undef AME2020
++#endif
++#line 16237
+    Public Function AME2020(IZ As Integer,IA As Integer) As Single
+       ' Masses from the 2020 mass evaluation, complemented by TF masses
+@@ -16258,5 +16397,14 @@
+       End If  
+    End Function
+-
++#ifdef GEF_ARGLOG
++#undef AME2020
++#define AME2020(hl_a1, hl_a2) hlog_AME2020(__FILE__, __LINE__, hl_a1, hl_a2)
++#endif
++#line 16259
++
++#ifdef GEF_ARGLOG
++#undef U_SHELL
++#endif
++#line 16260
+    Function U_SHELL(Z As Integer,A As Integer) As Single
+       Dim As Integer N
+@@ -16270,5 +16418,14 @@
+      U_SHELL = Res
+    End Function
+-
++#ifdef GEF_ARGLOG
++#undef U_SHELL
++#define U_SHELL(hl_a1, hl_a2) hlog_U_SHELL(__FILE__, __LINE__, hl_a1, hl_a2)
++#endif
++#line 16271
++
++#ifdef GEF_ARGLOG
++#undef U_SHELL_exp
++#endif
++#line 16272
+    Function U_SHELL_exp(IZ As Integer, IA As Integer) As Single
+       Dim Res As Single
+@@ -16291,5 +16448,14 @@
+       U_SHELL_exp = Res             
+    End Function
+-
++#ifdef GEF_ARGLOG
++#undef U_SHELL_exp
++#define U_SHELL_exp(hl_a1, hl_a2) hlog_U_SHELL_exp(__FILE__, __LINE__, hl_a1, hl_a2)
++#endif
++#line 16292
++
++#ifdef GEF_ARGLOG
++#undef U_SHELL_EO_exp
++#endif
++#line 16293
+  Function U_SHELL_EO_exp(IZ As Integer, IA As Integer) As Single
+      ' Returns experimental shell and even-odd staggering,
+@@ -16305,7 +16471,16 @@
+       U_SHELL_EO_exp = Res             
+    End Function
+-
+-
+-
++#ifdef GEF_ARGLOG
++#undef U_SHELL_EO_exp
++#define U_SHELL_EO_exp(hl_a1, hl_a2) hlog_U_SHELL_EO_exp(__FILE__, __LINE__, hl_a1, hl_a2)
++#endif
++#line 16306
++
++
++
++#ifdef GEF_ARGLOG
++#undef U_MASS
++#endif
++#line 16309
+    Function U_MASS(Z As Single,A As Single) As Single
+      /' LD + congruence energy + shell (no pairing) '/
+@@ -16322,6 +16497,15 @@
+      U_MASS = BE
+    End Function
+-
+-
++#ifdef GEF_ARGLOG
++#undef U_MASS
++#define U_MASS(hl_a1, hl_a2) hlog_U_MASS(__FILE__, __LINE__, hl_a1, hl_a2)
++#endif
++#line 16323
++
++
++#ifdef GEF_ARGLOG
++#undef ECOUL
++#endif
++#line 16325
+    Function ECOUL(Z1 As Single,A1 As Single,beta1 As Single,Z2 As Single,A2 As Single, _
+                      beta2 As Single,d As Single) _
+@@ -16354,6 +16538,15 @@
+       ECOUL = REcoul
+    END Function
+-
+-
++#ifdef GEF_ARGLOG
++#undef ECOUL
++#define ECOUL(hl_a1, hl_a2, hl_a3, hl_a4, hl_a5, hl_a6, hl_a7) hlog_ECOUL(__FILE__, __LINE__, hl_a1, hl_a2, hl_a3, hl_a4, hl_a5, hl_a6, hl_a7)
++#endif
++#line 16355
++
++
++#ifdef GEF_ARGLOG
++#undef beta_light
++#endif
++#line 16357
+    Function beta_light(Z As Integer,betaL0 As Single,betaL1 As Single) As Single
+       /' Deformation of light fission fragment for S1 and S2 '/
+@@ -16364,6 +16557,15 @@
+      beta_light = beta
+    End Function
+-
+-
++#ifdef GEF_ARGLOG
++#undef beta_light
++#define beta_light(hl_a1, hl_a2, hl_a3) hlog_beta_light(__FILE__, __LINE__, hl_a1, hl_a2, hl_a3)
++#endif
++#line 16365
++
++
++#ifdef GEF_ARGLOG
++#undef beta_heavy
++#endif
++#line 16367
+    Function beta_heavy(Z As Integer,betaH0 As Single,betaH1 As Single) As Single
+       /' Deformation of heavy fission fragment for S2 '/
+@@ -16374,7 +16576,16 @@
+      beta_heavy = beta
+    End Function
+-
+-
+-
++#ifdef GEF_ARGLOG
++#undef beta_heavy
++#define beta_heavy(hl_a1, hl_a2, hl_a3) hlog_beta_heavy(__FILE__, __LINE__, hl_a1, hl_a2, hl_a3)
++#endif
++#line 16375
++
++
++
++#ifdef GEF_ARGLOG
++#undef Z_equi
++#endif
++#line 16378
+    Function Z_equi(ZCN As Integer,A1 As Integer,A2 As Integer, _
+            beta1 As Single,beta2 As Single,d As Single,Imode As Integer) _
+@@ -16425,4 +16636,9 @@
+           Z_equi = RZ_equi
+    End Function
++#ifdef GEF_ARGLOG
++#undef Z_equi
++#define Z_equi(hl_a1, hl_a2, hl_a3, hl_a4, hl_a5, hl_a6, hl_a7) hlog_Z_equi(__FILE__, __LINE__, hl_a1, hl_a2, hl_a3, hl_a4, hl_a5, hl_a6, hl_a7)
++#endif
++#line 16426
+ 
+ 
+@@ -16478,4 +16694,8 @@
+ 
+ 
++#ifdef GEF_ARGLOG
++#undef Beta_Equi
++#endif
++#line 16479
+    Sub Beta_Equi(A1 As Single,A2 As Single,Z1 As Single,Z2 As Single,d As Single, _
+                   beta1prev As Single,beta2prev As Single, _
+@@ -16645,4 +16865,9 @@
+ 
+    End Sub
++#ifdef GEF_ARGLOG
++#undef Beta_Equi
++#define Beta_Equi(hl_a1, hl_a2, hl_a3, hl_a4, hl_a5, hl_a6, hl_a7, hl_a8, hl_a9) hlog_Beta_Equi(__FILE__, __LINE__, hl_a1, hl_a2, hl_a3, hl_a4, hl_a5, hl_a6, hl_a7, hl_a8, hl_a9)
++#endif
++#line 16646
+ 
+ /'>'/
+@@ -16905,4 +17130,8 @@
+    
+   
++#ifdef GEF_ARGLOG
++#undef u_accel
++#endif
++#line 16906
+    Function u_accel(A1 As Single,Z1 As Single,A2 As Single,Z2 As Single, _
+       TKE As Single,E0 As Single,Tn As Single) As Single 
+@@ -16958,4 +17187,9 @@
+      u_accel = v1  
+    End Function
++#ifdef GEF_ARGLOG
++#undef u_accel
++#define u_accel(hl_a1, hl_a2, hl_a3, hl_a4, hl_a5, hl_a6, hl_a7) hlog_u_accel(__FILE__, __LINE__, hl_a1, hl_a2, hl_a3, hl_a4, hl_a5, hl_a6, hl_a7)
++#endif
++#line 16959
+    
+    
+@@ -16977,5 +17211,5 @@
+      
+      Dim As Single alev
+-     
++#include "harness_arglog_pegl_table_in.bi"
+      N = Int(Ei*10 + 0.5) 
+      If N <= 0 Then N = 1
+@@ -17036,5 +17270,5 @@
+        Next
+      End If     
+-     
++#include "harness_arglog_pegl_table_out.bi"
+  /' ' Weisskopf approximation
+      sigMax = 0
+@@ -17092,4 +17326,8 @@
+ 
+ /'<'/    
++#ifdef GEF_ARGLOG
++#undef U_Ired
++#endif
++#line 17093
+   Function U_Ired(Z As Single,A As Single) As Single
+     ' Effective moment of inertia by pairing with correction for excitation energy
+@@ -17107,5 +17345,14 @@
+      U_Ired = IfragEff     
+    End Function
++#ifdef GEF_ARGLOG
++#undef U_Ired
++#define U_Ired(hl_a1, hl_a2) hlog_U_Ired(__FILE__, __LINE__, hl_a1, hl_a2)
++#endif
++#line 17108
+    
++#ifdef GEF_ARGLOG
++#undef U_IredFF
++#endif
++#line 17109
+   Function U_IredFF(Z As Single,A As Single) As Single
+     ' Effective moment of inertia by pairing with correction for excitation energy
+@@ -17117,5 +17364,14 @@
+      U_IredFF = U_Ired(Z,A) * U_I_Shell(Z,A)    
+    End Function
++#ifdef GEF_ARGLOG
++#undef U_IredFF
++#define U_IredFF(hl_a1, hl_a2) hlog_U_IredFF(__FILE__, __LINE__, hl_a1, hl_a2)
++#endif
++#line 17118
+    
++#ifdef GEF_ARGLOG
++#undef U_I_Shell
++#endif
++#line 17119
+    Function U_I_Shell(Z As Single,A As Single) As Single
+       Dim As Integer N_shells(6)
+@@ -17169,6 +17425,15 @@
+ 'Print "*",I_inv_add_Z, I_inv_add_N, I_inv_add_Nsub,1.0 / (1.0 + Max(I_inv_add_N,I_inv_add_Nsub) + I_inv_add_Z)  
+    End Function
++#ifdef GEF_ARGLOG
++#undef U_I_Shell
++#define U_I_Shell(hl_a1, hl_a2) hlog_U_I_Shell(__FILE__, __LINE__, hl_a1, hl_a2)
++#endif
++#line 17170
+    
+ 
++#ifdef GEF_ARGLOG
++#undef U_alev_ld
++#endif
++#line 17172
+    Function U_alev_ld(Z As Single, A As Single) As Single
+     '  U_alev_ld = 0.073 * A + 0.095 * A^0.666667  'Ignatyuk (1970's)
+@@ -17176,4 +17441,9 @@
+     '  U_alev_ld = 0.089 * A    ' only volume term
+    End Function
++#ifdef GEF_ARGLOG
++#undef U_alev_ld
++#define U_alev_ld(hl_a1, hl_a2) hlog_U_alev_ld(__FILE__, __LINE__, hl_a1, hl_a2)
++#endif
++#line 17177
+    
+ /'>'/     
+@@ -17203,4 +17473,8 @@
+    End Function                
+    
++#ifdef GEF_ARGLOG
++#undef U_levdens
++#endif
++#line 17204
+    Function U_levdens(Z As Integer, A As Integer, E As Single, Ishell As Integer, _
+             Ipair As Integer, Tscale As Single, Econd As Single, _ 
+@@ -17222,5 +17496,14 @@
+      U_levdens = rho 
+    End Function                    
++#ifdef GEF_ARGLOG
++#undef U_levdens
++#define U_levdens(hl_a1, hl_a2, hl_a3, hl_a4, hl_a5, hl_a6, hl_a7, hl_a8, hl_a9) hlog_U_levdens(__FILE__, __LINE__, hl_a1, hl_a2, hl_a3, hl_a4, hl_a5, hl_a6, hl_a7, hl_a8, hl_a9)
++#endif
++#line 17223
+    
++#ifdef GEF_ARGLOG
++#undef U_levdens_Egidy
++#endif
++#line 17224
+    Function U_levdens_Egidy(Z As Integer, A As Integer, E As Single, Ishell As Integer, _
+              Ipair As Integer, Tscale As Single, Econd As Single, _
+@@ -17258,5 +17541,14 @@
+ 
+    End Function   
++#ifdef GEF_ARGLOG
++#undef U_levdens_Egidy
++#define U_levdens_Egidy(hl_a1, hl_a2, hl_a3, hl_a4, hl_a5, hl_a6, hl_a7, hl_a8, hl_a9) hlog_U_levdens_Egidy(__FILE__, __LINE__, hl_a1, hl_a2, hl_a3, hl_a4, hl_a5, hl_a6, hl_a7, hl_a8, hl_a9)
++#endif
++#line 17259
+    
++#ifdef GEF_ARGLOG
++#undef U_levdens_FG
++#endif
++#line 17260
+    Function U_levdens_FG(Z As Integer, A As Integer, E As Single, Ishell As Integer, _
+               Ipair As Integer, Tscale As Single, Econd As Single, Etrans As Single, _
+@@ -17330,7 +17622,16 @@
+      U_levdens_FG = F_enhance * Rho1
+    End Function        
++#ifdef GEF_ARGLOG
++#undef U_levdens_FG
++#define U_levdens_FG(hl_a1, hl_a2, hl_a3, hl_a4, hl_a5, hl_a6, hl_a7, hl_a8, hl_a9) hlog_U_levdens_FG(__FILE__, __LINE__, hl_a1, hl_a2, hl_a3, hl_a4, hl_a5, hl_a6, hl_a7, hl_a8, hl_a9)
++#endif
++#line 17331
+     
+ /'<'/   
+     
++#ifdef GEF_ARGLOG
++#undef U_Temp
++#endif
++#line 17334
+    Function U_Temp(Z As Single, A As Single, E As Single, Ishell As Integer, _
+            Ipair As Integer, Tscale As Single,Econd As Single,Etrans As Single) As Single
+@@ -17384,6 +17685,15 @@
+        U_Temp = Res
+    End Function
++#ifdef GEF_ARGLOG
++#undef U_Temp
++#define U_Temp(hl_a1, hl_a2, hl_a3, hl_a4, hl_a5, hl_a6, hl_a7, hl_a8) hlog_U_Temp(__FILE__, __LINE__, hl_a1, hl_a2, hl_a3, hl_a4, hl_a5, hl_a6, hl_a7, hl_a8)
++#endif
++#line 17385
+ /'>'/   
+ 
++#ifdef GEF_ARGLOG
++#undef U_Temp2
++#endif
++#line 17387
+    Function U_Temp2(Z As Single, A As Single, E As Single, Rshell As Single, _
+           Rpair As Single, Tscale As Single,Econd As Single,Etrans As Single) As Single
+@@ -17419,4 +17729,9 @@
+        U_Temp2 = Res
+    End Function
++#ifdef GEF_ARGLOG
++#undef U_Temp2
++#define U_Temp2(hl_a1, hl_a2, hl_a3, hl_a4, hl_a5, hl_a6, hl_a7, hl_a8) hlog_U_Temp2(__FILE__, __LINE__, hl_a1, hl_a2, hl_a3, hl_a4, hl_a5, hl_a6, hl_a7, hl_a8)
++#endif
++#line 17420
+    
+  /'  Function U_levdens(Z As Single, A As Single, E As Single, Econd As Single, Ishell As Integer) _
+@@ -17437,4 +17752,8 @@
+    End Function '/
+    
++#ifdef GEF_ARGLOG
++#undef E0_GDR
++#endif
++#line 17438
+    Function E0_GDR(Z As Single, A As Single) As Single
+      ' Calculates the centroid energy of the GDR for spherical nucleus
+@@ -17458,10 +17777,28 @@
+   '      (1 + u - epsilon * (1+epsilon+3*u)/(1+epsilon+u))^(-1/2) 
+    End Function
++#ifdef GEF_ARGLOG
++#undef E0_GDR
++#define E0_GDR(hl_a1, hl_a2) hlog_E0_GDR(__FILE__, __LINE__, hl_a1, hl_a2)
++#endif
++#line 17459
+    
++#ifdef GEF_ARGLOG
++#undef Width_GDR
++#endif
++#line 17460
+    Function Width_GDR(E0 As Single) As Single
+      ' Spreading width of the GDR (Nucl. Phys. A 531 (1991) 27)
+       Width_GDR = 1.99 * (E0/10)^1.6
+    End Function
++#ifdef GEF_ARGLOG
++#undef Width_GDR
++#define Width_GDR(hl_a1) hlog_Width_GDR(__FILE__, __LINE__, hl_a1)
++#endif
++#line 17464
+    
++#ifdef GEF_ARGLOG
++#undef Efac_def_GDR
++#endif
++#line 17465
+    Function Efac_def_GDR(Beta As Single,Gamma As Single,K As Single) As Single
+      ' Modification factors of the resonance energy due to triaxial deformation
+@@ -17474,4 +17811,9 @@
+      End If   
+    End Function  
++#ifdef GEF_ARGLOG
++#undef Efac_def_GDR
++#define Efac_def_GDR(hl_a1, hl_a2, hl_a3) hlog_Efac_def_GDR(__FILE__, __LINE__, hl_a1, hl_a2, hl_a3)
++#endif
++#line 17475
+    
+    Function GgGtot(Z As Single, A As Single, E As Single, Egm As Single) As Single
+@@ -17591,4 +17933,8 @@
+ /'>'/ 
+ 
++#ifdef GEF_ARGLOG
++#undef EVEN_ODD
++#endif
++#line 17592
+    Function EVEN_ODD(R_ORIGIN As Single,R_EVEN_ODD As Single) As Integer
+ 
+@@ -17652,7 +17998,16 @@
+      Even_odd = I_OUT
+    End Function
++#ifdef GEF_ARGLOG
++#undef EVEN_ODD
++#define EVEN_ODD(hl_a1, hl_a2) hlog_EVEN_ODD(__FILE__, __LINE__, hl_a1, hl_a2)
++#endif
++#line 17653
+ 
+ /'<'/
+ 
++#ifdef GEF_ARGLOG
++#undef BFTF
++#endif
++#line 17656
+    Function BFTF(RZ As Single,RA As Single,I_Switch As Integer) As Single
+     /' Fission barriers from Myers and Swiatecki, Thomas-Fermi model '/
+@@ -17749,5 +18104,14 @@
+      End If '/
+    End Function
+-
++#ifdef GEF_ARGLOG
++#undef BFTF
++#define BFTF(hl_a1, hl_a2, hl_a3) hlog_BFTF(__FILE__, __LINE__, hl_a1, hl_a2, hl_a3)
++#endif
++#line 17750
++
++#ifdef GEF_ARGLOG
++#undef BFTFA
++#endif
++#line 17751
+    Function BFTFA(RZ As Single,RA As Single,I_Switch As Integer) As Single
+     /' inner barrier height '/
+@@ -17772,5 +18136,14 @@
+      BFTFA = EA
+    End Function
+-
++#ifdef GEF_ARGLOG
++#undef BFTFA
++#define BFTFA(hl_a1, hl_a2, hl_a3) hlog_BFTFA(__FILE__, __LINE__, hl_a1, hl_a2, hl_a3)
++#endif
++#line 17773
++
++#ifdef GEF_ARGLOG
++#undef BFTFB
++#endif
++#line 17774
+    Function BFTFB(RZ As Single,RA As Single,I_Switch As Integer) As Single
+     /' outer barrier height '/
+@@ -17795,4 +18168,9 @@
+      BFTFB = EB
+    End Function
++#ifdef GEF_ARGLOG
++#undef BFTFB
++#define BFTFB(hl_a1, hl_a2, hl_a3) hlog_BFTFB(__FILE__, __LINE__, hl_a1, hl_a2, hl_a3)
++#endif
++#line 17796
+    
+    Function Acentral(Z As Single) As Single
+@@ -17806,4 +18184,8 @@
+ 
+ 
++#ifdef GEF_ARGLOG
++#undef Gaussintegral
++#endif
++#line 17807
+    Function Gaussintegral(R_x As Single,R_sigma As Single) As Single
+      /' Smoothed step function. Grows from 0 to 1 around R_x
+@@ -17815,5 +18197,14 @@
+        Gaussintegral = R_ret
+    End Function
++#ifdef GEF_ARGLOG
++#undef Gaussintegral
++#define Gaussintegral(hl_a1, hl_a2) hlog_Gaussintegral(__FILE__, __LINE__, hl_a1, hl_a2)
++#endif
++#line 17816
+    
++#ifdef GEF_ARGLOG
++#undef Bell
++#endif
++#line 17817
+    Public Function Bell(xpos As Single, xleft As Single, xright As Single) As Single
+    ' Bell-shaped curve, maximum = 1, zero for x < xleft and x > xright
+@@ -17827,5 +18218,14 @@
+      Bell = y
+    End Function     
+-
++#ifdef GEF_ARGLOG
++#undef Bell
++#define Bell(hl_a1, hl_a2, hl_a3) hlog_Bell(__FILE__, __LINE__, hl_a1, hl_a2, hl_a3)
++#endif
++#line 17828
++
++#ifdef GEF_ARGLOG
++#undef U_Box
++#endif
++#line 17829
+    Function U_Box(x As Single,sigma As Single, _
+          length As Single) As Single
+@@ -17836,4 +18236,9 @@
+      U_Box = y/length
+    End Function
++#ifdef GEF_ARGLOG
++#undef U_Box
++#define U_Box(hl_a1, hl_a2, hl_a3) hlog_U_Box(__FILE__, __LINE__, hl_a1, hl_a2, hl_a3)
++#endif
++#line 17837
+    
+    Function U_Box2(x As Single,sigma1 As Single, sigma2 As Single, _
+--- a/DCLbranchingJEFF33.bas
++++ b/DCLbranchingJEFF33.bas
+@@ -109,10 +109,10 @@
+ 
+ Declare Function U_Q_beta_minus(IZ As Integer, IA As Integer) As Single
+-
++#include "harness_arglog_dcl.bi"
+ Function U_Q_beta_minus(IZ As Integer, IA As Integer) As Single
+   U_Q_beta_minus = -( AME2020(IZ+1,IA) - AME2020(IZ,IA) )
+  ' U_Q_beta_minus = ( U_MASS(IZ+1,IZ+IN) - U_MASS(IZ,IZ+IN) )
+ End Function
+-
++#include "harness_arglog_dcl_on.bi"
+ Declare Sub U_Print_an(IZ As Integer,IN As Integer,R_an As Single,C_decay As String)
+ 
+--- /dev/null
++++ b/harness_arglog.bi
+@@ -0,0 +1,316 @@
++' SPDX-License-Identifier: GPL-3.0-or-later
++' Copyright (C) 2026 Aurora Jahan
++' Licensed under the GNU GPL v3 or later, WITHOUT ANY WARRANTY; see LICENSE.txt.
++' Harness patch "arglog" (M5.1), part 1, included at GEF.bas:695: the
++' logging runtime (also used by the wrapper in DCLbranchingJEFF33.bas and the
++' sites).
++' See harness/ARGLOG.md. Generated by python3 -m harness.arglog_patch; do not edit.
++
++#ifdef GEF_ARGLOG
++
++' Logging runtime. POSIX open/write/close and static buffers: no FreeBASIC file numbers (GEF's
++' FreeFile results stay the same) and no heap allocation in GEF's address space.
++Extern "C"
++  Declare Function HLC_open Alias "open" (ByVal Cpath As ZString Ptr, ByVal Iflags As Long, _
++    ...) As Long
++  Declare Function HLC_write Alias "write" (ByVal Ifd As Long, ByVal Pbuf As Any Ptr, _
++    ByVal Nbytes As UInteger) As Integer
++  Declare Function HLC_close Alias "close" (ByVal Ifd As Long) As Long
++  Declare Function HLC_mkdir Alias "mkdir" (ByVal Cpath As ZString Ptr, _
++    ByVal Imode As ULong) As Long
++  Declare Function HLC_getenv Alias "getenv" (ByVal Cname As ZString Ptr) As ZString Ptr
++End Extern
++
++Const HL_N = 49             ' log files: 46 functions, then 3 sites
++Const HL_BUFSZ = 65536
++Dim Shared As Long HL_Fd(1 To HL_N)             ' 0 = not open (descriptor + 1 otherwise)
++Dim Shared As Long HL_Len(1 To HL_N)
++Dim Shared As UByte HL_Buf(1 To HL_N, 0 To HL_BUFSZ - 1)
++Dim Shared As ULongInt HL_Calls(1 To HL_N)      ' every call, logged or not
++Dim Shared As ULongInt HL_SiteSeq(1 To HL_N)    ' sites: sequence number of the open record
++Dim Shared As ULongInt HL_Max, HL_Spread
++Dim Shared As ULongInt HL_Stride(1 To HL_N), HL_Limit(1 To HL_N)  ' sampling beyond HL_Max
++Dim Shared As Long HL_Ready
++
++' A decimal environment variable, or Ndefault if it is unset.
++Private Function HL_EnvCount(ByVal Cname As ZString Ptr, ByVal Ndefault As ULongInt) As ULongInt
++  Dim As UByte Ptr P = Cast(UByte Ptr, HLC_getenv(Cname))
++  If P = 0 Then Return Ndefault
++  Dim As ULongInt Nvalue = 0
++  Dim As Long Ic = 0
++  While P[Ic] >= 48 And P[Ic] <= 57
++    Nvalue = Nvalue * 10 + (P[Ic] - 48)
++    Ic += 1
++  Wend
++  If Ic = 0 Or P[Ic] <> 0 Then
++    Print "<harness> " & *Cname & " must be a decimal integer."
++    End 2
++  End If
++  Return Nvalue
++End Function
++
++Private Sub HL_Init()
++  HL_Ready = 1
++  HL_Max = HL_EnvCount("GEF_ARGLOG_MAX", 100000)
++  HL_Spread = HL_EnvCount("GEF_ARGLOG_SPREAD", 1)
++End Sub
++
++Private Sub HL_Flush(ByVal Id As Long)
++  If HL_Len(Id) > 0 Then
++    If HLC_write(HL_Fd(Id) - 1, @HL_Buf(Id, 0), HL_Len(Id)) <> HL_Len(Id) Then
++      Print "<harness> arglog write failed."
++      End 2
++    End If
++    HL_Len(Id) = 0
++  End If
++End Sub
++
++Private Sub HL_PutC(ByVal Id As Long, ByVal C As UByte)
++  If HL_Len(Id) >= HL_BUFSZ Then HL_Flush(Id)
++  HL_Buf(Id, HL_Len(Id)) = C
++  HL_Len(Id) += 1
++End Sub
++
++Private Sub HL_PutZ(ByVal Id As Long, ByVal Z As ZString Ptr)
++  Dim As Long Ic = 0
++  While Cast(UByte Ptr, Z)[Ic] <> 0
++    HL_PutC(Id, Cast(UByte Ptr, Z)[Ic])
++    Ic += 1
++  Wend
++End Sub
++
++' Space, then V as exactly Ndig lowercase hex digits.
++Private Sub HL_PutHex(ByVal Id As Long, ByVal V As ULongInt, ByVal Ndig As Long)
++  HL_PutC(Id, 32)
++  For Ic As Long = Ndig - 1 To 0 Step -1
++    Dim As Long D = (V Shr (4 * Ic)) And 15
++    HL_PutC(Id, IIf(D < 10, 48 + D, 87 + D))
++  Next
++End Sub
++
++Private Sub HL_PutHexRaw(ByVal Id As Long, ByVal V As ULongInt, ByVal Ndig As Long)
++  For Ic As Long = Ndig - 1 To 0 Step -1
++    Dim As Long D = (V Shr (4 * Ic)) And 15
++    HL_PutC(Id, IIf(D < 10, 48 + D, 87 + D))
++  Next
++End Sub
++
++' Signed decimal, without a leading space.
++Private Sub HL_PutDec(ByVal Id As Long, ByVal V As LongInt)
++  Dim As UByte Digits(0 To 20)
++  Dim As Long Nd = 0
++  Dim As ULongInt U
++  If V < 0 Then
++    HL_PutC(Id, 45)
++    U = CULngInt(-(V + 1)) + 1
++  Else
++    U = CULngInt(V)
++  End If
++  Do
++    Digits(Nd) = 48 + (U Mod 10)
++    Nd += 1
++    U \= 10
++  Loop While U > 0
++  For Ic As Long = Nd - 1 To 0 Step -1
++    HL_PutC(Id, Digits(Ic))
++  Next
++End Sub
++
++Private Sub HL_Open(ByVal Id As Long, ByVal Cname As ZString Ptr, ByVal Cschema As ZString Ptr)
++  HLC_mkdir("probes", &o755)
++  HLC_mkdir("probes/arglog", &o755)
++  Dim As ZString * 256 Cpath = "probes/arglog/"
++  Dim As Long Ip = 14, Ic = 0
++  While Cast(UByte Ptr, Cname)[Ic] <> 0 And Ip < 250
++    Cpath[Ip] = Cast(UByte Ptr, Cname)[Ic]
++    Ip += 1
++    Ic += 1
++  Wend
++  Cpath[Ip] = 46 : Cpath[Ip + 1] = 116 : Cpath[Ip + 2] = 120  ' ".txt"
++  Cpath[Ip + 3] = 116 : Cpath[Ip + 4] = 0
++  ' O_WRONLY | O_CREAT | O_TRUNC (Linux)
++  Dim As Long Ifd = HLC_open(@Cpath, &h241, &o644)
++  If Ifd < 0 Then
++    Print "<harness> cannot create " & Cpath
++    End 2
++  End If
++  HL_Fd(Id) = Ifd + 1
++  HL_PutZ(Id, "# arglog 1 ")
++  HL_PutZ(Id, Cname)
++  HL_PutC(Id, 32)
++  HL_PutZ(Id, Cschema)
++  HL_PutC(Id, 10)
++End Sub
++
++' Counts the call; returns its 1-based number n if it is logged, 0 otherwise. Logged: n <= K
++' (K = GEF_ARGLOG_MAX) and, unless GEF_ARGLOG_SPREAD=0, every 2^j-th call for
++' K*2^(j-1) < n <= K*2^j (about K/2 more records per doubling of the call count).
++Private Function HL_Next(ByVal Id As Long) As ULongInt
++  If HL_Ready = 0 Then HL_Init()
++  HL_Calls(Id) += 1
++  Dim As ULongInt N = HL_Calls(Id)
++  If N <= HL_Max Then Return N
++  If HL_Spread = 0 Or HL_Max = 0 Then Return 0
++  If HL_Stride(Id) = 0 Then
++    HL_Stride(Id) = 1
++    HL_Limit(Id) = HL_Max
++  End If
++  If N > HL_Limit(Id) Then
++    HL_Stride(Id) *= 2
++    HL_Limit(Id) *= 2
++  End If
++  If N Mod HL_Stride(Id) = 0 Then Return N
++  Return 0
++End Function
++
++' "<seq> <step> <pass> <event> <file>:<line>" (the file without its directory).
++Private Sub HL_Begin(ByVal Id As Long, ByVal Cname As ZString Ptr, ByVal Cschema As ZString Ptr, _
++                     ByVal Nseq As ULongInt, ByVal Cfile As ZString Ptr, ByVal Iline As Long)
++  If HL_Fd(Id) = 0 Then HL_Open(Id, Cname, Cschema)
++  HL_PutDec(Id, Nseq)
++  HL_PutC(Id, 32) : HL_PutDec(Id, Harness_Step)
++  HL_PutC(Id, 32) : HL_PutDec(Id, Harness_Pass)
++  HL_PutC(Id, 32) : HL_PutDec(Id, Harness_Event)
++  HL_PutC(Id, 32)
++  Dim As Long Ibase = 0, Ic = 0
++  While Cast(UByte Ptr, Cfile)[Ic] <> 0
++    If Cast(UByte Ptr, Cfile)[Ic] = 47 Or Cast(UByte Ptr, Cfile)[Ic] = 92 Then Ibase = Ic + 1
++    Ic += 1
++  Wend
++  HL_PutZ(Id, Cfile + Ibase)
++  HL_PutC(Id, 58)
++  HL_PutDec(Id, Iline)
++End Sub
++
++Private Sub HL_End(ByVal Id As Long)
++  HL_PutC(Id, 10)
++End Sub
++
++Private Sub HL_F32(ByVal Id As Long, ByVal X As Single)
++  HL_PutHex(Id, *Cast(ULong Ptr, @X), 8)
++End Sub
++
++Private Sub HL_F64(ByVal Id As Long, ByVal X As Double)
++  HL_PutHex(Id, *Cast(ULongInt Ptr, @X), 16)
++End Sub
++
++Private Sub HL_I64(ByVal Id As Long, ByVal X As LongInt)
++  HL_PutHex(Id, CULngInt(X), 16)
++End Sub
++
++Private Sub HL_U8(ByVal Id As Long, ByVal X As UByte)
++  HL_PutHex(Id, X, 2)
++End Sub
++
++' The bytes of a string in hex, "-" if it is empty.
++Private Sub HL_Str(ByVal Id As Long, ByRef S As String)
++  HL_PutC(Id, 32)
++  If Len(S) = 0 Then
++    HL_PutC(Id, 45)
++  Else
++    For Ic As Long = 0 To Len(S) - 1
++      HL_PutHexRaw(Id, S[Ic], 2)
++    Next
++  End If
++End Sub
++
++' "<count>" or "<count>:<v1>,<v2>,..." for elements Ifirst..Ilast of a Single array.
++Private Sub HL_F32List(ByVal Id As Long, A() As Single, ByVal Ifirst As LongInt, _
++                       ByVal Ilast As LongInt)
++  HL_PutC(Id, 32)
++  If Ilast > UBound(A) Then Ilast = UBound(A)
++  If Ilast < Ifirst Then
++    HL_PutDec(Id, 0)
++    Exit Sub
++  End If
++  HL_PutDec(Id, Ilast - Ifirst + 1)
++  For I As LongInt = Ifirst To Ilast
++    HL_PutC(Id, IIf(I = Ifirst, 58, 44))
++    Dim As Single X = A(I)
++    HL_PutHexRaw(Id, *Cast(ULong Ptr, @X), 8)
++  Next
++End Sub
++
++' FNV-style hash h = (h Xor bits) * &h100000001B3 over the bits of A(LBound..UBound).
++Private Sub HL_F32Hash(ByVal Id As Long, A() As Single)
++  Dim As ULongInt H = &hCBF29CE484222325ull
++  For I As LongInt = LBound(A) To UBound(A)
++    Dim As Single X = A(I)
++    H = (H Xor *Cast(ULong Ptr, @X)) * &h100000001B3ull
++  Next
++  HL_PutHex(Id, H, 16)
++End Sub
++
++Private Sub HL_Final() Destructor
++  If HL_Ready = 0 Then Exit Sub
++  For Id As Long = 1 To HL_N
++    If HL_Fd(Id) <> 0 Then
++      HL_Flush(Id)
++      HLC_close(HL_Fd(Id) - 1)
++      HL_Fd(Id) = 0
++    End If
++  Next
++  ' Total calls per function and site, logged or not.
++  HLC_mkdir("probes", &o755)
++  HLC_mkdir("probes/arglog", &o755)
++  Dim As Long Ifd = HLC_open("probes/arglog/_counts.txt", &h241, &o644)
++  If Ifd < 0 Then Exit Sub
++  HL_Fd(1) = Ifd + 1
++  HL_Len(1) = 0
++  HL_PutZ(1, "# arglog 1 _counts name calls max spread")
++  HL_PutC(1, 10)
++  HL_PutZ(1, "LyMass ") : HL_PutDec(1, HL_Calls(1)) : HL_PutC(1, 32) : HL_PutDec(1, HL_Max) : HL_PutC(1, 32) : HL_PutDec(1, HL_Spread) : HL_PutC(1, 10)
++  HL_PutZ(1, "LyPair ") : HL_PutDec(1, HL_Calls(2)) : HL_PutC(1, 32) : HL_PutDec(1, HL_Max) : HL_PutC(1, 32) : HL_PutDec(1, HL_Spread) : HL_PutC(1, 10)
++  HL_PutZ(1, "FEDEFOLys ") : HL_PutDec(1, HL_Calls(3)) : HL_PutC(1, 32) : HL_PutDec(1, HL_Max) : HL_PutC(1, 32) : HL_PutDec(1, HL_Spread) : HL_PutC(1, 10)
++  HL_PutZ(1, "LDMass ") : HL_PutDec(1, HL_Calls(4)) : HL_PutC(1, 32) : HL_PutDec(1, HL_Max) : HL_PutC(1, 32) : HL_PutDec(1, HL_Spread) : HL_PutC(1, 10)
++  HL_PutZ(1, "AME2020 ") : HL_PutDec(1, HL_Calls(5)) : HL_PutC(1, 32) : HL_PutDec(1, HL_Max) : HL_PutC(1, 32) : HL_PutDec(1, HL_Spread) : HL_PutC(1, 10)
++  HL_PutZ(1, "U_SHELL ") : HL_PutDec(1, HL_Calls(6)) : HL_PutC(1, 32) : HL_PutDec(1, HL_Max) : HL_PutC(1, 32) : HL_PutDec(1, HL_Spread) : HL_PutC(1, 10)
++  HL_PutZ(1, "U_SHELL_exp ") : HL_PutDec(1, HL_Calls(7)) : HL_PutC(1, 32) : HL_PutDec(1, HL_Max) : HL_PutC(1, 32) : HL_PutDec(1, HL_Spread) : HL_PutC(1, 10)
++  HL_PutZ(1, "U_SHELL_EO_exp ") : HL_PutDec(1, HL_Calls(8)) : HL_PutC(1, 32) : HL_PutDec(1, HL_Max) : HL_PutC(1, 32) : HL_PutDec(1, HL_Spread) : HL_PutC(1, 10)
++  HL_PutZ(1, "U_MASS ") : HL_PutDec(1, HL_Calls(9)) : HL_PutC(1, 32) : HL_PutDec(1, HL_Max) : HL_PutC(1, 32) : HL_PutDec(1, HL_Spread) : HL_PutC(1, 10)
++  HL_PutZ(1, "ECOUL ") : HL_PutDec(1, HL_Calls(10)) : HL_PutC(1, 32) : HL_PutDec(1, HL_Max) : HL_PutC(1, 32) : HL_PutDec(1, HL_Spread) : HL_PutC(1, 10)
++  HL_PutZ(1, "U_Q_beta_minus ") : HL_PutDec(1, HL_Calls(11)) : HL_PutC(1, 32) : HL_PutDec(1, HL_Max) : HL_PutC(1, 32) : HL_PutDec(1, HL_Spread) : HL_PutC(1, 10)
++  HL_PutZ(1, "U_Valid ") : HL_PutDec(1, HL_Calls(12)) : HL_PutC(1, 32) : HL_PutDec(1, HL_Max) : HL_PutC(1, 32) : HL_PutDec(1, HL_Spread) : HL_PutC(1, 10)
++  HL_PutZ(1, "U_Delta_S0 ") : HL_PutDec(1, HL_Calls(13)) : HL_PutC(1, 32) : HL_PutDec(1, HL_Max) : HL_PutC(1, 32) : HL_PutDec(1, HL_Spread) : HL_PutC(1, 10)
++  HL_PutZ(1, "BFTF ") : HL_PutDec(1, HL_Calls(14)) : HL_PutC(1, 32) : HL_PutDec(1, HL_Max) : HL_PutC(1, 32) : HL_PutDec(1, HL_Spread) : HL_PutC(1, 10)
++  HL_PutZ(1, "BFTFA ") : HL_PutDec(1, HL_Calls(15)) : HL_PutC(1, 32) : HL_PutDec(1, HL_Max) : HL_PutC(1, 32) : HL_PutDec(1, HL_Spread) : HL_PutC(1, 10)
++  HL_PutZ(1, "BFTFB ") : HL_PutDec(1, HL_Calls(16)) : HL_PutC(1, 32) : HL_PutDec(1, HL_Max) : HL_PutC(1, 32) : HL_PutDec(1, HL_Spread) : HL_PutC(1, 10)
++  HL_PutZ(1, "U_alev_ld ") : HL_PutDec(1, HL_Calls(17)) : HL_PutC(1, 32) : HL_PutDec(1, HL_Max) : HL_PutC(1, 32) : HL_PutDec(1, HL_Spread) : HL_PutC(1, 10)
++  HL_PutZ(1, "U_levdens ") : HL_PutDec(1, HL_Calls(18)) : HL_PutC(1, 32) : HL_PutDec(1, HL_Max) : HL_PutC(1, 32) : HL_PutDec(1, HL_Spread) : HL_PutC(1, 10)
++  HL_PutZ(1, "U_levdens_Egidy ") : HL_PutDec(1, HL_Calls(19)) : HL_PutC(1, 32) : HL_PutDec(1, HL_Max) : HL_PutC(1, 32) : HL_PutDec(1, HL_Spread) : HL_PutC(1, 10)
++  HL_PutZ(1, "U_levdens_FG ") : HL_PutDec(1, HL_Calls(20)) : HL_PutC(1, 32) : HL_PutDec(1, HL_Max) : HL_PutC(1, 32) : HL_PutDec(1, HL_Spread) : HL_PutC(1, 10)
++  HL_PutZ(1, "U_Temp ") : HL_PutDec(1, HL_Calls(21)) : HL_PutC(1, 32) : HL_PutDec(1, HL_Max) : HL_PutC(1, 32) : HL_PutDec(1, HL_Spread) : HL_PutC(1, 10)
++  HL_PutZ(1, "U_Temp2 ") : HL_PutDec(1, HL_Calls(22)) : HL_PutC(1, 32) : HL_PutDec(1, HL_Max) : HL_PutC(1, 32) : HL_PutDec(1, HL_Spread) : HL_PutC(1, 10)
++  HL_PutZ(1, "TEgidy ") : HL_PutDec(1, HL_Calls(23)) : HL_PutC(1, 32) : HL_PutDec(1, HL_Max) : HL_PutC(1, 32) : HL_PutDec(1, HL_Spread) : HL_PutC(1, 10)
++  HL_PutZ(1, "TRusanov ") : HL_PutDec(1, HL_Calls(24)) : HL_PutC(1, 32) : HL_PutDec(1, HL_Max) : HL_PutC(1, 32) : HL_PutDec(1, HL_Spread) : HL_PutC(1, 10)
++  HL_PutZ(1, "Getyield ") : HL_PutDec(1, HL_Calls(25)) : HL_PutC(1, 32) : HL_PutDec(1, HL_Max) : HL_PutC(1, 32) : HL_PutDec(1, HL_Spread) : HL_PutC(1, 10)
++  HL_PutZ(1, "F1 ") : HL_PutDec(1, HL_Calls(26)) : HL_PutC(1, 32) : HL_PutDec(1, HL_Max) : HL_PutC(1, 32) : HL_PutDec(1, HL_Spread) : HL_PutC(1, 10)
++  HL_PutZ(1, "F2 ") : HL_PutDec(1, HL_Calls(27)) : HL_PutC(1, 32) : HL_PutDec(1, HL_Max) : HL_PutC(1, 32) : HL_PutDec(1, HL_Spread) : HL_PutC(1, 10)
++  HL_PutZ(1, "Masscurv ") : HL_PutDec(1, HL_Calls(28)) : HL_PutC(1, 32) : HL_PutDec(1, HL_Max) : HL_PutC(1, 32) : HL_PutDec(1, HL_Spread) : HL_PutC(1, 10)
++  HL_PutZ(1, "Masscurv1 ") : HL_PutDec(1, HL_Calls(29)) : HL_PutC(1, 32) : HL_PutDec(1, HL_Max) : HL_PutC(1, 32) : HL_PutDec(1, HL_Spread) : HL_PutC(1, 10)
++  HL_PutZ(1, "Masscurv2 ") : HL_PutDec(1, HL_Calls(30)) : HL_PutC(1, 32) : HL_PutDec(1, HL_Max) : HL_PutC(1, 32) : HL_PutDec(1, HL_Spread) : HL_PutC(1, 10)
++  HL_PutZ(1, "De_Saddle_Scission ") : HL_PutDec(1, HL_Calls(31)) : HL_PutC(1, 32) : HL_PutDec(1, HL_Max) : HL_PutC(1, 32) : HL_PutDec(1, HL_Spread) : HL_PutC(1, 10)
++  HL_PutZ(1, "beta_light ") : HL_PutDec(1, HL_Calls(32)) : HL_PutC(1, 32) : HL_PutDec(1, HL_Max) : HL_PutC(1, 32) : HL_PutDec(1, HL_Spread) : HL_PutC(1, 10)
++  HL_PutZ(1, "beta_heavy ") : HL_PutDec(1, HL_Calls(33)) : HL_PutC(1, 32) : HL_PutDec(1, HL_Max) : HL_PutC(1, 32) : HL_PutDec(1, HL_Spread) : HL_PutC(1, 10)
++  HL_PutZ(1, "Z_equi ") : HL_PutDec(1, HL_Calls(34)) : HL_PutC(1, 32) : HL_PutDec(1, HL_Max) : HL_PutC(1, 32) : HL_PutDec(1, HL_Spread) : HL_PutC(1, 10)
++  HL_PutZ(1, "Beta_Equi ") : HL_PutDec(1, HL_Calls(35)) : HL_PutC(1, 32) : HL_PutDec(1, HL_Max) : HL_PutC(1, 32) : HL_PutDec(1, HL_Spread) : HL_PutC(1, 10)
++  HL_PutZ(1, "Gaussintegral ") : HL_PutDec(1, HL_Calls(36)) : HL_PutC(1, 32) : HL_PutDec(1, HL_Max) : HL_PutC(1, 32) : HL_PutDec(1, HL_Spread) : HL_PutC(1, 10)
++  HL_PutZ(1, "Bell ") : HL_PutDec(1, HL_Calls(37)) : HL_PutC(1, 32) : HL_PutDec(1, HL_Max) : HL_PutC(1, 32) : HL_PutDec(1, HL_Spread) : HL_PutC(1, 10)
++  HL_PutZ(1, "U_Box ") : HL_PutDec(1, HL_Calls(38)) : HL_PutC(1, 32) : HL_PutDec(1, HL_Max) : HL_PutC(1, 32) : HL_PutDec(1, HL_Spread) : HL_PutC(1, 10)
++  HL_PutZ(1, "EVEN_ODD ") : HL_PutDec(1, HL_Calls(39)) : HL_PutC(1, 32) : HL_PutDec(1, HL_Max) : HL_PutC(1, 32) : HL_PutDec(1, HL_Spread) : HL_PutC(1, 10)
++  HL_PutZ(1, "U_Ired ") : HL_PutDec(1, HL_Calls(40)) : HL_PutC(1, 32) : HL_PutDec(1, HL_Max) : HL_PutC(1, 32) : HL_PutDec(1, HL_Spread) : HL_PutC(1, 10)
++  HL_PutZ(1, "U_IredFF ") : HL_PutDec(1, HL_Calls(41)) : HL_PutC(1, 32) : HL_PutDec(1, HL_Max) : HL_PutC(1, 32) : HL_PutDec(1, HL_Spread) : HL_PutC(1, 10)
++  HL_PutZ(1, "U_I_Shell ") : HL_PutDec(1, HL_Calls(42)) : HL_PutC(1, 32) : HL_PutDec(1, HL_Max) : HL_PutC(1, 32) : HL_PutDec(1, HL_Spread) : HL_PutC(1, 10)
++  HL_PutZ(1, "E0_GDR ") : HL_PutDec(1, HL_Calls(43)) : HL_PutC(1, 32) : HL_PutDec(1, HL_Max) : HL_PutC(1, 32) : HL_PutDec(1, HL_Spread) : HL_PutC(1, 10)
++  HL_PutZ(1, "Width_GDR ") : HL_PutDec(1, HL_Calls(44)) : HL_PutC(1, 32) : HL_PutDec(1, HL_Max) : HL_PutC(1, 32) : HL_PutDec(1, HL_Spread) : HL_PutC(1, 10)
++  HL_PutZ(1, "Efac_def_GDR ") : HL_PutDec(1, HL_Calls(45)) : HL_PutC(1, 32) : HL_PutDec(1, HL_Max) : HL_PutC(1, 32) : HL_PutDec(1, HL_Spread) : HL_PutC(1, 10)
++  HL_PutZ(1, "u_accel ") : HL_PutDec(1, HL_Calls(46)) : HL_PutC(1, 32) : HL_PutDec(1, HL_Max) : HL_PutC(1, 32) : HL_PutDec(1, HL_Spread) : HL_PutC(1, 10)
++  HL_PutZ(1, "e2_light ") : HL_PutDec(1, HL_Calls(47)) : HL_PutC(1, 32) : HL_PutDec(1, HL_Max) : HL_PutC(1, 32) : HL_PutDec(1, HL_Spread) : HL_PutC(1, 10)
++  HL_PutZ(1, "e2_heavy ") : HL_PutDec(1, HL_Calls(48)) : HL_PutC(1, 32) : HL_PutDec(1, HL_Max) : HL_PutC(1, 32) : HL_PutDec(1, HL_Spread) : HL_PutC(1, 10)
++  HL_PutZ(1, "pegl_table ") : HL_PutDec(1, HL_Calls(49)) : HL_PutC(1, 32) : HL_PutDec(1, HL_Max) : HL_PutC(1, 32) : HL_PutDec(1, HL_Spread) : HL_PutC(1, 10)
++  HL_Flush(1)
++  HLC_close(Ifd)
++  HL_Fd(1) = 0
++End Sub
++
++#endif
+--- /dev/null
++++ b/harness_arglog_wrappers.bi
+@@ -0,0 +1,774 @@
++' SPDX-License-Identifier: GPL-3.0-or-later
++' Copyright (C) 2026 Aurora Jahan
++' Licensed under the GNU GPL v3 or later, WITHOUT ANY WARRANTY; see LICENSE.txt.
++' Harness patch "arglog" (M5.1), part 2, included at GEF.bas:1820. With
++' -d GEF_ARGLOG every call of the functions of MILESTONE_5_PLAN.md section 3 goes
++' through a wrapper that logs its arguments, ByRef values and result; see
++' harness/ARGLOG.md. Generated by python3 -m harness.arglog_patch; do not edit.
++
++#ifdef GEF_ARGLOG
++
++' Wrappers (each calls the original once and returns its result unchanged).
++
++Private Function hlog_LyMass(ByVal hl_file As ZString Ptr, ByVal hl_line As Long, ByVal hl_p1 As Single, ByVal hl_p2 As Single, ByVal hl_p3 As Single) As Single
++  Dim As ULongInt hl_seq = HL_Next(1)
++  Dim As Single hl_r = LyMass(hl_p1, hl_p2, hl_p3)
++  If hl_seq <> 0 Then
++    HL_Begin(1, "LyMass", "Z:f32 A:f32 beta:f32 result:f32", hl_seq, hl_file, hl_line)
++    HL_F32(1, hl_p1)
++    HL_F32(1, hl_p2)
++    HL_F32(1, hl_p3)
++    HL_F32(1, hl_r)
++    HL_End(1)
++  End If
++  Return hl_r
++End Function
++
++Private Function hlog_LyPair(ByVal hl_file As ZString Ptr, ByVal hl_line As Long, ByVal hl_p1 As Integer, ByVal hl_p2 As Integer) As Single
++  Dim As ULongInt hl_seq = HL_Next(2)
++  Dim As Single hl_r = LyPair(hl_p1, hl_p2)
++  If hl_seq <> 0 Then
++    HL_Begin(2, "LyPair", "Z:i64 A:i64 result:f32", hl_seq, hl_file, hl_line)
++    HL_I64(2, hl_p1)
++    HL_I64(2, hl_p2)
++    HL_F32(2, hl_r)
++    HL_End(2)
++  End If
++  Return hl_r
++End Function
++
++Private Function hlog_FEDEFOLys(ByVal hl_file As ZString Ptr, ByVal hl_line As Long, ByVal hl_p1 As Single, ByVal hl_p2 As Single, ByVal hl_p3 As Single) As Single
++  Dim As ULongInt hl_seq = HL_Next(3)
++  Dim As Single hl_r = FEDEFOLys(hl_p1, hl_p2, hl_p3)
++  If hl_seq <> 0 Then
++    HL_Begin(3, "FEDEFOLys", "Z:f32 A:f32 beta:f32 result:f32", hl_seq, hl_file, hl_line)
++    HL_F32(3, hl_p1)
++    HL_F32(3, hl_p2)
++    HL_F32(3, hl_p3)
++    HL_F32(3, hl_r)
++    HL_End(3)
++  End If
++  Return hl_r
++End Function
++
++Private Function hlog_LDMass(ByVal hl_file As ZString Ptr, ByVal hl_line As Long, ByVal hl_p1 As Single, ByVal hl_p2 As Single, ByVal hl_p3 As Single) As Single
++  Dim As ULongInt hl_seq = HL_Next(4)
++  Dim As Single hl_r = LDMass(hl_p1, hl_p2, hl_p3)
++  If hl_seq <> 0 Then
++    HL_Begin(4, "LDMass", "Z:f32 A:f32 beta:f32 result:f32", hl_seq, hl_file, hl_line)
++    HL_F32(4, hl_p1)
++    HL_F32(4, hl_p2)
++    HL_F32(4, hl_p3)
++    HL_F32(4, hl_r)
++    HL_End(4)
++  End If
++  Return hl_r
++End Function
++
++Private Function hlog_AME2020(ByVal hl_file As ZString Ptr, ByVal hl_line As Long, ByVal hl_p1 As Integer, ByVal hl_p2 As Integer) As Single
++  Dim As ULongInt hl_seq = HL_Next(5)
++  Dim As Single hl_r = AME2020(hl_p1, hl_p2)
++  If hl_seq <> 0 Then
++    HL_Begin(5, "AME2020", "Z:i64 A:i64 result:f32", hl_seq, hl_file, hl_line)
++    HL_I64(5, hl_p1)
++    HL_I64(5, hl_p2)
++    HL_F32(5, hl_r)
++    HL_End(5)
++  End If
++  Return hl_r
++End Function
++
++Private Function hlog_U_SHELL(ByVal hl_file As ZString Ptr, ByVal hl_line As Long, ByVal hl_p1 As Integer, ByVal hl_p2 As Integer) As Single
++  Dim As ULongInt hl_seq = HL_Next(6)
++  Dim As Single hl_r = U_SHELL(hl_p1, hl_p2)
++  If hl_seq <> 0 Then
++    HL_Begin(6, "U_SHELL", "Z:i64 A:i64 result:f32", hl_seq, hl_file, hl_line)
++    HL_I64(6, hl_p1)
++    HL_I64(6, hl_p2)
++    HL_F32(6, hl_r)
++    HL_End(6)
++  End If
++  Return hl_r
++End Function
++
++Private Function hlog_U_SHELL_exp(ByVal hl_file As ZString Ptr, ByVal hl_line As Long, ByVal hl_p1 As Integer, ByVal hl_p2 As Integer) As Single
++  Dim As ULongInt hl_seq = HL_Next(7)
++  Dim As Single hl_r = U_SHELL_exp(hl_p1, hl_p2)
++  If hl_seq <> 0 Then
++    HL_Begin(7, "U_SHELL_exp", "Z:i64 A:i64 result:f32", hl_seq, hl_file, hl_line)
++    HL_I64(7, hl_p1)
++    HL_I64(7, hl_p2)
++    HL_F32(7, hl_r)
++    HL_End(7)
++  End If
++  Return hl_r
++End Function
++
++Private Function hlog_U_SHELL_EO_exp(ByVal hl_file As ZString Ptr, ByVal hl_line As Long, ByVal hl_p1 As Integer, ByVal hl_p2 As Integer) As Single
++  Dim As ULongInt hl_seq = HL_Next(8)
++  Dim As Single hl_r = U_SHELL_EO_exp(hl_p1, hl_p2)
++  If hl_seq <> 0 Then
++    HL_Begin(8, "U_SHELL_EO_exp", "Z:i64 A:i64 result:f32", hl_seq, hl_file, hl_line)
++    HL_I64(8, hl_p1)
++    HL_I64(8, hl_p2)
++    HL_F32(8, hl_r)
++    HL_End(8)
++  End If
++  Return hl_r
++End Function
++
++Private Function hlog_U_MASS(ByVal hl_file As ZString Ptr, ByVal hl_line As Long, ByVal hl_p1 As Single, ByVal hl_p2 As Single) As Single
++  Dim As ULongInt hl_seq = HL_Next(9)
++  Dim As Single hl_r = U_MASS(hl_p1, hl_p2)
++  If hl_seq <> 0 Then
++    HL_Begin(9, "U_MASS", "Z:f32 A:f32 result:f32", hl_seq, hl_file, hl_line)
++    HL_F32(9, hl_p1)
++    HL_F32(9, hl_p2)
++    HL_F32(9, hl_r)
++    HL_End(9)
++  End If
++  Return hl_r
++End Function
++
++Private Function hlog_ECOUL(ByVal hl_file As ZString Ptr, ByVal hl_line As Long, ByVal hl_p1 As Single, ByVal hl_p2 As Single, ByVal hl_p3 As Single, ByVal hl_p4 As Single, ByVal hl_p5 As Single, ByVal hl_p6 As Single, ByVal hl_p7 As Single) As Single
++  Dim As ULongInt hl_seq = HL_Next(10)
++  Dim As Single hl_r = ECOUL(hl_p1, hl_p2, hl_p3, hl_p4, hl_p5, hl_p6, hl_p7)
++  If hl_seq <> 0 Then
++    HL_Begin(10, "ECOUL", "Z1:f32 A1:f32 beta1:f32 Z2:f32 A2:f32 beta2:f32 d:f32 result:f32", hl_seq, hl_file, hl_line)
++    HL_F32(10, hl_p1)
++    HL_F32(10, hl_p2)
++    HL_F32(10, hl_p3)
++    HL_F32(10, hl_p4)
++    HL_F32(10, hl_p5)
++    HL_F32(10, hl_p6)
++    HL_F32(10, hl_p7)
++    HL_F32(10, hl_r)
++    HL_End(10)
++  End If
++  Return hl_r
++End Function
++
++Private Function hlog_U_Valid(ByVal hl_file As ZString Ptr, ByVal hl_line As Long, ByVal hl_p1 As Integer, ByVal hl_p2 As Integer) As UByte
++  Dim As ULongInt hl_seq = HL_Next(12)
++  Dim As UByte hl_r = U_Valid(hl_p1, hl_p2)
++  If hl_seq <> 0 Then
++    HL_Begin(12, "U_Valid", "I_Z:i64 I_A:i64 result:u8", hl_seq, hl_file, hl_line)
++    HL_I64(12, hl_p1)
++    HL_I64(12, hl_p2)
++    HL_U8(12, hl_r)
++    HL_End(12)
++  End If
++  Return hl_r
++End Function
++
++Private Function hlog_U_Delta_S0(ByVal hl_file As ZString Ptr, ByVal hl_line As Long, ByVal hl_p1 As Integer, ByVal hl_p2 As Integer) As Single
++  Dim As ULongInt hl_seq = HL_Next(13)
++  Dim As Single hl_r = U_Delta_S0(hl_p1, hl_p2)
++  If hl_seq <> 0 Then
++    HL_Begin(13, "U_Delta_S0", "I_Z:i64 I_A:i64 result:f32", hl_seq, hl_file, hl_line)
++    HL_I64(13, hl_p1)
++    HL_I64(13, hl_p2)
++    HL_F32(13, hl_r)
++    HL_End(13)
++  End If
++  Return hl_r
++End Function
++
++Private Function hlog_BFTF(ByVal hl_file As ZString Ptr, ByVal hl_line As Long, ByVal hl_p1 As Single, ByVal hl_p2 As Single, ByVal hl_p3 As Integer) As Single
++  Dim As ULongInt hl_seq = HL_Next(14)
++  Dim As Single hl_r = BFTF(hl_p1, hl_p2, hl_p3)
++  If hl_seq <> 0 Then
++    HL_Begin(14, "BFTF", "RZ:f32 RA:f32 I_Switch:i64 result:f32", hl_seq, hl_file, hl_line)
++    HL_F32(14, hl_p1)
++    HL_F32(14, hl_p2)
++    HL_I64(14, hl_p3)
++    HL_F32(14, hl_r)
++    HL_End(14)
++  End If
++  Return hl_r
++End Function
++
++Private Function hlog_BFTFA(ByVal hl_file As ZString Ptr, ByVal hl_line As Long, ByVal hl_p1 As Single, ByVal hl_p2 As Single, ByVal hl_p3 As Integer) As Single
++  Dim As ULongInt hl_seq = HL_Next(15)
++  Dim As Single hl_r = BFTFA(hl_p1, hl_p2, hl_p3)
++  If hl_seq <> 0 Then
++    HL_Begin(15, "BFTFA", "RZ:f32 RA:f32 I_Switch:i64 result:f32", hl_seq, hl_file, hl_line)
++    HL_F32(15, hl_p1)
++    HL_F32(15, hl_p2)
++    HL_I64(15, hl_p3)
++    HL_F32(15, hl_r)
++    HL_End(15)
++  End If
++  Return hl_r
++End Function
++
++Private Function hlog_BFTFB(ByVal hl_file As ZString Ptr, ByVal hl_line As Long, ByVal hl_p1 As Single, ByVal hl_p2 As Single, ByVal hl_p3 As Integer) As Single
++  Dim As ULongInt hl_seq = HL_Next(16)
++  Dim As Single hl_r = BFTFB(hl_p1, hl_p2, hl_p3)
++  If hl_seq <> 0 Then
++    HL_Begin(16, "BFTFB", "RZ:f32 RA:f32 I_Switch:i64 result:f32", hl_seq, hl_file, hl_line)
++    HL_F32(16, hl_p1)
++    HL_F32(16, hl_p2)
++    HL_I64(16, hl_p3)
++    HL_F32(16, hl_r)
++    HL_End(16)
++  End If
++  Return hl_r
++End Function
++
++Private Function hlog_U_alev_ld(ByVal hl_file As ZString Ptr, ByVal hl_line As Long, ByVal hl_p1 As Single, ByVal hl_p2 As Single) As Single
++  Dim As ULongInt hl_seq = HL_Next(17)
++  Dim As Single hl_r = U_alev_ld(hl_p1, hl_p2)
++  If hl_seq <> 0 Then
++    HL_Begin(17, "U_alev_ld", "Z:f32 A:f32 result:f32", hl_seq, hl_file, hl_line)
++    HL_F32(17, hl_p1)
++    HL_F32(17, hl_p2)
++    HL_F32(17, hl_r)
++    HL_End(17)
++  End If
++  Return hl_r
++End Function
++
++Private Function hlog_U_levdens(ByVal hl_file As ZString Ptr, ByVal hl_line As Long, ByVal hl_p1 As Integer, ByVal hl_p2 As Integer, ByVal hl_p3 As Single, ByVal hl_p4 As Integer, ByVal hl_p5 As Integer, ByVal hl_p6 As Single, ByVal hl_p7 As Single, ByVal hl_p8 As Single, ByVal hl_p9 As Single) As Double
++  Dim As ULongInt hl_seq = HL_Next(18)
++  Dim As Double hl_r = U_levdens(hl_p1, hl_p2, hl_p3, hl_p4, hl_p5, hl_p6, hl_p7, hl_p8, hl_p9)
++  If hl_seq <> 0 Then
++    HL_Begin(18, "U_levdens", "Z:i64 A:i64 E:f32 Ishell:i64 Ipair:i64 Tscale:f32 Econd:f32 Etrans:f32 af_an:f32 result:f64", hl_seq, hl_file, hl_line)
++    HL_I64(18, hl_p1)
++    HL_I64(18, hl_p2)
++    HL_F32(18, hl_p3)
++    HL_I64(18, hl_p4)
++    HL_I64(18, hl_p5)
++    HL_F32(18, hl_p6)
++    HL_F32(18, hl_p7)
++    HL_F32(18, hl_p8)
++    HL_F32(18, hl_p9)
++    HL_F64(18, hl_r)
++    HL_End(18)
++  End If
++  Return hl_r
++End Function
++
++Private Function hlog_U_levdens_Egidy(ByVal hl_file As ZString Ptr, ByVal hl_line As Long, ByVal hl_p1 As Integer, ByVal hl_p2 As Integer, ByVal hl_p3 As Single, ByVal hl_p4 As Integer, ByVal hl_p5 As Integer, ByVal hl_p6 As Single, ByVal hl_p7 As Single, ByVal hl_p8 As Single, ByVal hl_p9 As Single) As Double
++  Dim As ULongInt hl_seq = HL_Next(19)
++  Dim As Double hl_r = U_levdens_Egidy(hl_p1, hl_p2, hl_p3, hl_p4, hl_p5, hl_p6, hl_p7, hl_p8, hl_p9)
++  If hl_seq <> 0 Then
++    HL_Begin(19, "U_levdens_Egidy", "Z:i64 A:i64 E:f32 Ishell:i64 Ipair:i64 Tscale:f32 Econd:f32 Etrans:f32 af_an:f32 result:f64", hl_seq, hl_file, hl_line)
++    HL_I64(19, hl_p1)
++    HL_I64(19, hl_p2)
++    HL_F32(19, hl_p3)
++    HL_I64(19, hl_p4)
++    HL_I64(19, hl_p5)
++    HL_F32(19, hl_p6)
++    HL_F32(19, hl_p7)
++    HL_F32(19, hl_p8)
++    HL_F32(19, hl_p9)
++    HL_F64(19, hl_r)
++    HL_End(19)
++  End If
++  Return hl_r
++End Function
++
++Private Function hlog_U_levdens_FG(ByVal hl_file As ZString Ptr, ByVal hl_line As Long, ByVal hl_p1 As Integer, ByVal hl_p2 As Integer, ByVal hl_p3 As Single, ByVal hl_p4 As Integer, ByVal hl_p5 As Integer, ByVal hl_p6 As Single, ByVal hl_p7 As Single, ByVal hl_p8 As Single, ByVal hl_p9 As Single) As Double
++  Dim As ULongInt hl_seq = HL_Next(20)
++  Dim As Double hl_r = U_levdens_FG(hl_p1, hl_p2, hl_p3, hl_p4, hl_p5, hl_p6, hl_p7, hl_p8, hl_p9)
++  If hl_seq <> 0 Then
++    HL_Begin(20, "U_levdens_FG", "Z:i64 A:i64 E:f32 Ishell:i64 Ipair:i64 Tscale:f32 Econd:f32 Etrans:f32 af_an:f32 result:f64", hl_seq, hl_file, hl_line)
++    HL_I64(20, hl_p1)
++    HL_I64(20, hl_p2)
++    HL_F32(20, hl_p3)
++    HL_I64(20, hl_p4)
++    HL_I64(20, hl_p5)
++    HL_F32(20, hl_p6)
++    HL_F32(20, hl_p7)
++    HL_F32(20, hl_p8)
++    HL_F32(20, hl_p9)
++    HL_F64(20, hl_r)
++    HL_End(20)
++  End If
++  Return hl_r
++End Function
++
++Private Function hlog_U_Temp(ByVal hl_file As ZString Ptr, ByVal hl_line As Long, ByVal hl_p1 As Single, ByVal hl_p2 As Single, ByVal hl_p3 As Single, ByVal hl_p4 As Integer, ByVal hl_p5 As Integer, ByVal hl_p6 As Single, ByVal hl_p7 As Single, ByVal hl_p8 As Single) As Single
++  Dim As ULongInt hl_seq = HL_Next(21)
++  Dim As Single hl_r = U_Temp(hl_p1, hl_p2, hl_p3, hl_p4, hl_p5, hl_p6, hl_p7, hl_p8)
++  If hl_seq <> 0 Then
++    HL_Begin(21, "U_Temp", "Z:f32 A:f32 E:f32 Ishell:i64 Ipair:i64 Tscale:f32 Econd:f32 Etrans:f32 result:f32", hl_seq, hl_file, hl_line)
++    HL_F32(21, hl_p1)
++    HL_F32(21, hl_p2)
++    HL_F32(21, hl_p3)
++    HL_I64(21, hl_p4)
++    HL_I64(21, hl_p5)
++    HL_F32(21, hl_p6)
++    HL_F32(21, hl_p7)
++    HL_F32(21, hl_p8)
++    HL_F32(21, hl_r)
++    HL_End(21)
++  End If
++  Return hl_r
++End Function
++
++Private Function hlog_U_Temp2(ByVal hl_file As ZString Ptr, ByVal hl_line As Long, ByVal hl_p1 As Single, ByVal hl_p2 As Single, ByVal hl_p3 As Single, ByVal hl_p4 As Single, ByVal hl_p5 As Single, ByVal hl_p6 As Single, ByVal hl_p7 As Single, ByVal hl_p8 As Single) As Single
++  Dim As ULongInt hl_seq = HL_Next(22)
++  Dim As Single hl_r = U_Temp2(hl_p1, hl_p2, hl_p3, hl_p4, hl_p5, hl_p6, hl_p7, hl_p8)
++  If hl_seq <> 0 Then
++    HL_Begin(22, "U_Temp2", "Z:f32 A:f32 E:f32 Rshell:f32 Rpair:f32 Tscale:f32 Econd:f32 Etrans:f32 result:f32", hl_seq, hl_file, hl_line)
++    HL_F32(22, hl_p1)
++    HL_F32(22, hl_p2)
++    HL_F32(22, hl_p3)
++    HL_F32(22, hl_p4)
++    HL_F32(22, hl_p5)
++    HL_F32(22, hl_p6)
++    HL_F32(22, hl_p7)
++    HL_F32(22, hl_p8)
++    HL_F32(22, hl_r)
++    HL_End(22)
++  End If
++  Return hl_r
++End Function
++
++Private Function hlog_TEgidy(ByVal hl_file As ZString Ptr, ByVal hl_line As Long, ByVal hl_p1 As Single, ByVal hl_p2 As Single, ByVal hl_p3 As Single) As Single
++  Dim As ULongInt hl_seq = HL_Next(23)
++  Dim As Single hl_r = TEgidy(hl_p1, hl_p2, hl_p3)
++  If hl_seq <> 0 Then
++    HL_Begin(23, "TEgidy", "A:f32 DU:f32 Fred:f32 result:f32", hl_seq, hl_file, hl_line)
++    HL_F32(23, hl_p1)
++    HL_F32(23, hl_p2)
++    HL_F32(23, hl_p3)
++    HL_F32(23, hl_r)
++    HL_End(23)
++  End If
++  Return hl_r
++End Function
++
++Private Function hlog_TRusanov(ByVal hl_file As ZString Ptr, ByVal hl_line As Long, ByVal hl_p1 As Single, ByVal hl_p2 As Single) As Single
++  Dim As ULongInt hl_seq = HL_Next(24)
++  Dim As Single hl_r = TRusanov(hl_p1, hl_p2)
++  If hl_seq <> 0 Then
++    HL_Begin(24, "TRusanov", "E:f32 A:f32 result:f32", hl_seq, hl_file, hl_line)
++    HL_F32(24, hl_p1)
++    HL_F32(24, hl_p2)
++    HL_F32(24, hl_r)
++    HL_End(24)
++  End If
++  Return hl_r
++End Function
++
++Private Function hlog_Getyield(ByVal hl_file As ZString Ptr, ByVal hl_line As Long, ByVal hl_p1 As Single, ByVal hl_p2 As Single, ByVal hl_p3 As Single, ByVal hl_p4 As Single, ByVal hl_p5 As Single, ByVal hl_p6 As Single, ByVal hl_p7 As Single, ByVal hl_p8 As Integer) As Single
++  Dim As ULongInt hl_seq = HL_Next(25)
++  Dim As Single hl_r = Getyield(hl_p1, hl_p2, hl_p3, hl_p4, hl_p5, hl_p6, hl_p7, hl_p8)
++  If hl_seq <> 0 Then
++    HL_Begin(25, "Getyield", "E_rel:f32 E:f32 E_shell:f32 dE_defo:f32 T_low:f32 T_high:f32 T_high_mac:f32 Imode:i64 result:f32", hl_seq, hl_file, hl_line)
++    HL_F32(25, hl_p1)
++    HL_F32(25, hl_p2)
++    HL_F32(25, hl_p3)
++    HL_F32(25, hl_p4)
++    HL_F32(25, hl_p5)
++    HL_F32(25, hl_p6)
++    HL_F32(25, hl_p7)
++    HL_I64(25, hl_p8)
++    HL_F32(25, hl_r)
++    HL_End(25)
++  End If
++  Return hl_r
++End Function
++
++Private Function hlog_F1(ByVal hl_file As ZString Ptr, ByVal hl_line As Long, ByVal hl_p1 As Single) As Single
++  Dim As ULongInt hl_seq = HL_Next(26)
++  Dim As Single hl_r = F1(hl_p1)
++  If hl_seq <> 0 Then
++    HL_Begin(26, "F1", "Z_S_A:f32 result:f32", hl_seq, hl_file, hl_line)
++    HL_F32(26, hl_p1)
++    HL_F32(26, hl_r)
++    HL_End(26)
++  End If
++  Return hl_r
++End Function
++
++Private Function hlog_F2(ByVal hl_file As ZString Ptr, ByVal hl_line As Long, ByVal hl_p1 As Single) As Single
++  Dim As ULongInt hl_seq = HL_Next(27)
++  Dim As Single hl_r = F2(hl_p1)
++  If hl_seq <> 0 Then
++    HL_Begin(27, "F2", "Z_S_A:f32 result:f32", hl_seq, hl_file, hl_line)
++    HL_F32(27, hl_p1)
++    HL_F32(27, hl_r)
++    HL_End(27)
++  End If
++  Return hl_r
++End Function
++
++Private Function hlog_Masscurv(ByVal hl_file As ZString Ptr, ByVal hl_line As Long, ByVal hl_p1 As Single, ByVal hl_p2 As Single, ByVal hl_p3 As Single, ByVal hl_p4 As Single, ByVal hl_p5 As Single) As Single
++  Dim As ULongInt hl_seq = HL_Next(28)
++  Dim As Single hl_r = Masscurv(hl_p1, hl_p2, hl_p3, hl_p4, hl_p5)
++  If hl_seq <> 0 Then
++    HL_Begin(28, "Masscurv", "Z:f32 A:f32 RL:f32 kappa:f32 kappa4:f32 result:f32", hl_seq, hl_file, hl_line)
++    HL_F32(28, hl_p1)
++    HL_F32(28, hl_p2)
++    HL_F32(28, hl_p3)
++    HL_F32(28, hl_p4)
++    HL_F32(28, hl_p5)
++    HL_F32(28, hl_r)
++    HL_End(28)
++  End If
++  Return hl_r
++End Function
++
++Private Function hlog_Masscurv1(ByVal hl_file As ZString Ptr, ByVal hl_line As Long, ByVal hl_p1 As Single, ByVal hl_p2 As Single, ByVal hl_p3 As Single, ByVal hl_p4 As Single, ByVal hl_p5 As Single) As Single
++  Dim As ULongInt hl_seq = HL_Next(29)
++  Dim As Single hl_r = Masscurv1(hl_p1, hl_p2, hl_p3, hl_p4, hl_p5)
++  If hl_seq <> 0 Then
++    HL_Begin(29, "Masscurv1", "Z:f32 A:f32 RL:f32 kappa:f32 kappa4:f32 result:f32", hl_seq, hl_file, hl_line)
++    HL_F32(29, hl_p1)
++    HL_F32(29, hl_p2)
++    HL_F32(29, hl_p3)
++    HL_F32(29, hl_p4)
++    HL_F32(29, hl_p5)
++    HL_F32(29, hl_r)
++    HL_End(29)
++  End If
++  Return hl_r
++End Function
++
++Private Function hlog_Masscurv2(ByVal hl_file As ZString Ptr, ByVal hl_line As Long, ByVal hl_p1 As Single, ByVal hl_p2 As Single, ByVal hl_p3 As Single, ByVal hl_p4 As Single, ByVal hl_p5 As Single) As Single
++  Dim As ULongInt hl_seq = HL_Next(30)
++  Dim As Single hl_r = Masscurv2(hl_p1, hl_p2, hl_p3, hl_p4, hl_p5)
++  If hl_seq <> 0 Then
++    HL_Begin(30, "Masscurv2", "Z:f32 A:f32 RL:f32 kappa:f32 kappa4:f32 result:f32", hl_seq, hl_file, hl_line)
++    HL_F32(30, hl_p1)
++    HL_F32(30, hl_p2)
++    HL_F32(30, hl_p3)
++    HL_F32(30, hl_p4)
++    HL_F32(30, hl_p5)
++    HL_F32(30, hl_r)
++    HL_End(30)
++  End If
++  Return hl_r
++End Function
++
++Private Function hlog_De_Saddle_Scission(ByVal hl_file As ZString Ptr, ByVal hl_line As Long, ByVal hl_p1 As Single, ByVal hl_p2 As Single, ByVal hl_p3 As Single) As Single
++  Dim As ULongInt hl_seq = HL_Next(31)
++  Dim As Single hl_r = De_Saddle_Scission(hl_p1, hl_p2, hl_p3)
++  If hl_seq <> 0 Then
++    HL_Begin(31, "De_Saddle_Scission", "Z_CN_in:f32 A_CN_in:f32 ESHIFTSASCI:f32 result:f32", hl_seq, hl_file, hl_line)
++    HL_F32(31, hl_p1)
++    HL_F32(31, hl_p2)
++    HL_F32(31, hl_p3)
++    HL_F32(31, hl_r)
++    HL_End(31)
++  End If
++  Return hl_r
++End Function
++
++Private Function hlog_beta_light(ByVal hl_file As ZString Ptr, ByVal hl_line As Long, ByVal hl_p1 As Integer, ByVal hl_p2 As Single, ByVal hl_p3 As Single) As Single
++  Dim As ULongInt hl_seq = HL_Next(32)
++  Dim As Single hl_r = beta_light(hl_p1, hl_p2, hl_p3)
++  If hl_seq <> 0 Then
++    HL_Begin(32, "beta_light", "Z:i64 betaL0:f32 betaL1:f32 result:f32", hl_seq, hl_file, hl_line)
++    HL_I64(32, hl_p1)
++    HL_F32(32, hl_p2)
++    HL_F32(32, hl_p3)
++    HL_F32(32, hl_r)
++    HL_End(32)
++  End If
++  Return hl_r
++End Function
++
++Private Function hlog_beta_heavy(ByVal hl_file As ZString Ptr, ByVal hl_line As Long, ByVal hl_p1 As Integer, ByVal hl_p2 As Single, ByVal hl_p3 As Single) As Single
++  Dim As ULongInt hl_seq = HL_Next(33)
++  Dim As Single hl_r = beta_heavy(hl_p1, hl_p2, hl_p3)
++  If hl_seq <> 0 Then
++    HL_Begin(33, "beta_heavy", "Z:i64 betaH0:f32 betaH1:f32 result:f32", hl_seq, hl_file, hl_line)
++    HL_I64(33, hl_p1)
++    HL_F32(33, hl_p2)
++    HL_F32(33, hl_p3)
++    HL_F32(33, hl_r)
++    HL_End(33)
++  End If
++  Return hl_r
++End Function
++
++Private Function hlog_Z_equi(ByVal hl_file As ZString Ptr, ByVal hl_line As Long, ByVal hl_p1 As Integer, ByVal hl_p2 As Integer, ByVal hl_p3 As Integer, ByVal hl_p4 As Single, ByVal hl_p5 As Single, ByVal hl_p6 As Single, ByVal hl_p7 As Integer) As Single
++  Dim As ULongInt hl_seq = HL_Next(34)
++  Dim As Single hl_r = Z_equi(hl_p1, hl_p2, hl_p3, hl_p4, hl_p5, hl_p6, hl_p7)
++  If hl_seq <> 0 Then
++    HL_Begin(34, "Z_equi", "ZCN:i64 A1:i64 A2:i64 beta1:f32 beta2:f32 d:f32 Imode:i64 result:f32", hl_seq, hl_file, hl_line)
++    HL_I64(34, hl_p1)
++    HL_I64(34, hl_p2)
++    HL_I64(34, hl_p3)
++    HL_F32(34, hl_p4)
++    HL_F32(34, hl_p5)
++    HL_F32(34, hl_p6)
++    HL_I64(34, hl_p7)
++    HL_F32(34, hl_r)
++    HL_End(34)
++  End If
++  Return hl_r
++End Function
++
++Private Sub hlog_Beta_Equi(ByVal hl_file As ZString Ptr, ByVal hl_line As Long, ByVal hl_p1 As Single, ByVal hl_p2 As Single, ByVal hl_p3 As Single, ByVal hl_p4 As Single, ByVal hl_p5 As Single, ByVal hl_p6 As Single, ByVal hl_p7 As Single, ByRef hl_p8 As Single, ByRef hl_p9 As Single)
++  Dim As ULongInt hl_seq = HL_Next(35)
++  Dim As Integer hl_g1 = f
++  Dim As Single hl_in8 = hl_p8
++  Dim As Single hl_in9 = hl_p9
++  Beta_Equi(hl_p1, hl_p2, hl_p3, hl_p4, hl_p5, hl_p6, hl_p7, hl_p8, hl_p9)
++  If hl_seq <> 0 Then
++    HL_Begin(35, "Beta_Equi", "A1:f32 A2:f32 Z1:f32 Z2:f32 d:f32 beta1prev:f32 beta2prev:f32 beta1opt.in:f32 beta1opt.out:f32 beta2opt.in:f32 beta2opt.out:f32 global.f:i64", hl_seq, hl_file, hl_line)
++    HL_F32(35, hl_p1)
++    HL_F32(35, hl_p2)
++    HL_F32(35, hl_p3)
++    HL_F32(35, hl_p4)
++    HL_F32(35, hl_p5)
++    HL_F32(35, hl_p6)
++    HL_F32(35, hl_p7)
++    HL_F32(35, hl_in8)
++    HL_F32(35, hl_p8)
++    HL_F32(35, hl_in9)
++    HL_F32(35, hl_p9)
++    HL_I64(35, hl_g1)
++    HL_End(35)
++  End If
++End Sub
++
++Private Function hlog_Gaussintegral(ByVal hl_file As ZString Ptr, ByVal hl_line As Long, ByVal hl_p1 As Single, ByVal hl_p2 As Single) As Single
++  Dim As ULongInt hl_seq = HL_Next(36)
++  Dim As Single hl_r = Gaussintegral(hl_p1, hl_p2)
++  If hl_seq <> 0 Then
++    HL_Begin(36, "Gaussintegral", "R_x:f32 R_sigma:f32 result:f32", hl_seq, hl_file, hl_line)
++    HL_F32(36, hl_p1)
++    HL_F32(36, hl_p2)
++    HL_F32(36, hl_r)
++    HL_End(36)
++  End If
++  Return hl_r
++End Function
++
++Private Function hlog_Bell(ByVal hl_file As ZString Ptr, ByVal hl_line As Long, ByVal hl_p1 As Single, ByVal hl_p2 As Single, ByVal hl_p3 As Single) As Single
++  Dim As ULongInt hl_seq = HL_Next(37)
++  Dim As Single hl_r = Bell(hl_p1, hl_p2, hl_p3)
++  If hl_seq <> 0 Then
++    HL_Begin(37, "Bell", "xpos:f32 xleft:f32 xright:f32 result:f32", hl_seq, hl_file, hl_line)
++    HL_F32(37, hl_p1)
++    HL_F32(37, hl_p2)
++    HL_F32(37, hl_p3)
++    HL_F32(37, hl_r)
++    HL_End(37)
++  End If
++  Return hl_r
++End Function
++
++Private Function hlog_U_Box(ByVal hl_file As ZString Ptr, ByVal hl_line As Long, ByVal hl_p1 As Single, ByVal hl_p2 As Single, ByVal hl_p3 As Single) As Single
++  Dim As ULongInt hl_seq = HL_Next(38)
++  Dim As Single hl_r = U_Box(hl_p1, hl_p2, hl_p3)
++  If hl_seq <> 0 Then
++    HL_Begin(38, "U_Box", "x:f32 sigma:f32 width:f32 result:f32", hl_seq, hl_file, hl_line)
++    HL_F32(38, hl_p1)
++    HL_F32(38, hl_p2)
++    HL_F32(38, hl_p3)
++    HL_F32(38, hl_r)
++    HL_End(38)
++  End If
++  Return hl_r
++End Function
++
++Private Function hlog_EVEN_ODD(ByVal hl_file As ZString Ptr, ByVal hl_line As Long, ByVal hl_p1 As Single, ByVal hl_p2 As Single) As Integer
++  Dim As ULongInt hl_seq = HL_Next(39)
++  Dim As Integer hl_r = EVEN_ODD(hl_p1, hl_p2)
++  If hl_seq <> 0 Then
++    HL_Begin(39, "EVEN_ODD", "R_ORIGIN:f32 R_EVEN_ODD:f32 result:i64", hl_seq, hl_file, hl_line)
++    HL_F32(39, hl_p1)
++    HL_F32(39, hl_p2)
++    HL_I64(39, hl_r)
++    HL_End(39)
++  End If
++  Return hl_r
++End Function
++
++Private Function hlog_U_Ired(ByVal hl_file As ZString Ptr, ByVal hl_line As Long, ByVal hl_p1 As Single, ByVal hl_p2 As Single) As Single
++  Dim As ULongInt hl_seq = HL_Next(40)
++  Dim As Single hl_r = U_Ired(hl_p1, hl_p2)
++  If hl_seq <> 0 Then
++    HL_Begin(40, "U_Ired", "Z:f32 A:f32 result:f32", hl_seq, hl_file, hl_line)
++    HL_F32(40, hl_p1)
++    HL_F32(40, hl_p2)
++    HL_F32(40, hl_r)
++    HL_End(40)
++  End If
++  Return hl_r
++End Function
++
++Private Function hlog_U_IredFF(ByVal hl_file As ZString Ptr, ByVal hl_line As Long, ByVal hl_p1 As Single, ByVal hl_p2 As Single) As Single
++  Dim As ULongInt hl_seq = HL_Next(41)
++  Dim As Single hl_r = U_IredFF(hl_p1, hl_p2)
++  If hl_seq <> 0 Then
++    HL_Begin(41, "U_IredFF", "Z:f32 A:f32 result:f32", hl_seq, hl_file, hl_line)
++    HL_F32(41, hl_p1)
++    HL_F32(41, hl_p2)
++    HL_F32(41, hl_r)
++    HL_End(41)
++  End If
++  Return hl_r
++End Function
++
++Private Function hlog_U_I_Shell(ByVal hl_file As ZString Ptr, ByVal hl_line As Long, ByVal hl_p1 As Single, ByVal hl_p2 As Single) As Single
++  Dim As ULongInt hl_seq = HL_Next(42)
++  Dim As Single hl_r = U_I_Shell(hl_p1, hl_p2)
++  If hl_seq <> 0 Then
++    HL_Begin(42, "U_I_Shell", "Z:f32 A:f32 result:f32", hl_seq, hl_file, hl_line)
++    HL_F32(42, hl_p1)
++    HL_F32(42, hl_p2)
++    HL_F32(42, hl_r)
++    HL_End(42)
++  End If
++  Return hl_r
++End Function
++
++Private Function hlog_E0_GDR(ByVal hl_file As ZString Ptr, ByVal hl_line As Long, ByVal hl_p1 As Single, ByVal hl_p2 As Single) As Single
++  Dim As ULongInt hl_seq = HL_Next(43)
++  Dim As Single hl_r = E0_GDR(hl_p1, hl_p2)
++  If hl_seq <> 0 Then
++    HL_Begin(43, "E0_GDR", "Z:f32 A:f32 result:f32", hl_seq, hl_file, hl_line)
++    HL_F32(43, hl_p1)
++    HL_F32(43, hl_p2)
++    HL_F32(43, hl_r)
++    HL_End(43)
++  End If
++  Return hl_r
++End Function
++
++Private Function hlog_Width_GDR(ByVal hl_file As ZString Ptr, ByVal hl_line As Long, ByVal hl_p1 As Single) As Single
++  Dim As ULongInt hl_seq = HL_Next(44)
++  Dim As Single hl_r = Width_GDR(hl_p1)
++  If hl_seq <> 0 Then
++    HL_Begin(44, "Width_GDR", "E0:f32 result:f32", hl_seq, hl_file, hl_line)
++    HL_F32(44, hl_p1)
++    HL_F32(44, hl_r)
++    HL_End(44)
++  End If
++  Return hl_r
++End Function
++
++Private Function hlog_Efac_def_GDR(ByVal hl_file As ZString Ptr, ByVal hl_line As Long, ByVal hl_p1 As Single, ByVal hl_p2 As Single, ByVal hl_p3 As Single) As Single
++  Dim As ULongInt hl_seq = HL_Next(45)
++  Dim As Single hl_r = Efac_def_GDR(hl_p1, hl_p2, hl_p3)
++  If hl_seq <> 0 Then
++    HL_Begin(45, "Efac_def_GDR", "Beta:f32 Gamma:f32 K:f32 result:f32", hl_seq, hl_file, hl_line)
++    HL_F32(45, hl_p1)
++    HL_F32(45, hl_p2)
++    HL_F32(45, hl_p3)
++    HL_F32(45, hl_r)
++    HL_End(45)
++  End If
++  Return hl_r
++End Function
++
++Private Function hlog_u_accel(ByVal hl_file As ZString Ptr, ByVal hl_line As Long, ByVal hl_p1 As Single, ByVal hl_p2 As Single, ByVal hl_p3 As Single, ByVal hl_p4 As Single, ByVal hl_p5 As Single, ByVal hl_p6 As Single, ByVal hl_p7 As Single) As Single
++  Dim As ULongInt hl_seq = HL_Next(46)
++  Dim As Single hl_r = u_accel(hl_p1, hl_p2, hl_p3, hl_p4, hl_p5, hl_p6, hl_p7)
++  If hl_seq <> 0 Then
++    HL_Begin(46, "u_accel", "A1:f32 Z1:f32 A2:f32 Z2:f32 TKE:f32 E0:f32 Tn:f32 result:f32", hl_seq, hl_file, hl_line)
++    HL_F32(46, hl_p1)
++    HL_F32(46, hl_p2)
++    HL_F32(46, hl_p3)
++    HL_F32(46, hl_p4)
++    HL_F32(46, hl_p5)
++    HL_F32(46, hl_p6)
++    HL_F32(46, hl_p7)
++    HL_F32(46, hl_r)
++    HL_End(46)
++  End If
++  Return hl_r
++End Function
++
++' Every later call goes through its wrapper.
++#undef LyMass
++#define LyMass(hl_a1, hl_a2, hl_a3) hlog_LyMass(__FILE__, __LINE__, hl_a1, hl_a2, hl_a3)
++#undef LyPair
++#define LyPair(hl_a1, hl_a2) hlog_LyPair(__FILE__, __LINE__, hl_a1, hl_a2)
++#undef FEDEFOLys
++#define FEDEFOLys(hl_a1, hl_a2, hl_a3) hlog_FEDEFOLys(__FILE__, __LINE__, hl_a1, hl_a2, hl_a3)
++#undef LDMass
++#define LDMass(hl_a1, hl_a2, hl_a3) hlog_LDMass(__FILE__, __LINE__, hl_a1, hl_a2, hl_a3)
++#undef AME2020
++#define AME2020(hl_a1, hl_a2) hlog_AME2020(__FILE__, __LINE__, hl_a1, hl_a2)
++#undef U_SHELL
++#define U_SHELL(hl_a1, hl_a2) hlog_U_SHELL(__FILE__, __LINE__, hl_a1, hl_a2)
++#undef U_SHELL_exp
++#define U_SHELL_exp(hl_a1, hl_a2) hlog_U_SHELL_exp(__FILE__, __LINE__, hl_a1, hl_a2)
++#undef U_SHELL_EO_exp
++#define U_SHELL_EO_exp(hl_a1, hl_a2) hlog_U_SHELL_EO_exp(__FILE__, __LINE__, hl_a1, hl_a2)
++#undef U_MASS
++#define U_MASS(hl_a1, hl_a2) hlog_U_MASS(__FILE__, __LINE__, hl_a1, hl_a2)
++#undef ECOUL
++#define ECOUL(hl_a1, hl_a2, hl_a3, hl_a4, hl_a5, hl_a6, hl_a7) hlog_ECOUL(__FILE__, __LINE__, hl_a1, hl_a2, hl_a3, hl_a4, hl_a5, hl_a6, hl_a7)
++#undef U_Valid
++#define U_Valid(hl_a1, hl_a2) hlog_U_Valid(__FILE__, __LINE__, hl_a1, hl_a2)
++#undef U_Delta_S0
++#define U_Delta_S0(hl_a1, hl_a2) hlog_U_Delta_S0(__FILE__, __LINE__, hl_a1, hl_a2)
++#undef BFTF
++#define BFTF(hl_a1, hl_a2, hl_a3) hlog_BFTF(__FILE__, __LINE__, hl_a1, hl_a2, hl_a3)
++#undef BFTFA
++#define BFTFA(hl_a1, hl_a2, hl_a3) hlog_BFTFA(__FILE__, __LINE__, hl_a1, hl_a2, hl_a3)
++#undef BFTFB
++#define BFTFB(hl_a1, hl_a2, hl_a3) hlog_BFTFB(__FILE__, __LINE__, hl_a1, hl_a2, hl_a3)
++#undef U_alev_ld
++#define U_alev_ld(hl_a1, hl_a2) hlog_U_alev_ld(__FILE__, __LINE__, hl_a1, hl_a2)
++#undef U_levdens
++#define U_levdens(hl_a1, hl_a2, hl_a3, hl_a4, hl_a5, hl_a6, hl_a7, hl_a8, hl_a9) hlog_U_levdens(__FILE__, __LINE__, hl_a1, hl_a2, hl_a3, hl_a4, hl_a5, hl_a6, hl_a7, hl_a8, hl_a9)
++#undef U_levdens_Egidy
++#define U_levdens_Egidy(hl_a1, hl_a2, hl_a3, hl_a4, hl_a5, hl_a6, hl_a7, hl_a8, hl_a9) hlog_U_levdens_Egidy(__FILE__, __LINE__, hl_a1, hl_a2, hl_a3, hl_a4, hl_a5, hl_a6, hl_a7, hl_a8, hl_a9)
++#undef U_levdens_FG
++#define U_levdens_FG(hl_a1, hl_a2, hl_a3, hl_a4, hl_a5, hl_a6, hl_a7, hl_a8, hl_a9) hlog_U_levdens_FG(__FILE__, __LINE__, hl_a1, hl_a2, hl_a3, hl_a4, hl_a5, hl_a6, hl_a7, hl_a8, hl_a9)
++#undef U_Temp
++#define U_Temp(hl_a1, hl_a2, hl_a3, hl_a4, hl_a5, hl_a6, hl_a7, hl_a8) hlog_U_Temp(__FILE__, __LINE__, hl_a1, hl_a2, hl_a3, hl_a4, hl_a5, hl_a6, hl_a7, hl_a8)
++#undef U_Temp2
++#define U_Temp2(hl_a1, hl_a2, hl_a3, hl_a4, hl_a5, hl_a6, hl_a7, hl_a8) hlog_U_Temp2(__FILE__, __LINE__, hl_a1, hl_a2, hl_a3, hl_a4, hl_a5, hl_a6, hl_a7, hl_a8)
++#undef TEgidy
++#define TEgidy(hl_a1, hl_a2, hl_a3) hlog_TEgidy(__FILE__, __LINE__, hl_a1, hl_a2, hl_a3)
++#undef TRusanov
++#define TRusanov(hl_a1, hl_a2) hlog_TRusanov(__FILE__, __LINE__, hl_a1, hl_a2)
++#undef Getyield
++#define Getyield(hl_a1, hl_a2, hl_a3, hl_a4, hl_a5, hl_a6, hl_a7, hl_a8) hlog_Getyield(__FILE__, __LINE__, hl_a1, hl_a2, hl_a3, hl_a4, hl_a5, hl_a6, hl_a7, hl_a8)
++#undef F1
++#define F1(hl_a1) hlog_F1(__FILE__, __LINE__, hl_a1)
++#undef F2
++#define F2(hl_a1) hlog_F2(__FILE__, __LINE__, hl_a1)
++#undef Masscurv
++#define Masscurv(hl_a1, hl_a2, hl_a3, hl_a4, hl_a5) hlog_Masscurv(__FILE__, __LINE__, hl_a1, hl_a2, hl_a3, hl_a4, hl_a5)
++#undef Masscurv1
++#define Masscurv1(hl_a1, hl_a2, hl_a3, hl_a4, hl_a5) hlog_Masscurv1(__FILE__, __LINE__, hl_a1, hl_a2, hl_a3, hl_a4, hl_a5)
++#undef Masscurv2
++#define Masscurv2(hl_a1, hl_a2, hl_a3, hl_a4, hl_a5) hlog_Masscurv2(__FILE__, __LINE__, hl_a1, hl_a2, hl_a3, hl_a4, hl_a5)
++#undef De_Saddle_Scission
++#define De_Saddle_Scission(hl_a1, hl_a2, hl_a3) hlog_De_Saddle_Scission(__FILE__, __LINE__, hl_a1, hl_a2, hl_a3)
++#undef beta_light
++#define beta_light(hl_a1, hl_a2, hl_a3) hlog_beta_light(__FILE__, __LINE__, hl_a1, hl_a2, hl_a3)
++#undef beta_heavy
++#define beta_heavy(hl_a1, hl_a2, hl_a3) hlog_beta_heavy(__FILE__, __LINE__, hl_a1, hl_a2, hl_a3)
++#undef Z_equi
++#define Z_equi(hl_a1, hl_a2, hl_a3, hl_a4, hl_a5, hl_a6, hl_a7) hlog_Z_equi(__FILE__, __LINE__, hl_a1, hl_a2, hl_a3, hl_a4, hl_a5, hl_a6, hl_a7)
++#undef Beta_Equi
++#define Beta_Equi(hl_a1, hl_a2, hl_a3, hl_a4, hl_a5, hl_a6, hl_a7, hl_a8, hl_a9) hlog_Beta_Equi(__FILE__, __LINE__, hl_a1, hl_a2, hl_a3, hl_a4, hl_a5, hl_a6, hl_a7, hl_a8, hl_a9)
++#undef Gaussintegral
++#define Gaussintegral(hl_a1, hl_a2) hlog_Gaussintegral(__FILE__, __LINE__, hl_a1, hl_a2)
++#undef Bell
++#define Bell(hl_a1, hl_a2, hl_a3) hlog_Bell(__FILE__, __LINE__, hl_a1, hl_a2, hl_a3)
++#undef U_Box
++#define U_Box(hl_a1, hl_a2, hl_a3) hlog_U_Box(__FILE__, __LINE__, hl_a1, hl_a2, hl_a3)
++#undef EVEN_ODD
++#define EVEN_ODD(hl_a1, hl_a2) hlog_EVEN_ODD(__FILE__, __LINE__, hl_a1, hl_a2)
++#undef U_Ired
++#define U_Ired(hl_a1, hl_a2) hlog_U_Ired(__FILE__, __LINE__, hl_a1, hl_a2)
++#undef U_IredFF
++#define U_IredFF(hl_a1, hl_a2) hlog_U_IredFF(__FILE__, __LINE__, hl_a1, hl_a2)
++#undef U_I_Shell
++#define U_I_Shell(hl_a1, hl_a2) hlog_U_I_Shell(__FILE__, __LINE__, hl_a1, hl_a2)
++#undef E0_GDR
++#define E0_GDR(hl_a1, hl_a2) hlog_E0_GDR(__FILE__, __LINE__, hl_a1, hl_a2)
++#undef Width_GDR
++#define Width_GDR(hl_a1) hlog_Width_GDR(__FILE__, __LINE__, hl_a1)
++#undef Efac_def_GDR
++#define Efac_def_GDR(hl_a1, hl_a2, hl_a3) hlog_Efac_def_GDR(__FILE__, __LINE__, hl_a1, hl_a2, hl_a3)
++#undef u_accel
++#define u_accel(hl_a1, hl_a2, hl_a3, hl_a4, hl_a5, hl_a6, hl_a7) hlog_u_accel(__FILE__, __LINE__, hl_a1, hl_a2, hl_a3, hl_a4, hl_a5, hl_a6, hl_a7)
++
++#endif
+--- /dev/null
++++ b/harness_arglog_dcl.bi
+@@ -0,0 +1,18 @@
++' SPDX-License-Identifier: GPL-3.0-or-later
++' Copyright (C) 2026 Aurora Jahan
++' Licensed under the GNU GPL v3 or later, WITHOUT ANY WARRANTY; see LICENSE.txt.
++' Harness patch "arglog": wrapper of U_Q_beta_minus (DCLbranchingJEFF33.bas:111).
++#ifdef GEF_ARGLOG
++Private Function hlog_U_Q_beta_minus(ByVal hl_file As ZString Ptr, ByVal hl_line As Long, ByVal hl_p1 As Integer, ByVal hl_p2 As Integer) As Single
++  Dim As ULongInt hl_seq = HL_Next(11)
++  Dim As Single hl_r = U_Q_beta_minus(hl_p1, hl_p2)
++  If hl_seq <> 0 Then
++    HL_Begin(11, "U_Q_beta_minus", "IZ:i64 IA:i64 result:f32", hl_seq, hl_file, hl_line)
++    HL_I64(11, hl_p1)
++    HL_I64(11, hl_p2)
++    HL_F32(11, hl_r)
++    HL_End(11)
++  End If
++  Return hl_r
++End Function
++#endif
+--- /dev/null
++++ b/harness_arglog_dcl_on.bi
+@@ -0,0 +1,8 @@
++' SPDX-License-Identifier: GPL-3.0-or-later
++' Copyright (C) 2026 Aurora Jahan
++' Licensed under the GNU GPL v3 or later, WITHOUT ANY WARRANTY; see LICENSE.txt.
++' Harness patch "arglog": macro of U_Q_beta_minus (DCLbranchingJEFF33.bas:116).
++#ifdef GEF_ARGLOG
++#undef U_Q_beta_minus
++#define U_Q_beta_minus(hl_a1, hl_a2) hlog_U_Q_beta_minus(__FILE__, __LINE__, hl_a1, hl_a2)
++#endif
+--- /dev/null
++++ b/harness_arglog_e2_light_in.bi
+@@ -0,0 +1,23 @@
++' SPDX-License-Identifier: GPL-3.0-or-later
++' Copyright (C) 2026 Aurora Jahan
++' Licensed under the GNU GPL v3 or later, WITHOUT ANY WARRANTY; see LICENSE.txt.
++' Harness patch "arglog": entry of site e2_light (GEF.bas:9308).
++#ifdef GEF_ARGLOG
++HL_SiteSeq(47) = HL_Next(47)
++If HL_SiteSeq(47) <> 0 Then
++  HL_Begin(47, "e2_light", "in.I_Z_light_sci:i64 in.I_A_light_post:i64 in.I_MAT:i64 in.I_DelGam:i64 in.Jfrag:f32 in.J_frag_light:f32 in.Spin_gs_light:f32 in.N_iso:i64 in.I_iso:i64 in.Nglight:i64 in.Ngtot:i64 in.Egtot1000:f32 in.Ig2_light:i64 out.E_E2_tot:f32 out.IfragEff_light:f32 out.beta1:f32 out.alph:f32 out.N_iso:i64 out.I_iso:i64 out.C_iso_lmd_light:str out.J:f32 out.K:f32 out.RJeff:f32 out.Eg:f32 out.Nspectrum:i64 out.Nglight:i64 out.Ngtot:i64 out.Egtot1000:f32 out.Ig2_light:i64 out.Array_Eg2_light(1..Ig2_light):f32[]", HL_SiteSeq(47), "GEF.bas", 9309)
++  HL_I64(47, I_Z_light_sci)
++  HL_I64(47, I_A_light_post)
++  HL_I64(47, I_MAT)
++  HL_I64(47, I_DelGam)
++  HL_F32(47, Jfrag)
++  HL_F32(47, J_frag_light)
++  HL_F32(47, Spin_gs_light)
++  HL_I64(47, N_iso)
++  HL_I64(47, I_iso)
++  HL_I64(47, Nglight)
++  HL_I64(47, Ngtot)
++  HL_F32(47, Egtot1000)
++  HL_I64(47, Ig2_light)
++End If
++#endif
+--- /dev/null
++++ b/harness_arglog_e2_light_out.bi
+@@ -0,0 +1,27 @@
++' SPDX-License-Identifier: GPL-3.0-or-later
++' Copyright (C) 2026 Aurora Jahan
++' Licensed under the GNU GPL v3 or later, WITHOUT ANY WARRANTY; see LICENSE.txt.
++' Harness patch "arglog": exit of site e2_light (GEF.bas:9369).
++#ifdef GEF_ARGLOG
++If HL_SiteSeq(47) <> 0 Then
++  HL_F32(47, E_E2_tot)
++  HL_F32(47, IfragEff_light)
++  HL_F32(47, beta1)
++  HL_F32(47, alph)
++  HL_I64(47, N_iso)
++  HL_I64(47, I_iso)
++  HL_Str(47, C_iso_lmd_light)
++  HL_F32(47, J)
++  HL_F32(47, K)
++  HL_F32(47, RJeff)
++  HL_F32(47, Eg)
++  HL_I64(47, Nspectrum)
++  HL_I64(47, Nglight)
++  HL_I64(47, Ngtot)
++  HL_F32(47, Egtot1000)
++  HL_I64(47, Ig2_light)
++  HL_F32List(47, Array_Eg2_light(), 1, Ig2_light)
++  HL_End(47)
++  HL_SiteSeq(47) = 0
++End If
++#endif
+--- /dev/null
++++ b/harness_arglog_e2_heavy_in.bi
+@@ -0,0 +1,24 @@
++' SPDX-License-Identifier: GPL-3.0-or-later
++' Copyright (C) 2026 Aurora Jahan
++' Licensed under the GNU GPL v3 or later, WITHOUT ANY WARRANTY; see LICENSE.txt.
++' Harness patch "arglog": entry of site e2_heavy (GEF.bas:9429).
++#ifdef GEF_ARGLOG
++HL_SiteSeq(48) = HL_Next(48)
++If HL_SiteSeq(48) <> 0 Then
++  HL_Begin(48, "e2_heavy", "in.I_Z_heavy_sci:i64 in.I_A_heavy_post:i64 in.I_MAT:i64 in.I_DelGam:i64 in.Jfrag:f32 in.J_frag_heavy:f32 in.Spin_gs_heavy:f32 in.N_iso:i64 in.I_iso:i64 in.Ngheavy:i64 in.Ngtot:i64 in.Egtot1000:f32 in.Ig2_heavy:i64 in.E_E2_tot:f32 out.E_E2_tot:f32 out.IfragEff_heavy:f32 out.beta1:f32 out.alph:f32 out.N_iso:i64 out.I_iso:i64 out.C_iso_lmd_heavy:str out.J:f32 out.K:f32 out.RJeff:f32 out.Eg:f32 out.Nspectrum:i64 out.Ngheavy:i64 out.Ngtot:i64 out.Egtot1000:f32 out.Ig2_heavy:i64 out.Array_Eg2_heavy(1..Ig2_heavy):f32[]", HL_SiteSeq(48), "GEF.bas", 9430)
++  HL_I64(48, I_Z_heavy_sci)
++  HL_I64(48, I_A_heavy_post)
++  HL_I64(48, I_MAT)
++  HL_I64(48, I_DelGam)
++  HL_F32(48, Jfrag)
++  HL_F32(48, J_frag_heavy)
++  HL_F32(48, Spin_gs_heavy)
++  HL_I64(48, N_iso)
++  HL_I64(48, I_iso)
++  HL_I64(48, Ngheavy)
++  HL_I64(48, Ngtot)
++  HL_F32(48, Egtot1000)
++  HL_I64(48, Ig2_heavy)
++  HL_F32(48, E_E2_tot)
++End If
++#endif
+--- /dev/null
++++ b/harness_arglog_e2_heavy_out.bi
+@@ -0,0 +1,27 @@
++' SPDX-License-Identifier: GPL-3.0-or-later
++' Copyright (C) 2026 Aurora Jahan
++' Licensed under the GNU GPL v3 or later, WITHOUT ANY WARRANTY; see LICENSE.txt.
++' Harness patch "arglog": exit of site e2_heavy (GEF.bas:9485).
++#ifdef GEF_ARGLOG
++If HL_SiteSeq(48) <> 0 Then
++  HL_F32(48, E_E2_tot)
++  HL_F32(48, IfragEff_heavy)
++  HL_F32(48, beta1)
++  HL_F32(48, alph)
++  HL_I64(48, N_iso)
++  HL_I64(48, I_iso)
++  HL_Str(48, C_iso_lmd_heavy)
++  HL_F32(48, J)
++  HL_F32(48, K)
++  HL_F32(48, RJeff)
++  HL_F32(48, Eg)
++  HL_I64(48, Nspectrum)
++  HL_I64(48, Ngheavy)
++  HL_I64(48, Ngtot)
++  HL_F32(48, Egtot1000)
++  HL_I64(48, Ig2_heavy)
++  HL_F32List(48, Array_Eg2_heavy(), 1, Ig2_heavy)
++  HL_End(48)
++  HL_SiteSeq(48) = 0
++End If
++#endif
+--- /dev/null
++++ b/harness_arglog_pegl_table_in.bi
+@@ -0,0 +1,16 @@
++' SPDX-License-Identifier: GPL-3.0-or-later
++' Copyright (C) 2026 Aurora Jahan
++' Licensed under the GNU GPL v3 or later, WITHOUT ANY WARRANTY; see LICENSE.txt.
++' Harness patch "arglog": entry of site pegl_table (GEF.bas:16979).
++#ifdef GEF_ARGLOG
++HL_SiteSeq(49) = HL_Next(49)
++If HL_SiteSeq(49) <> 0 Then
++  HL_Begin(49, "pegl_table", "in.Zi:f32 in.Ai:f32 in.Ei:f32 in.Tscale:f32 in.Econd:f32 in.Etrans:f32 out.N:i64 out.Tm:f32 out.betadef:f32 out.gammadef:f32 out.sigMax:f32 out.Eg:f32 out.I:i64 out.E0(0):f32 out.E0(1):f32 out.E0(2):f32 out.E0(3):f32 out.G0(0):f32 out.G0(1):f32 out.G0(2):f32 out.G0(3):f32 out.UBound(sigma):i64 out.sigma(0..UBound):f32hash", HL_SiteSeq(49), "GEF.bas", 16980)
++  HL_F32(49, Zi)
++  HL_F32(49, Ai)
++  HL_F32(49, Ei)
++  HL_F32(49, Tscale)
++  HL_F32(49, Econd)
++  HL_F32(49, Etrans)
++End If
++#endif
+--- /dev/null
++++ b/harness_arglog_pegl_table_out.bi
+@@ -0,0 +1,27 @@
++' SPDX-License-Identifier: GPL-3.0-or-later
++' Copyright (C) 2026 Aurora Jahan
++' Licensed under the GNU GPL v3 or later, WITHOUT ANY WARRANTY; see LICENSE.txt.
++' Harness patch "arglog": exit of site pegl_table (GEF.bas:17038).
++#ifdef GEF_ARGLOG
++If HL_SiteSeq(49) <> 0 Then
++  HL_I64(49, N)
++  HL_F32(49, Tm)
++  HL_F32(49, betadef)
++  HL_F32(49, gammadef)
++  HL_F32(49, sigMax)
++  HL_F32(49, Eg)
++  HL_I64(49, I)
++  HL_F32(49, E0(0))
++  HL_F32(49, E0(1))
++  HL_F32(49, E0(2))
++  HL_F32(49, E0(3))
++  HL_F32(49, G0(0))
++  HL_F32(49, G0(1))
++  HL_F32(49, G0(2))
++  HL_F32(49, G0(3))
++  HL_I64(49, UBound(sigma))
++  HL_F32Hash(49, sigma())
++  HL_End(49)
++  HL_SiteSeq(49) = 0
++End If
++#endif

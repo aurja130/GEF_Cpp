@@ -1,0 +1,110 @@
+{
+  "created_utc": "2026-10-13T09:01:50Z",
+  "driver_json": {
+    "binary_sha256": "a45bb07dcd1be87d1264159af254d045fb01e6ba843bc2f1129ef4a83458d697",
+    "command": [
+      "m5_egamma_table"
+    ],
+    "cuts": [
+      {
+        "as": "gef_tegidy.bi",
+        "cut_sha256": "62ccb359c6040a2928ac0622105eb6d974e05745ce9879a1389055cdcb484f79",
+        "file": "GEF.bas",
+        "first": 16072,
+        "last": 16095,
+        "source_sha256": "055c0a17124e88390d749527b4d21ca238a0e42da1df1ca1d7a3633febe3a4cc"
+      },
+      {
+        "as": "gef_lypair.bi",
+        "cut_sha256": "c2542cd91ca0e4204d8fe6586f9909849662cefa07d57c5124f25276f145dc4f",
+        "file": "GEF.bas",
+        "first": 16140,
+        "last": 16151,
+        "source_sha256": "055c0a17124e88390d749527b4d21ca238a0e42da1df1ca1d7a3633febe3a4cc"
+      },
+      {
+        "as": "gef_u_shell.bi",
+        "cut_sha256": "53d226f995eb62079ff496fda41080ac16eee8e76b433f1b9892a01165419d9c",
+        "file": "GEF.bas",
+        "first": 16261,
+        "last": 16271,
+        "source_sha256": "055c0a17124e88390d749527b4d21ca238a0e42da1df1ca1d7a3633febe3a4cc"
+      },
+      {
+        "as": "gef_u_alev_ld.bi",
+        "cut_sha256": "03106231520dec2d6604b9b535d4cf161e3af3bfdedb549891e6eaea2c86a58d",
+        "file": "GEF.bas",
+        "first": 17173,
+        "last": 17177,
+        "source_sha256": "055c0a17124e88390d749527b4d21ca238a0e42da1df1ca1d7a3633febe3a4cc"
+      },
+      {
+        "as": "gef_u_temp.bi",
+        "cut_sha256": "3fd00c7d6a942169e1a73f65d8caa278ff15a75afe837b2e550f61d5456164d2",
+        "file": "GEF.bas",
+        "first": 17335,
+        "last": 17385,
+        "source_sha256": "055c0a17124e88390d749527b4d21ca238a0e42da1df1ca1d7a3633febe3a4cc"
+      },
+      {
+        "as": "gef_gdr.bi",
+        "cut_sha256": "d8b53b283349ba603d6c3d03c1c93e080b6ea7a017664dd34594e0afd6c18a07",
+        "file": "GEF.bas",
+        "first": 17439,
+        "last": 17475,
+        "source_sha256": "055c0a17124e88390d749527b4d21ca238a0e42da1df1ca1d7a3633febe3a4cc"
+      },
+      {
+        "as": "egamma_piece.bi",
+        "cut_sha256": "958b7e751136e5edb841dfab73ba2fa277da1b212f8c40c9a218c76ed450be8b",
+        "file": "GEF.bas",
+        "first": 16980,
+        "last": 17037,
+        "source_sha256": "055c0a17124e88390d749527b4d21ca238a0e42da1df1ca1d7a3633febe3a4cc"
+      }
+    ],
+    "driver": "m5_egamma_table",
+    "driver_includes": [
+      {
+        "file": "m5_common.bi",
+        "sha256": "6109ea0abed2fd32783b22868093a241a7282a04b420dbbb5cbc956f714d1d6e"
+      }
+    ],
+    "driver_sha256": "a176899f4f1b85b558c8e259161c5866947868ed2bfa0e819d5db21658f58b71",
+    "fbc_version": "1.10.1",
+    "includes": [
+      {
+        "file": "utilities.bi",
+        "sha256": "0a16dfd28006bdf1aa512ce380a814e9132e24f79e951e9946e08701c449fa46"
+      },
+      {
+        "file": "DEFO.bas",
+        "sha256": "eb5edfafe4fa5fbc4eab1ee8f3de28314de7428eeb7de4596b8c14e8ef12cc7e"
+      },
+      {
+        "file": "ShellMO.bas",
+        "sha256": "9aa16993080c54ae256fb86573ed3feae075f2f446c882666af33e40e5314a9c"
+      }
+    ],
+    "outputs": {
+      "pegl_table_grid.txt": "af78ea96a1cb3d915d97639bc1344e0559dc1b73ec15e8a0e171d1d3c9f10866",
+      "pegl_table_random.txt": "a7ef0dab50f68d9ce9cf10b8de676819dafea6359f54cec45ea7d735965eedd9",
+      "stdout.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "returncode": 0,
+    "run_wall_time_s": 1.116,
+    "work_files": []
+  },
+  "file_count": 4,
+  "files": {
+    "driver.json": "bb6abaf2c0f65777998efd8fe517e240a619775869155e3b82a4b3c9c39a027a",
+    "pegl_table_grid.txt": "af78ea96a1cb3d915d97639bc1344e0559dc1b73ec15e8a0e171d1d3c9f10866",
+    "pegl_table_random.txt": "a7ef0dab50f68d9ce9cf10b8de676819dafea6359f54cec45ea7d735965eedd9",
+    "stdout.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "id": "m5-egamma_table",
+  "kind": "driver",
+  "note": "M5.3 driver m5_egamma_table: synthetic grids (harness/drivers/M5_DRIVERS.md)",
+  "schema": 1,
+  "total_bytes": 35092699
+}

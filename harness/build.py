@@ -5,22 +5,29 @@
 
 Usage (from the repository root)::
 
-    python3 -m harness.build <patchset> [--define NAME[=VALUE] ...] [--force]
-                             [--source-date-epoch N]
+    python3 -m harness.build <patchset> [--define NAME[=VALUE] ...] [--fbc-option=OPT ...]
+                             [--force] [--source-date-epoch N]
     python3 -m harness.build --compare-sections <binary A> <binary B>
 
 ``<patchset>`` names ``harness/patchsets/<patchset>.txt``: one patch name per line (without
 ``.patch``), ``#`` comments allowed, in the canonical stacking order: the M4 variant patches
 (``nucprop-*``, ``legacy-isosource``), then ``seed``, ``scope``, ``reseed``, ``rndlog``,
-``probes``, ``datachain``, ``lookups``. The set ``none`` is empty (the unmodified source).
+``probes``, ``datachain``, ``lookups``, ``arglog``. The set ``none`` is empty (the unmodified
+source).
 
 The build copies the submodule source to ``build/harness/<build-id>/src/``, applies the
-patches with ``patch -p1 --fuzz=0``, runs ``fbc GEF.bas [-d DEFINE ...]`` with
+patches with ``patch -p1 --fuzz=0``, runs ``fbc GEF.bas [-d DEFINE ...] [OPT ...]`` with
 ``SOURCE_DATE_EPOCH`` set to the submodule commit time (``GEF`` prints its compile stamp), moves
 the binary to ``build/harness/<build-id>/GEF`` and writes ``build.json`` last. The build id
-``<patchset>-<12 hex>`` hashes the patch contents in order, the defines, the submodule commit,
-the fbc version and the epoch, so the same request always maps to the same directory. A valid
-existing build is reused unless ``--force`` is given. Concurrent builds are serialised by a lock.
+``<patchset>-<12 hex>`` hashes the patch contents in order, the defines, the fbc options (when
+there are any), the submodule commit, the fbc version and the epoch, so the same request always
+maps to the same directory. A valid existing build is reused unless ``--force`` is given.
+Concurrent builds are serialised by a lock.
+
+``--fbc-option=OPT`` (repeatable) passes one more fbc flag after the defines, in the order
+given (for example ``--fbc-option=-exx``). ``-d``, ``-o`` and ``-x`` are refused: the harness
+sets the defines and the output name. Use the ``=`` form: argparse reads a dash-prefixed value
+given after a space as another option.
 
 ``materialize_patch_dir`` writes a patch set as ``NN-<name>.patch`` files, which
 ``python3 -m tools.fbsrc.emit_c --patch-dir`` accepts, to inspect the generated C.
@@ -78,8 +85,8 @@ __all__ = [
 ]
 
 SCHEMA = 1
-# Variant patches (M4: alternative nuclide-data and branching files) come first, the DATA chain
-# dump (M4) last.
+# Variant patches (M4: alternative nuclide-data and branching files) come first, then the
+# instrumentation patches; arglog (M5) last.
 CANONICAL_ORDER = (
     "nucprop-jeff311",
     "nucprop-nubase2016",
@@ -95,11 +102,14 @@ CANONICAL_ORDER = (
     "probes",
     "datachain",
     "lookups",
+    "arglog",
 )
 BINARY_NAME = "GEF"
 BUILD_JSON = "build.json"
 _DEFINE_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*(=[A-Za-z0-9_.+-]+)?$")
 _NAME_RE = re.compile(r"^[A-Za-z0-9_-]+$")
+# fbc flags the harness sets itself: defines (-d) and the output name (-o, -x).
+_FBC_OPTIONS_REFUSED = frozenset({"-d", "-o", "-x"})
 _TIMEOUT_S = 900
 
 
@@ -187,6 +197,17 @@ def validate_defines(defines: Sequence[str]) -> list[str]:
     return sorted(set(defines))
 
 
+def validate_fbc_options(options: Sequence[str]) -> list[str]:
+    """``options`` in the order given: fbc flags, but not the ones the harness sets."""
+    bad = [o for o in options if not o.startswith("-") or o in _FBC_OPTIONS_REFUSED]
+    if bad:
+        raise HarnessError(
+            f"invalid --fbc-option {bad}; expected an fbc flag starting with '-' other than "
+            "-d, -o or -x (the harness sets the defines and the output name)"
+        )
+    return list(options)
+
+
 def compute_build_id(
     patchset: str,
     patches: Sequence[tuple[str, str]],
@@ -194,19 +215,21 @@ def compute_build_id(
     submodule_commit: str,
     fbc_ver: str,
     source_date_epoch: int,
+    fbc_options: Sequence[str] = (),
 ) -> str:
     """``<patchset>-<12 hex>`` over everything that determines the binary."""
-    payload = json.dumps(
-        {
-            "patches": [[n, h] for n, h in patches],
-            "defines": sorted(set(defines)),
-            "submodule_commit": submodule_commit,
-            "fbc_version": fbc_ver,
-            "source_date_epoch": source_date_epoch,
-        },
-        sort_keys=True,
-    )
-    return f"{patchset}-{hashlib.sha256(payload.encode()).hexdigest()[:12]}"
+    payload: dict[str, object] = {
+        "patches": [[n, h] for n, h in patches],
+        "defines": sorted(set(defines)),
+        "submodule_commit": submodule_commit,
+        "fbc_version": fbc_ver,
+        "source_date_epoch": source_date_epoch,
+    }
+    if fbc_options:
+        # Only when given, so a build without options keeps the id it had before.
+        payload["fbc_options"] = list(fbc_options)
+    text = json.dumps(payload, sort_keys=True)
+    return f"{patchset}-{hashlib.sha256(text.encode()).hexdigest()[:12]}"
 
 
 # --------------------------------------------------------------------------- build
@@ -282,9 +305,11 @@ def build(
     source_dir: Path = GEF_SOURCE_DIR,
     patchsets_dir: Path = PATCHSETS_DIR,
     patches_dir: Path = PATCHES_DIR,
+    fbc_options: Sequence[str] = (),
 ) -> BuildResult:
-    """Build (or reuse) the binary for ``patchset`` plus ``defines``."""
+    """Build (or reuse) the binary for ``patchset`` plus ``defines`` and ``fbc_options``."""
     clean_defines = validate_defines(defines)
+    clean_fbc_options = validate_fbc_options(fbc_options)
     patches = read_patchset(patchset, patchsets_dir, patches_dir)
     patch_hashes = [(p.stem, sha256_file(p)) for p in patches]
     try:
@@ -295,7 +320,7 @@ def build(
         raise HarnessError(str(exc)) from exc
     epoch = revision.commit_epoch if source_date_epoch is None else source_date_epoch
     build_id = compute_build_id(
-        patchset, patch_hashes, clean_defines, revision.commit, fbc_ver, epoch
+        patchset, patch_hashes, clean_defines, revision.commit, fbc_ver, epoch, clean_fbc_options
     )
     root = build_root / build_id
     with _locked(build_root / ".build.lock"):
@@ -313,6 +338,7 @@ def build(
             command = [str(fbc), "GEF.bas"]
             for define in clean_defines:
                 command += ["-d", define]
+            command += clean_fbc_options
             env = dict(os.environ, SOURCE_DATE_EPOCH=str(epoch))
             start = time.perf_counter()
             try:
@@ -349,6 +375,7 @@ def build(
             "patchset": patchset,
             "patches": [{"name": n, "sha256": h} for n, h in patch_hashes],
             "defines": clean_defines,
+            "fbc_options": clean_fbc_options,
             "fbc_path": str(fbc),
             "fbc_version": fbc_ver,
             "command": command,
@@ -453,6 +480,13 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument(
         "--define", action="append", default=[], metavar="NAME", help="fbc -d NAME[=VALUE]"
     )
+    parser.add_argument(
+        "--fbc-option",
+        action="append",
+        default=[],
+        metavar="OPT",
+        help="extra fbc flag after the defines: --fbc-option=OPT (repeatable; not -d, -o or -x)",
+    )
     parser.add_argument("--force", action="store_true", help="rebuild even if a valid build exists")
     parser.add_argument(
         "--source-date-epoch",
@@ -490,6 +524,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             args.define,
             force=args.force,
             source_date_epoch=args.source_date_epoch,
+            fbc_options=args.fbc_option,
         )
     except HarnessError as exc:
         print(f"harness.build: {exc}", file=sys.stderr)

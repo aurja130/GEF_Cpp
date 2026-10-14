@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Copyright (C) 2026 Aurora Jahan
 # Licensed under the GNU GPL v3 or later, WITHOUT ANY WARRANTY; see LICENSE.txt.
-"""Tests for harness.build: patch sets, build ids, ELF section comparison, seed.patch."""
+"""Tests for harness.build: patch sets, build ids, fbc options, ELF sections, seed.patch."""
 
 from __future__ import annotations
 
@@ -9,16 +9,21 @@ import shutil
 import struct
 import subprocess
 from pathlib import Path
+from types import SimpleNamespace
+from typing import Any
 
 import pytest
 
+from harness import build as build_mod
 from harness.build import (
+    BuildResult,
     compare_sections,
     compute_build_id,
     materialize_patch_dir,
     read_patchset,
     resolve_binary,
     validate_defines,
+    validate_fbc_options,
 )
 from harness.common import GEF_SOURCE_DIR, PATCHES_DIR, PATCHSETS_DIR, HarnessError
 
@@ -214,3 +219,96 @@ def test_seed_build_is_reproducible(tmp_path: Path) -> None:
     assert again.reused
     assert first.manifest["binary_sha256"] == second.manifest["binary_sha256"]
     assert first.manifest["patches"][0]["name"] == "seed"
+
+
+def test_cli_passes_fbc_options(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    seen: dict[str, object] = {}
+    manifest: dict[str, Any] = {
+        "binary_sha256": "0" * 64,
+        "fbc_diagnostics": "",
+        "fbc_wall_time_s": 0.0,
+    }
+
+    def fake_build(patchset: str, defines: list[str], **kwargs: object) -> BuildResult:
+        seen.update(patchset=patchset, defines=defines, **kwargs)
+        return BuildResult("plain-x", tmp_path, tmp_path / "GEF", manifest, reused=True)
+
+    monkeypatch.setattr(build_mod, "build", fake_build)
+    assert build_mod.main(["plain", "--fbc-option=-exx", "--fbc-option=-g"]) == 0
+    assert seen == {
+        "patchset": "plain",
+        "defines": [],
+        "force": False,
+        "source_date_epoch": None,
+        "fbc_options": ["-exx", "-g"],
+    }
+
+
+def test_cli_refuses_flags_the_harness_sets(capsys: pytest.CaptureFixture[str]) -> None:
+    assert build_mod.main(["plain", "--fbc-option=-o"]) == 1
+    assert "harness.build: invalid --fbc-option ['-o']" in capsys.readouterr().err
+
+
+@pytest.mark.fbc
+def test_fbc_options_reach_the_command_and_the_build_id(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from tools.toolchain.fbc import FbcError, resolve_fbc
+
+    try:
+        resolve_fbc()
+    except FbcError as exc:
+        pytest.skip(f"pinned fbc unavailable: {exc}")
+    source = tmp_path / "src"
+    source.mkdir()
+    (source / "GEF.bas").write_text('Print "ok"\n')
+    sets = tmp_path / "sets"
+    sets.mkdir()
+    (sets / "empty.txt").write_text("# no patches\n")
+    build_root = tmp_path / "b"
+    build_root.mkdir()
+    revision = SimpleNamespace(commit="c" * 40, commit_epoch=1000)
+    monkeypatch.setattr(build_mod, "submodule_revision", lambda: revision)
+
+    def build_with(options: list[str]) -> BuildResult:
+        return build_mod.build(
+            "empty",
+            ["FOO"],
+            fbc_options=options,
+            source_date_epoch=0,
+            build_root=build_root,
+            source_dir=source,
+            patchsets_dir=sets,
+            patches_dir=PATCHES_DIR,
+        )
+
+    first = build_with(["-exx", "-g"])
+    assert not first.reused
+    assert first.manifest["command"][1:] == ["GEF.bas", "-d", "FOO", "-exx", "-g"]
+    assert first.manifest["fbc_options"] == ["-exx", "-g"]
+    assert first.binary.is_file()
+    again = build_with(["-exx", "-g"])
+    assert again.reused
+    assert again.build_id == first.build_id
+    other = build_with(["-g", "-exx"])
+    assert not other.reused
+    assert other.build_id != first.build_id
+
+
+def test_validate_fbc_options() -> None:
+    assert validate_fbc_options(["-exx", "-g"]) == ["-exx", "-g"]
+    assert validate_fbc_options(["-g", "-exx"]) == ["-g", "-exx"]
+    assert validate_fbc_options([]) == []
+    for bad in (["-d"], ["-o"], ["-x"], ["OUT"], [""]):
+        with pytest.raises(HarnessError, match="invalid --fbc-option"):
+            validate_fbc_options(bad)
+
+
+def test_fbc_options_enter_the_build_id_only_when_given() -> None:
+    args = ("seed", [("seed", "a" * 64)], ["GEF_PROBES"], "c" * 40, "1.10.1", 1000)
+    plain = compute_build_id(*args)
+    assert plain == "seed-0324c1f83a9e"
+    assert compute_build_id(*args, fbc_options=()) == plain
+    assert compute_build_id(*args, fbc_options=["-exx"]) != plain
+    ordered = compute_build_id(*args, fbc_options=["-exx", "-g"])
+    assert ordered != compute_build_id(*args, fbc_options=["-g", "-exx"])

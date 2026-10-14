@@ -5,6 +5,7 @@
 add_subdirectory(src/fbrt)
 add_subdirectory(src/util)
 add_subdirectory(src/data)
+add_subdirectory(src/physics)
 add_subdirectory(src/params)
 add_subdirectory(src/analysis)
 add_subdirectory(src/app)

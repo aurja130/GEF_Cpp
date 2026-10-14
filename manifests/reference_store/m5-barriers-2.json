@@ -1,0 +1,154 @@
+{
+  "created_utc": "2026-10-13T11:39:03Z",
+  "driver_json": {
+    "binary_sha256": "89037fa937cf2e9dc73fb6093cd0e19d0f009acd104803cbe400aba72de3dbf8",
+    "command": [
+      "m5_barriers"
+    ],
+    "cuts": [
+      {
+        "as": "gef_lymass.bi",
+        "cut_sha256": "a48a95a49e7a12ad22b98b941266ea2dfcc0caeff8af37074e8bd52e3d2224ab",
+        "file": "GEF.bas",
+        "first": 16110,
+        "last": 16137,
+        "source_sha256": "055c0a17124e88390d749527b4d21ca238a0e42da1df1ca1d7a3633febe3a4cc"
+      },
+      {
+        "as": "gef_lypair.bi",
+        "cut_sha256": "c2542cd91ca0e4204d8fe6586f9909849662cefa07d57c5124f25276f145dc4f",
+        "file": "GEF.bas",
+        "first": 16140,
+        "last": 16151,
+        "source_sha256": "055c0a17124e88390d749527b4d21ca238a0e42da1df1ca1d7a3633febe3a4cc"
+      },
+      {
+        "as": "gef_fedefolys.bi",
+        "cut_sha256": "5cc113683676a999f9436a1e4ef679d5ddd2717bc33b75f49919b908ddf2cf8f",
+        "file": "GEF.bas",
+        "first": 16211,
+        "last": 16214,
+        "source_sha256": "055c0a17124e88390d749527b4d21ca238a0e42da1df1ca1d7a3633febe3a4cc"
+      },
+      {
+        "as": "gef_ldmass.bi",
+        "cut_sha256": "9211fe66549534bdc4e4acd2a770fcb34f9272b0cc6b9e11cd396d49240cb15e",
+        "file": "GEF.bas",
+        "first": 16217,
+        "last": 16236,
+        "source_sha256": "055c0a17124e88390d749527b4d21ca238a0e42da1df1ca1d7a3633febe3a4cc"
+      },
+      {
+        "as": "gef_ame2020.bi",
+        "cut_sha256": "fe97f6eef3ba35e8f738519875a6a1c06fb3117620c3db741e7930a253ab7646",
+        "file": "GEF.bas",
+        "first": 16238,
+        "last": 16259,
+        "source_sha256": "055c0a17124e88390d749527b4d21ca238a0e42da1df1ca1d7a3633febe3a4cc"
+      },
+      {
+        "as": "gef_u_shell.bi",
+        "cut_sha256": "53d226f995eb62079ff496fda41080ac16eee8e76b433f1b9892a01165419d9c",
+        "file": "GEF.bas",
+        "first": 16261,
+        "last": 16271,
+        "source_sha256": "055c0a17124e88390d749527b4d21ca238a0e42da1df1ca1d7a3633febe3a4cc"
+      },
+      {
+        "as": "gef_u_shell_exp.bi",
+        "cut_sha256": "1b64a5107c0d69f0ad2112c354981be354c22c5bbfa615d3f5cdb050059012f0",
+        "file": "GEF.bas",
+        "first": 16273,
+        "last": 16292,
+        "source_sha256": "055c0a17124e88390d749527b4d21ca238a0e42da1df1ca1d7a3633febe3a4cc"
+      },
+      {
+        "as": "gef_u_shell_eo_exp.bi",
+        "cut_sha256": "761111b5782b56d60bee4be4104b3c0acfc191f74b3e224dbd8504f544f519f3",
+        "file": "GEF.bas",
+        "first": 16294,
+        "last": 16306,
+        "source_sha256": "055c0a17124e88390d749527b4d21ca238a0e42da1df1ca1d7a3633febe3a4cc"
+      },
+      {
+        "as": "gef_bftf.bi",
+        "cut_sha256": "3da6b4398713622a5c9ede99cebf35a71f250df51378d637f62005bc380991b0",
+        "file": "GEF.bas",
+        "first": 17657,
+        "last": 17750,
+        "source_sha256": "055c0a17124e88390d749527b4d21ca238a0e42da1df1ca1d7a3633febe3a4cc"
+      },
+      {
+        "as": "gef_bftfa.bi",
+        "cut_sha256": "49895225f86e2ff49c8394084898485dc3cd0602203a0264e3a918492d0ccd17",
+        "file": "GEF.bas",
+        "first": 17752,
+        "last": 17773,
+        "source_sha256": "055c0a17124e88390d749527b4d21ca238a0e42da1df1ca1d7a3633febe3a4cc"
+      },
+      {
+        "as": "gef_bftfb.bi",
+        "cut_sha256": "1edf765551400d38ddaf34e1adc6e1928dd1e7940c3000939496f792547253f9",
+        "file": "GEF.bas",
+        "first": 17775,
+        "last": 17796,
+        "source_sha256": "055c0a17124e88390d749527b4d21ca238a0e42da1df1ca1d7a3633febe3a4cc"
+      }
+    ],
+    "driver": "m5_barriers",
+    "driver_includes": [
+      {
+        "file": "m5_common.bi",
+        "sha256": "6109ea0abed2fd32783b22868093a241a7282a04b420dbbb5cbc956f714d1d6e"
+      }
+    ],
+    "driver_sha256": "a55db5f2e6bf149f960d57f988208932cfdc84a30eda932e767079a1ecfef3a0",
+    "fbc_version": "1.10.1",
+    "includes": [
+      {
+        "file": "utilities.bi",
+        "sha256": "0a16dfd28006bdf1aa512ce380a814e9132e24f79e951e9946e08701c449fa46"
+      },
+      {
+        "file": "BEldmTF.bas",
+        "sha256": "c49a08ec5336d7ee238a1a90a625467872d2cf3fac5bf83405e1a81a28d30fdd"
+      },
+      {
+        "file": "BEexp.bas",
+        "sha256": "08edd5201de07d0c5f7605846c4b5dc6f97df80b18177729ebed7e60d35dee74"
+      },
+      {
+        "file": "ShellMO.bas",
+        "sha256": "9aa16993080c54ae256fb86573ed3feae075f2f446c882666af33e40e5314a9c"
+      }
+    ],
+    "outputs": {
+      "BFTFA_grid.txt": "d01947f7945f66f61858a2df2ef3a79939fee01269c011185c8e2154ae3f7885",
+      "BFTFA_random.txt": "4cc571306d4d6aa18dbffce5a5d2f91aefeb233ee320b0b1ecad19471c77be68",
+      "BFTFB_grid.txt": "f9244eec34f4463679a5995bda4f59ee3ad59bd142d2579fd161e8585ef573b5",
+      "BFTFB_random.txt": "d6d108564df77071f6cb0140557dcdf26aeb2944bd6079978e7c827f7347ec8c",
+      "BFTF_grid.txt": "77eb9b954fb5088bc2ccb73e409be9761733eca0ee51bbbf50cbe5eab6e171b4",
+      "BFTF_random.txt": "bf0328e922cbd1a344e6a7d9889a8130ed5fd9f374885affae6fd28b2a2e1be1",
+      "stdout.txt": "573f43e2f36132ba98f454dbf49cfa8b261c7f5ebfe0eba04291baa9f3c86bb0"
+    },
+    "returncode": 0,
+    "run_wall_time_s": 0.796,
+    "work_files": []
+  },
+  "file_count": 8,
+  "files": {
+    "BFTFA_grid.txt": "d01947f7945f66f61858a2df2ef3a79939fee01269c011185c8e2154ae3f7885",
+    "BFTFA_random.txt": "4cc571306d4d6aa18dbffce5a5d2f91aefeb233ee320b0b1ecad19471c77be68",
+    "BFTFB_grid.txt": "f9244eec34f4463679a5995bda4f59ee3ad59bd142d2579fd161e8585ef573b5",
+    "BFTFB_random.txt": "d6d108564df77071f6cb0140557dcdf26aeb2944bd6079978e7c827f7347ec8c",
+    "BFTF_grid.txt": "77eb9b954fb5088bc2ccb73e409be9761733eca0ee51bbbf50cbe5eab6e171b4",
+    "BFTF_random.txt": "bf0328e922cbd1a344e6a7d9889a8130ed5fd9f374885affae6fd28b2a2e1be1",
+    "driver.json": "12401f1b6fbd01066d8951d53bd354bdd7ed06930cc5c9edd8fced0b1c295345",
+    "stdout.txt": "573f43e2f36132ba98f454dbf49cfa8b261c7f5ebfe0eba04291baa9f3c86bb0"
+  },
+  "id": "m5-barriers-2",
+  "kind": "driver",
+  "note": "M5.3 driver m5_barriers after review round 1 (supersedes m5-barriers)",
+  "schema": 1,
+  "total_bytes": 42103601
+}

@@ -17,7 +17,7 @@ gcc           16.2.1    /usr/bin/gcc
 clang         22.1.8    /usr/bin/clang
 cmake         4.3.0     /usr/bin/cmake
 ninja         1.13.2    /usr/bin/ninja
-python        3.14.7    /usr/bin/python3
+python        3.14.8    /usr/bin/python3
 ruff          0.16.6    ~/.local/bin/ruff
 basedpyright  1.39.10   ~/.local/bin/basedpyright
 pytest        9.1.1     ~/.local/bin/pytest

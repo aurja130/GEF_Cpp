@@ -1,0 +1,79 @@
+{
+  "kind": "store-derived",
+  "outputs": {
+    "files.txt": "6c54c662cabb1bfa5ae262eb0e1b931618933f8b1c4a62a292a81bac0311461b"
+  },
+  "sources": [
+    {
+      "capture": "m5-rotation",
+      "file": "E0_GDR_grid.txt",
+      "sha256": "7de768f86efb8af285df6c729e44cf0fc3e3ddaba8211e42f9aa2dbde853c075"
+    },
+    {
+      "capture": "m5-rotation",
+      "file": "E0_GDR_random.txt",
+      "sha256": "e6e8b423f9fe557934da2495acffd01ecc0c6687c2169142e1e39543a9b1b9a7"
+    },
+    {
+      "capture": "m5-rotation",
+      "file": "Efac_def_GDR_grid.txt",
+      "sha256": "ff3978a66688f34648117706dae74b87d707e4a950fa28fd749e36a2d3e1f551"
+    },
+    {
+      "capture": "m5-rotation",
+      "file": "Efac_def_GDR_random.txt",
+      "sha256": "ef3430c33985990889edc0fc5115a01fc2ccea68d7e37afcccb8e70f0c89fdfd"
+    },
+    {
+      "capture": "m5-rotation",
+      "file": "u_accel_grid.txt",
+      "sha256": "dea16ea53889abd9bc60ace2e33bf69a7fb5c821886a87321dcc6a33d3253133"
+    },
+    {
+      "capture": "m5-rotation",
+      "file": "u_accel_random.txt",
+      "sha256": "552a63e103729605bbe03a10ad8279c6a362fa9150af409f9fbdc25725361174"
+    },
+    {
+      "capture": "m5-rotation",
+      "file": "U_IredFF_grid.txt",
+      "sha256": "4a9a6895d554958beb6d84b83cd1e3f7795189e66da2a0712a1faddb318e19c3"
+    },
+    {
+      "capture": "m5-rotation",
+      "file": "U_IredFF_random.txt",
+      "sha256": "6230b455b295704bf2e1b18915ca3132548794120e053eec4c024eda3e4291fa"
+    },
+    {
+      "capture": "m5-rotation",
+      "file": "U_Ired_grid.txt",
+      "sha256": "9951aaff41c691b492ce5879b3e4de448001b4d4916d69479d9ee50576e67dd8"
+    },
+    {
+      "capture": "m5-rotation",
+      "file": "U_Ired_random.txt",
+      "sha256": "85d5f5f3ccdd2d9d2e16cfdf9abbb59a629fa100ec0486678f2613d992d31367"
+    },
+    {
+      "capture": "m5-rotation",
+      "file": "U_I_Shell_grid.txt",
+      "sha256": "6448843fd45b340a691028af4659c7e7526f41ab397dec36e073a45b23051d93"
+    },
+    {
+      "capture": "m5-rotation",
+      "file": "U_I_Shell_random.txt",
+      "sha256": "503885df2578d2df566762f4d6b37f905b59226aaa25cb298a047182b125838c"
+    },
+    {
+      "capture": "m5-rotation",
+      "file": "Width_GDR_grid.txt",
+      "sha256": "75ee5b4aa562cf10f241281c4bb7671d2dbbc33fa2043ff7f6c30b940a11f0a8"
+    },
+    {
+      "capture": "m5-rotation",
+      "file": "Width_GDR_random.txt",
+      "sha256": "8264f1831062a11f274890a6dc88d7c6d9deed500351d2eec7e0ad6e84f2734e"
+    }
+  ],
+  "tool": "python3 -m harness.probe_fingerprints m5-rotation --name m5-rotation --files E0_GDR_grid.txt E0_GDR_random.txt Efac_def_GDR_grid.txt Efac_def_GDR_random.txt u_accel_grid.txt u_accel_random.txt U_IredFF_grid.txt U_IredFF_random.txt U_Ired_grid.txt U_Ired_random.txt U_I_Shell_grid.txt U_I_Shell_random.txt Width_GDR_grid.txt Width_GDR_random.txt"
+}

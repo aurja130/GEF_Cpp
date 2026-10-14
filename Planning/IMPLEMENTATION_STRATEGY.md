@@ -452,6 +452,8 @@ Two tracks run in parallel after M5 and meet at M14:
 
 ### M5 — Deterministic physics function library
 
+**Status:** complete (2026-10-13), see `Planning/MILESTONE_5_PLAN.md`. Every function of the plan's §3 and both extracted pieces equal BASIC bit for bit on synthetic grids and on every logged call of four reference runs, in `dev-gcc`, `dev-clang` and `release-exact`; no D12 exception was needed. Refinements decided there: the `arglog` capture harness and the `fn_c_equiv` check of driver C against `GEF.c` (D1, D2); prints of physics functions are returned as flags with the values BASIC prints (D7); parameters BASIC never reads stay in the C++ signatures; the E2 cascade's two copies compile to the same C and share one function.
+
 **Goal:** all pure physics functions, bit-exact.
 
 **Scope:**

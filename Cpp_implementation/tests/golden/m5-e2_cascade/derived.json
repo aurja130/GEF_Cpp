@@ -1,0 +1,29 @@
+{
+  "kind": "store-derived",
+  "outputs": {
+    "files.txt": "d22d4eb3ddb40b80588864c50899ede5889d8d1a0dee09eec0009ea659865aac"
+  },
+  "sources": [
+    {
+      "capture": "m5-e2_cascade",
+      "file": "e2_heavy_grid.txt",
+      "sha256": "b001562055daa980eab0eb07d199344f8103e4ce525fea0789684a087d0469fb"
+    },
+    {
+      "capture": "m5-e2_cascade",
+      "file": "e2_heavy_random.txt",
+      "sha256": "392260574cf677e0f87d4e43a51cd807b75f02f04c1071719e47f14d20954c5c"
+    },
+    {
+      "capture": "m5-e2_cascade",
+      "file": "e2_light_grid.txt",
+      "sha256": "760f505e8390c54aee3454175cb3f8a7e7d478730fe9b06f44e217466c9fd775"
+    },
+    {
+      "capture": "m5-e2_cascade",
+      "file": "e2_light_random.txt",
+      "sha256": "7595d7c84905fead9b22d35c8b16242a50ff089bb7c50c8b43fce3dd95b29be9"
+    }
+  ],
+  "tool": "python3 -m harness.probe_fingerprints m5-e2_cascade --name m5-e2_cascade --files e2_heavy_grid.txt e2_heavy_random.txt e2_light_grid.txt e2_light_random.txt"
+}

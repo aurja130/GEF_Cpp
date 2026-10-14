@@ -1,0 +1,6 @@
+# Patch set "m5-arglog" (M5.1): arguments, ByRef values and results of the M5 physics functions
+# and the inputs/outputs of the P_Egamma_low table and E2 cascade sites (build with -d GEF_ARGLOG;
+# harness/ARGLOG.md).
+seed
+scope
+arglog

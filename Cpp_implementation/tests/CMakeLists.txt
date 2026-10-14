@@ -30,6 +30,14 @@ add_executable(gef_tests
     maths_test.cpp
     nuclide_tables_test.cpp
     params_test.cpp
+    physics_e2_cascade_test.cpp
+    physics_helpers_test.cpp
+    physics_shape_test.cpp
+    physics_egamma_table_test.cpp
+    physics_barriers_test.cpp
+    physics_rotation_test.cpp
+    physics_level_density_test.cpp
+    physics_masses_test.cpp
     print_using_test.cpp
     probe_dump_test.cpp
     program_data_test.cpp
@@ -39,13 +47,15 @@ add_executable(gef_tests
     text_test.cpp
     utilities_test.cpp
     support/golden.cpp
+    support/m5.cpp
     support/probe_dump.cpp)
 target_include_directories(gef_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
 # Driver goldens (M3 plan D1): committed ones, and the reference store for large ones.
 target_compile_definitions(gef_tests PRIVATE
     GEF_TEST_GOLDEN_DIR="${CMAKE_CURRENT_SOURCE_DIR}/golden"
     GEF_TEST_STORE_CAPTURES_DIR="${PROJECT_SOURCE_DIR}/validation/reference_store/captures")
-target_link_libraries(gef_tests PRIVATE gef_analysis gef_data gef_fbrt gef_params gef_util
+target_link_libraries(gef_tests PRIVATE gef_analysis gef_data gef_fbrt gef_params gef_physics
+    gef_util
     Catch2::Catch2WithMain Threads::Threads)
 gef_apply_policy(gef_tests)
 
