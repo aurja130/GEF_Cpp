@@ -476,6 +476,8 @@ Two tracks run in parallel after M5 and meet at M14:
 
 ### M6 — Input parsing, run planning and system/step setup
 
+**Status:** planned (2026-10-14), see `Planning/MILESTONE_6_PLAN.md`. Refinements decided there: the BASIC values come from a setup-only harness patch with new probes P0 and P1b, cross-checked by full runs (D1); `done.ctl` deduplication is kept in-process (D2); the console printed by the ported batch code must be byte-exact, which replaces "match to the printed digits" below (D3); fit inputs are covered for iteration 1 (D4); a run driver that yields per step replaces a precomputed plan (D5); §2.4 gains an `InputRoundState` scope reset at `Nextfitloop`, and `Parameters` stays one object in `ProcessState` (D6).
+
 **Goal:** C++ reads GEF inputs and produces the same run plan and per-step setup as BASIC.
 
 **Scope:**

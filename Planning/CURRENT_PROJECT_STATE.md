@@ -1,7 +1,7 @@
 # GEF in C++: Current Project State
 
-**As of:** 2026-10-13
-**Phase:** M0–M5 complete. M5 ported every deterministic physics function of GEF (masses, barriers, level densities, temperatures, yields, deformations, moments of inertia, GDR helpers, the `P_Egamma_low` cross-section table and the E2 rotational cascade) bit-exact against the BASIC program, on synthetic grids and on every logged call of four reference runs. M6 (input parsing, run planning, system/step setup) is next; its plan is not written.
+**As of:** 2026-10-14
+**Phase:** M0–M5 complete. M5 ported every deterministic physics function of GEF (masses, barriers, level densities, temperatures, yields, deformations, moments of inertia, GDR helpers, the `P_Egamma_low` cross-section table and the E2 rotational cascade) bit-exact against the BASIC program, on synthetic grids and on every logged call of four reference runs. M6 (input parsing, run planning, system/step setup) is planned: `Planning/MILESTONE_6_PLAN.md`, decisions taken with the user on 2026-10-14 (setup-only harness patch plus full-run cross-checks; `done.ctl` deduplication kept in-process; console byte-exact for the ported batch code; fit inputs covered for iteration 1).
 
 **Decision 2026-10-08 — exact reproduction first** (vision §4.2 and §5, strategy §2.9):
 - **Phase 1 (M3–M16):** the C++ port must reproduce the BASIC arithmetic exactly. A seeded C++ run in exact mode must write the same output bytes as the seeded BASIC reference binary (T3).
@@ -14,9 +14,9 @@
 |---|---|
 | Vision | Written: `Planning/GEF_CPP_VISION.md` |
 | Implementation strategy | Written: `Planning/IMPLEMENTATION_STRATEGY.md`, 19 milestones (M0–M18) |
-| Milestone plan files (`Planning/MILESTONE_<n>_PLAN.md`) | M0–M5 complete; M6–M18 not written |
+| Milestone plan files (`Planning/MILESTONE_<n>_PLAN.md`) | M0–M5 complete; M6 planned (2026-10-14); M7–M18 not written |
 | C++ implementation (`Cpp_implementation/`) | `gef_fbrt` (namespace `gef::fb`): the FreeBASIC runtime emulation of M3 (conversions, maths, random numbers, `Str`/`Print`/`Print Using`/`Format`, arrays, `DATA`, `Val`/`Input #`, strings and `Line Input`), bit-exact against FreeBASIC drivers. M4: `gef_data` (GEF's `DATA` and table loaders, `gef::data`), `gef_params` (nominal parameters, widths, parameter files, `gef::params`), `gef_analysis` (analyzer registry, `gef::analysis`), `gef_util` (GEF's string utilities, `gef::util`). M5: `gef_physics` (`gef::physics`, the deterministic physics functions, §3.8). `gef` CLI (`--version`). Catch2 tests; five CMake presets. See §3.6, §3.7 |
-| Python tooling (`tools/`) | Toolchain check and fbc pin, validation-data manifests, BASIC-source tools (`emit_c`, `fbline`, `fbdef`) |
+| Python tooling (`tools/`) | Toolchain check and fbc pin, validation-data manifests, BASIC-source tools (`emit_c`, `fbline`, `fbdef`, `gen_gef_data`, `fn_c_equiv`), the usage-limit wait of the agent workflow |
 | Local CI | `scripts/ci.sh` (full) and `scripts/ci.sh --quick` |
 | Reference harness (`harness/`) | Complete (M1). Reference binary `ref-1` (seed patch only), proven byte-identical to `gef_reference` for captured seeds; per-event reseed mode; Rnd draw logs; probes T0/P1/P2/P3; function drivers; clean-run runner; immutable reference store. See §3.4 |
 | Comparison toolkit (`compare/`) | Complete (M2). Lossless parsers for every output file; exact field-level comparison (the phase-1 acceptance tool); calibrated statistical verdicts, valid for Cf-252 and not for Rn-215 with 20 BASIC runs (re-validated in M17). See §3.5 |
@@ -80,7 +80,7 @@ Recorded in `manifests/toolchain.txt`; checked by `python3 -m tools.toolchain.ch
 
 **fbc backend (captured with `fbc -v`):** `gcc -m64 -march=x86-64 -S -nostdlib -nostdinc -Wall -Wno-unused -Wno-main -Werror-implicit-function-declaration -O0 -fno-strict-aliasing -frounding-math -fno-math-errno -fwrapv -fno-exceptions -fno-asynchronous-unwind-tables -funwind-tables -Wno-format -masm=intel`, then GNU `as` and `ld` with `-lfb -ltinfo -lm -ldl -lpthread -lgcc -lgcc_eh -lc`.
 
-## 3. What exists after M0–M4
+## 3. What exists after M0–M5
 
 ### 3.1 C++ build
 
@@ -231,5 +231,5 @@ The six planning-session reports are saved in `Planning/code_maps/` (M0.1). Thei
 
 ## 6. Next steps
 
-1. Plan M6 (input parsing, run planning and system/step setup, strategy §3), which calls the M5 functions (`U_Valid`, the barrier and mass printout, CN kinematics). Open from M5 for later milestones: where Beta_Equi's message goes when it is reached (Q-041, M7/M13); the `arglog` spread sample is biased for paired calls (`ARGLOG.md`). Open user question (recorded in the M4 plan): whether to make `DCLbranchingJEFF311.bas` compile, which would change its code.
+1. Execute M6 (`MILESTONE_6_PLAN.md`), starting with M6.0: P0/P1b probes, the `setup` patch, the `harness.run` extensions, the console and `Sleep` checks, the corpus manifest, edge inputs and captures. Open from M5 for later milestones: where Beta_Equi's message goes when it is reached (Q-041, M7/M13); the `arglog` spread sample is biased for paired calls (`ARGLOG.md`). Open user question (recorded in the M4 plan): whether to make `DCLbranchingJEFF311.bas` compile, which would change its code.
 2. Per the exact-first decision, later milestone plans gate on bit-exact equality with BASIC (T0–T3) and use `compare.exact` and the per-event reseed mode to triage divergences. The Clang Debug test preset skips `[slow]` tests (user, 2026-10-08); work on this machine is limited to 10 cores (`taskset -c 0-9`, `-j 10`) while it is shared.

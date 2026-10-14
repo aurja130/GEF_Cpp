@@ -11,23 +11,26 @@ Known defects of the original are reproduced by default and documented in a quir
 
 ## Status
 
-**Milestones 0 (Foundations), 1 (Reference harness), 2 (Comparison toolkit) and 3 (FreeBASIC runtime emulation) are complete.** The repository has:
+**Milestones 0–5 are complete; Milestone 6 (input parsing, run planning and system/step setup) is planned.** The repository has:
 - its build, test, lint and CI infrastructure, and tooling to inspect the BASIC source;
 - a reference harness that turns the original BASIC program into a repeatable, observable test oracle;
 - a comparison toolkit that parses every output file and compares runs field by field, or statistically against seeded ensembles;
-- a C++ emulation of the FreeBASIC runtime GEF depends on (conversions, maths, random numbers, text output, arrays, `DATA` and input), proven bit for bit against programs compiled with the original compiler.
+- a C++ emulation of the FreeBASIC runtime GEF depends on (conversions, maths, random numbers, text output, arrays, `DATA` and input), proven bit for bit against programs compiled with the original compiler (M3);
+- GEF's static data, model parameters and analyzer registry in C++: the embedded tables of every certified nuclide-data variant, the nominal parameters and perturbation widths, `Fitpar.dat` reading and the nuclide lookup functions, equal to dumps of the running BASIC program (M4);
+- every deterministic physics function of GEF (masses, shell effects, fission barriers, level densities, temperatures, yields, deformations, moments of inertia, GDR helpers, the low-energy gamma cross-section table and the E2 rotational cascade), bit for bit equal to BASIC on synthetic grids and on every logged call of four reference runs (M5).
 
-No GEF physics has been ported yet; that starts with M4 (static data, parameters and analyzer registry).
+No complete GEF calculation runs in C++ yet. The next milestones add the run control (M6), the per-nucleus model tables (M7), the random samplers (M8), the multi-chance pre-pass (M9) and the event loop (M10); the first full C++ run is M14.
 
 | Area | State |
 |---|---|
-| C++ build (CMake + Ninja, C++23) | `gef_fbrt` library (FreeBASIC runtime emulation) and `gef` CLI; five presets; Catch2 v3 tests |
+| C++ build (CMake + Ninja, C++23) | Libraries `gef_fbrt` (FreeBASIC runtime), `gef_data` (tables and lookups), `gef_params` (parameters), `gef_analysis` (analyzer registry), `gef_util` (GEF's string utilities), `gef_physics` (deterministic physics functions); `gef` CLI (`--version` only so far); five presets; Catch2 v3 tests |
 | Exact floating-point mode | Flags mirror fbc's gcc backend; checked at run time by `gef --version` |
-| BASIC-source tooling | FreeBASIC → C translation, BASIC line → C lookup, symbol index |
-| Reference harness | Seeded reference binary `ref-1`, proven byte-identical to the original binary; per-event reseed mode; random-draw logs; state probes; function drivers; immutable reference store |
+| BASIC-source tooling | FreeBASIC → C translation, BASIC line → C lookup, symbol index, generator of the C++ data tables from the emitted C, function-level C equivalence check for drivers |
+| Reference harness | Seeded reference binary `ref-1`, proven byte-identical to the original binary; per-event reseed mode; random-draw logs; state probes; argument logs of physics calls; function drivers; immutable reference store |
 | Comparison toolkit | Lossless parsers for every GEF output; exact field-level comparison; calibrated statistical verdicts with false-alarm control |
 | Toolchain and data pinning | Toolchain check with fbc 1.10.1 pin; SHA-256 manifests for the validation data and the reference store |
-| Plans | 19 milestones (M0–M18); see `Planning/` |
+| Quirk register | 41 known BASIC quirks with their evidence; each is reproduced by the milestone that ports its code (`Planning/QUIRKS.md`) |
+| Plans | 19 milestones (M0–M18); plans and completion notes for M0–M5, plan for M6; see `Planning/` |
 
 ## Repository layout
 
@@ -37,12 +40,20 @@ Cpp_implementation/
   src/app/                          gef CLI
   src/fbrt/                         FreeBASIC runtime emulation (namespace gef::fb; fbc arithmetic
                                     rules in FBC_ARITHMETIC.md, template inventory in TEMPLATES.md)
+  src/data/                         GEF's DATA tables (generated/ from the emitted C), loaders, lookups
+  src/params/                       nominal parameters, perturbation widths, parameter files
+  src/analysis/                     analyzer registry
+  src/util/                         GEF's string utilities
+  src/physics/                      deterministic physics functions
   tests/                            Catch2 tests, tagged [unit] and [T0]…[T5]; golden/ holds the
-                                    FreeBASIC driver outputs they compare against (harness.golden)
+                                    fingerprints and FreeBASIC driver outputs they compare against
+                                    (harness.golden)
   cmake/                            compiler policy (exact-mode FP flags, warnings), build-time git revision
 tools/
   toolchain/                        toolchain check, fbc locator, validation-data manifests
-  fbsrc/                            BASIC-source tools: emit_c, fbline, fbdef (see tools/fbsrc/README.md)
+  fbsrc/                            BASIC-source tools: emit_c, fbline, fbdef, gen_gef_data, fn_c_equiv
+                                    (see tools/fbsrc/README.md)
+  agent/                            agent-workflow helper (usage-limit wait)
 harness/                            BASIC reference harness: patches, builder, runner, comparison,
                                     seed capture, store, drivers (see harness/README.md)
 compare/                            comparison toolkit: parsers, exact comparison, calibration,
@@ -154,7 +165,7 @@ python3 -m tools.toolchain.manifest_validation verify   # reports missing, chang
 | [`Planning/GEF_CPP_VISION.md`](Planning/GEF_CPP_VISION.md) | Goals, test tiers T0–T5, coverage dimensions, statistical acceptance, definition of done |
 | [`Planning/IMPLEMENTATION_STRATEGY.md`](Planning/IMPLEMENTATION_STRATEGY.md) | Component inventory, strategic decisions, milestones M0–M18 and their gates |
 | [`Planning/CURRENT_PROJECT_STATE.md`](Planning/CURRENT_PROJECT_STATE.md) | What exists now, open risks, next steps |
-| [`Planning/MILESTONE_0_PLAN.md`](Planning/MILESTONE_0_PLAN.md) … [`MILESTONE_4_PLAN.md`](Planning/MILESTONE_4_PLAN.md) | Milestone plans and completion notes |
+| [`Planning/MILESTONE_0_PLAN.md`](Planning/MILESTONE_0_PLAN.md) … [`MILESTONE_6_PLAN.md`](Planning/MILESTONE_6_PLAN.md) | Milestone plans and completion notes |
 | [`Planning/CODING_STANDARDS.md`](Planning/CODING_STANDARDS.md) | C++ and Python conventions, provenance and quirk annotations, tests, license notices |
 | [`Planning/QUIRKS.md`](Planning/QUIRKS.md) | Register of known BASIC quirks and defects that the port reproduces |
 | [`Planning/COVERAGE_MATRIX.md`](Planning/COVERAGE_MATRIX.md) | Coverage of GEF's dimensions by test tier, with owning milestones |
