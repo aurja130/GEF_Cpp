@@ -2,7 +2,8 @@
 // Copyright (C) 2026 Aurora Jahan
 // Licensed under the GNU GPL v3 or later, WITHOUT ANY WARRANTY; see LICENSE.txt.
 
-// Template definitions of support/probe_dump.hpp (included at its end; do not include directly).
+// Template and inline definitions of support/probe_dump.hpp (included at its end; do not include
+// directly).
 
 #pragma once
 
@@ -168,6 +169,21 @@ void ProbeDump::field(std::string_view name, fb::Array<Rec, 1> const& records, F
 }
 
 template <typename Rec, typename Field>
+void ProbeDump::field(std::string_view name, fb::Array<Rec, 1> const& records, std::int64_t lower,
+                      std::int64_t upper, Field field) {
+    using T = std::remove_cvref_t<std::invoke_result_t<Field&, Rec const&>>;
+    std::vector<std::string>& out = lines_[std::string(name)];
+    out.push_back(detail::dump_line(id_, context_, name, "-", "B",
+                                    std::string(detail::type_token<T>()) + " " +
+                                        detail::range_text(lower, upper)));
+    for (std::int64_t index = lower; index <= upper; ++index) {
+        T const value = field(records(index));
+        out.push_back(detail::dump_line(id_, context_, name, std::to_string(index),
+                                        detail::type_token<T>(), detail::element_text(value)));
+    }
+}
+
+template <typename Rec, typename Field>
 void ProbeDump::array_field(std::string_view name, fb::Array<Rec, 1> const& records, Field field) {
     using Member = std::remove_cvref_t<std::invoke_result_t<Field&, Rec const&>>;
     using T = detail::array_element<Member>::ElementType;
@@ -219,6 +235,16 @@ void ProbeDump::array_field(std::string_view name, fb::Array<Rec, 1> const& reco
         }
         ++index;
     }
+}
+
+// Every variable name, ascending byte-wise (the order of a fingerprint over the whole dump).
+inline std::vector<std::string> ProbeDump::names() const {
+    std::vector<std::string> out;
+    out.reserve(lines_.size());
+    for (auto const& entry : lines_) {
+        out.push_back(entry.first);
+    }
+    return out;
 }
 
 } // namespace gef::test

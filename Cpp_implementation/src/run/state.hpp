@@ -73,10 +73,10 @@ struct LmdFlags {
 struct ProcessState {
     explicit ProcessState(data::TableSet const& table_set) : tables{&table_set} {}
 
-    data::TableSet const* tables;   // NucTab, Isotab, mass tables (M4); never null
-    params::Parameters params;      // nominal parameters incl. Emode, EOscale, D_Par_Fac, BFC
+    data::TableSet const* tables; // NucTab, Isotab, mass tables (M4); never null
+    params::Parameters params;    // nominal parameters incl. Emode, EOscale, D_Par_Fac, BFC
     params::PerturbationWidths widths;
-    data::MatNumberState mat;       // I_MAT_ENDF state; ctl/IMATmax.ctl in memory (D7)
+    data::MatNumberState mat; // I_MAT_ENDF state; ctl/IMATmax.ctl in memory (D7)
 
     // stdout of the ported batch code (D3): the screen device of a redirected stdout.
     fb::PrintFile console = fb::PrintFile::console();
@@ -86,104 +86,104 @@ struct ProcessState {
     std::string done_ctl;
 
     // --- process and input mode
-    std::int64_t i_thread = 1;      // GEF.bas:857 (ctl/thread.ctl not ported: a clean run is thread 1)
-    std::int64_t i_thread_max = 8;  // 1761
-    std::int8_t bfilein = 0;        // 1735 Static Byte: -1 once file.in is found (1822)
-    std::int64_t ivalid = 0;        // 1754 (1908 Ivalid = 1)
+    std::int64_t i_thread = 1; // GEF.bas:857 (ctl/thread.ctl not ported: a clean run is thread 1)
+    std::int64_t i_thread_max = 8; // 1761
+    std::int8_t bfilein = 0;       // 1735 Static Byte: -1 once file.in is found (1822)
+    std::int64_t ivalid = 0;       // 1754 (1908 Ivalid = 1)
 
     // --- fit mode (M16 owns the loop; M6 the flags and iteration 1)
-    std::uint8_t b_fit = 0;                 // 868
-    std::int64_t n_iter = 0;                // 872
-    std::string c_fitoption;                // 869
-    std::int64_t i_fitloop = 0;             // 870 LongInt
-    double chisqr_fit_present = 0.0;        // DCLplotting.bas:30 Shared Double
-    std::uint8_t b_new_fit_parameters = 0;  // 871
-    double chisqr_min = 1.0E10;             // DCLplotting.bas:27 Shared Double
+    std::uint8_t b_fit = 0;                // 868
+    std::int64_t n_iter = 0;               // 872
+    std::string c_fitoption;               // 869
+    std::int64_t i_fitloop = 0;            // 870 LongInt
+    double chisqr_fit_present = 0.0;       // DCLplotting.bas:30 Shared Double
+    std::uint8_t b_new_fit_parameters = 0; // 871
+    double chisqr_min = 1.0E10;            // DCLplotting.bas:27 Shared Double
 
     // --- settings not covered by the per-file reset
-    std::int8_t bplot = -1;              // 1725
-    LmdFlags lmd;                        // 1728-1733
-    std::string cfileoutlmd_full;        // 1709 Static
-    std::string clocal;                  // 1717 Static
-    std::string c_espectrum;             // 1770
-    std::string c_espectrum1;            // 1771
-    std::string c_espectrum2;            // 1771
-    std::int64_t i_warning = 0;          // 1736
+    std::int8_t bplot = -1;       // 1725
+    LmdFlags lmd;                 // 1728-1733
+    std::string cfileoutlmd_full; // 1709 Static
+    std::string clocal;           // 1717 Static
+    std::string c_espectrum;      // 1770
+    std::string c_espectrum1;     // 1771
+    std::string c_espectrum2;     // 1771
+    std::int64_t i_warning = 0;   // 1736
 
     // --- the current sequence file
-    double fenhance = 0.0;               // 1712 Dim Double (3128 per file, 3695 per step, 3922)
-    double fenhance_global = 0.0;        // 1757 Static Double
-    std::int64_t iline = 0;              // 1737 Static
-    std::int64_t iline_tot = 0;          // 1738 Static
-    std::int64_t i_first_e_step = 1;     // 1741 Static
-    float en_min = 0.0F;                 // 2652 Static
-    float en_max = 0.0F;                 // 2653 Static
+    double fenhance = 0.0;           // 1712 Dim Double (3128 per file, 3695 per step, 3922)
+    double fenhance_global = 0.0;    // 1757 Static Double
+    std::int64_t iline = 0;          // 1737 Static
+    std::int64_t iline_tot = 0;      // 1738 Static
+    std::int64_t i_first_e_step = 1; // 1741 Static
+    float en_min = 0.0F;             // 2652 Static
+    float en_max = 0.0F;             // 2653 Static
     // 2664 `Static S_par(5000)`: filled without a bound check (the C++ throws beyond 5000).
     fb::Array<SystemLine, 1> s_par{{fb::Bounds{0, 5000}}};
-    std::string ceref;                   // 1711
+    std::string ceref; // 1711
 
     // --- the current system
-    std::int64_t p_z_cn = 92;            // 878 Shared Integer
-    std::int64_t p_a_cn = 236;           // 879 Shared Integer
-    float p_e_exc = 2.0F;                // 880
-    float p_i_rms_cn = 0.0F;             // 890 Shared (1910 `P_I_rms_CN = 0` at every RepeatInput)
-    std::uint8_t b_double_covar = 0;     // 882
-    std::int64_t i_double_covar = 0;     // 883
-    std::int64_t n_double_covar = 0;     // 884
-    std::int64_t p_z_cn_double = 0;      // 885
-    std::int64_t p_a_cn_double = 0;      // 886
-    float p_e_exc_double = 0.0F;         // 887
-    std::int64_t n_e_steps = 0;          // 1739 Static
-    std::int64_t i_e_iso = 0;            // 1748 Static
-    std::string cfileout;                // 1708 Static
-    std::string cfileout_single;         // 1708
-    std::string cfileout_full;           // 1708
-    std::string c_pfis;                  // 814
-    std::string c_pfis2;                 // 815
+    std::int64_t p_z_cn = 92;        // 878 Shared Integer
+    std::int64_t p_a_cn = 236;       // 879 Shared Integer
+    float p_e_exc = 2.0F;            // 880
+    float p_i_rms_cn = 0.0F;         // 890 Shared (1910 `P_I_rms_CN = 0` at every RepeatInput)
+    std::uint8_t b_double_covar = 0; // 882
+    std::int64_t i_double_covar = 0; // 883
+    std::int64_t n_double_covar = 0; // 884
+    std::int64_t p_z_cn_double = 0;  // 885
+    std::int64_t p_a_cn_double = 0;  // 886
+    float p_e_exc_double = 0.0F;     // 887
+    std::int64_t n_e_steps = 0;      // 1739 Static
+    std::int64_t i_e_iso = 0;        // 1748 Static
+    std::string cfileout;            // 1708 Static
+    std::string cfileout_single;     // 1708
+    std::string cfileout_full;       // 1708
+    std::string c_pfis;              // 814
+    std::string c_pfis2;             // 815
 
     // --- the current energy step
-    std::int64_t i_e_step = 0;           // 1740 Static
-    std::int64_t i_error = 0;            // 864
-    std::uint8_t b_error_analysis = 0;   // 862
-    std::int64_t n_error_max = 10;       // 863
-    std::string csystem;                 // 1707 Static
-    float e_exc_iso = 0.0F;              // 832 Static
-    float e_exc_true = 0.0F;             // 832 Static
-    float spin_cn = 0.0F;                // 1749 Static (ES/EM steps: what the last bin wrote)
-    float spin_target = 0.0F;            // 1749 Static
-    float eabsgs = 0.0F;                 // 1742
-    float bprot = 0.0F;                  // 772 Shared
-    float balpha = 0.0F;                 // 772 Shared
+    std::int64_t i_e_step = 0;         // 1740 Static
+    std::int64_t i_error = 0;          // 864
+    std::uint8_t b_error_analysis = 0; // 862
+    std::int64_t n_error_max = 10;     // 863
+    std::string csystem;               // 1707 Static
+    float e_exc_iso = 0.0F;            // 832 Static
+    float e_exc_true = 0.0F;           // 832 Static
+    float spin_cn = 0.0F;              // 1749 Static (ES/EM steps: what the last bin wrote)
+    float spin_target = 0.0F;          // 1749 Static
+    float eabsgs = 0.0F;               // 1742
+    float bprot = 0.0F;                // 772 Shared
+    float balpha = 0.0F;               // 772 Shared
 
     // --- written by later stages (step body), read by the set-up or dumped at P1. M6 never
     // writes them; a step body may (MILESTONE_6_PLAN.md M6.0 patch check).
-    float z = 0.0F;                      // 790 Shared `Z` (table builder; Q-007)
-    float t = 0.0F;                      // 823 Shared `T`
-    float pz_s3_olap_curv = 0.0F;        // working copy read by GEF.bas:2610 (Q-019; set by M12)
+    float z = 0.0F;               // 790 Shared `Z` (table builder; Q-007)
+    float t = 0.0F;               // 823 Shared `T`
+    float pz_s3_olap_curv = 0.0F; // working copy read by GEF.bas:2610 (Q-019; set by M12)
 };
 
 // GEF.bas:2647-2684.
 struct InputRoundState {
-    std::string c_energy_table;                                   // 2647
-    fb::Array<float, 1> energy_table{{fb::Bounds{0, 1}}};           // 2648 Redim Energy_Table(1)
-    fb::Array<float, 1> spin_table{{fb::Bounds{0, 1}}};             // 2649
-    std::int64_t n_e_values = 1;                                  // 2650
-    std::int64_t i_first = 0;                                     // 2651
-    std::int64_t i_last = 0;                                      // 2651
-    std::int64_t i_step = 0;                                      // 2651
-    std::int64_t n_values = 0;                                    // 2651
-    fb::Array<float, 1> e_spectrum{{fb::Bounds{0, 1}}};             // 2669
-    fb::Array<float, 1> l_spectrum{{fb::Bounds{0, 1}}};             // 2670
-    fb::Array<float, 1> w_spectrum{{fb::Bounds{0, 1}}};             // 2671
-    fb::Array<std::int64_t, 1> ne_all{{fb::Bounds{0, 1}}};          // 2672 LongInt
-    fb::Array<std::int64_t, 1> ne_fis{{fb::Bounds{0, 1}}};          // 2673 LongInt
-    std::int64_t i_estep = 0;                                     // 2674 LongInt
-    float w_spectrum_max = 0.0F;                                  // 2675
-    float ichannel = 0.0F;                                        // 2676 (a Single counter)
-    std::string chelp;                                            // 2681
-    fb::Array<std::string, 1> cfilein{{fb::Bounds{0, 1000}}};       // 2682
-    std::int64_t ifilein = 0;                                     // 2683
-    std::int64_t nfilein = 0;                                     // 2684
+    std::string c_energy_table;                               // 2647
+    fb::Array<float, 1> energy_table{{fb::Bounds{0, 1}}};     // 2648 Redim Energy_Table(1)
+    fb::Array<float, 1> spin_table{{fb::Bounds{0, 1}}};       // 2649
+    std::int64_t n_e_values = 1;                              // 2650
+    std::int64_t i_first = 0;                                 // 2651
+    std::int64_t i_last = 0;                                  // 2651
+    std::int64_t i_step = 0;                                  // 2651
+    std::int64_t n_values = 0;                                // 2651
+    fb::Array<float, 1> e_spectrum{{fb::Bounds{0, 1}}};       // 2669
+    fb::Array<float, 1> l_spectrum{{fb::Bounds{0, 1}}};       // 2670
+    fb::Array<float, 1> w_spectrum{{fb::Bounds{0, 1}}};       // 2671
+    fb::Array<std::int64_t, 1> ne_all{{fb::Bounds{0, 1}}};    // 2672 LongInt
+    fb::Array<std::int64_t, 1> ne_fis{{fb::Bounds{0, 1}}};    // 2673 LongInt
+    std::int64_t i_estep = 0;                                 // 2674 LongInt
+    float w_spectrum_max = 0.0F;                              // 2675
+    float ichannel = 0.0F;                                    // 2676 (a Single counter)
+    std::string chelp;                                        // 2681
+    fb::Array<std::string, 1> cfilein{{fb::Bounds{0, 1000}}}; // 2682
+    std::int64_t ifilein = 0;                                 // 2683
+    std::int64_t nfilein = 0;                                 // 2684
 };
 
 // GEF.bas:2827-2842 (the values right after the reset), changed by Options(...) and later by
@@ -203,9 +203,9 @@ struct SequenceFileState {
 
 // GEF.bas:3914-3945, the part M6 sets (the rest belongs to the pre-pass, M9).
 struct StepState {
-    std::int64_t bmulti = 0;          // 3920 (3972 `Bmulti = 1` when the pre-pass runs)
-    std::int64_t n_multi_sample = 0;  // 3921 LongInt (3926)
-    bool prepass = false;             // the decision of 3967 (`Eabsgs >= Eexc_min_multi Or Emode = 13`)
+    std::int64_t bmulti = 0;         // 3920 (3972 `Bmulti = 1` when the pre-pass runs)
+    std::int64_t n_multi_sample = 0; // 3921 LongInt (3926)
+    bool prepass = false; // the decision of 3967 (`Eabsgs >= Eexc_min_multi Or Emode = 13`)
 };
 
 // What BASIC does after a block of the input or the set-up: carry on, leave the system line

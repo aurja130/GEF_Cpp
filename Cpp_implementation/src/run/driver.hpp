@@ -23,10 +23,10 @@ namespace gef::run {
 
 // Why the run is over.
 enum class RunEnd : std::uint8_t {
-    None,          // not over
-    Finished,      // the last file was done (GEF.bas:15613-15669: "GEF is terminated.")
+    None,         // not over
+    Finished,     // the last file was done (GEF.bas:15613-15669: "GEF is terminated.")
     EndStatement, // a `Sleep : End` after an error message
-    FitBackEdge, // fit mode without the end of NITER: `GoTo Nextfitloop` (15610), M16
+    FitBackEdge,  // fit mode without the end of NITER: `GoTo Nextfitloop` (15610), M16
 };
 
 // One pass of the error analysis (GEF.bas:4811 calcstart, 5055-5091).
@@ -65,7 +65,7 @@ public:
 private:
     // Where next_step() resumes.
     enum class Resume : std::uint8_t {
-        Start,     // GEF.bas:1821, not yet run
+        Start,    // GEF.bas:1821, not yet run
         NextStep, // after a step: `Next I_E_step`
     };
 

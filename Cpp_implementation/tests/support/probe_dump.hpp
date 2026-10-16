@@ -47,6 +47,14 @@ public:
     template <typename Rec, typename Field>
     void field(std::string_view name, fb::Array<Rec, 1> const& records, Field field);
 
+    // The field of a 1-dimensional UDT array over the explicit bounds `lower:upper`, as BASIC's
+    // `HP_F1(array, field, lower, upper)` writes it: `B <type> lower:upper`, then
+    // `field(records(i))` for i = lower..upper (no elements when upper < lower). Every index must
+    // lie in the bounds of `records`; `records(i)` throws otherwise.
+    template <typename Rec, typename Field>
+    void field(std::string_view name, fb::Array<Rec, 1> const& records, std::int64_t lower,
+               std::int64_t upper, Field field);
+
     // An array field of a 1-dimensional UDT array (`Isotab.R_SPI`, record index first):
     // `field(rec)` returns the fb::Array<T, 1> member.
     template <typename Rec, typename Field>
@@ -54,6 +62,8 @@ public:
 
     [[nodiscard]] std::vector<std::string> const& lines(std::string_view name) const;
     [[nodiscard]] ProbeFingerprint fingerprint(std::string_view name) const;
+    // Every variable name, ascending byte-wise (the order of a fingerprint over the whole dump).
+    [[nodiscard]] std::vector<std::string> names() const;
 
 private:
     std::string id_;

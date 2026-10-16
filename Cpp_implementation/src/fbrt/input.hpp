@@ -52,6 +52,11 @@ public:
     // branch (dev_file_eof.c). Same condition as at_end().
     [[nodiscard]] bool eof() const noexcept;
 
+    // True when the file position is at the end of the contents, whatever the putback buffer
+    // holds. With eof() false and this true, every `Line Input` returns "" and changes nothing,
+    // so `Do Until EOF(f) : Line Input #f, s` never ends.
+    [[nodiscard]] bool data_at_end() const noexcept;
+
 private:
     static constexpr int eof_char = -1;
 

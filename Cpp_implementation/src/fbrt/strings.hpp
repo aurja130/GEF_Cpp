@@ -18,6 +18,13 @@ namespace gef::fb {
 // fb_TRIM (str_trim.c): strips trailing ASCII 32 and NUL, leading ASCII 32 only.
 [[nodiscard]] std::string trim(std::string_view s);
 
+// Trim(s, pattern) = fb_TrimEx (str_trim.c): removes whole copies of `pattern` from both ends,
+// repeatedly (Trim("xxxabxxx", "xx") is "xabx"); not a set of characters.
+[[nodiscard]] std::string trim(std::string_view s, std::string_view pattern);
+
+// RTrim(s) = fb_RTRIM (str_rtrim.c): strips trailing ASCII 32 and NUL.
+[[nodiscard]] std::string rtrim(std::string_view s);
+
 // UCase(s): fb_StrUcase2(s, 0) (str_ucase.c); only the C-locale letters a-z change.
 [[nodiscard]] std::string ucase(std::string_view s);
 
@@ -32,5 +39,11 @@ namespace gef::fb {
 
 // fb_StrMid (str_mid.c): len characters from the 1-based start (clipped to the string).
 [[nodiscard]] std::string mid(std::string_view s, std::int64_t start, std::int64_t len);
+
+// Left(s, n) = fb_LEFT (str_left.c): the first n bytes, clipped to the string.
+[[nodiscard]] std::string left(std::string_view s, std::int64_t n);
+
+// Right(s, n) = fb_RIGHT (str_right.c): the last n bytes, clipped to the string.
+[[nodiscard]] std::string right(std::string_view s, std::int64_t n);
 
 } // namespace gef::fb

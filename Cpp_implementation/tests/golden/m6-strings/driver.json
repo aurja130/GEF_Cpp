@@ -1,0 +1,25 @@
+{
+  "binary_sha256": "8a03d25bc59e89a1e4027b3ee0cfce0eb5f9438da10ff1bafc88770ddbeea8f7",
+  "command": [
+    "m6_strings"
+  ],
+  "cuts": [],
+  "driver": "m6_strings",
+  "driver_includes": [],
+  "driver_sha256": "c95d4e47340893700e9b4ed27f4b6802afefe44e1468ef0c7de5f0151de7df01",
+  "fbc_version": "1.10.1",
+  "includes": [],
+  "outputs": {
+    "hang.txt": "f8aba00f508c0b80ce6e0b191bb4c4f3bde01b1db2d62143cddc54e45205bc63",
+    "in_blank_first.bin": "a3bce3a8f2647a147d550b2bbc09edd181d27b9b6c7d8ed13f6097e749a0b2d8",
+    "in_number.bin": "4d4387237135fde785bb110ed704c4b99fd9f425364b480ddd5cc90b43726b9e",
+    "in_number_noeol.bin": "388228d8c2e5a927ba33460ebf5f883c05a39b708c9501b5441536f3ab6af4cc",
+    "in_quote.bin": "a1e2def1957d311f35ee7ea9f5bbeb37a00490b7d3b363f2ff4824012a9a73c4",
+    "in_quote_noeol.bin": "a2a172a2152aa5687e6bd62721f25cd2c0c6337c134f6144b7cc5a105f9e84a5",
+    "stdout.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "strings.txt": "38b982c110e06072abc055bcbbe52df4e59ec0b947257e21d9028e0d0fcdc5fb"
+  },
+  "returncode": 0,
+  "run_wall_time_s": 0.002,
+  "work_files": []
+}

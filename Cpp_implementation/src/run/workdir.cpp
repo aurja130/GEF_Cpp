@@ -22,11 +22,19 @@ std::filesystem::path WorkDir::resolve(std::string_view path) const {
 }
 
 std::optional<std::string> WorkDir::read(std::string_view path) const {
+    // fopen("") fails (ENOENT); joined to the root, "" would name the root directory instead.
+    if (path.empty()) {
+        return std::nullopt;
+    }
     return params::read_input_file(resolve(path));
 }
 
 bool WorkDir::exists(std::string_view path) const {
-    // fb_FileExists: fopen(filename, "r") (libstdc++'s filebuf opens with fopen as well).
+    // fb_FileExists: fopen(filename, "r") (libstdc++'s filebuf opens with fopen as well);
+    // FileExists("") is 0 with fbc 1.10.1.
+    if (path.empty()) {
+        return false;
+    }
     std::ifstream const file(resolve(path), std::ios::binary);
     return file.is_open();
 }

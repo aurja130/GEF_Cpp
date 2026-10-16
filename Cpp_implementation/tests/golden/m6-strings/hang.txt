@@ -1,0 +1,35 @@
+INPUT quote 0000000000000000 0 0
+LINE quote 1 0 0 31
+LINE quote 2 1 1 -
+LINE quote 3 1 1 -
+LINE quote 4 1 1 -
+LINE quote 5 1 1 -
+LINE quote 6 1 1 -
+INPUT quote_noeol 0000000000000000 0 0
+LINE quote_noeol 1 0 0 -
+LINE quote_noeol 2 0 0 3530
+LINE quote_noeol 3 0 0 39362c3234372c22475322
+LINE quote_noeol 4 0 0 -
+LINE quote_noeol 5 0 0 -
+LINE quote_noeol 6 0 0 -
+INPUT number 4014000000000000 0 0
+LINE number 1 0 0 36
+LINE number 2 1 1 -
+LINE number 3 1 1 -
+LINE number 4 1 1 -
+LINE number 5 1 1 -
+LINE number 6 1 1 -
+INPUT blank_first 0000000000000000 0 0
+LINE blank_first 1 0 0 2f4d6556
+LINE blank_first 2 0 0 2020362e392020392e38
+LINE blank_first 3 0 0 -
+LINE blank_first 4 0 0 -
+LINE blank_first 5 0 0 -
+LINE blank_first 6 0 0 -
+INPUT number_noeol 401b99999999999a 0 0
+LINE number_noeol 1 0 0 2e38
+LINE number_noeol 2 0 0 -
+LINE number_noeol 3 0 0 -
+LINE number_noeol 4 0 0 -
+LINE number_noeol 5 0 0 -
+LINE number_noeol 6 0 0 -
