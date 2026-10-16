@@ -133,6 +133,58 @@ def test_prepare_run_dir_layout(tmp_path: Path, input_file: Path) -> None:
     assert sorted(p.name for p in work.iterdir()) == ["file.in", "in"]
 
 
+def test_prepare_run_dir_inputs_file_in_and_placed_files(tmp_path: Path, input_file: Path) -> None:
+    second = tmp_path / "two.in"
+    second.write_text(' 1\n0\n 98, 252, "GS"\n', encoding="utf-8")
+    spectrum = tmp_path / "spec.dat"
+    spectrum.write_text("1 2\n", encoding="utf-8")
+    fitpar = tmp_path / "Fitpar.dat"
+    fitpar.write_text("x\n", encoding="utf-8")
+    work = prepare_run_dir(
+        tmp_path / "x", input_file, [fitpar, (spectrum, "in/E.in")], extra_inputs=[second]
+    )
+    assert (work / "file.in").read_bytes() == b'"in/seq.in"\n"in/two.in"\nEND\n'
+    assert (work / "in" / "two.in").read_bytes() == second.read_bytes()
+    assert (work / "in" / "E.in").read_bytes() == spectrum.read_bytes()
+    assert (work / "Fitpar.dat").read_bytes() == fitpar.read_bytes()
+    custom = prepare_run_dir(tmp_path / "y", input_file, file_in=b'NITER(1)\n"in/seq.in"\n')
+    assert (custom / "file.in").read_bytes() == b'NITER(1)\n"in/seq.in"\n'
+
+
+@pytest.mark.parametrize("dest", ["/abs", "../up", "file.in", "in", "in/seq.in"])
+def test_prepare_run_dir_refuses_bad_destinations(
+    tmp_path: Path, input_file: Path, dest: str
+) -> None:
+    extra = tmp_path / "e.dat"
+    extra.write_text("1\n", encoding="utf-8")
+    with pytest.raises(HarnessError):
+        prepare_run_dir(tmp_path / "x", input_file, [(extra, dest)])
+    assert not (tmp_path / "x").exists()
+
+
+def test_cli_repeated_inputs_and_file_in(
+    tmp_path: Path, fake_binary: Path, input_file: Path
+) -> None:
+    second = tmp_path / "two.in"
+    second.write_text(' 1\n0\n 98, 252, "GS"\n', encoding="utf-8")
+    file_in = tmp_path / "list.in"
+    file_in.write_text('"in/two.in"\nNITER(1)\n', encoding="utf-8")
+    spectrum = tmp_path / "spec.dat"
+    spectrum.write_text("1 2\n", encoding="utf-8")
+    out = tmp_path / "cli2"
+    argv = ["--binary", str(fake_binary), "--input", str(input_file), "--input", str(second)]
+    argv += ["--seed", "5", "--out", str(out), "--file-in", str(file_in)]
+    argv += ["--work-file", f"{spectrum}=in/E.in"]
+    assert main(argv) == 0
+    assert 'file.in="in/two.in"|NITER(1)|' in (out / "stdout.log").read_text(encoding="utf-8")
+    record = json.loads((out / "run.json").read_text(encoding="utf-8"))
+    assert [i["name"] for i in record["inputs"]] == ["seq.in", "two.in"]
+    assert record["file_in"] == {"sha256": sha256_file(file_in)}
+    assert record["work_files"] == [
+        {"name": "spec.dat", "sha256": sha256_file(spectrum), "dest": "in/E.in"}
+    ]
+
+
 def test_build_environment() -> None:
     assert build_environment(7) == {"GEF_SEED": "7"}
     assert build_environment(None, extra_env={"A": "b"}) == {"A": "b"}

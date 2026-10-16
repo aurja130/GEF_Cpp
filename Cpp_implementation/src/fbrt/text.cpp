@@ -65,7 +65,8 @@ std::string str(std::int64_t x) {
     return format("%lld", static_cast<long long>(x));
 }
 
-// file_put.c fb_FilePutDataEx: line_length counts the characters after the last CR or LF.
+// file_put.c fb_FilePutDataEx: line_length counts the characters after the last CR or LF,
+// modulo the device width when it is not 0.
 void PrintFile::write(std::string_view s) {
     text_.append(s);
     std::size_t const last = s.find_last_of("\r\n");
@@ -74,13 +75,19 @@ void PrintFile::write(std::string_view s) {
     } else {
         line_length_ = s.size() - (last + 1);
     }
+    if (width_ != 0) {
+        line_length_ %= width_;
+    }
 }
 
-// io_printpad.c fb_PrintPadEx (file width 0): spaces up to the next zone start
-// (columns 1, 15, 29, ...); never a newline, because the new column is always greater.
+// io_printpad.c fb_PrintPadEx: spaces up to the next zone start (columns 1, 15, 29, ...). With
+// a device width, a zone beyond it becomes column 1, which fb_hPrintPadEx writes as a newline.
 void PrintFile::pad() {
     std::size_t const old_x = line_length_ + 1;
-    std::size_t const new_x = ((old_x + tab_width - 1) / tab_width) * tab_width + 1;
+    std::size_t new_x = ((old_x + tab_width - 1) / tab_width) * tab_width + 1;
+    if (width_ != 0 && new_x > width_) {
+        new_x = 1;
+    }
     if (new_x <= old_x) {
         write(newline);
     } else {

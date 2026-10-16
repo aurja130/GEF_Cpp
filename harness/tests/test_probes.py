@@ -241,7 +241,7 @@ def _emitted_names(text: str) -> list[str]:
             names.append(m.group(1))
         elif (m := re.match(r"\s*HP_(?:F1|FS1|FA1|FA2)\((\w+), (\w+),", line)) is not None:
             names.append(f"{m.group(1)}.{m.group(2)}")
-        elif (m := re.match(r'\s*HP_(?:F1N|A1N)\("([\w.]+)"', line)) is not None:
+        elif (m := re.match(r'\s*HP_(?:F1N|A1N|VN)\("([\w.]+)"', line)) is not None:
             names.append(m.group(1))
     return names
 
@@ -253,7 +253,7 @@ def _md_section(probe: str) -> str:
     return match.group(0)
 
 
-@pytest.mark.parametrize("probe", ["T0", "P1", "P2", "P3"])
+@pytest.mark.parametrize("probe", ["T0", "P0", "P1", "P1b", "P2", "P3"])
 def test_probes_md_lists_exactly_the_emitted_variables(probe: str) -> None:
     source = _patch_new_files()[f"harness_probe_{probe.lower()}.bi"]
     emitted = _emitted_names(source)
@@ -268,8 +268,15 @@ def test_probes_md_lists_exactly_the_emitted_variables(probe: str) -> None:
     assert set(emitted) <= set(documented)
 
 
+def test_p1b_skip_writes_the_same_variables_as_p1b() -> None:
+    files = _patch_new_files()
+    assert _emitted_names(files["harness_probe_p1b_skip.bi"]) == _emitted_names(
+        files["harness_probe_p1b.bi"]
+    )
+
+
 def test_every_probe_group_names_a_consumer() -> None:
-    for probe in ("T0", "P1", "P2", "P3"):
+    for probe in ("T0", "P0", "P1", "P1b", "P2", "P3"):
         section = _md_section(probe)
         groups = re.findall(r"^### .*$", section, re.M)
         assert groups
@@ -349,7 +356,7 @@ def test_probes_patch_applies_in_every_patch_set(tmp_path: Path, patchset: str) 
     _apply(src, PROBES_PATCH)
     with_probes = (src / "GEF.bas").read_bytes().splitlines()
     inserted = [ln for ln in with_probes if ln.startswith((b'#Include "harness_probe_', b"#line "))]
-    assert len(inserted) == 8
+    assert len(inserted) == 14
     assert [ln for ln in with_probes if ln not in inserted] == without
 
 
@@ -397,7 +404,8 @@ def test_probes_build_and_write_every_probe_file(tmp_path: Path) -> None:
         timeout_s=600,
     )
     probe_dir = outcome.work_dir / "probes"
-    assert sorted(p.name for p in probe_dir.iterdir()) == ["P1.txt", "P2.txt", "P3.txt", "T0.txt"]
+    names = sorted(p.name for p in probe_dir.iterdir())
+    assert names == ["P0.txt", "P1.txt", "P1b.txt", "P2.txt", "P3.txt", "T0.txt"]
     t0 = read_probe_file(probe_dir / "T0.txt")[0]
     assert t0.scalar("N_MAT_MAX") == 3852
     assert t0.var("NucTab.I_Z").get((1,)) == 0 and t0.var("BEldmTF").bounds == ((0, 203), (0, 136))
@@ -405,3 +413,46 @@ def test_probes_build_and_write_every_probe_file(tmp_path: Path) -> None:
     assert (p1.scalar("P_Z_CN"), p1.scalar("P_A_CN"), p1.scalar("Emode")) == (86, 215, 2)
     p3 = read_probe_file(probe_dir / "P3.txt")[0]
     assert p3.bin == (1, 0, 0, 0) and p3.pass_ == 0
+    p1b = read_probe_file(probe_dir / "P1b.txt")[0]
+    p2 = read_probe_file(probe_dir / "P2.txt")[0]
+    assert p1b.scalar("Eexc_min_multi") == p2.scalar("Eexc_min_multi")
+    assert p1b.scalar("N_multi_sample") == p2.scalar("N_multi_sample")
+    assert p1b.scalar("Harness_Prepass") == (-1 if p2.scalar("Bmulti") else 0)
+
+
+@needs_source
+@pytest.mark.fbc
+@pytest.mark.slow
+def test_setup_only_build_ends_every_step_after_p1b(tmp_path: Path) -> None:
+    from harness.build import build
+    from harness.run import run
+    from tools.toolchain.fbc import FbcError, resolve_fbc
+
+    try:
+        resolve_fbc()
+    except FbcError:
+        pytest.skip("pinned fbc is not available")
+    result = build("seed-probes", ["GEF_PROBES", "GEF_SETUP_ONLY"], build_root=tmp_path / "build")
+    sequence = tmp_path / "two.in"
+    # Two systems, one with a channel outside the multi-chance block (FC: Emode = -1).
+    sequence.write_text(' 10\n0.0253E-6, 14\n 92, 236, "EN"\n 98, 252, "FC"\n', encoding="utf-8")
+    outcome = run(
+        result.binary,
+        sequence,
+        tmp_path / "run",
+        seed=12345,
+        scope={"steps": "1-9", "passes": "0"},
+        timeout_s=120,
+    )
+    probe_dir = outcome.work_dir / "probes"
+    names = sorted(p.name for p in probe_dir.iterdir())
+    assert names == ["P0.txt", "P1.txt", "P1b.txt", "T0.txt"]
+    p0 = read_probe_file(probe_dir / "P0.txt")
+    assert len(p0) == 1 and p0[0].scalar("Iline_tot") == 2
+    p1 = read_probe_file(probe_dir / "P1.txt")
+    p1b = read_probe_file(probe_dir / "P1b.txt")
+    # EN: two energies, two steps; FC: one step.
+    assert [(r.scalar("P_Z_CN"), r.step) for r in p1] == [(92, 1), (92, 2), (98, 1)]
+    assert [r.step for r in p1b] == [1, 2, 1]
+    assert p1b[2].scalar("Harness_Prepass") == 0
+    assert not (outcome.work_dir / "out").exists() or not any((outcome.work_dir / "out").iterdir())

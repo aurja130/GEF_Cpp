@@ -29,11 +29,18 @@ enum class PrintEnd : std::uint8_t {
     Pad = 2,     // `,`: advance to the next 14-column print zone
 };
 
-// The text written by a sequence of `Print #f` statements to one sequential file (libfb's
-// FB_FILE with width 0, not a console or pipe). It tracks libfb's line_length, the number of
-// characters since the last CR or LF, which zones (`,`) and Tab() depend on.
+// The text written by a sequence of `Print #` statements to one sequential file (libfb's
+// FB_FILE with width 0, not a console or pipe), or, with `console()`, by `Print` to the screen
+// device when stdout is not a terminal (width 80: line_length is kept modulo 80 and a `,` zone
+// beyond column 80 starts a new line; M6.0). It tracks libfb's line_length, the number of
+// characters since the last CR or LF, which zones (`,`) and Tab() depend on. Tab() follows the
+// file branch only.
 class PrintFile {
 public:
+    PrintFile() = default;
+    // The screen device of a program whose stdout is redirected (fb_ConsoleGetSize: 80 columns
+    // when the console is not initialised).
+    [[nodiscard]] static PrintFile console() { return PrintFile{80}; }
     void print(std::string_view s, PrintEnd end); // fb_PrintString
     void print(float x, PrintEnd end);            // fb_PrintSingle: blank or '-', then %.7g
     void print(double x, PrintEnd end);           // fb_PrintDouble: blank or '-', then %.16g
@@ -71,8 +78,11 @@ private:
     void using_real(double x, bool is_single, PrintEnd end,
                     bool last); // fb_PrintUsingDouble/Single
 
+    explicit PrintFile(std::size_t width) : width_{width} {}
+
     std::string text_;
     std::size_t line_length_ = 0;
+    std::size_t width_ = 0; // FB_FILE width: 0 for files, 80 for the redirected screen
 
     std::string using_format_;
     std::size_t using_pos_ = 0;

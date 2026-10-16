@@ -9,7 +9,9 @@ group. `python3 -m harness.probes` reads the files (see below). Line numbers ref
 | Probe | Where | When written | Consumer milestones |
 |---|---|---|---|
 | **T0** | after line 1570 (`#Include Once "ElmtNames.bas"`), module level | once per process | M4 (tables, parameters, registry) |
+| **P0** | after line 3128 (`Fenhance = Fenhance_global`), after a sequence file has been read | every sequence file (not selected by `GEF_TRACE_STEPS`) | M6 (input parsing) |
 | **P1** | before line 3882, after the entrance-channel kinematics and the validity checks (inside `For I_E_step`) | every energy step selected by `GEF_TRACE_STEPS` | M6 (input, run plan, step setup) |
+| **P1b** | after line 3966 (threshold computed, before the pre-pass decision at 3967) for the channels inside the `If` of 3948; after line 3947 for the others | every energy step selected by `GEF_TRACE_STEPS` | M6 (threshold, pre-pass decision) |
 | **P2** | after line 4800 (`End If ' If Emode < 3 etc.`, end of the multi-chance pre-pass) | every energy step selected by `GEF_TRACE_STEPS` | M9 (pre-pass), M10 (packed emission records) |
 | **P3** | after line 7920 (`Racc = ...`), just before `For ILoop` | every bin with `NEVTused > 0`, in every pass selected by `GEF_TRACE_PASSES`, of every selected step | M7 (table builder), M10 (event-loop inputs) |
 
@@ -19,7 +21,8 @@ Deviations from the plan text (`MILESTONE_1_PLAN.md` M1.8), all checked with `fb
   only for 100 < E < 120 MeV. P1 is therefore placed after the whole entrance-channel block
   (`Select Case Emode` ends at 3843, the `Eabsgs < 0` check at 3874), directly before the
   pre-pass starts clearing the CN spectra at 3882.
-* The multi-chance threshold `Eexc_min_multi` is computed at 3951-3957, i.e. after P1. It is in P2.
+* The multi-chance threshold `Eexc_min_multi` is computed at 3951-3957, i.e. after P1. It is in P1b
+  (M6) and P2.
 * Line 4800 is the last line of the pre-pass block, so P2 is placed right after it.
 * P3 is placed after line 7920 so that `Racc` is included. Bins with `NEVTused = 0` skip the table
   builder entirely and write no P3 record; their weights are visible in P2.
@@ -75,9 +78,15 @@ passes narrowly.
 ## Selection and neutrality
 
 * `GEF_TRACE_STEPS`, `GEF_TRACE_PASSES` (comma-separated integers or ranges such as `1,3-5`; unset
-  selects nothing) come from the `scope` patch. T0 is always written. P1 and P2 use
+  selects nothing) come from the `scope` patch. T0 and P0 are always written. P1, P1b and P2 use
   `Harness_StepSelected()`; P3 uses `Harness_Traced()` (step and pass selected; the event selector
   is not consulted outside the event loop). Without `-d GEF_PROBES` the inserted lines are empty.
+* **Setup-only mode** (M6): with `-d GEF_SETUP_ONLY` in addition to `-d GEF_PROBES`, P1b ends
+  every energy step with `Continue For` after it has been written (written or not, depending on
+  the step selection), so the multi-chance pre-pass, the passes, the events and every writer are
+  skipped. A `GoTo` to the end of the step cannot be used: fbc refuses a forward branch across the
+  step's local arrays (error 105). This mode is not neutral by design; `MILESTONE_6_PLAN.md` M6.0
+  lists what it changes.
 * The probes only read variables. They add no `ReDim`, call no GEF function and draw no random
   number (they use no `Rnd`; the `rndlog` patch redefines `Rnd`). Arrays that GEF exposes through
   accessor functions (`Egamma`, `ENsci`, ...) are read through their underlying `_` arrays.
@@ -92,9 +101,9 @@ passes narrowly.
 * `#line` directives after each inserted `#Include` keep the original BASIC line numbers for every
   later statement, so the `rnd.log` site tags (`__LINE__`) are unchanged.
 * The patch must apply after `seed`, `scope`, `reseed`, `rndlog` in this order (it touches only
-  lines 1570/1571, 3881/3882, 4800/4801 and 7920/7921, with one line of patch context).
-  Patch sets that contain it: `seed-probes`, `seed-rndlog-probes`, `seed-reseed-rndlog-probes`
-  (where `reseed.patch` exists).
+  lines 1570/1571, 3128/3129, 3881/3882, 3947/3948, 3966/3967, 4800/4801 and 7920/7921, with one
+  line of patch context). Patch sets that contain it: `seed-probes`, `seed-rndlog-probes`,
+  `seed-reseed-rndlog-probes` (where `reseed.patch` exists).
 
 ## Not captured
 
@@ -244,6 +253,74 @@ Consumer: M4 T0 exact (initial `Var_*`; the final values are in P1); M12
 |---|---|
 | S | `Fred_par`, `Var_P_DZ_Mean_S1`, `Var_P_Corr_S1`, `Var_P_DZ_Mean_S2`, `Var_P_A_Width_S2`, `Var_P_DZ_Mean_S3`, `Var_P_DZ_Mean_S4`, `Var_P_DZ_Mean_SL5`, `Var_P_DZ_Mean_S5`, `Var_Delta_S0`, `Var_P_Shell_S1`, `Var_P_Shell_S2`, `Var_P_Shell_S3`, `Var_P_Shell_S4`, `Var_P_Shell_SL5`, `Var_P_Shell_S5`, `Var_P_Z_Curv_S1`, `Var_P_Z_Curv_S2`, `Var_S2leftmod`, `Var_P_Z_Curv_S3`, `Var_P_Z_Curv_S4`, `Var_P_Z_Curv_SL5`, `Var_P_Z_Curv_S5`, `Var_PZ_S3_olap_pos`, `Var_PZ_S3_olap_curv`, `Var_dE_Defo_S1`, `Var_dE_Defo_S2`, `Var_dE_Defo_S3`, `Var_dE_Defo_S4`, `Var_dE_Defo_S5`, `Var_betaL0`, `Var_betaL1`, `Var_betaH0`, `Var_betaH1`, `Var_dbeta_S3`, `Var_T_low_S1`, `Var_T_low_S2`, `Var_T_low_S3`, `Var_T_low_S4`, `Var_T_low_S5`, `Var_T_low_SL`, `Var_ECOLLFRAC`, `Var_EDISSFRAC`, `Var_P_att_pol`, `Var_HOMPOL`, `Var_POLARadd`, `Var_Jscaling` |
 
+## P0: sequence file as parsed
+
+Written once per sequence file, after its last line has been read and `Fenhance = Fenhance_global` (GEF.bas:3128), before the first system of the file is set up. Not selected by `GEF_TRACE_STEPS`. Context `step=- pass=- bin=- rec=<k>`; `rec` counts the files of the process (a restart through `RepeatInput` reads them again). `S_par` is dumped for the lines of this file only (`1 … Iline_tot`); entries beyond it are left over from earlier files and never read.
+
+### file list
+
+Consumer: M6 (`file.in` parser)
+
+| Type | Scalars |
+|---|---|
+| I | `Nfilein`, `Ifilein` |
+
+| Array | Type | Bounds | Dump |
+|---|---|---|---|
+| `Cfilein` | Z | 0:1000 | sparse (empty strings omitted) |
+
+### statistics and energy line
+
+Consumer: M6 (sequence-file parser; `Energy_Table`, `N_E_values` also as left over after a spectrum-file line)
+
+| Type | Scalars |
+|---|---|
+| D | `Fenhance_global`, `Fenhance` |
+| Z | `C_Energy_Table`, `C_Espectrum1`, `C_Espectrum2` |
+| I | `I_first_E_step`, `N_E_values` |
+| S | `En_min`, `En_max` |
+
+| Array | Type | Bounds | Dump |
+|---|---|---|---|
+| `Energy_Table` | S | 0:N_E_values | dense |
+| `Spin_Table` | S | 0:N_E_values | dense |
+
+### system lines
+
+Consumer: M6 (3-field and 6-field lines, A ranges)
+
+| Type | Scalars |
+|---|---|
+| I | `Iline_tot` |
+
+| Array | Type | Bounds | Dump |
+|---|---|---|---|
+| `S_par.Z` | I | 1:Iline_tot | dense |
+| `S_par.A` | I | 1:Iline_tot | dense |
+| `S_par.Z_double` | I | 1:Iline_tot | dense |
+| `S_par.A_double` | I | 1:Iline_tot | dense |
+| `S_par.E_double` | S | 1:Iline_tot | dense |
+| `S_par.CE` | Z | 1:Iline_tot | dense |
+
+### options reset for every file
+
+Consumer: M6 (per-file reset GEF.bas:2827-2842 and `Options(...)`)
+
+| Type | Scalars |
+|---|---|
+| I | `B_Error_On`, `Brec`, `Bcov`, `Bcor`, `B_supp`, `B_ENDF`, `B_Random_on`, `I_Mode_selected` |
+| Z | `Cfileoutlmd`, `Cfileoutlmd_full`, `Clocal_file_option` |
+
+### settings the per-file reset does not cover
+
+Consumer: M6 (settings carried from file to file; `Emode` is the value the `E/spin` check reads)
+
+| Type | Scalars |
+|---|---|
+| I | `B_Fit`, `N_iter`, `Bplot`, `B_MyParameters`, `Emode`, `PZ1`, `PZ2`, `PA1pre`, `PA2pre`, `PA1post`, `PA2post`, `PI1`, `PI2`, `Pn1`, `Pn2`, `PTKEpre`, `PTKEpost`, `PnCN`, `PEnpost`, `PEgpost`, `Pdir`, `PXE`, `PXEdetails`, `Pndel` |
+| Z | `C_Fitoption` |
+| S | `D_Par_Fac`, `EOscale` |
+
 ## P1: step setup
 
 Written for every energy step in `GEF_TRACE_STEPS`, after the entrance channel is fixed (isomer energy added to `P_E_exc`, `Spin_CN`, `Spin_target`, `Eabsgs`) and before the pre-pass. Context `step=<s> pass=- bin=- rec=<k>`.
@@ -321,6 +398,20 @@ Consumer: M4, M12 (final `Var_*`, after `D_Par_Fac` and the sequence-file option
 | Type | Scalars |
 |---|---|
 | S | `Fred_par`, `Var_P_DZ_Mean_S1`, `Var_P_Corr_S1`, `Var_P_DZ_Mean_S2`, `Var_P_A_Width_S2`, `Var_P_DZ_Mean_S3`, `Var_P_DZ_Mean_S4`, `Var_P_DZ_Mean_SL5`, `Var_P_DZ_Mean_S5`, `Var_Delta_S0`, `Var_P_Shell_S1`, `Var_P_Shell_S2`, `Var_P_Shell_S3`, `Var_P_Shell_S4`, `Var_P_Shell_SL5`, `Var_P_Shell_S5`, `Var_P_Z_Curv_S1`, `Var_P_Z_Curv_S2`, `Var_S2leftmod`, `Var_P_Z_Curv_S3`, `Var_P_Z_Curv_S4`, `Var_P_Z_Curv_SL5`, `Var_P_Z_Curv_S5`, `Var_PZ_S3_olap_pos`, `Var_PZ_S3_olap_curv`, `Var_dE_Defo_S1`, `Var_dE_Defo_S2`, `Var_dE_Defo_S3`, `Var_dE_Defo_S4`, `Var_dE_Defo_S5`, `Var_betaL0`, `Var_betaL1`, `Var_betaH0`, `Var_betaH1`, `Var_dbeta_S3`, `Var_T_low_S1`, `Var_T_low_S2`, `Var_T_low_S3`, `Var_T_low_S4`, `Var_T_low_S5`, `Var_T_low_SL`, `Var_ECOLLFRAC`, `Var_EDISSFRAC`, `Var_P_att_pol`, `Var_HOMPOL`, `Var_POLARadd`, `Var_Jscaling` |
+
+## P1b: multi-chance threshold and pre-pass decision
+
+Written for every energy step in `GEF_TRACE_STEPS`, once per step: for the channels inside `If (EMode Mod 10 < 3 And EMode >= 0) Or Emode = 13` (GEF.bas:3948) after the threshold (3949-3966) and before the decision (3967), from `harness_probe_p1b.bi`; for the other channels after 3947 from `harness_probe_p1b_skip.bi` (they hold there every value they have at 4800). Context as P1. With `GEF_SETUP_ONLY` the step ends right after P1b.
+
+### pre-pass decision
+
+Consumer: M6 T1 exact (`Eexc_min_multi`, `Fenhance` after `If Fenhance = 0 Then Fenhance = 1` at 3922, `N_multi_sample` at 3926); M9. `Harness_Prepass` is not a GEF variable: it is GEF's condition `Eabsgs >= Eexc_min_multi Or Emode = 13` evaluated by the probe (-1 true, 0 false; 0 for the channels outside the block), which decides whether the pre-pass runs.
+
+| Type | Scalars |
+|---|---|
+| I | `Harness_Prepass`, `N_multi_sample` |
+| S | `Eexc_min_multi` |
+| D | `Fenhance` |
 
 ## P2: multi-chance pre-pass
 

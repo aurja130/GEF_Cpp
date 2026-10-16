@@ -211,11 +211,14 @@ class ProbeVar:
         return self.texts[index]
 
     def get(self, index: Index = ()) -> ProbeValue:
-        """The decoded value. A sparse array returns zero for an omitted element in bounds."""
+        """The decoded value. A sparse array returns zero (the empty string for strings) for an
+        omitted element in bounds."""
         text = self.texts.get(index)
         if text is not None:
             return _decode(self.type, text)
         if self.sparse and self.bounds is not None and self.in_bounds(index):
+            if self.type == "Z":
+                return ""
             return 0.0 if self.type in ("S", "D") else 0
         raise KeyError(index)
 
