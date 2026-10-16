@@ -19,9 +19,11 @@ Models come from the user's session choice, otherwise `.omp/config.yml` (`task.a
 - **Reviewers**: `reviewer`, in a context of its own, read-only, judging against the authorities above. A worker never approves its own patch.
 - Workers and reviewers do not build or test. The orchestrator verifies each integrated batch; review approval is not runtime proof. Mechanical or documentation-only changes need no review panel.
 
-### Usage limits
+### Sessions and usage limits
 
-At each batch boundary (before delegating a batch, before a review round), the orchestrator runs `python3 -m tools.agent.wait_for_usage` with bash `timeout: 0`. If a usage window is over 90 % used and resets within an hour, it sleeps until the reset and returns; otherwise it returns at once and work continues until the allowance is used up, since waiting longer gains nothing.
+A session completes one sub-milestone (e.g. M6.1) and nothing more: it delivers it as defined under **Deliver** below, then stops and reports. It may run unattended (overnight), so it never stops early to wait for the user while reachable work remains.
+
+At each batch boundary (before delegating a batch, before a review round, before a long build or CI run), and whenever a model call or agent fails on a usage limit, the orchestrator runs `python3 -m tools.agent.wait_for_usage` with bash `timeout: 0`. When a usage window has less than 5 % left and resets within 5 hours (the 5-hour window always; the 7-day window in its last 5 hours), it sleeps until the reset and returns, and work continues; a low window that resets later is reported and work continues until the allowance is used up.
 
 ### Review cycle
 

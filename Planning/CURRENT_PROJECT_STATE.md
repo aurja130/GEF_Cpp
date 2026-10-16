@@ -109,7 +109,7 @@ Recorded in `manifests/toolchain.txt`; checked by `python3 -m tools.toolchain.ch
 | `python3 -m tools.fbsrc.emit_c [--patch-dir DIR] [--force]` | Translate the BASIC source to C in `build/fbsrc/<rev>[-p<hash>]/` (`fbc -gen gcc -R -g -c GEF.bas`, `SOURCE_DATE_EPOCH` = submodule commit time, so output is deterministic). Patch dirs hold unified diffs applied with `patch -p1` |
 | `python3 -m tools.fbsrc.fbline <file>:<line>[-<line>] [--context N] [--raw] [--symbols]` | BASIC line(s) and the C generated from them; works for included files |
 | `python3 -m tools.fbsrc.fbdef <name> [--refs]` | Case-insensitive definition lookup (ctags index corrected for `Static`, `ReDim`, `#Define`) and whole-word references outside comments |
-| `python3 -m tools.agent.wait_for_usage [--dry-run]` | Agent workflow (`.omp/AGENTS.md`): sleep until a usage window over 90 % used resets, if every such window resets within an hour; otherwise return at once |
+| `python3 -m tools.agent.wait_for_usage [--dry-run]` | Agent workflow (`.omp/AGENTS.md`): sleep until a usage window with less than 5 % left resets, if it resets within 5 hours (the 5-hour window always, the 7-day window in its last 5 hours); otherwise return at once |
 
 Configuration: `pyproject.toml` (ruff, basedpyright strict over `tools/` and `harness/`, pytest markers `fbc`, `slow`, `gdb`, `validation`). Details: `tools/fbsrc/README.md`, `Planning/CODING_STANDARDS.md` §3.
 

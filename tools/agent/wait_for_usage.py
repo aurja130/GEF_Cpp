@@ -1,21 +1,24 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Copyright (C) 2026 Aurora Jahan
 # Licensed under the GNU GPL v3 or later, WITHOUT ANY WARRANTY; see LICENSE.txt.
-"""Wait out a nearly used-up usage window when it resets soon (`.omp/AGENTS.md`, usage limits).
+"""Wait out a nearly used-up usage window (`.omp/AGENTS.md`, usage limits).
 
 Usage (from the repository root)::
 
-    python3 -m tools.agent.wait_for_usage [--provider anthropic] [--threshold 0.10]
-                                          [--horizon-min 60] [--dry-run]
+    python3 -m tools.agent.wait_for_usage [--provider anthropic] [--threshold 0.05]
+                                          [--horizon-min 300] [--dry-run]
 
 Reads ``omp usage --json --provider <provider>``. A window is *low* when less than
-``threshold`` of it remains (default: more than 90 % used).
+``threshold`` of it remains (default: more than 95 % used). A low window is *waited for* when
+it resets within ``horizon-min`` minutes (default 5 hours: the 5-hour window always, the 7-day
+window in its last 5 hours).
 
 - No low window: print why and return at once.
-- Every low window resets within ``horizon-min`` minutes: sleep until the last of them has
-  reset (plus a minute), drop omp's cached report, check again (at most three waits).
-- A low window resets later: return at once; waiting would not help, so work continues and
-  uses up the remaining allowance.
+- Some low windows are waited for: sleep until the last of them has reset (plus a minute), drop
+  omp's cached report, check again (at most three waits). Low windows that are not waited for
+  (resetting later, or without a reset time) are reported and do not stop the wait.
+- Only low windows that are not waited for: return at once; work continues and uses up the
+  remaining allowance.
 
 ``--dry-run`` prints the decision without sleeping. Exit codes: 0 done (keep working);
 1 the usage report could not be read; 2 command-line usage error (argparse).
@@ -85,24 +88,29 @@ def parse_windows(report: object) -> list[Window]:
 
 
 def decide(windows: Sequence[Window], now_ms: int, threshold: float, horizon_s: float) -> Decision:
-    """Wait only if every low window resets within the horizon."""
+    """Wait for the low windows that reset within the horizon."""
     low = [w for w in windows if w.remaining < threshold]
     if not low:
         return Decision(0.0, f"keep working: every window has at least {threshold:.0%} left")
-    late = [
-        w for w in low if w.resets_at_ms is None or (w.resets_at_ms - now_ms) / 1000 > horizon_s
-    ]
-    if late:
-        names = ", ".join(w.label for w in late)
-        return Decision(
-            0.0,
-            f"keep working: {names} below {threshold:.0%} but not resetting within "
-            f"{horizon_s / 60:.0f} min; waiting does not help",
+
+    def waited_for(w: Window) -> bool:
+        return w.resets_at_ms is not None and (w.resets_at_ms - now_ms) / 1000 <= horizon_s
+
+    wait_for = [w for w in low if waited_for(w)]
+    other = [w for w in low if not waited_for(w)]
+    note = ""
+    if other:
+        names = ", ".join(w.label for w in other)
+        note = (
+            f"; {names} below {threshold:.0%} but not resetting within "
+            f"{horizon_s / 60:.0f} min, waiting for it does not help"
         )
-    last_reset_ms = max(cast(int, w.resets_at_ms) for w in low)
+    if not wait_for:
+        return Decision(0.0, f"keep working{note}")
+    last_reset_ms = max(cast(int, w.resets_at_ms) for w in wait_for)
     wait_s = max((last_reset_ms - now_ms) / 1000, 0.0) + RESET_MARGIN_S
-    names = ", ".join(w.label for w in low)
-    return Decision(wait_s, f"waiting {wait_s / 60:.1f} min for {names} to reset")
+    names = ", ".join(w.label for w in wait_for)
+    return Decision(wait_s, f"waiting {wait_s / 60:.1f} min for {names} to reset{note}")
 
 
 def _read_report(provider: str) -> object:
@@ -119,8 +127,8 @@ def _read_report(provider: str) -> object:
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0] if __doc__ else None)
     parser.add_argument("--provider", default="anthropic", help="omp provider id")
-    parser.add_argument("--threshold", type=float, default=0.10, help="low below this fraction")
-    parser.add_argument("--horizon-min", type=float, default=60.0, help="longest wait, minutes")
+    parser.add_argument("--threshold", type=float, default=0.05, help="low below this fraction")
+    parser.add_argument("--horizon-min", type=float, default=300.0, help="longest wait, minutes")
     parser.add_argument("--dry-run", action="store_true", help="print the decision, do not sleep")
     args = parser.parse_args(argv)
     provider = cast(str, args.provider)
