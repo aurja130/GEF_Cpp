@@ -304,7 +304,7 @@ Consumer: M6 (3-field and 6-field lines, A ranges)
 
 ### options reset for every file
 
-Consumer: M6 (per-file reset GEF.bas:2827-2842 and `Options(...)`)
+Consumer: M6 (per-file reset GEF.bas:2827-2842 and `Options(...)`). `Cfileoutlmd_full` is written by `Options(LMD/LMD+)` (2920, 2941) and the system and step set-up (3434-3436, 3535-3537), but the per-file reset does not cover it: it carries over from file to file.
 
 | Type | Scalars |
 |---|---|

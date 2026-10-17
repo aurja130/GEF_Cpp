@@ -12,11 +12,17 @@ compares its P0 dump with the fingerprints.
 
 Derivation rules, all checked against the store:
 
-- An input goes to the sequence path BASIC opened under its name, else to ``lists/<name>``. A
-  work file goes to its recorded dest, else to its name at the work root.
+- An input goes to its recorded dest, else to the sequence path BASIC opened under its name,
+  else to the one file under ``work/`` with its sha256. The batch file ``work/file.in`` is no
+  candidate: the plan's ``filein`` line records it. A work file goes to its recorded dest, else
+  to its name at the work root.
 - Only the last parse may lack a P0 record. Its Ifilein is 1 after a restart and the previous
   Ifilein plus one otherwise. Its Emode is the run's last P1 Emode, else its last P0 Emode,
   else 1.
+- A parse whose P0 record has Cfileoutlmd ``$Events.lmd`` (the LMD option path) has seed ``-``:
+  that parse wrote Cfileoutlmd_full itself before the probe, so the dump does not show the value
+  it started from. Other parses take their seed from their record's Cfileoutlmd_full; a parse
+  without a P0 record takes the last record's Cfileoutlmd_full.
 - Without P0 a parse is ``hang`` when the run exited nonzero and ``end`` otherwise. The exit
   code is the one ``corpus.json`` gives the run, else the one in ``run.json``.
 - A record's digest covers its full dump lines, each followed by a newline, grouped by variable
@@ -52,7 +58,7 @@ from harness.probes import ProbeRecord, parse_line, read_probe_file
 
 CAPTURES: Final[tuple[str, ...]] = (
     "m6-setup-corpus",
-    "m6-setup-edge-3",
+    "m6-setup-edge-4",
     "m6-full-f1-f7",
     "m6-patch-check-m1",
 )
@@ -64,8 +70,9 @@ PROBE: Final[str] = "P0"
 FOUND_LINE: Final[str] = "File 'file.in' found."
 SEQUENCE_MARK: Final[str] = "Sequence of nuclei given in "
 SEQUENCE_RE: Final[re.Pattern[str]] = re.compile(
-    r"Sequence of nuclei given in (?P<path>.+?) will be calculated"
+    r"Sequence of nuclei given in (?P<path>.*?) will be calculated!"
 )
+EVENTS_LMD: Final[str] = "$Events.lmd"  # Cfileoutlmd after the LMD and LMD+ options
 
 
 @dataclass(frozen=True)
@@ -83,6 +90,7 @@ class P0Record:
     rec: int
     ifilein: int
     emode: int
+    cfileoutlmd: str  # short name: EVENTS_LMD marks a parse on the LMD option path
     cfileoutlmd_full: bytes
     lines: int  # dump lines of the record
     fnv: int  # FNV-1a 64 of those lines, see ``_record_fnv``
@@ -245,7 +253,7 @@ def _run_block(
         capture=capture,
         rel=rel,
         filein=filein.hex() or "-",
-        work=tuple(_work_entries(run, parses, where)),
+        work=tuple(_work_entries(run, parses, run_dir / "work", where)),
         parses=tuple(_parse_lines(parses, p0, last_p1, exit_code, where)),
         records=tuple(p0),
         files=tuple(files),
@@ -285,7 +293,8 @@ def _parse_lines(
                 )
             ifilein = record.ifilein
             emode = record.emode
-            cfile = record.cfileoutlmd_full
+            # the LMD option path wrote Cfileoutlmd_full itself: no seed (module docstring)
+            cfile = b"" if record.cfileoutlmd == EVENTS_LMD else record.cfileoutlmd_full
             outcome = f"p0={record.rec}"
         else:
             if expected is None:
@@ -304,14 +313,14 @@ def _parse_lines(
 
 
 def _work_entries(
-    run: dict[str, object], parses: Sequence[Parse], where: str
+    run: dict[str, object], parses: Sequence[Parse], work_dir: Path, where: str
 ) -> list[tuple[str, str]]:
     """(dest, sha256) of the run's input and work files, in run.json order."""
     entries: list[tuple[str, str]] = []
     if run.get("input") is not None:
         inp = _as_object(run["input"], "input", where)
         sha = _str_of(_field(inp, "sha256", where), "input sha256", where)
-        entries.append((_input_dest(inp, parses, where), sha))
+        entries.append((_input_dest(inp, parses, work_dir, where), sha))
     raw_files = run.get("work_files", [])
     if not isinstance(raw_files, list):
         raise HarnessError(f"{where}: work_files is not a list")
@@ -330,15 +339,30 @@ def _work_entries(
     return entries
 
 
-def _input_dest(inp: dict[str, object], parses: Sequence[Parse], where: str) -> str:
-    """Dest of the run's input: recorded, else the sequence path BASIC opened, else lists/."""
+def _input_dest(inp: dict[str, object], parses: Sequence[Parse], work_dir: Path, where: str) -> str:
+    """Dest of the run's input: recorded, else the sequence path BASIC opened, else the one
+    file under work/ with its sha256. The batch file work/file.in is no candidate."""
     if inp.get("dest") is not None:
         return _str_of(inp["dest"], "input dest", where)
     name = _str_of(_field(inp, "name", where), "input name", where)
     opened = sorted({parse.sequence for parse in parses if Path(parse.sequence).name == name})
     if len(opened) > 1:
         raise HarnessError(f"{where}: input {name} matches sequence paths {opened}")
-    return opened[0] if opened else f"lists/{name}"
+    if opened:
+        return opened[0]
+    sha = _str_of(_field(inp, "sha256", where), "input sha256", where)
+    copies: list[str] = []
+    for path in sorted(work_dir.rglob("*")):
+        relative = path.relative_to(work_dir).as_posix()
+        if path.is_file() and relative != "file.in" and sha256_file(path) == sha:
+            copies.append(relative)
+    if not copies:
+        raise HarnessError(f"{where}: no file under work/ has the sha256 of input {name}")
+    if len(copies) > 1:
+        raise HarnessError(
+            f"{where}: {len(copies)} files under work/ have the sha256 of input {name}: {copies}"
+        )
+    return copies[0]
 
 
 def _check_file_in(run: dict[str, object], filein: bytes, where: str) -> None:
@@ -388,6 +412,9 @@ def _read_p0(path: Path, where: str) -> list[P0Record]:
                 rec=number,
                 ifilein=_int_of(_probe_value(record, "Ifilein", where), "Ifilein", where),
                 emode=_int_of(_probe_value(record, "Emode", where), "Emode", where),
+                cfileoutlmd=_str_of(
+                    _probe_value(record, "Cfileoutlmd", where), "Cfileoutlmd", where
+                ),
                 cfileoutlmd_full=_str_of(
                     _probe_value(record, "Cfileoutlmd_full", where), "Cfileoutlmd_full", where
                 ).encode("latin-1"),

@@ -340,3 +340,40 @@ input = "harness/inputs/m6/lists/l_spectra.in"
 tree = "harness/inputs/m6/edge"
 file_in = "harness/inputs/m6/lists/l_spectra.in"
 note = "ES then EM in one run (full run F1: Spin_CN from the previous bin)"
+
+[[entry]]
+id = "edge-e_energy_empty"
+group = "edge"
+input = "harness/inputs/m6/edge/e_energy_empty.in"
+tree = "harness/inputs/m6/edge"
+note = "empty energy line: N_E_values 0, GEF.bas:2824 reads Energy_Table(1) beyond its bounds (M6.1 review)"
+
+[[entry]]
+id = "edge-e_energy_k_empty"
+group = "edge"
+input = "harness/inputs/m6/edge/e_energy_k_empty.in"
+tree = "harness/inputs/m6/edge"
+note = "energy line `3:` with no energy: I_first_E_step 3, N_E_values 0 (M6.1 review)"
+
+[[entry]]
+id = "edge-h_energy_line_lost"
+group = "edge"
+input = "harness/inputs/m6/edge/h_energy_line_lost.in"
+tree = "harness/inputs/m6/edge"
+timeout_s = 20
+note = "comment as the first line: Input # leaves a put-back byte, the energy line reads as empty, EOF never comes (M6.1 review)"
+
+[[entry]]
+id = "edge-f_spectrum_backslash"
+group = "edge"
+input = "harness/inputs/m6/edge/f_spectrum_backslash.in"
+tree = "harness/inputs/m6/edge"
+note = "spectrum file named with a backslash: FileExists does not convert it (M6.1 review)"
+
+[[entry]]
+id = "edge-f_backslash_name"
+group = "edge"
+input = "harness/inputs/m6/lists/f_backslash_name.in"
+tree = "harness/inputs/m6/edge"
+file_in = "harness/inputs/m6/lists/f_backslash_name.in"
+note = "sequence file named with a backslash in file.in: FileExists does not convert it (M6.1 review)"

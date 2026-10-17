@@ -22,6 +22,7 @@
 #include <filesystem>
 #include <fstream>
 #include <iomanip>
+#include <iterator>
 #include <map>
 #include <optional>
 #include <set>
@@ -30,6 +31,7 @@
 #include <string>
 #include <string_view>
 #include <system_error>
+#include <unistd.h>
 #include <utility>
 #include <vector>
 
@@ -47,7 +49,7 @@ using gef::run::WorkDir;
 using gef::test::ProbeDump;
 using gef::test::ProbeFingerprint;
 
-// ---- The plan (tests/golden/m6-p0/plan.txt; contract section 3) ------------------------------
+// ---- The plan (tests/golden/m6-p0/plan.txt; harness/p0_golden.py) -------------------------------
 
 struct PlanFile {
     std::string dest;   // relative to the run's work/ directory
@@ -458,75 +460,181 @@ bool perform_parse(PlanParse const& parse, ProcessState& process, InputRoundStat
     return ok;
 }
 
+// This test process's scratch root; the process id in its name keeps processes apart.
+fs::path process_scratch_root() {
+    return fs::temp_directory_path() / ("gef-m6-p0-" + std::to_string(getpid()));
+}
+
+// Fills a scratch work/ directory from the repository: file.in, then each copied source.
+void fill_scratch(PlanRun const& run, fs::path const& repo,
+                  std::map<std::int64_t, PlanFile> const& files, fs::path const& root) {
+    static_cast<void>(fs::create_directories(root));
+    write_bytes(root / "file.in", run.filein);
+    for (std::int64_t const id : run.work) {
+        PlanFile const& plan_file = files.at(id);
+        fs::path const dest = root / plan_file.dest;
+        static_cast<void>(fs::create_directories(dest.parent_path()));
+        plan_check(
+            fs::copy_file(repo / plan_file.source, dest, fs::copy_options::overwrite_existing),
+            "cannot copy " + plan_file.source + " to " + dest.string());
+    }
+}
+
+// Start-up as BASIC runs it before file.in is read: Parameters.bas and
+// ParameterManipulation.mac (GEF.bas:1015-1017; FitparRead applies Fitpar.dat when present,
+// which sets D_Par_Fac and EOscale, both P0 variables). bfilein: file.in exists
+// (GEF.bas:1821-1822).
+void start_up(ProcessState& process, WorkDir const& workdir,
+              std::vector<std::string>& parameter_console) {
+    gef::params::load_parameters_bas(process.params);
+    static_cast<void>(gef::params::parameter_manipulation(workdir.read("MyParameters.dat"),
+                                                          workdir.read("Fitpar.dat"), 0.0,
+                                                          process.params, parameter_console));
+    process.bfilein = -1;
+}
+
+// Nextfitloop (GEF.bas:2519-2684): FitparRead again (2555), then the round's variables start
+// afresh and file.in is read.
+void begin_round(ProcessState& process, InputRoundState& round, SequenceFileState& file,
+                 WorkDir const& workdir, std::vector<std::string>& parameter_console) {
+    gef::params::fitpar_read(workdir.read("Fitpar.dat"), process.params, parameter_console);
+    round = InputRoundState{};
+    gef::run::read_file_in(process, round, file, workdir);
+}
+
+// The first offset at or after `from` where `prefix` begins a line of `text`, or npos.
+std::size_t find_line_start(std::string const& text, std::string_view prefix, std::size_t from) {
+    std::size_t pos = text.find(prefix, from);
+    while (pos != std::string::npos && pos != 0 && text.at(pos - 1) != '\n') {
+        pos = text.find(prefix, pos + 1);
+    }
+    return pos;
+}
+
+// The lines of `text` without their '\n'; a final '\n' does not begin another line.
+std::vector<std::string_view> split_lines(std::string_view text) {
+    std::vector<std::string_view> lines;
+    std::size_t start = 0;
+    while (start < text.size()) {
+        std::size_t stop = text.find('\n', start);
+        if (stop == std::string_view::npos) {
+            stop = text.size();
+        }
+        lines.push_back(text.substr(start, stop - start));
+        start = stop + 1;
+    }
+    return lines;
+}
+
+// Names the first line where the two texts differ (1-based), or says that only the line endings
+// differ.
+std::string first_line_difference(std::string_view basic, std::string const& printed) {
+    std::string_view const missing = "<no line>";
+    std::vector<std::string_view> const expected = split_lines(basic);
+    std::vector<std::string_view> const actual = split_lines(printed);
+    std::size_t const count = std::max(expected.size(), actual.size());
+    for (std::size_t line = 0; line < count; ++line) {
+        std::string_view const want = line < expected.size() ? expected.at(line) : missing;
+        std::string_view const got = line < actual.size() ? actual.at(line) : missing;
+        if (want != got) {
+            return "line " + std::to_string(line + 1) + ": BASIC '" + std::string(want) +
+                   "', C++ '" + std::string(got) + "'";
+        }
+    }
+    return "the texts differ in line endings only";
+}
+
+// One run's stdout.log, and how far the console text checked so far reaches into it.
+struct StdoutLog {
+    std::string text;
+    std::size_t matched = 0;
+};
+
+// Checks that the console text one parse printed occurs in stdout.log at the parse's anchor,
+// after the text of the previous parse. Reports the failure and returns false when it does not.
+// An End or hang parse must also end stdout.log. Where a parse that wrote P0 ends is not
+// checked: BASIC's system loop prints next, usually a " " line like the parser's own first line
+// (GEF.bas:2770), so only the run driver can place that boundary; the byte-equal console test
+// of M6.5 covers it.
+bool check_console(PlanRun const& run, std::size_t index, PlanParse const& parse,
+                   std::string const& printed, StdoutLog& stdout_log) {
+    std::string_view const prefix =
+        parse.restart ? "File 'file.in' found." : " \nSequence of nuclei given in ";
+    std::string const kind = parse.restart
+                                 ? "line 'File 'file.in' found.'"
+                                 : "blank line followed by 'Sequence of nuclei given in '";
+    std::string const where =
+        "run " + std::to_string(run.number) + ", parse " + std::to_string(index + 1);
+    std::size_t const anchor = find_line_start(stdout_log.text, prefix, stdout_log.matched);
+    if (anchor == std::string::npos) {
+        FAIL_CHECK(where + ": no " + kind + " at or after offset " +
+                   std::to_string(stdout_log.matched) + " of stdout.log");
+        return false;
+    }
+    if (stdout_log.text.compare(anchor, printed.size(), printed) != 0) {
+        std::string_view const basic =
+            std::string_view{stdout_log.text}.substr(anchor, printed.size());
+        FAIL_CHECK(where + " (expected " + kind + " at offset " + std::to_string(anchor) +
+                   "): " + first_line_difference(basic, printed));
+        return false;
+    }
+    stdout_log.matched = anchor + printed.size();
+    if (parse.outcome != PlanParse::Outcome::P0 && stdout_log.matched != stdout_log.text.size()) {
+        FAIL_CHECK(where + ": stdout.log continues after the end of the run (offset " +
+                   std::to_string(stdout_log.matched) + " of " +
+                   std::to_string(stdout_log.text.size()) + ")");
+        return false;
+    }
+    return true;
+}
+
 // Replays one plan run, from the store's work/ directory when the store holds the run, otherwise
 // from a scratch work/ directory filled from the repository, and performs each parse in plan
-// order (contract section 3). Stops at the first parse that fails, so one defect does not
-// cascade into every later parse of the run.
+// order (harness/p0_golden.py, module docstring). Stops at the first parse that fails, so one
+// defect does not cascade into every later parse of the run.
 void replay_run(PlanRun const& run, std::map<std::int64_t, PlanFile> const& files,
                 fs::path const& repo, data::TableSet const& tables, GoldenMap const& golden,
                 Tally& tally) {
     INFO("run " + std::to_string(run.number) + " " + run.capture + " " + run.run_dir);
 
     std::optional<fs::path> const stored = store_run(run);
-    fs::path const scratch_root =
-        fs::temp_directory_path() / "gef-m6-p0" / ("run-" + std::to_string(run.number));
     std::optional<ScopedDir> scratch;
     fs::path root;
     if (stored.has_value()) {
         root = *stored / "work";
     } else {
-        root = scratch_root;
+        root = process_scratch_root() / ("run-" + std::to_string(run.number));
         scratch.emplace(root);
-        static_cast<void>(fs::create_directories(root));
-        write_bytes(root / "file.in", run.filein);
-        for (std::int64_t const id : run.work) {
-            PlanFile const& plan_file = files.at(id);
-            fs::path const dest = root / plan_file.dest;
-            static_cast<void>(fs::create_directories(dest.parent_path()));
-            plan_check(
-                fs::copy_file(repo / plan_file.source, dest, fs::copy_options::overwrite_existing),
-                "cannot copy " + plan_file.source + " to " + dest.string());
-        }
+        fill_scratch(run, repo, files, root);
     }
     WorkDir const workdir{root};
 
-    // Start-up as BASIC runs it before file.in is read: Parameters.bas and
-    // ParameterManipulation.mac (GEF.bas:1015-1017; FitparRead applies Fitpar.dat when present,
-    // which sets D_Par_Fac and EOscale, both P0 variables). bfilein: file.in exists
-    // (GEF.bas:1821-1822).
     ProcessState process{tables};
     std::vector<std::string> parameter_console;
-    gef::params::load_parameters_bas(process.params);
-    static_cast<void>(gef::params::parameter_manipulation(workdir.read("MyParameters.dat"),
-                                                          workdir.read("Fitpar.dat"), 0.0,
-                                                          process.params, parameter_console));
-    process.bfilein = -1;
+    start_up(process, workdir, parameter_console);
     P0Sink sink;
     process.probes = &sink;
     InputRoundState round;
     SequenceFileState file;
 
     StoreRecords basic;
-    std::string stdout_text;
+    std::optional<StdoutLog> stdout_log;
     if (stored.has_value()) {
         // A run whose only parse ends or hangs before GEF.bas:3128 wrote no P0.txt.
         fs::path const p0 = *stored / "work" / "probes" / "P0.txt";
         basic = fs::is_regular_file(p0) ? read_basic_p0(p0) : std::map<std::int64_t, BasicRecord>{};
-        stdout_text = read_bytes(*stored / "stdout.log");
+        stdout_log = StdoutLog{.text = read_bytes(*stored / "stdout.log")};
     }
-    std::size_t stdout_pos = 0;
 
-    for (PlanParse const& parse : run.parses) {
+    for (std::size_t index = 0; index < run.parses.size(); ++index) {
+        PlanParse const& parse = run.parses.at(index);
         std::size_t const console_mark = process.console.text().size();
         if (parse.restart) {
-            // Nextfitloop (GEF.bas:2519-2684): FitparRead again (2555), then the round's
-            // variables start afresh and file.in is read.
-            gef::params::fitpar_read(workdir.read("Fitpar.dat"), process.params, parameter_console);
-            round = InputRoundState{};
-            gef::run::read_file_in(process, round, file, workdir);
+            begin_round(process, round, file, workdir, parameter_console);
         }
-        // The two values code outside the parser leaves between files (contract section 3);
-        // the driver test of M6.5 checks them end to end.
+        // The values code outside the parser leaves between files (harness/p0_golden.py, module
+        // docstring); the driver test of M6.5 checks them end to end. A "-" seed of
+        // Cfileoutlmd_full decodes to ""; the parse overwrites it, so it is not recorded.
         round.ifilein = parse.ifilein;
         process.params.emode = parse.emode;
         process.cfileoutlmd_full = parse.cfileoutlmd_full;
@@ -538,17 +646,12 @@ void replay_run(PlanRun const& run, std::map<std::int64_t, PlanFile> const& file
             return;
         }
 
-        // BASIC's console: what file.in and this parse printed occurs in stdout.log, after what
-        // the previous parse printed (system and step lines come in between).
-        if (stored.has_value()) {
+        // BASIC's console: the text this parse printed must occur in stdout.log at its anchor,
+        // after the text the previous parse ended on (check_console).
+        if (stdout_log.has_value()) {
             std::string const printed = process.console.text().substr(console_mark);
-            std::size_t const found = stdout_text.find(printed, stdout_pos);
-            if (found == std::string::npos) {
-                FAIL_CHECK("console text of the parse not found in stdout.log after offset " +
-                           std::to_string(stdout_pos) + ":\n" + printed);
+            if (!check_console(run, index, parse, printed, *stdout_log)) {
                 ok = false;
-            } else {
-                stdout_pos = found + printed.size();
             }
         }
         if (!ok) {
@@ -559,7 +662,7 @@ void replay_run(PlanRun const& run, std::map<std::int64_t, PlanFile> const& file
 
 } // namespace
 
-TEST_CASE("M6.1: sequence-file parses reproduce BASIC's P0 for every plan run", "[T1][run]") {
+TEST_CASE("run: every sequence-file parse of the M6 captures equals BASIC's P0", "[T1][run]") {
     Plan const plan = read_plan(gef::test::read_lines(gef::test::golden_file("m6-p0", "plan.txt")));
     GoldenMap const golden =
         read_golden(gef::test::read_lines(gef::test::golden_file("m6-p0", "fingerprints.txt")));
@@ -594,7 +697,7 @@ TEST_CASE("M6.1: sequence-file parses reproduce BASIC's P0 for every plan run", 
     }
 
     data::TableSet const tables = data::load_tables(data::ProgramData(data::NuclideData::Jeff33));
-    ScopedDir const scratch{fs::temp_directory_path() / "gef-m6-p0"};
+    ScopedDir const scratch{process_scratch_root()};
     for (PlanRun const* run : todo) {
         try {
             replay_run(*run, plan.files, repo, tables, golden, tally);
@@ -611,4 +714,48 @@ TEST_CASE("M6.1: sequence-file parses reproduce BASIC's P0 for every plan run", 
         WARN("BASIC's P0.txt was not found for any replayed run; only the fingerprints were "
              "checked");
     }
+}
+
+TEST_CASE("run: more than 5000 system lines overflow S_par", "[run]") {
+    fs::path const source =
+        fs::path{GEF_TEST_REPO_DIR} / "harness" / "inputs" / "m6" / "edge" / "x_s_par_overflow.in";
+    if (!fs::is_regular_file(source)) {
+        SKIP("harness/inputs/m6/edge/x_s_par_overflow.in is absent from the repository");
+        return;
+    }
+    ScopedDir const process_root{process_scratch_root()};
+    fs::path const root = process_scratch_root() / "s-par-overflow";
+    static_cast<void>(fs::create_directories(root / "in"));
+    plan_check(fs::copy_file(source, root / "in" / "x.in", fs::copy_options::overwrite_existing),
+               "cannot copy " + source.string());
+    write_bytes(root / "file.in", "\"in/x.in\"\nEND\n");
+    WorkDir const workdir{root};
+    data::TableSet const tables = data::load_tables(data::ProgramData(data::NuclideData::Jeff33));
+    ProcessState process{tables};
+    std::vector<std::string> parameter_console;
+    start_up(process, workdir, parameter_console);
+    InputRoundState round;
+    SequenceFileState file;
+    gef::run::read_file_in(process, round, file, workdir);
+    round.ifilein = 1;
+    CHECK_THROWS_AS(static_cast<void>(gef::run::read_sequence_file(process, round, file, workdir)),
+                    std::out_of_range);
+}
+
+TEST_CASE("run: WorkDir names a file as fb_FileExists and Open do", "[run]") {
+    ScopedDir const process_root{process_scratch_root()};
+    fs::path const root = process_scratch_root() / "names";
+    static_cast<void>(fs::create_directories(root / "in"));
+    write_bytes(root / "in" / "a.in", "NITER(1)\n");
+    WorkDir const workdir{root};
+    CHECK_FALSE(workdir.exists("in\\a.in"));
+    CHECK(workdir.exists("in/a.in"));
+    std::optional<std::string> const content = workdir.read("in\\a.in");
+    if (content.has_value()) {
+        CHECK(*content == "NITER(1)\n");
+    } else {
+        FAIL_CHECK("WorkDir::read did not find in\\a.in");
+    }
+    CHECK_FALSE(workdir.exists(""));
+    CHECK_FALSE(workdir.read("").has_value());
 }

@@ -107,7 +107,7 @@ std::string trim(std::string_view s) {
     return std::string(s.substr(first, last - first));
 }
 
-// str_trim.c fb_TrimEx: whole copies of pattern are removed from the left end, then from the
+// str_trimex.c fb_TrimEx: whole copies of pattern are removed from the left end, then from the
 // right end, each repeatedly (golden m6-strings: Trim("ababa", "aba") is "ba"). A one-character
 // pattern goes through fb_hStrSkipChar/fb_hStrSkipCharRev, so on the right a run of that
 // character and NUL is removed, as fb_TRIM does for blanks (Trim("ab"+Chr(0)+" ", " ") is "ab");

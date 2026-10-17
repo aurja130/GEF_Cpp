@@ -18,7 +18,7 @@ namespace gef::fb {
 // fb_TRIM (str_trim.c): strips trailing ASCII 32 and NUL, leading ASCII 32 only.
 [[nodiscard]] std::string trim(std::string_view s);
 
-// Trim(s, pattern) = fb_TrimEx (str_trim.c): removes whole copies of `pattern` from both ends,
+// Trim(s, pattern) = fb_TrimEx (str_trimex.c): removes whole copies of `pattern` from both ends,
 // repeatedly (Trim("xxxabxxx", "xx") is "xabx"); not a set of characters.
 [[nodiscard]] std::string trim(std::string_view s, std::string_view pattern);
 

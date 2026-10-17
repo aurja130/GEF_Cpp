@@ -4,7 +4,7 @@
 // Ported from GEF 2025/1.2, Copyright (C) 2009-2025 Karl-Heinz Schmidt and Beatriz Jurado.
 
 // GEF's batch input (M6.1): `file.in` and the sequence files it lists, ported statement by
-// statement from the C fbc emits for GEF.bas:2699-2763 and 2768-3133. Every console line goes
+// statement from the C fbc emits for GEF.bas:2699-2763, 2768-3133. Every console line goes
 // to ProcessState::console exactly as BASIC prints it (MILESTONE_6_PLAN.md D3).
 
 #pragma once
@@ -17,7 +17,7 @@ namespace gef::run {
 // GEF.bas:2699-2763: the `If Bfilein Then` block. Bfilein is -1 when file.in was found
 // (GEF.bas:1821-1822) and 0 otherwise; the function returns at once when Bfilein is 0.
 // It reads file.in into round.cfilein(1..nfilein). `FIT` sets process.b_fit, process.bplot = -1,
-// and file.b_error_on = 1 (B_Error_On, set at GEF.bas:2730 and read at 4805). `NITER(n)` sets
+// and file.b_error_on = 1 (B_Error_On, set at GEF.bas:2730, read at 4805). `NITER(n)` sets
 // process.n_iter.
 void read_file_in(ProcessState& process, InputRoundState& round, SequenceFileState& file,
                   WorkDir const& workdir);
