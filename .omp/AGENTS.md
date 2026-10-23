@@ -23,7 +23,7 @@ Models come from the user's session choice, otherwise `.omp/config.yml` (`task.a
 
 A session completes one sub-milestone (e.g. M6.1) and nothing more: it delivers it as defined under **Deliver** below, then stops and reports. It may run unattended (overnight), so it never stops early to wait for the user while reachable work remains.
 
-At each batch boundary (before delegating a batch, before a review round, before a long build or CI run), and whenever a model call or agent fails on a usage limit, the orchestrator runs `python3 -m tools.agent.wait_for_usage` with bash `timeout: 0`. When a usage window has less than 5 % left and resets within 5 hours (the 5-hour window always; the 7-day window in its last 5 hours), it sleeps until the reset and returns, and work continues; a low window that resets later is reported and work continues until the allowance is used up.
+At each batch boundary (before delegating a batch, before a review round, before a long build or CI run), and whenever a model call or agent fails on a usage limit, the orchestrator runs `python3 -m tools.agent.usage_guard --status --provider anthropic --threshold 0.95`. It reads the usage omp has already cached (`~/.omp/agent/agent.db`) and never calls a usage API itself: Anthropic ends sessions that poll its API too often, so never add a check that does. Exit 0: work continues. Exit 3: a window has less than 5 % left. The orchestrator waits at most 5 hours, whichever window it is: if every blocked window's reset time (printed by `--status`) is within 5 hours (the 5-hour window always is; the 7-day window only in its last 5 hours), it runs `python3 -m tools.agent.usage_guard --wait --provider anthropic --threshold 0.95` with bash `timeout: 18000`, which sleeps until the windows clear, and work continues; otherwise it does not wait: it reports the low window and work continues until the allowance is used up. Exit 1: omp's cache could not be read; report it and do not substitute an API call.
 
 ### Review cycle
 
@@ -55,4 +55,4 @@ Licensed under the GNU GPL v3 or later, WITHOUT ANY WARRANTY; see LICENSE.txt.
 ## Tracking
 
 - Only the orchestrator edits `Planning/`. When a task, sub-milestone or milestone is finished, mark it done in its plan file and record it in `CURRENT_PROJECT_STATE.md`.
-- Commit or push only when the user asks; never include unrelated or private local changes.
+- Commit and push when meaningful progress is achieved. If changes by the user are detected, ask if the user wants them included in the commit.
