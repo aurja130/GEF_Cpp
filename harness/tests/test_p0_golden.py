@@ -13,10 +13,19 @@ from typing import cast
 import pytest
 
 from harness.common import HarnessError
-from harness.p0_golden import Golden, build_golden, default_source_roots, write_golden
+from harness.p0_golden import (
+    FINGERPRINTS_HEADER,
+    PLAN_HEADER,
+    Golden,
+    build_golden,
+    default_source_roots,
+    write_golden,
+)
 
 FILEIN = b'"in/a.in"\nEND\n'
 FOUND = "File 'file.in' found.\n"
+WAIT = "Please wait ... code is running.\n"
+BARRIER = "Fission barrier of CN (Z = 95, A = 243):\n"
 FNV_OFFSET = 0xCBF29CE484222325
 FNV_PRIME = 0x100000001B3
 MASK64 = (1 << 64) - 1
@@ -53,6 +62,10 @@ def p0_block(rec: int, ifilein: int, emode: int, cfile: str, *, short: str = "")
         f"{context} Emode - I {emode}\n"
         f'{context} Cfileoutlmd_full - Z "{cfile}"\n'
     )
+
+
+def p1_block(rec: int, emode: int) -> str:
+    return f"P1 step=- pass=- bin=- rec={rec} Emode - I {emode}\n"
 
 
 def make_inputs(tmp_path: Path, files: dict[str, bytes]) -> Path:
@@ -120,7 +133,7 @@ def test_plan_and_fingerprints_for_a_two_parse_run(tmp_path: Path) -> None:
     golden = build_golden(captures, ["cap"], (("harness/inputs", inputs),))
 
     assert golden.plan_text == text(
-        "# m6-p0 plan 2",
+        PLAN_HEADER,
         f"file 1 in/a.in harness/inputs/a.in {sha(seq_a)}",
         f"file 2 in/b.in harness/inputs/b.in {sha(seq_b)}",
         "run 1 cap r1",
@@ -144,7 +157,7 @@ def test_plan_and_fingerprints_for_a_two_parse_run(tmp_path: Path) -> None:
         f"{CTX2} Ifilein - I 2",
     )
     assert golden.fingerprint_text == text(
-        "# m6-p0 fingerprints 2",
+        FINGERPRINTS_HEADER,
         f"1 1 4 {record_1}",
         f"1 2 4 {record_2}",
     )
@@ -161,15 +174,16 @@ def test_restart_resets_ifilein_and_p1_emode_seeds_last_parse(tmp_path: Path) ->
     write_run(
         captures / "cap",
         "r2",
-        stdout=FOUND + parse_line("in/a.in") + FOUND + parse_line("in/b.in"),
+        # the wait line dumps P1 record 1: its Emode seeds the last parse
+        stdout=FOUND + parse_line("in/a.in") + WAIT + FOUND + parse_line("in/b.in"),
         p0=p0_block(1, 1, 4, "xy"),
-        p1="P1 step=- pass=- bin=- rec=1 Emode - I 9\n",
+        p1=p1_block(1, 9),
     )
 
     golden = build_golden(captures, ["cap"], ())
 
     assert golden.plan_text == text(
-        "# m6-p0 plan 2",
+        PLAN_HEADER,
         "run 1 cap r2",
         f"filein {FILEIN.hex()}",
         "work",
@@ -313,14 +327,14 @@ def test_run_without_work_file_in_is_skipped_with_a_comment(tmp_path: Path) -> N
     golden = build_golden(captures, ["cap"], ())
 
     assert golden.plan_text == text(
-        "# m6-p0 plan 2",
+        PLAN_HEADER,
         "# skipped cap r1: the store keeps no work/file.in",
         "run 1 cap r2",
         f"filein {FILEIN.hex()}",
         "work",
         "endrun",
     )
-    assert golden.fingerprint_text == text("# m6-p0 fingerprints 2")
+    assert golden.fingerprint_text == text(FINGERPRINTS_HEADER)
     assert golden.sources == (
         ("cap", "r1/run.json"),
         ("cap", "r2/run.json"),
@@ -350,13 +364,13 @@ def test_empty_file_in_is_recorded_as_dash(tmp_path: Path) -> None:
     golden = build_golden(captures, ["cap"], ())
 
     assert golden.plan_text == text(
-        "# m6-p0 plan 2",
+        PLAN_HEADER,
         "run 1 cap r1",
         "filein -",
         "work",
         "endrun",
     )
-    assert golden.fingerprint_text == text("# m6-p0 fingerprints 2")
+    assert golden.fingerprint_text == text(FINGERPRINTS_HEADER)
 
 
 def test_input_and_work_file_dests_are_derived(tmp_path: Path) -> None:
@@ -383,7 +397,7 @@ def test_input_and_work_file_dests_are_derived(tmp_path: Path) -> None:
     golden = build_golden(captures, ["cap"], (("harness/inputs", inputs),))
 
     assert golden.plan_text == text(
-        "# m6-p0 plan 2",
+        PLAN_HEADER,
         f"file 1 in/l.in harness/inputs/l.in {sha(lst)}",
         f"file 2 w.dat - {sha(other)}",
         f"file 3 in/s.in harness/inputs/s.in {sha(seq)}",
@@ -397,7 +411,7 @@ def test_input_and_work_file_dests_are_derived(tmp_path: Path) -> None:
         "parse 1 1 1 - end",
         "endrun",
     )
-    assert golden.fingerprint_text == text("# m6-p0 fingerprints 2")
+    assert golden.fingerprint_text == text(FINGERPRINTS_HEADER)
 
 
 def test_two_files_for_one_dest_are_rejected(tmp_path: Path) -> None:
@@ -434,7 +448,7 @@ def test_first_source_root_wins_and_hidden_files_are_skipped(tmp_path: Path) -> 
     )
 
     assert golden.plan_text == text(
-        "# m6-p0 plan 2",
+        PLAN_HEADER,
         f"file 1 x.in harness/inputs/x.in {sha(data)}",
         "run 1 cap r1",
         f"filein {FILEIN.hex()}",
@@ -513,7 +527,7 @@ def test_final_parse_without_p0_continues_the_ifilein_chain(tmp_path: Path) -> N
     golden = build_golden(captures, ["cap"], ())
 
     assert golden.plan_text == text(
-        "# m6-p0 plan 2",
+        PLAN_HEADER,
         "run 1 cap r1",
         f"filein {FILEIN.hex()}",
         "work",
@@ -523,8 +537,90 @@ def test_final_parse_without_p0_continues_the_ifilein_chain(tmp_path: Path) -> N
     )
 
 
-@pytest.mark.parametrize("p1", [None, ""], ids=["no-p1-file", "empty-p1-file"])
-def test_emode_falls_back_to_the_last_p0_record_without_a_p1_record(
+@pytest.mark.parametrize(
+    "before_last",
+    [WAIT + BARRIER, BARRIER],
+    ids=["barrier-after-wait", "barrier-after-p0-parse"],
+)
+def test_last_parse_after_a_barrier_line_has_unknown_emode(
+    tmp_path: Path, before_last: str
+) -> None:
+    captures = tmp_path / "captures"
+    write_run(
+        captures / "cap",
+        "r1",
+        stdout=FOUND + parse_line("in/a.in") + before_last + parse_line("in/b.in"),
+        p0=p0_block(1, 1, 2, "xy"),
+        p1=p1_block(1, 3),
+    )
+
+    golden = build_golden(captures, ["cap"], ())
+
+    assert golden.plan_text == text(
+        PLAN_HEADER,
+        "run 1 cap r1",
+        f"filein {FILEIN.hex()}",
+        "work",
+        "parse 1 1 2 7879 p0=1",
+        "parse 0 2 - 7879 end",
+        "endrun",
+    )
+
+
+def test_last_parse_after_a_wait_line_takes_the_emode_of_that_p1_record(tmp_path: Path) -> None:
+    captures = tmp_path / "captures"
+    write_run(
+        captures / "cap",
+        "r1",
+        # the second P1 record is dumped after the last parse, so it is not the seed
+        stdout=FOUND + parse_line("in/a.in") + WAIT + parse_line("in/b.in") + WAIT,
+        p0=p0_block(1, 1, 2, "xy"),
+        p1=p1_block(1, 3) + p1_block(2, 5),
+    )
+
+    golden = build_golden(captures, ["cap"], ())
+
+    assert golden.plan_text == text(
+        PLAN_HEADER,
+        "run 1 cap r1",
+        f"filein {FILEIN.hex()}",
+        "work",
+        "parse 1 1 2 7879 p0=1",
+        "parse 0 2 3 7879 end",
+        "endrun",
+    )
+
+
+def test_last_parse_after_a_later_p0_parse_takes_that_p0_emode(tmp_path: Path) -> None:
+    captures = tmp_path / "captures"
+    write_run(
+        captures / "cap",
+        "r1",
+        # the P1 record is dumped first; the P0 record of parse a is the last dump before b
+        stdout=FOUND + WAIT + parse_line("in/a.in") + parse_line("in/b.in"),
+        p0=p0_block(1, 1, 2, "xy"),
+        p1=p1_block(1, 3),
+    )
+
+    golden = build_golden(captures, ["cap"], ())
+
+    assert golden.plan_text == text(
+        PLAN_HEADER,
+        "run 1 cap r1",
+        f"filein {FILEIN.hex()}",
+        "work",
+        "parse 1 1 2 7879 p0=1",
+        "parse 0 2 2 7879 end",
+        "endrun",
+    )
+
+
+@pytest.mark.parametrize(
+    "p1",
+    [None, "", p1_block(1, 9)],
+    ids=["no-p1-file", "empty-p1-file", "p1-record-without-wait-line"],
+)
+def test_last_parse_without_a_wait_line_takes_the_emode_of_the_earlier_p0_record(
     tmp_path: Path, p1: str | None
 ) -> None:
     captures = tmp_path / "captures"
@@ -539,12 +635,28 @@ def test_emode_falls_back_to_the_last_p0_record_without_a_p1_record(
     golden = build_golden(captures, ["cap"], ())
 
     assert golden.plan_text == text(
-        "# m6-p0 plan 2",
+        PLAN_HEADER,
         "run 1 cap r1",
         f"filein {FILEIN.hex()}",
         "work",
         "parse 1 1 4 - p0=1",
         "parse 0 2 4 - end",
+        "endrun",
+    )
+
+
+def test_last_parse_with_nothing_dumped_before_it_has_emode_one(tmp_path: Path) -> None:
+    captures = tmp_path / "captures"
+    write_run(captures / "cap", "r1", stdout=FOUND + parse_line("in/a.in"))
+
+    golden = build_golden(captures, ["cap"], ())
+
+    assert golden.plan_text == text(
+        PLAN_HEADER,
+        "run 1 cap r1",
+        f"filein {FILEIN.hex()}",
+        "work",
+        "parse 1 1 1 - end",
         "endrun",
     )
 
@@ -563,7 +675,7 @@ def test_recorded_input_dest_is_kept_without_a_copy_under_work(tmp_path: Path) -
     golden = build_golden(captures, ["cap"], (("harness/inputs", inputs),))
 
     assert golden.plan_text == text(
-        "# m6-p0 plan 2",
+        PLAN_HEADER,
         f"file 1 lists/a.in harness/inputs/a.in {sha(seq)}",
         "run 1 cap r1",
         f"filein {FILEIN.hex()}",
@@ -588,7 +700,7 @@ def test_input_without_dest_is_found_under_work_beside_the_batch_file(tmp_path: 
     golden = build_golden(captures, ["cap"], (("harness/inputs", inputs),))
 
     assert golden.plan_text == text(
-        "# m6-p0 plan 2",
+        PLAN_HEADER,
         f"file 1 in/a.in harness/inputs/a.in {sha(data)}",
         "run 1 cap r1",
         f"filein {data.hex()}",
@@ -632,7 +744,7 @@ def test_empty_sequence_file_name_is_read(tmp_path: Path) -> None:
     golden = build_golden(captures, ["cap"], ())
 
     assert golden.plan_text == text(
-        "# m6-p0 plan 2",
+        PLAN_HEADER,
         "run 1 cap r1",
         f"filein {FILEIN.hex()}",
         "work",
@@ -665,7 +777,7 @@ def test_digest_keeps_dump_order_within_a_variable(tmp_path: Path) -> None:
         f"{CTX1} V 2 I 6",
         f"{CTX1} V 1 I 5",
     )
-    assert golden.fingerprint_text == text("# m6-p0 fingerprints 2", f"1 1 7 {record}")
+    assert golden.fingerprint_text == text(FINGERPRINTS_HEADER, f"1 1 7 {record}")
 
 
 def test_option_path_parse_has_seed_dash_and_the_next_parse_is_seeded(tmp_path: Path) -> None:
@@ -680,7 +792,7 @@ def test_option_path_parse_has_seed_dash_and_the_next_parse_is_seeded(tmp_path: 
     golden = build_golden(captures, ["cap"], ())
 
     assert golden.plan_text == text(
-        "# m6-p0 plan 2",
+        PLAN_HEADER,
         "run 1 cap r1",
         f"filein {FILEIN.hex()}",
         "work",
@@ -702,7 +814,7 @@ def test_no_p0_parse_after_an_option_path_record_takes_the_dump_seed(tmp_path: P
     golden = build_golden(captures, ["cap"], ())
 
     assert golden.plan_text == text(
-        "# m6-p0 plan 2",
+        PLAN_HEADER,
         "run 1 cap r1",
         f"filein {FILEIN.hex()}",
         "work",

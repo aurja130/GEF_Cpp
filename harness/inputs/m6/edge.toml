@@ -377,3 +377,104 @@ input = "harness/inputs/m6/lists/f_backslash_name.in"
 tree = "harness/inputs/m6/edge"
 file_in = "harness/inputs/m6/lists/f_backslash_name.in"
 note = "sequence file named with a backslash in file.in: FileExists does not convert it (M6.1 review)"
+
+[[entry]]
+id = "edge-l_empty"
+group = "edge"
+input = "harness/inputs/m6/lists/l_empty.in"
+tree = "harness/inputs/m6/edge"
+file_in = "harness/inputs/m6/lists/l_empty.in"
+timeout_s = 20
+note = "file.in names no sequence file: Bfilein = 0, GEF waits for a key at GEF.bas:15621 (M6.2)"
+
+[[entry]]
+id = "edge-l_fit_only"
+group = "edge"
+input = "harness/inputs/m6/lists/l_fit_only.in"
+tree = "harness/inputs/m6/edge"
+file_in = "harness/inputs/m6/lists/l_fit_only.in"
+timeout_s = 20
+note = "FIT and NITER(1) but no sequence file: past the fit end, the key wait of GEF.bas:15621 (M6.2)"
+
+[[entry]]
+id = "edge-e_plot"
+group = "edge"
+input = "harness/inputs/m6/edge/e_plot.in"
+tree = "harness/inputs/m6/edge"
+timeout_s = 60
+note = "Options(PLOT): a full run waits in Input at GEF.bas:15512 after the nominal pass (M6.2)"
+
+[[entry]]
+id = "edge-e_plot_err"
+group = "edge"
+input = "harness/inputs/m6/edge/e_plot_err.in"
+tree = "harness/inputs/m6/edge"
+timeout_s = 60
+note = "Options(PLOT, ERR): a full run waits in Input at GEF.bas:15522 after its first pass (M6.2)"
+
+[[entry]]
+id = "edge-e_pass_fen10"
+group = "edge"
+input = "harness/inputs/m6/edge/e_pass_fen10.in"
+tree = "harness/inputs/m6/edge"
+timeout_s = 900
+note = "pass schedule at Fenhance 10 with ERR: 31 perturbed passes and the nominal one (M6.2 full run)"
+
+[[entry]]
+id = "edge-e_pass_fen01"
+group = "edge"
+input = "harness/inputs/m6/edge/e_pass_fen01.in"
+tree = "harness/inputs/m6/edge"
+note = "pass schedule at Fenhance 0.1 with ERR: 3 perturbed passes, the warning before the nominal one (M6.2 full run)"
+
+[[entry]]
+id = "edge-e_pass_fen01_nominal"
+group = "edge"
+input = "harness/inputs/m6/edge/e_pass_fen01_nominal.in"
+tree = "harness/inputs/m6/edge"
+note = "Fenhance 0.1 without ERR: the warning of GEF.bas:5055-5058 (M6.2 full run)"
+
+[[entry]]
+id = "edge-e_is_energy_empty"
+group = "edge"
+input = "harness/inputs/m6/edge/e_is_energy_empty.in"
+tree = "harness/inputs/m6/edge"
+note = "IS line after an empty energy line: GEF.bas:3455-3456 read Energy_Table(1) and Spin_Table(1) past Redim (0) (M6.2 review)"
+
+[[entry]]
+id = "edge-e_fc_energy_empty"
+group = "edge"
+input = "harness/inputs/m6/edge/e_fc_energy_empty.in"
+tree = "harness/inputs/m6/edge"
+note = "FC line after an empty energy line: GEF.bas:3495 reads Energy_Table(1) past Redim (0) (M6.2 review)"
+
+[[entry]]
+id = "edge-e_endf_energy_empty"
+group = "edge"
+input = "harness/inputs/m6/edge/e_endf_energy_empty.in"
+tree = "harness/inputs/m6/edge"
+note = "ENDF EN line after an empty energy line: N_E_steps 1, GEF.bas:3462 reads Energy_Table(1) past Redim (0) (M6.2 review)"
+
+[[entry]]
+id = "edge-l_restart_stale"
+group = "edge"
+input = "harness/inputs/m6/lists/l_restart_stale.in"
+tree = "harness/inputs/m6/edge"
+file_in = "harness/inputs/m6/lists/l_restart_stale.in"
+note = "restarts whose rounds start from different stale En_max and Emode: two equal rounds, then GEF ends in the third (M6.2 review)"
+
+[[entry]]
+id = "edge-l_restart_emode"
+group = "edge"
+input = "harness/inputs/m6/lists/l_restart_emode.in"
+tree = "harness/inputs/m6/edge"
+file_in = "harness/inputs/m6/lists/l_restart_emode.in"
+note = "five restart rounds; rounds 4 and 5 start from the same done.ctl records and differ only in the stale Emode, which ends GEF at the E/spin check (M6.2 review)"
+
+[[entry]]
+id = "edge-l_restart_fit_stale"
+group = "edge"
+input = "harness/inputs/m6/lists/l_restart_fit_stale.in"
+tree = "harness/inputs/m6/edge"
+file_in = "harness/inputs/m6/lists/l_restart_fit_stale.in"
+note = "fit mode: the restart leaves Emode 2, so round 2 ends at the E/spin check of the first file (M6.2 review)"

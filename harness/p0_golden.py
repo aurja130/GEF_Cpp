@@ -1,14 +1,17 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Copyright (C) 2026 Aurora Jahan
 # Licensed under the GNU GPL v3 or later, WITHOUT ANY WARRANTY; see LICENSE.txt.
-"""Store-derived golden of the M6.1 P0 parser test, format 2.
+"""Store-derived golden of the M6.1 P0 parser test, format 3.
 
 For every run of the m6 captures that has ``work/file.in``, ``plan.txt`` lists the files
 copied into ``work/`` (ids into a ``file`` table at its head) and, for each sequence file
-BASIC parsed (``stdout.log``), what the parser did: the P0 record that parse wrote, or
-``end``/``hang`` when it wrote none. ``fingerprints.txt`` gives every P0 record a line count
-and an FNV-1a 64 digest of its dump lines. The C++ test replays the parses from the plan and
-compares its P0 dump with the fingerprints.
+BASIC parsed (``stdout.log``), one ``parse <restart> <ifilein> <emode> <seed> <outcome>`` line:
+the P0 record that parse wrote (``p0=N``), or ``end``/``hang`` when it wrote none. ``<emode>``
+is an integer, or ``-`` where the Emode is unknown (format 3; see the Emode rule below).
+``<seed>`` is the hex of the Cfileoutlmd_full the parse starts from, or ``-``.
+``fingerprints.txt`` gives every P0 record a line count and an FNV-1a 64 digest of its dump
+lines. The C++ test replays the parses from the plan and compares its P0 dump with the
+fingerprints.
 
 Derivation rules, all checked against the store:
 
@@ -17,8 +20,12 @@ Derivation rules, all checked against the store:
   candidate: the plan's ``filein`` line records it. A work file goes to its recorded dest, else
   to its name at the work root.
 - Only the last parse may lack a P0 record. Its Ifilein is 1 after a restart and the previous
-  Ifilein plus one otherwise. Its Emode is the run's last P1 Emode, else its last P0 Emode,
-  else 1.
+  Ifilein plus one otherwise. Its Emode is the one BASIC last dumped before it, read in stdout
+  order: a ``Please wait ... code is running.`` line stands for the next P1 record, an earlier
+  parse for its P0 record, and none for the start value 1. A ``Fission barrier of CN`` line after
+  that (a system line head set Emode, GEF.bas:3227-3277, and no probe dumped it) makes the
+  Emode unknown: ``-``. The M6.1 test does not replay such a parse; the driver test of M6.2 runs
+  it with the Emode the driver carries.
 - A parse whose P0 record has Cfileoutlmd ``$Events.lmd`` (the LMD option path) has seed ``-``:
   that parse wrote Cfileoutlmd_full itself before the probe, so the dump does not show the value
   it started from. Other parses take their seed from their record's Cfileoutlmd_full; a parse
@@ -42,7 +49,6 @@ from __future__ import annotations
 
 import argparse
 import hashlib
-import json
 import re
 import shutil
 import sys
@@ -53,22 +59,40 @@ from typing import Final, cast
 
 from harness.common import INPUTS_DIR, REPO_ROOT, STORE_CAPTURES, HarnessError, sha256_file
 from harness.golden import GOLDEN_DIR, write_derived
-from harness.probe_fingerprints import fnv1a64, split_lines
-from harness.probes import ProbeRecord, parse_line, read_probe_file
+from harness.golden_store import (
+    StoreRun,
+    as_object,
+    capture_runs,
+    field,
+    int_of,
+    load_json,
+    probe_value,
+    read_dump,
+    run_exit_code,
+    skip_comment,
+    str_of,
+)
+from harness.probe_fingerprints import fnv1a64
+from harness.probes import parse_line, read_probe_file
 
 CAPTURES: Final[tuple[str, ...]] = (
     "m6-setup-corpus",
-    "m6-setup-edge-4",
+    "m6-setup-edge-7",
     "m6-full-f1-f7",
+    "m6-full-plot",
+    "m6-full-passes",
+    "m6-setup-restart",
     "m6-patch-check-m1",
 )
 GOLDEN_OUT: Final[Path] = GOLDEN_DIR / "m6-p0"
 TOOL: Final[str] = "python3 -m harness.p0_golden"
-PLAN_HEADER: Final[str] = "# m6-p0 plan 2"
-FINGERPRINTS_HEADER: Final[str] = "# m6-p0 fingerprints 2"
+PLAN_HEADER: Final[str] = "# m6-p0 plan 3"
+FINGERPRINTS_HEADER: Final[str] = "# m6-p0 fingerprints 3"
 PROBE: Final[str] = "P0"
 FOUND_LINE: Final[str] = "File 'file.in' found."
 SEQUENCE_MARK: Final[str] = "Sequence of nuclei given in "
+WAIT_LINE: Final[str] = "Please wait ... code is running."  # printed just before probe P1
+BARRIER_MARK: Final[str] = "Fission barrier of CN ("  # GEF.bas:3347, after a line head
 SEQUENCE_RE: Final[re.Pattern[str]] = re.compile(
     r"Sequence of nuclei given in (?P<path>.*?) will be calculated!"
 )
@@ -81,6 +105,9 @@ class Parse:
 
     sequence: str
     restart: bool  # a ``File 'file.in' found.`` line came after the previous parse
+    # Where the Emode at this parse was last dumped: ("p1", k) the k-th P1 record, ("p0", n) the
+    # P0 record of parse n, ("start", 0) nowhere since start-up, ("unknown", 0) a line head after.
+    emode_from: tuple[str, int]
 
 
 @dataclass(frozen=True)
@@ -137,27 +164,15 @@ def build_golden(
     items: list[_RunBlock | str] = []  # a run block, or the skip comment of a skipped run
     files: set[tuple[str, str]] = set()
     for capture in captures:
-        base = captures_dir / capture
-        if not base.is_dir():
-            raise HarnessError(f"capture {capture} not found in {captures_dir}")
-        run_jsons = sorted(base.rglob("run.json"))
-        run_ids = {path.parent.relative_to(base).as_posix() for path in run_jsons}
-        exit_codes: dict[str, int] = {}
-        corpus = base / "corpus.json"
-        if corpus.is_file():
-            exit_codes = _corpus_exit_codes(corpus, capture)
-            unknown = sorted(set(exit_codes) - run_ids)
-            if unknown:
-                raise HarnessError(f"{capture}: corpus.json names unknown runs {unknown}")
+        found = capture_runs(captures_dir, capture)
+        if found.has_corpus:
             files.add((capture, "corpus.json"))
-        for run_json in run_jsons:
-            run_dir = run_json.parent
-            rel = run_dir.relative_to(base).as_posix()
-            if not (run_dir / "work" / "file.in").is_file():
-                items.append(_skip_line(capture, rel, run_json))
-                files.add((capture, f"{rel}/run.json"))
+        for run in found.runs:
+            if not run.has_file_in():
+                items.append(skip_comment(run))
+                files.add((capture, f"{run.rel}/run.json"))
                 continue
-            block = _run_block(capture, rel, run_dir, exit_codes.get(rel))
+            block = _run_block(run)
             items.append(block)
             files.update((capture, path) for path in block.files)
     plan_text, fingerprint_text = _render(items, sources)
@@ -228,50 +243,35 @@ def main(argv: Sequence[str] | None = None) -> int:
     return 0
 
 
-def _run_block(
-    capture: str,
-    rel: str,
-    run_dir: Path,
-    corpus_exit: int | None,
-) -> _RunBlock:
-    where = f"{capture}/{rel}"
-    run = _load_json(run_dir / "run.json", where)
-    exit_code = corpus_exit
-    if exit_code is None:
-        exit_code = _int_of(_field(run, "exit_code", where), "exit_code", where)
-    parses = _read_parses((run_dir / "stdout.log").read_text(encoding="latin-1"), where)
-    probes = run_dir / "work" / "probes"
+def _run_block(run: StoreRun) -> _RunBlock:
+    where = run.where
+    run_json = load_json(run.run_dir / "run.json", where)
+    exit_code = run_exit_code(run, run_json)
+    parses = _read_parses((run.run_dir / "stdout.log").read_text(encoding="latin-1"), where)
+    probes = run.run_dir / "work" / "probes"
     p0 = _read_p0(probes / "P0.txt", where)
-    last_p1 = _last_p1_emode(probes / "P1.txt", where)
-    filein = (run_dir / "work" / "file.in").read_bytes()
-    _check_file_in(run, filein, where)
-    files = [f"{rel}/run.json", f"{rel}/stdout.log", f"{rel}/work/file.in"]
+    p1_emodes = _p1_emodes(probes / "P1.txt", where)
+    filein = (run.run_dir / "work" / "file.in").read_bytes()
+    _check_file_in(run_json, filein, where)
+    files = [f"{run.rel}/run.json", f"{run.rel}/stdout.log", f"{run.rel}/work/file.in"]
     for name in ("P0.txt", "P1.txt"):
         if (probes / name).is_file():
-            files.append(f"{rel}/work/probes/{name}")
+            files.append(f"{run.rel}/work/probes/{name}")
     return _RunBlock(
-        capture=capture,
-        rel=rel,
+        capture=run.capture,
+        rel=run.rel,
         filein=filein.hex() or "-",
-        work=tuple(_work_entries(run, parses, run_dir / "work", where)),
-        parses=tuple(_parse_lines(parses, p0, last_p1, exit_code, where)),
+        work=tuple(_work_entries(run_json, parses, run.run_dir / "work", where)),
+        parses=tuple(_parse_lines(parses, p0, p1_emodes, exit_code, where)),
         records=tuple(p0),
         files=tuple(files),
     )
 
 
-def _skip_line(capture: str, rel: str, run_json: Path) -> str:
-    """Plan comment for a run without work/file.in; the run must record no file_in."""
-    where = f"{capture}/{rel}"
-    if _load_json(run_json, where).get("file_in") is not None:
-        raise HarnessError(f"{where}: run.json records file_in but work/file.in is absent")
-    return f"# skipped {capture} {rel}: the store keeps no work/file.in"
-
-
 def _parse_lines(
     parses: Sequence[Parse],
     p0: Sequence[P0Record],
-    last_p1_emode: int | None,
+    p1_emodes: Sequence[int],
     exit_code: int,
     where: str,
 ) -> list[str]:
@@ -292,7 +292,7 @@ def _parse_lines(
                     f"{where}: parse {number} has Ifilein {record.ifilein}, expected {expected}"
                 )
             ifilein = record.ifilein
-            emode = record.emode
+            emode = str(record.emode)
             # the LMD option path wrote Cfileoutlmd_full itself: no seed (module docstring)
             cfile = b"" if record.cfileoutlmd == EVENTS_LMD else record.cfileoutlmd_full
             outcome = f"p0={record.rec}"
@@ -302,7 +302,7 @@ def _parse_lines(
                     f"{where}: parse {number} has no P0 record and no Ifilein to continue from"
                 )
             ifilein = expected
-            emode = last_p1_emode if last_p1_emode is not None else (p0[-1].emode if p0 else 1)
+            emode = _seed_emode(parse.emode_from, p0, p1_emodes, where)
             cfile = p0[-1].cfileoutlmd_full if p0 else b""
             outcome = "hang" if exit_code != 0 else "end"
         restart = int(parse.restart)
@@ -318,18 +318,18 @@ def _work_entries(
     """(dest, sha256) of the run's input and work files, in run.json order."""
     entries: list[tuple[str, str]] = []
     if run.get("input") is not None:
-        inp = _as_object(run["input"], "input", where)
-        sha = _str_of(_field(inp, "sha256", where), "input sha256", where)
+        inp = as_object(run["input"], "input", where)
+        sha = str_of(field(inp, "sha256", where), "input sha256", where)
         entries.append((_input_dest(inp, parses, work_dir, where), sha))
     raw_files = run.get("work_files", [])
     if not isinstance(raw_files, list):
         raise HarnessError(f"{where}: work_files is not a list")
     for item in cast("list[object]", raw_files):
-        work = _as_object(item, "work_files entry", where)
-        dest = _str_of(_field(work, "name", where), "work file name", where)
+        work = as_object(item, "work_files entry", where)
+        dest = str_of(field(work, "name", where), "work file name", where)
         if work.get("dest") is not None:
-            dest = _str_of(work["dest"], "work file dest", where)
-        sha = _str_of(_field(work, "sha256", where), "work file sha256", where)
+            dest = str_of(work["dest"], "work file dest", where)
+        sha = str_of(field(work, "sha256", where), "work file sha256", where)
         entries.append((dest, sha))
     seen: set[str] = set()
     for dest, _ in entries:
@@ -343,14 +343,14 @@ def _input_dest(inp: dict[str, object], parses: Sequence[Parse], work_dir: Path,
     """Dest of the run's input: recorded, else the sequence path BASIC opened, else the one
     file under work/ with its sha256. The batch file work/file.in is no candidate."""
     if inp.get("dest") is not None:
-        return _str_of(inp["dest"], "input dest", where)
-    name = _str_of(_field(inp, "name", where), "input name", where)
+        return str_of(inp["dest"], "input dest", where)
+    name = str_of(field(inp, "name", where), "input name", where)
     opened = sorted({parse.sequence for parse in parses if Path(parse.sequence).name == name})
     if len(opened) > 1:
         raise HarnessError(f"{where}: input {name} matches sequence paths {opened}")
     if opened:
         return opened[0]
-    sha = _str_of(_field(inp, "sha256", where), "input sha256", where)
+    sha = str_of(field(inp, "sha256", where), "input sha256", where)
     copies: list[str] = []
     for path in sorted(work_dir.rglob("*")):
         relative = path.relative_to(work_dir).as_posix()
@@ -368,55 +368,67 @@ def _input_dest(inp: dict[str, object], parses: Sequence[Parse], work_dir: Path,
 def _check_file_in(run: dict[str, object], filein: bytes, where: str) -> None:
     if run.get("file_in") is None:
         return
-    recorded = _as_object(run["file_in"], "file_in", where)
-    sha = _str_of(_field(recorded, "sha256", where), "file_in sha256", where)
+    recorded = as_object(run["file_in"], "file_in", where)
+    sha = str_of(field(recorded, "sha256", where), "file_in sha256", where)
     if hashlib.sha256(filein).hexdigest() != sha:
         raise HarnessError(f"{where}: work/file.in does not match file_in in run.json")
+
+
+def _seed_emode(
+    source: tuple[str, int], p0: Sequence[P0Record], p1_emodes: Sequence[int], where: str
+) -> str:
+    """The Emode seed of a parse without P0 record (module docstring), or ``-``."""
+    kind, index = source
+    if kind == "unknown":
+        return "-"
+    if kind == "start":
+        return "1"
+    values = p1_emodes if kind == "p1" else [record.emode for record in p0]
+    if not 1 <= index <= len(values):
+        raise HarnessError(f"{where}: no {kind.upper()} record {index} for an Emode seed")
+    return str(values[index - 1])
 
 
 def _read_parses(stdout: str, where: str) -> list[Parse]:
     parses: list[Parse] = []
     restart = False
+    waits = 0
+    emode_from = ("start", 0)
     for line in stdout.split("\n"):
         if FOUND_LINE in line:
             restart = True
+        if line.strip(" ") == WAIT_LINE:
+            waits += 1
+            emode_from = ("p1", waits)
+        if line.startswith(BARRIER_MARK):
+            emode_from = ("unknown", 0)
         if SEQUENCE_MARK in line:
             match = SEQUENCE_RE.search(line)
             if match is None:
                 raise HarnessError(f"{where}: unreadable sequence line {line!r}")
-            parses.append(Parse(str(match.group("path")), restart))
+            parses.append(Parse(str(match.group("path")), restart, emode_from))
             restart = False
+            emode_from = ("p0", len(parses))
     return parses
 
 
 def _read_p0(path: Path, where: str) -> list[P0Record]:
-    if not path.is_file():
-        return []
-    lines = split_lines(path.read_bytes())
-    probe_records = read_probe_file(path)
-    if sum(record.line_count for record in probe_records) != len(lines):
-        raise HarnessError(f"{where}: {path.name} has blank lines")
     records: list[P0Record] = []
-    start = 0
-    for number, record in enumerate(probe_records, start=1):
+    for number, (record, block) in enumerate(read_dump(path, where), start=1):
         if record.probe != PROBE:
             raise HarnessError(f"{where}: {path.name} holds {record.probe} records")
         if record.rec != number:
             raise HarnessError(
                 f"{where}: P0 record {number} has rec={record.rec}; records must be rec=1..n"
             )
-        block = lines[start : start + record.line_count]
-        start += record.line_count
         records.append(
             P0Record(
                 rec=number,
-                ifilein=_int_of(_probe_value(record, "Ifilein", where), "Ifilein", where),
-                emode=_int_of(_probe_value(record, "Emode", where), "Emode", where),
-                cfileoutlmd=_str_of(
-                    _probe_value(record, "Cfileoutlmd", where), "Cfileoutlmd", where
-                ),
-                cfileoutlmd_full=_str_of(
-                    _probe_value(record, "Cfileoutlmd_full", where), "Cfileoutlmd_full", where
+                ifilein=int_of(probe_value(record, "Ifilein", where), "Ifilein", where),
+                emode=int_of(probe_value(record, "Emode", where), "Emode", where),
+                cfileoutlmd=str_of(probe_value(record, "Cfileoutlmd", where), "Cfileoutlmd", where),
+                cfileoutlmd_full=str_of(
+                    probe_value(record, "Cfileoutlmd_full", where), "Cfileoutlmd_full", where
                 ).encode("latin-1"),
                 lines=record.line_count,
                 fnv=_record_fnv(block, number, where),
@@ -441,31 +453,14 @@ def _record_fnv(block: Sequence[bytes], rec: int, where: str) -> int:
     return fnv1a64([line for _, line in named])
 
 
-def _last_p1_emode(path: Path, where: str) -> int | None:
+def _p1_emodes(path: Path, where: str) -> list[int]:
+    """The Emode of each P1 record, in record order."""
     if not path.is_file():
-        return None
-    records = read_probe_file(path)
-    if not records:
-        return None
-    return _int_of(_probe_value(records[-1], "Emode", where), "P1 Emode", where)
-
-
-def _probe_value(record: ProbeRecord, name: str, where: str) -> object:
-    if name not in record.variables:
-        raise HarnessError(f"{where}: {record.probe} record rec={record.rec} has no {name}")
-    return record.var(name).get()
-
-
-def _corpus_exit_codes(path: Path, capture: str) -> dict[str, int]:
-    entries = _field(_load_json(path, capture), "entries", capture)
-    if not isinstance(entries, list):
-        raise HarnessError(f"{capture}: corpus.json entries is not a list")
-    codes: dict[str, int] = {}
-    for entry in cast("list[object]", entries):
-        item = _as_object(entry, "corpus entry", capture)
-        run_id = _str_of(_field(item, "id", capture), "corpus id", capture)
-        codes[run_id] = _int_of(_field(item, "exit_code", capture), "corpus exit_code", capture)
-    return codes
+        return []
+    return [
+        int_of(probe_value(record, "Emode", where), "P1 Emode", where)
+        for record in read_probe_file(path)
+    ]
 
 
 def _index_sources(roots: Sequence[tuple[str, Path]]) -> dict[str, str]:
@@ -480,38 +475,6 @@ def _index_sources(roots: Sequence[tuple[str, Path]]) -> dict[str, str]:
                 continue
             index.setdefault(sha256_file(path), f"{prefix}/{relative.as_posix()}")
     return index
-
-
-def _load_json(path: Path, where: str) -> dict[str, object]:
-    try:
-        data: object = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, ValueError) as exc:
-        raise HarnessError(f"{where}: cannot read {path.name}: {exc}") from exc
-    return _as_object(data, path.name, where)
-
-
-def _as_object(value: object, what: str, where: str) -> dict[str, object]:
-    if not isinstance(value, dict):
-        raise HarnessError(f"{where}: {what} is not a JSON object")
-    return cast("dict[str, object]", value)
-
-
-def _field(obj: dict[str, object], key: str, where: str) -> object:
-    if key not in obj:
-        raise HarnessError(f"{where}: no {key!r} entry")
-    return obj[key]
-
-
-def _int_of(value: object, what: str, where: str) -> int:
-    if isinstance(value, bool) or not isinstance(value, int):
-        raise HarnessError(f"{where}: {what} is not an integer")
-    return value
-
-
-def _str_of(value: object, what: str, where: str) -> str:
-    if not isinstance(value, str):
-        raise HarnessError(f"{where}: {what} is not a string")
-    return value
 
 
 if __name__ == "__main__":

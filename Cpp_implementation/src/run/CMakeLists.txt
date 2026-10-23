@@ -2,9 +2,10 @@
 # Copyright (C) 2026 Aurora Jahan
 # Licensed under the GNU GPL v3 or later, WITHOUT ANY WARRANTY; see LICENSE.txt.
 
-# GEF's batch input, run control and system/step set-up (M6, namespace gef::run). The driver
-# and the system/step set-up join the target with M6.2-M6.4.
+# GEF's batch input, run control and system/step set-up (M6, namespace gef::run). The system and
+# step set-up join the target with M6.3-M6.4.
 add_library(gef_run STATIC
+    driver.cpp
     input_files.cpp
     workdir.cpp)
 target_include_directories(gef_run PUBLIC "${PROJECT_SOURCE_DIR}/Cpp_implementation/src")

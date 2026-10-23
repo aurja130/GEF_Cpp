@@ -12,6 +12,7 @@
 #include "support/golden.hpp"
 #include "support/probe_dump.hpp"
 #include "support/run_p0.hpp"
+#include "support/run_replay.hpp"
 
 #include <catch2/catch_test_macros.hpp>
 
@@ -20,9 +21,7 @@
 #include <cstdint>
 #include <exception>
 #include <filesystem>
-#include <fstream>
 #include <iomanip>
-#include <iterator>
 #include <map>
 #include <optional>
 #include <set>
@@ -30,8 +29,6 @@
 #include <stdexcept>
 #include <string>
 #include <string_view>
-#include <system_error>
-#include <unistd.h>
 #include <utility>
 #include <vector>
 
@@ -46,193 +43,25 @@ using gef::run::ProbeSink;
 using gef::run::ProcessState;
 using gef::run::SequenceFileState;
 using gef::run::WorkDir;
+using gef::test::fill_scratch;
+using gef::test::find_line_start;
+using gef::test::first_line_difference;
+using gef::test::Plan;
+using gef::test::plan_check;
+using gef::test::PlanFile;
+using gef::test::PlanParse;
+using gef::test::PlanRun;
 using gef::test::ProbeDump;
 using gef::test::ProbeFingerprint;
-
-// ---- The plan (tests/golden/m6-p0/plan.txt; harness/p0_golden.py) -------------------------------
-
-struct PlanFile {
-    std::string dest;   // relative to the run's work/ directory
-    std::string source; // repository-relative; empty when the plan says `-`
-};
-
-struct PlanParse {
-    enum class Outcome : std::uint8_t { P0, End, Hang };
-
-    bool restart = false;
-    std::int64_t ifilein = 0;
-    std::int64_t emode = 0;
-    std::string cfileoutlmd_full; // decoded bytes
-    Outcome outcome = Outcome::End;
-    std::int64_t rec = 0; // the record of a `p0=<rec>` outcome
-};
-
-struct PlanRun {
-    std::int64_t number = 0;
-    std::string capture;
-    std::string run_dir;
-    std::string filein;             // decoded contents of file.in
-    std::vector<std::int64_t> work; // ids of the `file` lines copied into work/
-    std::vector<PlanParse> parses;
-};
-
-struct Plan {
-    std::map<std::int64_t, PlanFile> files;
-    std::vector<PlanRun> runs;
-};
-
-// ---- Text helpers ----------------------------------------------------------------------------
-
-void plan_check(bool ok, std::string const& message) {
-    if (!ok) {
-        throw std::runtime_error(message);
-    }
-}
-
-// Splits a line on single spaces; empty fields are dropped.
-std::vector<std::string_view> split_fields(std::string_view line) {
-    std::vector<std::string_view> fields;
-    std::size_t start = 0;
-    while (start <= line.size()) {
-        std::size_t end = line.find(' ', start);
-        if (end == std::string_view::npos) {
-            end = line.size();
-        }
-        if (end > start) {
-            fields.push_back(line.substr(start, end - start));
-        }
-        start = end + 1;
-    }
-    return fields;
-}
-
-// A decimal integer, optionally negative.
-std::int64_t to_int(std::string_view text) {
-    bool const negative = text.starts_with('-');
-    std::string_view const digits = negative ? text.substr(1) : text;
-    plan_check(!digits.empty(), "bad integer '" + std::string(text) + "'");
-    std::int64_t value = 0;
-    for (char const digit : digits) {
-        if (digit < '0' || digit > '9') {
-            throw std::runtime_error("bad integer '" + std::string(text) + "'");
-        }
-        value = (value * 10) + (digit - '0');
-    }
-    return negative ? -value : value;
-}
-
-// The value of one hex digit.
-int hex_value(char const digit) {
-    if (digit >= '0' && digit <= '9') {
-        return digit - '0';
-    }
-    if (digit >= 'a' && digit <= 'f') {
-        return digit - 'a' + 10;
-    }
-    if (digit >= 'A' && digit <= 'F') {
-        return digit - 'A' + 10;
-    }
-    throw std::runtime_error(std::string("bad hex digit '") + digit + "'");
-}
-
-// A hex field of the plan: `-` is empty, otherwise two hex digits per byte.
-std::string decode_hex(std::string_view hex) {
-    if (hex == "-") {
-        return {};
-    }
-    plan_check(hex.size() % 2 == 0, "odd-length hex field '" + std::string(hex) + "'");
-    std::string bytes;
-    bytes.reserve(hex.size() / 2);
-    for (std::size_t i = 0; i < hex.size(); i += 2) {
-        bytes.push_back(static_cast<char>((hex_value(hex.at(i)) * 16) + hex_value(hex.at(i + 1))));
-    }
-    return bytes;
-}
-
-// ---- Reading the plan and the golden fingerprints --------------------------------------------
-
-// `file <id> <dest> <source|-> <sha256>`
-void read_file_line(std::vector<std::string_view> const& fields, Plan& plan) {
-    plan_check(fields.size() == 5, "plan: bad file line");
-    PlanFile entry;
-    entry.dest = std::string(fields.at(2));
-    entry.source = fields.at(3) == "-" ? std::string{} : std::string(fields.at(3));
-    plan.files[to_int(fields.at(1))] = std::move(entry);
-}
-
-// `parse <restart> <ifilein> <emode> <cfileoutlmd_full|-> <outcome>`; the outcome is `end`,
-// `hang` or `p0=<rec>`.
-PlanParse read_parse_line(std::vector<std::string_view> const& fields) {
-    plan_check(fields.size() == 6, "plan: bad parse line");
-    PlanParse parse;
-    parse.restart = to_int(fields.at(1)) == 1;
-    parse.ifilein = to_int(fields.at(2));
-    parse.emode = to_int(fields.at(3));
-    parse.cfileoutlmd_full = decode_hex(fields.at(4));
-    std::string_view const outcome = fields.at(5);
-    if (outcome == "end") {
-        parse.outcome = PlanParse::Outcome::End;
-    } else if (outcome == "hang") {
-        parse.outcome = PlanParse::Outcome::Hang;
-    } else if (outcome.starts_with("p0=")) {
-        parse.outcome = PlanParse::Outcome::P0;
-        parse.rec = to_int(outcome.substr(3));
-    } else {
-        throw std::runtime_error("plan: bad outcome '" + std::string(outcome) + "'");
-    }
-    return parse;
-}
-
-// The run open at a line of the plan; `message` is thrown when no run is open.
-PlanRun& require_open(std::optional<PlanRun>& open, std::string const& message) {
-    if (!open.has_value()) {
-        throw std::runtime_error(message);
-    }
-    return *open;
-}
-
-Plan read_plan(std::vector<std::string> const& lines) {
-    Plan plan;
-    std::optional<PlanRun> open;
-    for (std::string const& line : lines) {
-        std::vector<std::string_view> const fields = split_fields(line);
-        if (fields.empty() || fields.front().starts_with('#')) {
-            continue;
-        }
-        std::string_view const kind = fields.front();
-        if (kind == "file") {
-            read_file_line(fields, plan);
-        } else if (kind == "run") {
-            plan_check(!open.has_value() && fields.size() == 4,
-                       "plan: bad run line '" + line + "'");
-            open.emplace();
-            open->number = to_int(fields.at(1));
-            open->capture = std::string(fields.at(2));
-            open->run_dir = std::string(fields.at(3));
-        } else if (kind == "filein") {
-            std::string const message = "plan: bad filein line '" + line + "'";
-            PlanRun& run = require_open(open, message);
-            plan_check(fields.size() == 2, message);
-            run.filein = decode_hex(fields.at(1));
-        } else if (kind == "work") {
-            PlanRun& run = require_open(open, "plan: work line outside a run");
-            for (std::size_t i = 1; i < fields.size(); ++i) {
-                run.work.push_back(to_int(fields.at(i)));
-            }
-        } else if (kind == "parse") {
-            PlanRun& run = require_open(open, "plan: parse line outside a run");
-            run.parses.push_back(read_parse_line(fields));
-        } else if (kind == "endrun") {
-            PlanRun& run = require_open(open, "plan: endrun without run");
-            plan.runs.push_back(std::move(run));
-            open.reset();
-        } else {
-            throw std::runtime_error("plan: unknown line '" + line + "'");
-        }
-    }
-    plan_check(!open.has_value(), "plan: run without endrun");
-    return plan;
-}
+using gef::test::read_bytes;
+using gef::test::read_plan;
+using gef::test::replayable;
+using gef::test::ScopedDir;
+using gef::test::split_fields;
+using gef::test::start_up;
+using gef::test::store_run;
+using gef::test::to_int;
+using gef::test::write_bytes;
 
 using GoldenKey = std::pair<std::int64_t, std::int64_t>; // (run, rec)
 using GoldenMap = std::map<GoldenKey, ProbeFingerprint>;
@@ -331,58 +160,6 @@ struct Tally {
     std::size_t store_compared = 0; // P0 records compared with BASIC's P0.txt
 };
 
-// Empties a scratch directory on construction and removes it on destruction.
-class ScopedDir {
-public:
-    explicit ScopedDir(fs::path path) : path_(std::move(path)) { remove(); }
-    ~ScopedDir() { remove(); }
-    ScopedDir(ScopedDir const&) = delete;
-    ScopedDir& operator=(ScopedDir const&) = delete;
-    ScopedDir(ScopedDir&&) = delete;
-    ScopedDir& operator=(ScopedDir&&) = delete;
-
-private:
-    void remove() {
-        std::error_code ignored;
-        static_cast<void>(fs::remove_all(path_, ignored));
-    }
-
-    fs::path path_;
-};
-
-void write_bytes(fs::path const& path, std::string const& bytes) {
-    std::ofstream out(path, std::ios::binary);
-    plan_check(out.is_open(), "cannot create " + path.string());
-    out.write(bytes.data(), static_cast<std::streamsize>(bytes.size()));
-    out.close();
-    plan_check(!out.fail(), "cannot write " + path.string());
-}
-
-// A run is replayable from the repository when every file it copies has a source present there.
-bool replayable(PlanRun const& run, std::map<std::int64_t, PlanFile> const& files,
-                fs::path const& repo) {
-    return std::ranges::all_of(run.work, [&](std::int64_t const id) {
-        std::string const& source = files.at(id).source;
-        return !source.empty() && fs::is_regular_file(repo / source);
-    });
-}
-
-// The run's directory in the reference store, when the store holds it.
-std::optional<fs::path> store_run(PlanRun const& run) {
-    std::optional<fs::path> const marker =
-        gef::test::store_file(run.capture, run.run_dir + "/run.json");
-    if (!marker.has_value()) {
-        return std::nullopt;
-    }
-    return marker->parent_path();
-}
-
-std::string read_bytes(fs::path const& path) {
-    std::ifstream in(path, std::ios::binary);
-    plan_check(in.is_open(), "cannot open " + path.string());
-    return {std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>()};
-}
-
 // Checks the P0 record `rec` of one run against its golden fingerprint and, when BASIC's P0.txt
 // is present, names the first variable that differs from it.
 void check_record(GoldenMap const& golden, Tally& tally, std::int64_t run_number, std::int64_t rec,
@@ -460,37 +237,9 @@ bool perform_parse(PlanParse const& parse, ProcessState& process, InputRoundStat
     return ok;
 }
 
-// This test process's scratch root; the process id in its name keeps processes apart.
+// This test file's scratch root in this process.
 fs::path process_scratch_root() {
-    return fs::temp_directory_path() / ("gef-m6-p0-" + std::to_string(getpid()));
-}
-
-// Fills a scratch work/ directory from the repository: file.in, then each copied source.
-void fill_scratch(PlanRun const& run, fs::path const& repo,
-                  std::map<std::int64_t, PlanFile> const& files, fs::path const& root) {
-    static_cast<void>(fs::create_directories(root));
-    write_bytes(root / "file.in", run.filein);
-    for (std::int64_t const id : run.work) {
-        PlanFile const& plan_file = files.at(id);
-        fs::path const dest = root / plan_file.dest;
-        static_cast<void>(fs::create_directories(dest.parent_path()));
-        plan_check(
-            fs::copy_file(repo / plan_file.source, dest, fs::copy_options::overwrite_existing),
-            "cannot copy " + plan_file.source + " to " + dest.string());
-    }
-}
-
-// Start-up as BASIC runs it before file.in is read: Parameters.bas and
-// ParameterManipulation.mac (GEF.bas:1015-1017; FitparRead applies Fitpar.dat when present,
-// which sets D_Par_Fac and EOscale, both P0 variables). bfilein: file.in exists
-// (GEF.bas:1821-1822).
-void start_up(ProcessState& process, WorkDir const& workdir,
-              std::vector<std::string>& parameter_console) {
-    gef::params::load_parameters_bas(process.params);
-    static_cast<void>(gef::params::parameter_manipulation(workdir.read("MyParameters.dat"),
-                                                          workdir.read("Fitpar.dat"), 0.0,
-                                                          process.params, parameter_console));
-    process.bfilein = -1;
+    return gef::test::process_scratch_root("m6-p0");
 }
 
 // Nextfitloop (GEF.bas:2519-2684): FitparRead again (2555), then the round's variables start
@@ -500,48 +249,6 @@ void begin_round(ProcessState& process, InputRoundState& round, SequenceFileStat
     gef::params::fitpar_read(workdir.read("Fitpar.dat"), process.params, parameter_console);
     round = InputRoundState{};
     gef::run::read_file_in(process, round, file, workdir);
-}
-
-// The first offset at or after `from` where `prefix` begins a line of `text`, or npos.
-std::size_t find_line_start(std::string const& text, std::string_view prefix, std::size_t from) {
-    std::size_t pos = text.find(prefix, from);
-    while (pos != std::string::npos && pos != 0 && text.at(pos - 1) != '\n') {
-        pos = text.find(prefix, pos + 1);
-    }
-    return pos;
-}
-
-// The lines of `text` without their '\n'; a final '\n' does not begin another line.
-std::vector<std::string_view> split_lines(std::string_view text) {
-    std::vector<std::string_view> lines;
-    std::size_t start = 0;
-    while (start < text.size()) {
-        std::size_t stop = text.find('\n', start);
-        if (stop == std::string_view::npos) {
-            stop = text.size();
-        }
-        lines.push_back(text.substr(start, stop - start));
-        start = stop + 1;
-    }
-    return lines;
-}
-
-// Names the first line where the two texts differ (1-based), or says that only the line endings
-// differ.
-std::string first_line_difference(std::string_view basic, std::string const& printed) {
-    std::string_view const missing = "<no line>";
-    std::vector<std::string_view> const expected = split_lines(basic);
-    std::vector<std::string_view> const actual = split_lines(printed);
-    std::size_t const count = std::max(expected.size(), actual.size());
-    for (std::size_t line = 0; line < count; ++line) {
-        std::string_view const want = line < expected.size() ? expected.at(line) : missing;
-        std::string_view const got = line < actual.size() ? actual.at(line) : missing;
-        if (want != got) {
-            return "line " + std::to_string(line + 1) + ": BASIC '" + std::string(want) +
-                   "', C++ '" + std::string(got) + "'";
-        }
-    }
-    return "the texts differ in line endings only";
 }
 
 // One run's stdout.log, and how far the console text checked so far reaches into it.
@@ -633,10 +340,15 @@ void replay_run(PlanRun const& run, std::map<std::int64_t, PlanFile> const& file
             begin_round(process, round, file, workdir, parameter_console);
         }
         // The values code outside the parser leaves between files (harness/p0_golden.py, module
-        // docstring); the driver test of M6.5 checks them end to end. A "-" seed of
-        // Cfileoutlmd_full decodes to ""; the parse overwrites it, so it is not recorded.
+        // docstring); run_driver_test.cpp checks them end to end. A "-" seed of Cfileoutlmd_full
+        // decodes to ""; the parse overwrites it, so it is not recorded. A parse whose Emode no
+        // probe dumped (a system line head came after the last dump) is replayed only by the
+        // driver test, which carries Emode itself; it is the last parse of its run.
+        if (!parse.emode.has_value()) {
+            return;
+        }
         round.ifilein = parse.ifilein;
-        process.params.emode = parse.emode;
+        process.params.emode = *parse.emode;
         process.cfileoutlmd_full = parse.cfileoutlmd_full;
         sink.pending.reset();
         bool ok = perform_parse(parse, process, round, file, workdir, sink, golden, tally,
