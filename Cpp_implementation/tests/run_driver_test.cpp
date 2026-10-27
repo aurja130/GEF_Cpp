@@ -2,8 +2,8 @@
 // Copyright (C) 2026 Aurora Jahan
 // Licensed under the GNU GPL v3 or later, WITHOUT ANY WARRANTY; see LICENSE.txt.
 
-// M6.2: the run driver against the BASIC runs of the M6 captures. The set-up stages (M6.3,
-// M6.4) are replaced by ReplayStages, which answers each stage call with what BASIC's stdout
+// M6.2: the run driver against the BASIC runs of the M6 captures. The set-up stages (M6.3) are
+// replaced by ReplayStages, which answers each stage call with what BASIC's stdout
 // shows that stage decided (tests/golden/m6-plan, harness/plan_golden.py): the driver's own
 // decisions (file, line, covariance and step loops, done.ctl, U_Valid, Emode, N_E_steps, the
 // step schedule, the restart, the pass schedule, the end of the run) are what is checked.

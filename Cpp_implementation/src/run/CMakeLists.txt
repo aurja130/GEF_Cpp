@@ -3,7 +3,7 @@
 # Licensed under the GNU GPL v3 or later, WITHOUT ANY WARRANTY; see LICENSE.txt.
 
 # GEF's batch input, run control and system/step set-up (M6, namespace gef::run). The system and
-# step set-up join the target with M6.3-M6.4.
+# step set-up join the target with M6.3.
 add_library(gef_run STATIC
     driver.cpp
     input_files.cpp

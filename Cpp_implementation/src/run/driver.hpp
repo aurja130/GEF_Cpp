@@ -9,7 +9,7 @@
 // (pre-pass, passes, events, writers: M9-M13) and asks for the next step; with an empty step
 // body the driver does what the harness's GEF_SETUP_ONLY build does.
 //
-// The set-up of a round, a system and a step (M6.3, M6.4) is reached through SetupStages, so the
+// The set-up of a round, a system and a step (M6.3) is reached through SetupStages, so the
 // driver's own decisions can be checked on their own (user decision 2026-10-19).
 //
 // Not ported (vision §3): the dialogue and GUI (a working directory without file.in), the ctl/

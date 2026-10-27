@@ -3,9 +3,9 @@
 // Licensed under the GNU GPL v3 or later, WITHOUT ANY WARRANTY; see LICENSE.txt.
 // Ported from GEF 2025/1.2, Copyright (C) 2009-2025 Karl-Heinz Schmidt and Beatriz Jurado.
 
-// Per-round, per-system and per-step set-up of GEF's batch mode (M6.3, M6.4), ported statement
-// by statement from the C fbc emits. Console text goes to ProcessState::console. The run driver
-// (run/driver.hpp) reaches them through SetupStages; M6.3 and M6.4 add the implementation of
+// Per-round, per-system and per-step set-up of GEF's batch mode (M6.3), ported statement by
+// statement from the C fbc emits. Console text goes to ProcessState::console. The run driver
+// (run/driver.hpp) reaches them through SetupStages; M6.3 adds the implementation of
 // SetupStages that calls them. Contract header: not yet implemented.
 
 #pragma once

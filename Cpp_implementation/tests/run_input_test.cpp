@@ -262,7 +262,7 @@ struct StdoutLog {
 // An End or hang parse must also end stdout.log. Where a parse that wrote P0 ends is not
 // checked: BASIC's system loop prints next, usually a " " line like the parser's own first line
 // (GEF.bas:2770), so only the run driver can place that boundary; the byte-equal console test
-// of M6.5 covers it.
+// of M6.4 covers it.
 bool check_console(PlanRun const& run, std::size_t index, PlanParse const& parse,
                    std::string const& printed, StdoutLog& stdout_log) {
     std::string_view const prefix =

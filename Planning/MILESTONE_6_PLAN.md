@@ -1,6 +1,6 @@
 # Milestone 6: Input Parsing, Run Planning and System/Step Setup
 
-**Status:** in progress: M6.0 complete (2026-10-16), M6.1 complete (2026-10-17), M6.2 complete (2026-10-19); M6.3–M6.6 open. Planned 2026-10-14
+**Status:** in progress: M6.0 complete (2026-10-16), M6.1 complete (2026-10-17), M6.2 complete (2026-10-22); M6.3–M6.5 open (re-cut 2026-10-27, D14). Planned 2026-10-14
 **Strategy reference:** `IMPLEMENTATION_STRATEGY.md` §1.2, §2.1, §2.4, §2.9 and §3, M6
 **Depends on:** M1 (probes P1, runner, reference store, `harness.golden`), M3 (`fb::PrintFile`, `fb::str`, `fb::val`, `fb::InputFile`, `fb::trim/ucase/instr/mid`, conversions, `fb::Array`), M4 (`TableSet`, `Parameters` with `load_parameters_bas`, `PerturbationWidths` with `update_widths`, `fitpar_read`, `MatNumberState` with `i_mat_endf`/`n_iso_mat`, `util::cc_count`/`cc_cut`), M5 (`U_Valid`, `BFTF`/`BFTFA`/`BFTFB`, `AME2020`, `LyMass`, `U_SHELL`, `U_SHELL_exp`; `Round` from M3)
 **Unblocks:** M7 (per-step CN values that the bin loops start from), M9 (`StepState`: `Eabsgs`, `Spin_CN`, the spectrum tables, `Eexc_min_multi`, the pre-pass decision, `N_multi_sample`), M12 (pass schedule, `B_Error_On`, the per-system parameter reset), M13 (file names, the lmd name, `B_ENDF`/`Brec`/`I_first_E_step`), M14 (the run driver), M16 (the fit-loop back edge)
@@ -26,6 +26,7 @@ C++ reads GEF's batch inputs and goes through GEF's run control exactly as BASIC
 | D11 | Layout | `Cpp_implementation/src/run/`, CMake target `gef_run`, namespace `gef::run`: `state.hpp`, `input_files.{hpp,cpp}` (file.in and sequence files), `driver.{hpp,cpp}` (D5, done list, schedules), `system_setup.{hpp,cpp}`, `step_setup.{hpp,cpp}`, `workdir.{hpp,cpp}`. Tests `Cpp_implementation/tests/run_<part>_test.cpp`, tagged `[run][T1]`; probe writers for P0/P1/P1b in `tests/support/` | Strategy §2.8 (`run/`); coding standards §2.1 |
 | D12 | Test data | As M4 D7 and M5 D9: P0/P1/P1b fingerprints and console SHA-256 per capture committed with `harness.golden`; full dumps in the store; tests that need the store or `validation/` skip without them. The corpus and edge inputs are listed in a committed manifest (`harness/inputs/m6/corpus.toml`) that the harness and the C++ tests both read | Same rule as M3–M5 |
 | D13 | Types, arithmetic, presets | As M5 D10 and D11: BASIC types (`Single` → `float`, `Integer` → `std::int64_t`, `Byte`/`UByte` as declared), arithmetic from the `fbline` output, conversions through `fb::f2l` etc.; every T1 test in `dev-gcc`, `dev-clang` and `release-exact`; NaN sign and payload excepted (B-001) | Coding standards §2.4, §5 |
+| D14 | Sub-milestone cut | **Re-cut 2026-10-27 (user decision).** The system set-up, the step set-up and the corpus test are one sub-milestone (new M6.3); the console and D10 unit tests are M6.4; quirks, CI and close-out are M6.5. Old numbering → new: M6.3 + M6.4 + M6.5's `run_corpus_test.cpp` → M6.3; the rest of M6.5 → M6.4; M6.6 → M6.5. Completion notes in §9 written before the re-cut keep the old numbers | `begin_system`'s results (`Clocal`, `CFileout*`, the parameter reset) reach BASIC's output only through P1, which `set_up_step` writes; the set-up code is verified by the P1/P1b comparison (G3), so splitting it from that test would leave a sub-milestone approved without its bit-exact gate |
 
 ## 3. Scope inventory
 
@@ -111,29 +112,29 @@ Tasks in execution order. Mark each one done here when finished, and update `CUR
 - [x] `read_file_in` (2699-2763) and `read_sequence_file` (2768-3133), line by line from the `fbline` output, with every console line, the sticky settings in `ProcessState` and the fatal ends as `Flow::End` (D8).
 - [x] Tests: the P0 of every capture, field by field.
 
-**Carried to later parts (M6.1 review):** M6.3 restores the unreviewed `begin_system` draft from commit `f2e0436` (`src/run/setup.cpp`; it did not compile and left the tree); M6.5's console test also checks where the console text of a parse that wrote P0 ends (the M6.1 test anchors its start, and the end only for End and hang parses).
+**Carried to later parts (M6.1 review):** M6.3 restores the unreviewed `begin_system` draft from commit `f2e0436` (`src/run/setup.cpp`; it did not compile and left the tree); M6.4's console test also checks where the console text of a parse that wrote P0 ends (the M6.1 test anchors its start, and the end only for End and hang parses).
 
 ### M6.2 Run driver (D2, D4, D5)
 - [x] `RunDriver`: the round/file/line/system/step loops; `done` list (D2); `U_Valid` skip; `Emode`, `N_E_steps`, `I_E_iso`; the step schedule (3449-3497) including the ENDF N+3, single-energy and `RANDOM` paths; `B_Error_Analysis` and the pass schedule with its headers (5055-5091) and loop (15527-15551); unbound skip; restart; fit back edge (D4); batch exit text (15664-15666). (Amended, D5: through `SetupStages`.)
 - [x] Tests: the sequence of (file, line, system, step) records equals the P1 contexts of every capture; the pass schedule equals the pass headers of the full-run captures' stdout.
 
-### M6.3 System setup
-- [ ] `begin_system` (3313-3440; the driver does 3294-3305): `Clocal`, `load_parameters_bas` when `B_Fit = 0`, the barrier and mass printout (`BFC`), the unbound check, `CFileout`, `CFileout_Single`, `CFileout_full`.
+### M6.3 System and step set-up, corpus test (D5, D14)
 - [ ] Round setup at `Nextfitloop` (`begin_round`: 2555, 2575-2624; the driver does 2570 `I_Fitloop`): `fitpar_read`, `update_widths` with the `PZ_S3_olap_curv` working copy from `ProcessState`, `Clocal`.
-- [ ] The implementation of `run::SetupStages` that calls M6.3's and M6.4's functions.
-- [ ] `RunDriver::next_step()`: move the first `repeat_input()` of `Resume::Start` inside the `GefHangs` catch, so that a hang in `begin_round` also leaves `RunEnd::Hang` (M6.2 review remark: none can occur while the stage is empty).
-
-### M6.4 Step setup
+- [ ] `begin_system` (3313-3440; the driver does 3294-3305): `Clocal`, `load_parameters_bas` when `B_Fit = 0`, the barrier and mass printout (`BFC`), the unbound check, `CFileout`, `CFileout_Single`, `CFileout_full`.
 - [ ] `set_up_step` (3499-3880 and 3922-3972; the driver does the energy and `B_Error_On` of 3444-3497): `Csystem`, lmd name, isomer and `E_EXC_ISO`, spectrum reader and normalisation (`Ichannel`, `E/L/W_spectrum`, `W_spectrum_max`, `NE_all`, `NE_fis`, `I_Warning`), `Fenhance`, `Spin_CN`, `Spin_target`, `Eabsgs`, `Bprot`, `Balpha`, range checks, `Fenhance = 0 → 1`, `N_multi_sample`, `Eexc_min_multi`, pre-pass decision, probes P1 and P1b.
+- [ ] The implementation of `run::SetupStages` that calls `begin_round`, `begin_system` and `set_up_step`.
+- [ ] `RunDriver::next_step()`: move the first `repeat_input()` of `Resume::Start` inside the `GefHangs` catch, so that a hang in `begin_round` also leaves `RunEnd::Hang` (M6.2 review remark: none can occur while the stage is empty).
+- [ ] `run_corpus_test.cpp`: for every manifest entry, the C++ driver with the real stages and an empty step body on the same inputs; the sequence of P0/P1/P1b records and the run end equal BASIC's, each record field by field (all fields for setup-only captures; all but the M6.0 list for full runs); first difference reported with input, record and field. Fingerprints without the store (corpus goldens from `m6-setup-corpus`, `m6-setup-edge-7`, `m6-setup-restart` and the full-run captures); inputs from `validation/` skip without it. It also checks end to end the two values M6.1's P0 test seeds from BASIC (`Emode`, `Cfileoutlmd_full`).
 
-### M6.5 Tests
-- [ ] `run_corpus_test.cpp`: for every manifest entry, the C++ driver with an empty step body on the same inputs; P0/P1/P1b equal BASIC field by field (all fields for setup-only captures; all but the M6.0 list for full runs); first difference reported with input, record and field. Fingerprints without the store; inputs from `validation/` skip without it.
+**Done when:** `run_corpus_test.cpp` and the existing `[run]` tests pass in `dev-gcc`, `dev-clang` and `release-exact`; `asan-ubsan` and `tsan` pass without `[slow]` (G3, G4 with the real stages).
+
+### M6.4 Console and unit tests
 - [ ] `run_console_test.cpp`: the C++ console equals the setup-only stdout from the D3 start to the end, byte for byte; for full runs, the C++ lines are a subsequence of the BASIC stdout in order, with only lines of M9–M13 code between them.
 - [ ] Unit tests where the corpus cannot reach: the D10 branches. (`GefHangs` for a missing isomer in fit mode is in M6.2's `run_driver_test.cpp`.)
 
-**Done when:** every test passes in `dev-gcc`, `dev-clang` and `release-exact`; `asan-ubsan` and `tsan` pass without `[slow]`.
+**Done when:** every test passes in `dev-gcc`, `dev-clang` and `release-exact`; `asan-ubsan` and `tsan` pass without `[slow]` (G5).
 
-### M6.6 Quirks, CI, documentation and close-out
+### M6.5 Quirks, CI, documentation and close-out
 - [ ] Register the established quirk candidates of §4 with evidence and fidelity switches; annotate the C++ (`QUIRK(Q-0xx)`); close the M6 part of Q-018 (per-system reset) and Q-021 (in-process `IMATmax.ctl`).
 - [ ] `scripts/ci.sh` covers `gef_run`, its tests and the new pytest; `harness.golden check` covers the M6 goldens.
 - [ ] Update `COVERAGE_MATRIX.md` (the T1 cells M6 owns; the `FC` label; "Maximum valid energy" as no limit in batch mode), `IMPLEMENTATION_STRATEGY.md` (M6 status; §2.4 with `InputRoundState`; the M6 console criterion of D3), `harness/README.md`, `PROBES.md`, `CODING_STANDARDS.md` if the run module adds conventions, `CURRENT_PROJECT_STATE.md`.
