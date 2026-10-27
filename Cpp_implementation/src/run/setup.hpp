@@ -5,11 +5,12 @@
 
 // Per-round, per-system and per-step set-up of GEF's batch mode (M6.3), ported statement by
 // statement from the C fbc emits. Console text goes to ProcessState::console. The run driver
-// (run/driver.hpp) reaches them through SetupStages; M6.3 adds the implementation of
-// SetupStages that calls them. Contract header: not yet implemented.
+// (run/driver.hpp) reaches them through SetupStages; BatchSetup is the implementation that calls
+// them.
 
 #pragma once
 
+#include "run/driver.hpp"
 #include "run/state.hpp"
 #include "run/workdir.hpp"
 
@@ -40,5 +41,22 @@ void begin_round(ProcessState& process, WorkDir const& workdir);
 // otherwise.
 [[nodiscard]] Flow set_up_step(ProcessState& process, InputRoundState& round,
                                SequenceFileState& file, StepState& step, WorkDir const& workdir);
+
+// The set-up stages of a batch run: the driver's SetupStages, answered by the functions above.
+class BatchSetup final : public SetupStages {
+public:
+    void begin_round(ProcessState& process, WorkDir const& workdir) override {
+        run::begin_round(process, workdir);
+    }
+    [[nodiscard]] Flow begin_system(ProcessState& process, InputRoundState& round,
+                                    SequenceFileState& file) override {
+        return run::begin_system(process, round, file);
+    }
+    [[nodiscard]] Flow set_up_step(ProcessState& process, InputRoundState& round,
+                                   SequenceFileState& file, StepState& step,
+                                   WorkDir const& workdir) override {
+        return run::set_up_step(process, round, file, step, workdir);
+    }
+};
 
 } // namespace gef::run

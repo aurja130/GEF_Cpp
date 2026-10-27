@@ -105,7 +105,7 @@ class Golden:
 
 
 @dataclass(frozen=True)
-class _RunBlock:
+class RunBlock:
     """One run with ``work/file.in``: its golden lines and the store files they came from."""
 
     capture: str
@@ -337,7 +337,7 @@ def _exit_state(lines: Sequence[bytes], exit_code: int) -> str:
     return "hang" if exit_code != 0 else "end"
 
 
-def _render(items: Sequence[_RunBlock | str]) -> str:
+def _render(items: Sequence[RunBlock | str]) -> str:
     """The plan text: the header and names line, then each run block or skip comment in order."""
     lines = [PLAN_HEADER, "names " + " ".join(NAMES)]
     runs = 0
@@ -352,7 +352,7 @@ def _render(items: Sequence[_RunBlock | str]) -> str:
     return "\n".join(lines) + "\n"
 
 
-def _run_block(run: StoreRun) -> _RunBlock:
+def run_block(run: StoreRun) -> RunBlock:
     """The golden block of a run with work/file.in, replayed from its store files."""
     where = run.where
     if " " in run.rel:
@@ -387,12 +387,12 @@ def _run_block(run: StoreRun) -> _RunBlock:
     for name in ("P1.txt", "P1b.txt"):
         if (probes / name).is_file():
             files.append(f"{run.rel}/work/probes/{name}")
-    return _RunBlock(capture=run.capture, rel=run.rel, lines=lines, files=tuple(files))
+    return RunBlock(capture=run.capture, rel=run.rel, lines=lines, files=tuple(files))
 
 
 def build_golden(captures_dir: Path, captures: Sequence[str]) -> Golden:
     """Derive the m6-plan golden for ``captures`` under ``captures_dir``; writes nothing."""
-    items: list[_RunBlock | str] = []
+    items: list[RunBlock | str] = []
     files: set[tuple[str, str]] = set()
     for capture in captures:
         found = capture_runs(captures_dir, capture)
@@ -403,7 +403,7 @@ def build_golden(captures_dir: Path, captures: Sequence[str]) -> Golden:
                 items.append(skip_comment(run))
                 files.add((capture, f"{run.rel}/run.json"))
                 continue
-            block = _run_block(run)
+            block = run_block(run)
             items.append(block)
             files.update((capture, path) for path in block.files)
     return Golden(plan_text=_render(items), sources=tuple(sorted(files)))

@@ -120,7 +120,7 @@ class P0Record:
     cfileoutlmd: str  # short name: EVENTS_LMD marks a parse on the LMD option path
     cfileoutlmd_full: bytes
     lines: int  # dump lines of the record
-    fnv: int  # FNV-1a 64 of those lines, see ``_record_fnv``
+    fnv: int  # FNV-1a 64 of those lines, see ``record_fnv``
 
 
 @dataclass(frozen=True)
@@ -431,13 +431,13 @@ def _read_p0(path: Path, where: str) -> list[P0Record]:
                     probe_value(record, "Cfileoutlmd_full", where), "Cfileoutlmd_full", where
                 ).encode("latin-1"),
                 lines=record.line_count,
-                fnv=_record_fnv(block, number, where),
+                fnv=record_fnv(block, PROBE, number, where),
             )
         )
     return records
 
 
-def _record_fnv(block: Sequence[bytes], rec: int, where: str) -> int:
+def record_fnv(block: Sequence[bytes], probe: str, rec: int, where: str) -> int:
     """FNV-1a 64 of one record's dump lines, variable by variable in ascending NAME order."""
     named = [(parse_line(line.decode("latin-1")).name, line) for line in block]
     seen: set[str] = set()
@@ -446,7 +446,7 @@ def _record_fnv(block: Sequence[bytes], rec: int, where: str) -> int:
         if name == previous:
             continue
         if name in seen:
-            raise HarnessError(f"{where}: variable {name} is not contiguous in P0 rec={rec}")
+            raise HarnessError(f"{where}: variable {name} is not contiguous in {probe} rec={rec}")
         seen.add(name)
         previous = name
     named.sort(key=lambda pair: pair[0])  # stable: each variable keeps its dump order

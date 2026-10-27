@@ -103,7 +103,8 @@ void fill_scratch(PlanRun const& run, std::filesystem::path const& repo,
 
 // Start-up as BASIC runs it before file.in is read: Parameters.bas and
 // ParameterManipulation.mac (GEF.bas:1015-1017; FitparRead applies Fitpar.dat when present,
-// which sets D_Par_Fac and EOscale). Sets bfilein = -1 (file.in exists, GEF.bas:1821-1822).
+// which sets D_Par_Fac and EOscale), then the initial widths (GEF.bas:1347-1394). Sets
+// bfilein = -1 (file.in exists, GEF.bas:1821-1822).
 void start_up(run::ProcessState& process, run::WorkDir const& workdir,
               std::vector<std::string>& parameter_console);
 

@@ -42,6 +42,7 @@ add_executable(gef_tests
     probe_dump_test.cpp
     program_data_test.cpp
     rng_test.cpp
+    run_corpus_test.cpp
     run_driver_test.cpp
     run_input_test.cpp
     strings_test.cpp
@@ -52,6 +53,7 @@ add_executable(gef_tests
     support/m5.cpp
     support/probe_dump.cpp
     support/run_p0.cpp
+    support/run_p1.cpp
     support/run_replay.cpp)
 target_include_directories(gef_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
 # Driver goldens (M3 plan D1): committed ones, and the reference store for large ones.

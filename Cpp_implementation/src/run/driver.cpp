@@ -13,6 +13,7 @@
 #include "params/parameter_files.hpp"
 #include "physics/masses.hpp"
 #include "run/input_files.hpp"
+#include "run/run_util.hpp"
 
 #include <algorithm>
 #include <bit>
@@ -27,14 +28,6 @@
 namespace gef::run {
 
 namespace {
-
-void print_line(ProcessState& process, std::string_view text) {
-    process.console.print(text, fb::PrintEnd::Newline);
-}
-
-void print_part(ProcessState& process, std::string_view text) {
-    process.console.print(text, fb::PrintEnd::None);
-}
 
 // `Energy_table(i)` and `Spin_table(i)` as the step schedule (GEF.bas:3451-3495) reads them. The
 // emitted C indexes both arrays without a bound check.
@@ -87,7 +80,6 @@ bool RunDriver::next_step() {
         // GEF.bas:1908
         p.ivalid = 1;
         round_starts_.push_back(round_start());
-        repeat_input();
         break;
     case Resume::InStep:
         if (pass_ == Pass::Running || pass_ == Pass::Continues) {
@@ -99,10 +91,15 @@ bool RunDriver::next_step() {
         loop_ = Loop::Step;
         break;
     }
+    bool const start = resume_ == Resume::Start;
     pass_ = Pass::None;
     resume_ = Resume::Over; // until advance() stops at a step
     bool ready = false;
     try {
+        if (start) {
+            // GEF.bas:1909 RepeatInput, then Nextfitloop, whose stage (begin_round) may hang too.
+            repeat_input();
+        }
         ready = advance();
     } catch (params::GefHangs const&) {
         // The parser (GEF.bas:2843), a stage or the driver found that BASIC never ends here.
@@ -545,7 +542,7 @@ void RunDriver::endf_step_energy() {
         // GEF.bas:3463-3475. N_E_steps is 2 only from 3248, which needs B_random_on. Within the
         // line only the step body changes B_random_on (ENDF.bas:81-89), and only for Emode 1 or
         // N_E_steps 1, never on this path; so the Else of 3472-3474 (which reads Energy_table(I)
-        // with the local I of 3171) is never taken.
+        // with the shared I of GEF.bas:762, C `I$`, not the scope-local I of 3171) is never taken.
         if (file_.b_random_on == 0) {
             throw std::logic_error("GEF.bas:3472: N_E_steps = 2 without RANDOM");
         }

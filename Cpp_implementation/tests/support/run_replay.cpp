@@ -240,6 +240,8 @@ void start_up(run::ProcessState& process, run::WorkDir const& workdir,
     static_cast<void>(params::parameter_manipulation(workdir.read("MyParameters.dat"),
                                                      workdir.read("Fitpar.dat"), 0.0,
                                                      process.params, parameter_console));
+    // GEF.bas:1347-1394
+    process.widths = params::initial_widths(process.params);
     process.bfilein = -1;
 }
 

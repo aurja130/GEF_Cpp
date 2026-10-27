@@ -620,6 +620,24 @@ public:
     }
 };
 
+// Stages whose round set-up never returns in BASIC (e.g. FitparRead on a never-ending comment,
+// Q-035).
+class HangingRoundStages final : public SetupStages {
+public:
+    void begin_round(ProcessState& /*process*/, WorkDir const& /*workdir*/) override {
+        throw gef::params::GefHangs{"FitparRead never returns"};
+    }
+    Flow begin_system(ProcessState& /*process*/, InputRoundState& /*round*/,
+                      SequenceFileState& /*file*/) override {
+        return Flow::Proceed;
+    }
+    Flow set_up_step(ProcessState& /*process*/, InputRoundState& /*round*/,
+                     SequenceFileState& /*file*/, StepState& /*step*/,
+                     WorkDir const& /*workdir*/) override {
+        return Flow::Proceed;
+    }
+};
+
 // A scratch working directory with file.in and in/a.in.
 struct SmallRun {
     SmallRun(std::string_view name, std::string const& filein, std::string const& sequence)
@@ -760,4 +778,16 @@ TEST_CASE("run: fit mode without the end of NITER takes the fit back edge", "[ru
     CHECK_FALSE(driver.next_step());
     CHECK(driver.end() == RunEnd::FitBackEdge);
     CHECK_FALSE(process.console.text().contains("GEF is terminated."));
+}
+
+TEST_CASE("run: a hang in the first round's set-up ends the run as a hang", "[run]") {
+    data::TableSet const tables = data::load_tables(data::ProgramData(data::NuclideData::Jeff33));
+    ScopedDir const scratch{gef::test::process_scratch_root("m6-driver")};
+    SmallRun const small{"round-hang", "\"in/a.in\"\nEND\n", " 1\n0.0253E-6\n 92, 236, \"EN\"\n"};
+    ProcessState process{tables};
+    HangingRoundStages stages;
+    RunDriver driver{process, WorkDir{small.root}, stages};
+    CHECK_THROWS_AS(driver.next_step(), gef::params::GefHangs);
+    CHECK(driver.end() == RunEnd::Hang);
+    CHECK_FALSE(driver.next_step());
 }

@@ -77,6 +77,8 @@ python3 -m harness.patch_check SETUP_DIR FULL_DIR [--json OUT]
 
 `plan_golden` derives the C++ test golden `m6-plan` (the set-up plan of every BASIC run of those captures: its set-up stages in order, what each decided, its pass headers, a digest of its P1 records and how it ended; format in its module docstring): `python3 -m harness.plan_golden [--replace]`.
 
+`setup_golden` derives the C++ test golden `m6-setup` (the P1 and P1b records of every BASIC run of those captures, one digest per record; format in its module docstring): `python3 -m harness.setup_golden [--replace]`.
+
 ## Reference store
 
 ```sh

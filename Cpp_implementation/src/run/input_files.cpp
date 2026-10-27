@@ -12,6 +12,7 @@
 #include "fbrt/text.hpp"
 #include "params/parameter_files.hpp"
 #include "run/probes.hpp"
+#include "run/run_util.hpp"
 #include "util/utilities.hpp"
 
 #include <cstdint>
@@ -27,14 +28,6 @@ namespace {
 
 std::int64_t len_of(std::string_view s) {
     return static_cast<std::int64_t>(s.size());
-}
-
-void print_line(ProcessState& process, std::string_view text) {
-    process.console.print(text, fb::PrintEnd::Newline);
-}
-
-void print_part(ProcessState& process, std::string_view text) {
-    process.console.print(text, fb::PrintEnd::None);
 }
 
 // GEF.bas:3065, 3101: the first line printed when a spectrum file is not ES or EM.
@@ -53,9 +46,7 @@ void cut_fields(ProcessState& process, std::string_view in, std::string_view div
                 fb::Array<std::string, 1>& out, std::int64_t& n) {
     std::vector<std::string> messages;
     util::cc_cut(in, div, out, n, messages);
-    for (auto const& message : messages) {
-        print_line(process, message);
-    }
+    print_lines(process, messages);
 }
 
 // GEF.bas:2919-2920, 2940-2941. The doubled ".lmd" is the BASIC name, kept as written.
