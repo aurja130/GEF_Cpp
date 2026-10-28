@@ -38,6 +38,7 @@ std::optional<std::string> WorkDir::read(std::string_view path) const {
 bool WorkDir::exists(std::string_view path) const {
     // fb_FileExists: fopen(filename, "r") (libstdc++'s filebuf opens with fopen as well), on the
     // name as given: no backslash conversion (fb_FileExists does none), so join(), not resolve().
+    // QUIRK(Q-060): a name with a backslash is not found here although read() opens it.
     // FileExists("") is 0 with fbc 1.10.1.
     if (path.empty()) {
         return false;

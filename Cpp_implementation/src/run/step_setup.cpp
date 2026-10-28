@@ -46,6 +46,7 @@ bool in_nuc_tab(data::TableSet const& tables, std::int64_t index) {
 }
 
 // I_MAT_ENDF(IZ, IA), with the lines it prints.
+// QUIRK(Q-021): ProcessState::mat holds ctl/IMATmax.ctl for the whole run (plan D7).
 std::int64_t mat_number(ProcessState& process, std::int64_t iz, std::int64_t ia) {
     std::vector<std::string> lines;
     std::int64_t const imat = data::i_mat_endf(*process.tables, iz, ia, process.mat, lines);
@@ -213,9 +214,10 @@ bool set_isomer(ProcessState& process) {
         process.console.print(at, PrintEnd::Pad);
         process.console.print(process.i_e_iso, PrintEnd::Newline);
         print_line(process, "Please stop GEF, complete table and restart GEF.");
-        // GEF.bas:3567 `Goto RepeatInput`. On the way out fbc erases Cfilein, Chelp, NE_fis,
-        // NE_all, the spectra, Spin_Table, Energy_Table and C_Energy_Table (GEF.c:43660-43678);
-        // the driver's restart starts the next round from a fresh InputRoundState.
+        // GEF.bas:3567 `Goto RepeatInput`. QUIRK(Q-049): the whole input is read again. On the
+        // way out fbc erases Cfilein, Chelp, NE_fis, NE_all, the spectra, Spin_Table,
+        // Energy_Table and C_Energy_Table (GEF.c:43660-43678); the driver's restart starts the
+        // next round from a fresh InputRoundState.
         return false;
     }
     add_isomer_energy(process, imat);
@@ -336,7 +338,7 @@ float read_spectrum_file(ProcessState& process, InputRoundState& round,
 }
 
 // GEF.bas:3682-3691: the spectrum normalised, for every Emode.
-// QUIRK(candidate): without a spectrum W_spectrum(1) is 0 and the division is 0/0 (NaN); a
+// QUIRK(Q-047): without a spectrum W_spectrum(1) is 0 and the division is 0/0 (NaN); a
 // spectrum read once is normalised again at every later step.
 void normalise_spectrum(InputRoundState& round) {
     float norm = 0.0F; // GEF.bas:3612
@@ -616,7 +618,7 @@ bool alpha_capture(ProcessState& process) {
 }
 
 // GEF.bas:3698-3843: Spin_CN, Spin_target and the excitation energy above the ground state.
-// QUIRK(candidate): for ES and EM (Emode 3, 13) Spin_CN is not set here; it keeps what the last
+// QUIRK(Q-054): for ES and EM (Emode 3, 13) Spin_CN is not set here; it keeps what the last
 // bin or the pre-pass of an earlier step wrote. False where BASIC ends (3835-3839).
 bool set_excitation(ProcessState& process) {
     std::int64_t const emode = process.params.emode;
@@ -669,12 +671,12 @@ bool check_energy(ProcessState& process) {
     }
     // GEF.bas:3849-3868: in batch mode (`If Bfilein Then` with an empty branch) nothing is
     // printed. The C skips the block when `Eabsgs <= 100`.
-    // QUIRK(candidate): no energy limit in batch mode; Emax_valid (GEF.bas:894) is never read.
+    // QUIRK(Q-055): no energy limit in batch mode; Emax_valid (GEF.bas:894) is never read.
     if (!(process.eabsgs <= 100.0F) && process.bfilein == 0) {
         dialogue_only("GEF.bas:3852-3866");
     }
     // GEF.bas:3869-3874: the C skips the block when `Eabsgs >= 0` (Sleep prints nothing).
-    // QUIRK(candidate): for ES and EM (Emode 3, 13) Eabsgs is not set by this step's set-up; the
+    // QUIRK(Q-054): for ES and EM (Emode 3, 13) Eabsgs is not set by this step's set-up; the
     // check reads the value an earlier step or its pre-pass left.
     if (!(process.eabsgs >= 0.0F)) {
         print_line(process,

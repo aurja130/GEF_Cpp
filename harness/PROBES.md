@@ -271,7 +271,7 @@ Consumer: M6 (`file.in` parser)
 
 ### statistics and energy line
 
-Consumer: M6 (sequence-file parser; `Energy_Table`, `N_E_values` also as left over after a spectrum-file line)
+Consumer: M6 (sequence-file parser; `Energy_Table`, `N_E_values` also as left over after a spectrum-file line, QUIRKS Q-046; `En_min`, `En_max` 0 after an empty energy line, Q-059)
 
 | Type | Scalars |
 |---|---|
@@ -313,7 +313,7 @@ Consumer: M6 (per-file reset GEF.bas:2827-2842 and `Options(...)`). `Cfileoutlmd
 
 ### settings the per-file reset does not cover
 
-Consumer: M6 (settings carried from file to file; `Emode` is the value the `E/spin` check reads)
+Consumer: M6 (settings carried from file to file, QUIRKS Q-050; `Emode` is the value the `E/spin` check reads, Q-043)
 
 | Type | Scalars |
 |---|---|
@@ -337,7 +337,7 @@ Consumer: M6 (run plan: system line, energy step, kind of fission, error-analysi
 
 ### system and step excitation
 
-Consumer: M6 T1 exact: `P_E_exc` (after the isomer energy `E_EXC_ISO` was added), `E_EXC_TRUE`, `Spin_CN`, `Spin_target`, `Eabsgs`, `Bprot`, `Balpha`.
+Consumer: M6 T1 exact: `P_E_exc` (after the isomer energy `E_EXC_ISO` was added), `E_EXC_TRUE`, `Spin_CN`, `Spin_target`, `Eabsgs`, `Bprot`, `Balpha`. For `ES`/`EM` steps `Spin_CN` and `Eabsgs` are what earlier code left (QUIRKS Q-054); in a full run that includes the bins and the pre-pass of earlier steps.
 
 | Type | Scalars |
 |---|---|
@@ -356,7 +356,7 @@ Consumer: M6 (output naming with `Str(Single)`: `Csystem`, `Cfileout`, ...)
 
 ### E* spectrum of the entrance channel (ES / EM)
 
-Consumer: M6 (spectrum reader and energy table); M9 (EM channel sampling)
+Consumer: M6 (spectrum reader and energy table; `W_spectrum(1)` is NaN after a step without a spectrum as long as none has been read in the round, QUIRKS Q-047); M9 (EM channel sampling)
 
 | Type | Scalars |
 |---|---|

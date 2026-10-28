@@ -143,10 +143,11 @@ BASIC's shared globals (about 470 `Dim/ReDim/Static Shared` statements across `G
 
 | Scope | Holds | BASIC reset point |
 |---|---|---|
-| `ProcessState` | tables, the analyzer registry, `IMATmax` additions, `Static Ntimes`, `Nmulti2dpre/post`, mutable `Isotab` fields, leaked "stale" globals (e.g. `Z`) | never |
-| `SequenceFileState` | per-file option flags, the frozen lmd file name | per input file (`GEF.bas:2825–2840`) |
-| `SystemState` | nominal parameters (Parameters.bas reloaded), naming | per system (`GEF.bas:3320`) |
-| `StepState` | energy, CN kinematics, pre-pass results, error accumulators, ENDF state machine | per step (`CLEARerrors`, `GEF.bas:3446`) |
+| `ProcessState` | tables, the analyzer registry, `IMATmax` additions, `Static Ntimes`, `Nmulti2dpre/post`, mutable `Isotab` fields, leaked "stale" globals (e.g. `Z`); the one `Parameters` object, which `Parameters.bas` reloads per system; the in-memory `done.ctl`, the console, options that survive the per-file reset, and every value a step body writes that later set-up reads (M6 D6) | never |
+| `InputRoundState` | the `file.in` list, `Energy_Table`, `Spin_Table`, `N_E_values`, the spectrum arrays (M6 D6) | per input round: the `Dim`s after `Nextfitloop:` (`GEF.bas:2647–2684`), i.e. per fit iteration and per missing-isomer restart |
+| `SequenceFileState` | per-file option flags, the frozen lmd file name | per input file (`GEF.bas:2827–2842`) |
+| `SystemState` | nothing in M6: no BASIC variable is re-initialised by a per-system `Dim`. The `Parameters.bas` reload (`GEF.bas:3320`) re-assigns the nominal parameters in the one `Parameters` object of `ProcessState`; CN and names are `ProcessState` fields that each system overwrites | per system (`GEF.bas:3320`) |
+| `StepState` | energy, CN kinematics, pre-pass results, error accumulators, ENDF state machine; in M6 the multi-chance `Dim`s and the pre-pass decision | per step (`CLEARerrors`, `GEF.bas:3446`; the multi-chance `Dim`s at 3914–3945) |
 | `PassState` | working parameters (nominal or perturbed), spectra | per pass (`CLEARspectra`, `GEF.bas:4816`) |
 | `BinTables` | per-nucleus model tables plus the persistent arrays they overwrite only partly | per bin, with deliberate carry-over |
 | `Event` | per-event values handed from stage to stage | per event |
@@ -476,7 +477,7 @@ Two tracks run in parallel after M5 and meet at M14:
 
 ### M6 — Input parsing, run planning and system/step setup
 
-**Status:** in progress, M6.0 complete (2026-10-16), see `Planning/MILESTONE_6_PLAN.md`. Refinements decided there: the BASIC values come from a setup-only mode of the probes patch (`-d GEF_SETUP_ONLY`) with new probes P0 and P1b, cross-checked by full runs (D1); `done.ctl` deduplication is kept in-process (D2); the console printed by the ported batch code must be byte-exact, which replaces "match to the printed digits" below (D3); fit inputs are covered for iteration 1 (D4); a run driver that yields per step replaces a precomputed plan (D5); §2.4 gains an `InputRoundState` scope reset at `Nextfitloop`, and `Parameters` stays one object in `ProcessState` (D6).
+**Status:** complete (2026-10-28), see `Planning/MILESTONE_6_PLAN.md`. The set-up of all 187 runs of the M6 captures (the `wrkdir/in` corpus, `validation/reference/`, 63 edge inputs, restart, full-run and patch-check captures) equals BASIC's P0, P1 and P1b records (full runs: all but four step-body fields of P1), run plan, run end and console (set-up runs byte for byte; full runs piece by piece around the unported code). Refinements decided there: the BASIC values come from a setup-only mode of the probes patch (`-d GEF_SETUP_ONLY`) with new probes P0 and P1b, cross-checked by full runs (D1); `done.ctl` deduplication is kept in-process (D2); the console printed by the ported batch code must be byte-exact, which replaces "match to the printed digits" below (D3); fit inputs are covered for iteration 1 (D4); a run driver (`run::RunDriver`) that yields per step through `run::SetupStages` replaces a precomputed plan (D5); §2.4 gains an `InputRoundState` scope reset at `Nextfitloop`, and `Parameters` stays one object in `ProcessState` (D6); reads past the mass tables are emulated, not stopped (M6.4, Q-042, amends M5 D3). Quirks Q-043–Q-060 registered.
 
 **Goal:** C++ reads GEF inputs and produces the same run plan and per-step setup as BASIC.
 
@@ -490,7 +491,7 @@ Two tracks run in parallel after M5 and meet at M14:
 
 **Proven by:**
 - **T1:** for every input file in `Reference/GEF_code/wrkdir/in/` and `validation/reference/` plus targeted edge inputs, the parsed plan and P1 probe values match BASIC exactly. Values: `P_E_exc`, `E_EXC_ISO`, `Eabsgs`, `Spin_CN`, `Spin_target`, names, threshold.
-- The barrier and mass printouts in the run log match to the printed digits.
+- The console printed by the ported batch code (barrier and mass printouts included) equals BASIC's stdout byte for byte, from the first line printed at or after `Nextfitloop:` to the end of the run (M6 D3; full runs: the ported lines in order, with only unported code's lines between them).
 
 **Exit:** C++ knows exactly what BASIC would compute, and in what order.
 

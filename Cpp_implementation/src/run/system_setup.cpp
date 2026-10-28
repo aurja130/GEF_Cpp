@@ -177,7 +177,7 @@ void name_output_file(ProcessState& process, SequenceFileState const& file) {
     if (emode == 22) {
         process.cfileout += "_a";
     }
-    // GEF.bas:3412-3422. QUIRK(candidate): P_E_exc is still the line's En_max here (GEF.bas:3225),
+    // GEF.bas:3412-3422. QUIRK(Q-045): P_E_exc is still the line's En_max here (GEF.bas:3225),
     // not a step energy, so a single-step FC or IS line that runs Energy_table(1) is named by
     // En_max (MILESTONE_6_PLAN.md §4 "Single-step modes").
     if (fb::abs(emode) == 1) {
@@ -225,9 +225,10 @@ Flow begin_system(ProcessState& process, InputRoundState& /*round*/, SequenceFil
     if (process.bfilein != 0) {
         process.clocal = file.clocal_file_option;
     }
-    // GEF.bas:3317-3321 `#include "Parameters.bas"`: the nominal parameters are reset; the others
-    // in Parameters (Emode, EOscale, Eexc_min_multi, D_Par_Fac, Chisqr_Fit_min, BFC, ...) keep
-    // their values (load_parameters_bas leaves them alone).
+    // GEF.bas:3317-3321 `#include "Parameters.bas"`. QUIRK(Q-018): the nominal parameters are
+    // reset, the values of Fitpar.dat included; the others in Parameters (Emode, EOscale,
+    // Eexc_min_multi, D_Par_Fac, Chisqr_Fit_min, BFC, ...) keep their values
+    // (load_parameters_bas leaves them alone).
     if (process.b_fit == 0) {
         params::load_parameters_bas(process.params);
     }

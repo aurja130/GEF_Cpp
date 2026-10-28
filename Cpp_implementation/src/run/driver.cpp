@@ -31,7 +31,7 @@ namespace {
 
 // `Energy_table(i)` and `Spin_table(i)` as the step schedule (GEF.bas:3451-3495) reads them. The
 // emitted C indexes both arrays without a bound check.
-// QUIRK(candidate): with N_E_values 0 (an empty energy line, `Redim Energy_Table(0)` and
+// QUIRK(Q-059): with N_E_values 0 (an empty energy line, `Redim Energy_Table(0)` and
 // `Redim Spin_Table(0)`), FC, IS, ES, EM and the single-step ENDF schedule read element 1, past
 // the bounds. BASIC reads +0.0F there, as GEF.bas:2824 does (captures edge-e_energy_empty,
 // edge-e_is_energy_empty, edge-e_fc_energy_empty, edge-e_endf_energy_empty); the port returns
@@ -240,7 +240,7 @@ RunDriver::Advance RunDriver::system_iteration() {
         return Advance::Continue;
     }
     // GEF.bas:3296-3300 (plotting: not ported), 3301-3305
-    // QUIRK(candidate): the energy of a two-system line (P_E_exc_Double) is set here and
+    // QUIRK(Q-044): the energy of a two-system line (P_E_exc_Double) is set here and
     // overwritten by the step schedule (3449-3497) for every Emode, so it has no effect.
     if (p.i_double_covar == 2) {
         p.p_z_cn = p.p_z_cn_double;
@@ -394,7 +394,7 @@ Flow RunDriver::select_channel() {
         p.n_e_steps = round_.n_e_values;
     } else if (kind == "ES") {
         // GEF.bas:3268-3275
-        // QUIRK(candidate): clearing B_ENDF and B_random_on here holds for the rest of the file.
+        // QUIRK(Q-051): clearing B_ENDF and B_random_on here holds for the rest of the file.
         p.params.emode = 3;
         if (file_.b_endf == 1) {
             print_line(p, "<W> ENDF output not available for option 'ES'.");
@@ -438,7 +438,7 @@ std::int64_t RunDriver::neutron_steps() const {
 
 // GEF.bas:3175-3202: the records of ctl/done.ctl (D2: ProcessState::done_ctl, empty while the
 // file does not exist) that match the system; prints a line for each. Returns Ifound.
-// QUIRK(candidate): the key is Z, A, En_max, Fenhance and I_Mode_selected, not the channel; a
+// QUIRK(Q-048): the key is Z, A, En_max, Fenhance and I_Mode_selected, not the channel; a
 // Fenhance that is not exact in Single (0.1) never matches, since Fenhance_done is read back as
 // Single and compared with the Double Fenhance (GEF.c:40727); a record of the first line of a
 // file with Fenhance 0 holds 0 (3217 comes before 3922), so a repeat of that line is computed
@@ -524,8 +524,9 @@ void RunDriver::step_energy() {
         }
     } else {
         // GEF.bas:3494-3495
-        // QUIRK(candidate): FC, IS, ES and EM run Energy_table(1) (N_E_steps 1) while CFileout
-        // and done.ctl use En_max (3225, 3413); a spectrum-file line reads the round's table.
+        // QUIRK(Q-045): FC, IS, ES and EM run Energy_table(1) (N_E_steps 1) while done.ctl
+        // uses En_max (3217), and CFileout of FC and IS too (3225, 3413).
+        // QUIRK(Q-046): a spectrum-file line reads the table an earlier file left.
         p.p_e_exc = energy_table_at(round_, step);
     }
 }
@@ -557,7 +558,7 @@ void RunDriver::endf_step_energy() {
         }
     } else if (p.n_e_steps > 3) {
         // GEF.bas:3476-3489
-        // QUIRK(candidate): the last step leaves B_Error_On 0 for the rest of the file.
+        // QUIRK(Q-051): the last step leaves B_Error_On 0 for the rest of the file.
         // NOLINTNEXTLINE(bugprone-branch-clone): BASIC's branches, in the order of 3477-3489
         if (step == 1) {
             p.p_e_exc = p.en_min;
@@ -596,7 +597,7 @@ RunDriver::RoundStart RunDriver::round_start() const {
 }
 
 // GEF.bas:3567 `Goto RepeatInput`.
-// QUIRK(candidate): the missing-isomer restart reads file.in again. It ends only when done.ctl
+// QUIRK(Q-049): the missing-isomer restart reads file.in again. It ends only when done.ctl
 // holds every restarting line, or when a value left by the earlier round (Emode at the E/spin
 // check of 2801, En_max in the done.ctl key) leads to a fatal end; in fit mode only the latter.
 // Proof of the hang, for the step body M6 runs (none: the GEF_SETUP_ONLY program): a round's
@@ -630,6 +631,7 @@ void RunDriver::finish() {
         }
     }
     // GEF.bas:15618-15631. Bfilein is 0 only when file.in names no sequence file (3130).
+    // QUIRK(Q-058): with stdin at EOF Inkey returns "" for ever.
     if (p.bfilein == 0) {
         hang("GEF.bas:15621: file.in names no sequence file; GEF waits for a key for ever");
     }
@@ -714,6 +716,7 @@ bool RunDriver::end_pass() {
         // `Input " ",Icontinue` (15522; 15512 before it at the nominal pass of the last step).
         // With stdin at EOF a console Input never returns (fb_ConReadLine waits for ever; M6.2,
         // a full run of Options(PLOT, ERR) stopped there after its first pass).
+        // QUIRK(Q-057): a batch run with Options(PLOT) stops here.
         if (p.bplot != 0) {
             hang("GEF.bas:15522: Input from the console never returns with stdin at EOF");
         }

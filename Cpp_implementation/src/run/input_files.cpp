@@ -193,7 +193,7 @@ void read_option(ProcessState& process, SequenceFileState& file, WorkDir const& 
         }
     } else if (key == "DPARFAC(") {
         // GEF.bas:2888-2892
-        // QUIRK(candidate): D_Par_Fac takes effect only from later rounds (widths set before).
+        // QUIRK(Q-052): D_Par_Fac takes effect only from later rounds (widths set before).
         // BASIC computes the widths before it sets D_Par_Fac here (GEF.bas:2889).
         process.params.d_par_fac = static_cast<float>(fb::val(cval));
         print_part(process, "<I> Factor ");
@@ -310,7 +310,7 @@ bool read_system_line(ProcessState& process, InputRoundState& round) {
         std::int64_t const step = round.i_step;
         for (std::int64_t i = round.i_first; step >= 0 ? i <= last : i >= last;
              i = fb::add(i, step)) {
-            // QUIRK(candidate): S_par(Iline) is written with no bound check in BASIC (3050).
+            // QUIRK(Q-053): S_par(Iline) is written with no bound check in BASIC (3050).
             // The port throws (fb::Array) past the end of S_par.
             process.iline = fb::add(process.iline, std::int64_t{1});
             auto& entry = process.s_par(process.iline);
@@ -321,7 +321,7 @@ bool read_system_line(ProcessState& process, InputRoundState& round) {
         }
     } else {
         // GEF.bas:3057-3061
-        // QUIRK(candidate): S_par(Iline) is written with no bound check in BASIC (3057).
+        // QUIRK(Q-053): S_par(Iline) is written with no bound check in BASIC (3057).
         process.iline = fb::add(process.iline, std::int64_t{1});
         auto& entry = process.s_par(process.iline);
         entry.z = fb::d2l(fb::val(ccut(1)));
@@ -359,7 +359,7 @@ bool read_pair_line(ProcessState& process, InputRoundState& round, WorkDir const
     ccut(6) = fb::trim(ccut(6));
     ccut(6) = fb::trim(ccut(6), "\"");
     // GEF.bas:3087-3091
-    // QUIRK(candidate): S_par(Iline) is written with no bound check in BASIC (3087).
+    // QUIRK(Q-053): S_par(Iline) is written with no bound check in BASIC (3087).
     process.iline = fb::add(process.iline, std::int64_t{1});
     auto& entry = process.s_par(process.iline);
     entry.z = fb::d2l(fb::val(ccut(1)));
@@ -415,7 +415,7 @@ bool read_energy_table(ProcessState& process, InputRoundState& round, WorkDir co
     // GEF.bas:2779
     process.c_espectrum1 = "";
     // GEF.bas:2780-2787
-    // QUIRK(candidate): a spectrum energy line keeps the earlier Energy_Table and N_E_values.
+    // QUIRK(Q-046): a spectrum energy line keeps the earlier Energy_Table and N_E_values.
     // En_min and En_max keep theirs too; the numeric branch (2788-2825) is skipped.
     if (fb::left(round.c_energy_table, 1) == "\"") {
         process.c_espectrum1 = fb::trim(round.c_energy_table, "\"");
@@ -447,7 +447,7 @@ bool read_energy_table(ProcessState& process, InputRoundState& round, WorkDir co
         // GEF.bas:2800-2811: the average spin is read only where BASIC allows it (2801).
         auto const slash = fb::instr(ccut(i), "/");
         if (slash > 0) {
-            // QUIRK(candidate): the spin check (GEF.bas:2801) reads a stale Emode. In batch mode
+            // QUIRK(Q-043): the spin check (GEF.bas:2801) reads a stale Emode. In batch mode
             // Emode is set only by the system loop, from each system line's channel (GEF.bas:
             // 3227-3277, after the parse and the done.ctl and U_Valid skips), so this is the
             // value of the last earlier system line that got there, or the start value 1
@@ -476,7 +476,7 @@ bool read_energy_table(ProcessState& process, InputRoundState& round, WorkDir co
         }
     }
     // GEF.bas:2824-2825
-    // QUIRK(candidate): with N_E_values 0, GEF.bas:2824 reads Energy_Table(1), past its bounds.
+    // QUIRK(Q-059): with N_E_values 0, GEF.bas:2824 reads Energy_Table(1), past its bounds.
     // Redim Energy_Table(0) is calloc-cleared: BASIC reads +0.0F (capture edge-e_energy_empty).
     if (round.n_e_values < 1) {
         process.en_min = 0.0F;
@@ -489,7 +489,7 @@ bool read_energy_table(ProcessState& process, InputRoundState& round, WorkDir co
 
 // GEF.bas:2827-2842: the per-file state is reset before the lines of the file are read. BASIC
 // lines 2830-2833 are comments. CFileoutlmd_full is not reset, as in BASIC.
-// QUIRK(candidate): the reset does not cover EOscale, D_Par_Fac, B_MyParameters, Bplot, the LMD
+// QUIRK(Q-050): the reset does not cover EOscale, D_Par_Fac, B_MyParameters, Bplot, the LMD
 // flags, Cfileoutlmd_full, N_iter, C_Fitoption or B_Fit, and it clears B_Error_On, which FIT in
 // file.in sets.
 void reset_file_options(ProcessState& process, SequenceFileState& file) {
@@ -511,7 +511,7 @@ void reset_file_options(ProcessState& process, SequenceFileState& file) {
 bool read_sequence_lines(ProcessState& process, InputRoundState& round, SequenceFileState& file,
                          WorkDir const& workdir, fb::InputFile& input) {
     while (!input.eof()) {
-        // QUIRK(candidate): BASIC's Do Until EOF hangs once the data is used up; the port throws.
+        // QUIRK(Q-056): BASIC's Do Until EOF hangs once the data is used up; the port throws.
         if (input.data_at_end()) {
             throw params::GefHangs{
                 "GEF.bas:2843: Do Until EOF(Ffilein) never ends: the data is used up"};
