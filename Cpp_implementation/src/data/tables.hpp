@@ -101,6 +101,9 @@ struct TableSet {
     fb::Array<float, 2> defo_tab; // DEFO.bas
     fb::Array<float, 2> shell_mo; // ShellMO.bas
     fb::Array<float, 2> evod;     // declared, never filled
+    // Fidelity switch of QUIRK(Q-042) (data/table_memory.hpp): true makes a read outside these
+    // five tables throw instead of reading the memory next to them, as GEF does.
+    bool fix_table_overrun = false;
 
     fb::Array<std::string, 1> c_element; // ElmtNames.bas
     fb::Array<double, 1> enfrvar_lim;    // Spectra.bas:798

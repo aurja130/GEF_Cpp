@@ -508,10 +508,13 @@ TEST_CASE("physics: masses replay the captured GEF calls", "[T1][physics]") {
     }
 }
 
-TEST_CASE("physics: mass table reads outside the tables throw", "[T1][physics]") {
-    auto const tables = masses_tables();
-    // BEldmTF, BEexp and ShellMO are (N 0..203) x (Z 0..136) (data/mass_tables.cpp). Reads outside
-    // them throw std::out_of_range (plan D3); the port keeps that behavior.
+TEST_CASE("physics: with fix_table_overrun mass table reads outside the tables throw",
+          "[T1][physics]") {
+    auto tables = masses_tables();
+    tables.fix_table_overrun = true;
+    // BEldmTF, BEexp and ShellMO are (N 0..203) x (Z 0..136) (data/mass_tables.cpp). With the
+    // fix of QUIRK(Q-042) reads outside them throw std::out_of_range; GEF's own reads there are
+    // table_memory_test.cpp's subject.
     REQUIRE_THROWS_AS(physics::ame2020(tables, 137, 137), std::out_of_range);
     REQUIRE_THROWS_AS(physics::ame2020(tables, 1, 300), std::out_of_range);
     REQUIRE_THROWS_AS(physics::u_shell(tables, 1, 300), std::out_of_range);

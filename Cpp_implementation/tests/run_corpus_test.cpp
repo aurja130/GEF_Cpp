@@ -26,7 +26,6 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include <algorithm>
-#include <array>
 #include <cstddef>
 #include <cstdint>
 #include <exception>
@@ -54,6 +53,7 @@ using gef::run::RunDriver;
 using gef::run::SequenceFileState;
 using gef::run::StepState;
 using gef::run::WorkDir;
+using gef::test::PlanMode;
 using gef::test::PlanRun;
 using gef::test::ProbeDump;
 using gef::test::ProbeFingerprint;
@@ -61,15 +61,6 @@ using gef::test::ProbeFingerprint;
 // A golden row's key: the run, the probe ("P0", "P1" or "P1b") and the record's number.
 using GoldenKey = std::tuple<std::int64_t, std::string, std::int64_t>;
 using GoldenMap = std::map<GoldenKey, ProbeFingerprint>;
-
-// A run of m6-plan: its capture and run directory, whether its passes are taken (`mode full`) and
-// how BASIC's run ended (`exit`).
-struct PlanMode {
-    std::string capture;
-    std::string run_dir;
-    bool full = false;
-    std::string exit;
-};
 
 // BASIC's records of one probe file, by record number. A record maps each NAME to its lines (an
 // array's bounds line and its elements share one NAME).
@@ -187,54 +178,6 @@ GoldenMap read_golden(std::vector<std::string> const& p0_lines,
     }
     gef::test::plan_check(opened, "m6-setup fingerprints.txt: no exclude-full line");
     return golden;
-}
-
-// m6-plan's runs: `run <n> <capture> <run_dir>`, `mode setup|full`, `exit <how>`, `endrun`. The
-// plan's other lines are not used here.
-std::map<std::int64_t, PlanMode> read_modes(std::vector<std::string> const& lines) {
-    std::map<std::int64_t, PlanMode> modes;
-    std::optional<std::int64_t> current;
-    bool has_mode = false;
-    for (std::string const& line : lines) {
-        std::vector<std::string_view> const fields = gef::test::split_fields(line);
-        if (fields.empty()) {
-            continue;
-        }
-        if (fields.front() == "run") {
-            gef::test::plan_check(!current.has_value() && fields.size() == 4,
-                                  "m6-plan: bad run line '" + line + "'");
-            current = gef::test::to_int(fields.at(1));
-            has_mode = false;
-            PlanMode const mode{.capture = std::string{fields.at(2)},
-                                .run_dir = std::string{fields.at(3)},
-                                .full = false,
-                                .exit = {}};
-            gef::test::plan_check(modes.try_emplace(*current, mode).second,
-                                  "m6-plan: repeated run " + std::to_string(*current));
-        } else if (fields.front() == "mode" || fields.front() == "exit") {
-            if (!current.has_value()) {
-                throw std::runtime_error("m6-plan: '" + line + "' outside a run");
-            }
-            PlanMode& run = modes.at(*current);
-            if (fields.front() == "mode") {
-                gef::test::plan_check(!has_mode && fields.size() == 2 &&
-                                          (fields.at(1) == "setup" || fields.at(1) == "full"),
-                                      "m6-plan: bad mode line '" + line + "'");
-                run.full = fields.at(1) == "full";
-                has_mode = true;
-            } else {
-                gef::test::plan_check(fields.size() >= 2, "m6-plan: bad exit line '" + line + "'");
-                // `exit fit back edge` has spaces: the rest of the line after "exit ".
-                run.exit = line.substr(line.find(' ') + 1);
-            }
-        } else if (fields.front() == "endrun") {
-            gef::test::plan_check(current.has_value() && has_mode &&
-                                      !modes.at(*current).exit.empty(),
-                                  "m6-plan: endrun without a run, its mode and its exit");
-            current.reset();
-        }
-    }
-    return modes;
 }
 
 // BASIC's records of `probe` in one probe file. A record's lines read `<ID> step=.. pass=..
@@ -374,91 +317,17 @@ void run_passes(RunDriver& driver) {
     }
 }
 
-// How the C++ run ended, in m6-plan's words (harness/plan_golden.py `_exit_state`).
-std::string describe_end(gef::run::RunEnd end) {
-    switch (end) {
-    case gef::run::RunEnd::Finished:
-        return "terminated";
-    case gef::run::RunEnd::EndStatement:
-        return "end";
-    case gef::run::RunEnd::FitBackEdge:
-        return "fit back edge";
-    case gef::run::RunEnd::Hang:
-        return "hang";
-    case gef::run::RunEnd::None:
-        break;
-    }
-    return "not over";
-}
-
-// A run in which BASIC reads a table beyond its bounds, where the C++ stops with
-// std::out_of_range (M5 plan D3: table reads throw outside the table). Whether to reproduce such
-// reads is an open decision of the user (MILESTONE_6_PLAN.md §8, "Table reads beyond the bounds").
-// The test requires exactly this stop: the read, the system being set up and BASIC's last
-// console line before it; every record written before it must equal BASIC's, and no other record
-// of BASIC's may be missing.
-struct TableOverrun {
-    std::string_view run_dir;
-    std::string_view what; // the fb::Array message of the read
-    std::int64_t i_double_covar = 0;
-    std::int64_t z = 0;
-    std::int64_t a = 0;
-    std::string_view last_line; // BASIC's stdout line before the read
-};
-
-constexpr std::array<TableOverrun, 1> table_overruns{{
-    // GEF.bas:3350 BFTFA(82, 300, 1) -> U_SHELL_EO_exp -> AME2020(82, 300) reads BEexp(218, 82).
-    {.run_dir = "edge-f_second_system_outside_table",
-     .what = "FreeBASIC array index 218 outside 0 To 203 in dimension 1",
-     .i_double_covar = 2,
-     .z = 82,
-     .a = 300,
-     .last_line = "Macrosc. barrier (Thomas-Fermi) =  8.09 MeV"},
-}};
-
-// The overrun pinned for a run, or nullptr.
-TableOverrun const* find_overrun(std::string_view run_dir) {
-    auto const* const found = std::ranges::find(table_overruns, run_dir, &TableOverrun::run_dir);
-    return found == table_overruns.end() ? nullptr : &*found;
-}
-
-// Whether the C++ stopped where `overrun` says BASIC read beyond the table.
-std::optional<std::string> overrun_difference(TableOverrun const& overrun,
-                                              ProcessState const& process, std::string_view what) {
-    std::vector<std::string_view> const lines =
-        gef::test::split_lines(std::string_view{process.console.text()});
-    std::string_view const last = lines.empty() ? std::string_view{} : lines.back();
-    if (what != overrun.what || process.i_double_covar != overrun.i_double_covar ||
-        process.p_z_cn != overrun.z || process.p_a_cn != overrun.a || last != overrun.last_line) {
-        return "stopped with '" + std::string{what} + "' at system " +
-               std::to_string(process.i_double_covar) + " (Z " + std::to_string(process.p_z_cn) +
-               ", A " + std::to_string(process.p_a_cn) + ") after the line '" + std::string{last} +
-               "', not at the pinned table overrun";
-    }
-    return std::nullopt;
-}
-
 // Replays one run and checks each of its records as the driver writes it, the pre-pass decision
 // each step stores, and how the run ends; returns the number of records that matched BASIC's
 // stored probe files. The run's inputs come from the reference store when it holds the run (its
-// work directory), else from the repository. With `overrun` the run must stop there.
-std::size_t replay_run(PlanRun const& source, PlanMode const& mode, TableOverrun const* overrun,
-                       fs::path const& repo,
+// work directory), else from the repository.
+std::size_t replay_run(PlanRun const& source, PlanMode const& mode, fs::path const& repo,
                        std::map<std::int64_t, gef::test::PlanFile> const& files,
                        data::TableSet const& tables, GoldenMap const& golden) {
     INFO("run " + std::to_string(source.number) + " " + source.capture + " " + source.run_dir);
-    std::optional<fs::path> const stored = gef::test::store_run(source);
-    std::optional<gef::test::ScopedDir> scratch;
-    fs::path root;
-    if (stored.has_value()) {
-        root = *stored / "work";
-    } else {
-        root =
-            gef::test::process_scratch_root("m6-setup") / ("run-" + std::to_string(source.number));
-        scratch.emplace(root);
-        gef::test::fill_scratch(source, repo, files, root);
-    }
-    WorkDir const workdir{root};
+    gef::test::RunRoot const run_root{source, repo, files, "m6-setup"};
+    std::optional<fs::path> const& stored = run_root.stored();
+    WorkDir const workdir{run_root.root()};
     ProcessState process{tables};
     std::vector<std::string> parameter_console;
     gef::test::start_up(process, workdir, parameter_console);
@@ -483,21 +352,12 @@ std::size_t replay_run(PlanRun const& source, PlanMode const& mode, TableOverrun
                 run_passes(driver);
             }
         }
-        exit = describe_end(driver.end());
+        exit = gef::test::describe_end(driver.end());
     } catch (gef::params::GefHangs const&) {
         // BASIC never ends here; the records written so far are still checked below.
         exit = "hang";
-    } catch (std::out_of_range const& error) {
-        if (overrun == nullptr) {
-            throw;
-        }
-        if (auto const difference = overrun_difference(*overrun, process, error.what());
-            difference.has_value()) {
-            FAIL_CHECK(*difference);
-        }
-        exit = "table overrun";
     }
-    CHECK(exit == (overrun != nullptr ? std::string{"table overrun"} : mode.exit));
+    CHECK(exit == mode.exit);
     GoldenMap const& unreached = probes.unreached();
     if (!unreached.empty()) {
         auto const& [number, probe, rec] = unreached.begin()->first;
@@ -513,8 +373,8 @@ std::size_t replay_run(PlanRun const& source, PlanMode const& mode, TableOverrun
 TEST_CASE("run: every set-up of the M6 captures equals BASIC's P0, P1 and P1b", "[T1][run]") {
     gef::test::Plan const sources =
         gef::test::read_plan(gef::test::read_lines(gef::test::golden_file("m6-p0", "plan.txt")));
-    std::map<std::int64_t, PlanMode> const modes =
-        read_modes(gef::test::read_lines(gef::test::golden_file("m6-plan", "plan.txt")));
+    std::map<std::int64_t, PlanMode> const modes = gef::test::read_plan_modes(
+        gef::test::read_lines(gef::test::golden_file("m6-plan", "plan.txt")));
     GoldenMap const golden =
         read_golden(gef::test::read_lines(gef::test::golden_file("m6-p0", "fingerprints.txt")),
                     gef::test::read_lines(gef::test::golden_file("m6-setup", "fingerprints.txt")));
@@ -536,17 +396,10 @@ TEST_CASE("run: every set-up of the M6 captures equals BASIC's P0, P1 and P1b", 
             continue;
         }
         ++replayed;
-        TableOverrun const* const overrun = find_overrun(source.run_dir);
         try {
-            store_matches +=
-                replay_run(source, mode->second, overrun, repo, sources.files, tables, golden);
+            store_matches += replay_run(source, mode->second, repo, sources.files, tables, golden);
         } catch (std::exception const& error) {
             FAIL_CHECK("run " + std::to_string(source.number) + " aborted: " + error.what());
-        }
-        if (overrun != nullptr) {
-            WARN("run " + std::to_string(source.number) + " " + source.run_dir +
-                 ": BASIC reads a table beyond its bounds; the C++ stops (open decision, "
-                 "MILESTONE_6_PLAN.md §8)");
         }
     }
     if (replayed < sources.runs.size()) {

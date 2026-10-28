@@ -524,6 +524,17 @@ Tool commands are run from the repository root: `python3 -m tools.fbsrc.fbline <
 - **C++ symbol:** `gef::physics::beta_equi` (`Cpp_implementation/src/physics/shape.cpp`)
 - **Owning milestone:** M5 (condition), M7/M13 (destination)
 
+### Q-042 Mass-table reads past the bounds read the neighbouring table or a malloc header
+
+- **BASIC location:** the readers of `BEldmTF`, `BEexp`, `DEFOtab`, `ShellMO` (`ReDim Shared` at `GEF.bas:1222, 1233, 1244, 1255`; `EVOD` at 1266, never read): `LDMass` (16224, 16227), `AME2020` (16253), `U_SHELL` (16266), the system set-up (3361, 3368), `P_Egamma_low` (16987), the E2 cascade (9313, 9433) (`fbdef --refs`); reached through `BFTF`, `U_SHELL_exp`, `U_SHELL_EO_exp` and every caller of these.
+- **Mechanism:** fbc compiles GEF without `-exx`; `BEexp(N, Z)` is `*(float*)(((N * 137 + Z) << 2) + data)` (e.g. GEF.c at `fbline GEF.bas:3361`), with no check. The five tables (with `EVOD`, declared and never filled) are allocated one after the other at start-up (GEF.c:25524-25620: nothing else is allocated between the five `fb_ArrayRedimEx` calls; each table is dimensioned once and never erased), each one glibc malloc chunk: `BEldmTF | 16 | BEexp | 16 | DEFOtab | 12 | ShellMO | 16 | EVOD`. A gap is the end of a chunk, zeroed because libfb allocates with `calloc` (which clears up to the next chunk's size word), then the next chunk's 8-byte size word (chunk size with PREV_INUSE set: `0x1B4C1` for the 204 × 137 tables, `0x1FB61` for DEFOtab). An index past one table therefore reads the next table, or a header word. The layout depends on glibc's main arena (DEFOtab's 129888-byte chunk is below the default 128 KiB mmap threshold); another allocator or a lowered `MALLOC_MMAP_THRESHOLD_` would change it.
+- **Effect:** for a CN beyond the tables GEF computes with values of other nuclides' tables. Capture `edge-f_second_system_outside_table` (line `92, 236, 82, 300, 5, "EB"`): `AME2020(82, 300)` reads `BEexp(218, 82)` = `DEFOtab(14, 78)` = 0, `BEldmTF(218, 82)` reads `BEexp(14, 78)` = −1.E11; BASIC prints `Inner saddle =-1e+11 MeV`, `exp. Mass =  0 MeV`, and ends at GEF.bas:3869 (`Eabsgs < 0`). Reads before `BEldmTF` or after `EVOD` would read other heap data, which the C++ does not model.
+- **Evidence status:** *confirmed in output*
+- **Evidence:** gdb on build `seed-probes-32c3cfccb98c` at the first `AME2020(82, 300)` call of that capture (M6.4, 2026-10-28): the five tables' data pointers and sizes, and a dump of the memory from 256 bytes before `BEldmTF` to 256 bytes past `EVOD`; from `BEldmTF`'s first element to `EVOD`'s last it equals the C++ tables plus the gap model byte for byte; builds `none-8ee226bf3241` and `seed-probes-9bc237a66eec` place the tables at the same relative offsets. Reproduced by `table_memory_test.cpp` (values read from the dump, including reads that land on filled elements of the next table) and by `run_corpus_test.cpp` and `run_console_test.cpp`, whose runs of the capture equal BASIC's P0/P1/P1b records, console and run end.
+- **Fidelity switch:** `fix_table_overrun` (`gef::data::TableSet::fix_table_overrun`; true: a read outside the bounds throws `std::out_of_range`). The C++ has no `Fidelity` configuration yet; the switch moves there when it exists.
+- **C++ symbol:** `gef::data::read_mass_table` (`Cpp_implementation/src/data/table_memory.cpp`), called by `gef::physics::ld_mass`, `ame2020`, `u_shell`, `e2_cascade`, `p_egamma_low_table` and `gef::run::begin_system`
+- **Owning milestone:** M6.4 (user decision 2026-10-28, `MILESTONE_6_PLAN.md` §8; amends M5 plan D3)
+
 ## 5. Build notes (not GEF quirks)
 
 These describe how the toolchain, not GEF, can make the C++ results differ from the reference binary. They have no fidelity switch.
@@ -610,6 +621,7 @@ These describe how the toolchain, not GEF, can make the C++ results differ from 
 | Q-039 | `Array_Eg2_*(100)` written without a bound | `GEF.bas:9353, 9469` | confirmed by fbc C | — | M5 |
 | Q-040 | TRusanov computes a pairing floor and does not use it | `GEF.bas:16100-16107` | confirmed by fbc C | `fix_trusanov_pairing_floor` | M5 |
 | Q-041 | Beta_Equi prints to whatever file number `f` holds | `GEF.bas:16628` | read only (destination) | — | M5, M7/M13 |
+| Q-042 | Mass-table reads past the bounds read the neighbouring table | `GEF.bas:1222-1266` and readers | confirmed in output | `fix_table_overrun` | M6.4 |
 | B-001 | Optimisation level vs fbc `-O0` | (toolchain) | open risk | — | M3, M5 |
 | B-002 | fbc gcc passes `-fwrapv -fno-strict-aliasing` | (toolchain) | resolved for the runtime layer (M3.3) | — | M3 |
 | B-003 | `Compilationstamp` needs `SOURCE_DATE_EPOCH` | `GEF.bas:17` | handled (M1) | — | M1 |

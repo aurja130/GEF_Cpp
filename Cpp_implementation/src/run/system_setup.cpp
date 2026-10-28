@@ -7,6 +7,7 @@
 // `For I_Double_Covar` (GEF.bas:3313-3440), from the C fbc emits (GEF.c:37546-37694,
 // 41358-42368; FitparRead.bas through params::fitpar_read).
 
+#include "data/table_memory.hpp"
 #include "data/tables.hpp"
 #include "fbrt/convert.hpp"
 #include "fbrt/gef_math.hpp"
@@ -110,8 +111,10 @@ void print_masses(ProcessState& process) {
     auto const af = static_cast<float>(a);
     // GEF.bas:3361 and 3368 `If BEexp(P_A_CN-P_Z_CN, P_Z_CN) > -1.E10`: the C jumps to the Else
     // branch when the entry is `<= -1.E10`, so a NaN entry takes the experimental branch.
+    // QUIRK(Q-042): reads outside the table return the memory next to it (data/table_memory).
     bool const experimental =
-        !(static_cast<double>(tables.be_exp(fb::sub(a, z), z)) <= -0x1.2A05F2p+33);
+        !(static_cast<double>(data::read_mass_table(tables, data::MassTable::BeExp, fb::sub(a, z),
+                                                    z)) <= -0x1.2A05F2p+33);
 
     // GEF.bas:3361-3365
     print_part(process, experimental ? "exp. Mass = " : "Mass = ");

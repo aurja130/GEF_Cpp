@@ -301,9 +301,11 @@ TEST_CASE("physics: E2 cascade replays the captured light and heavy cascades", "
     }
 }
 
-TEST_CASE("physics: E2 cascade reads outside DEFOtab throw", "[T1][physics]") {
-    data::TableSet const& tables = jeff33();
-    // DEFOtab is (N 0..236) x (Z 0..136).
+TEST_CASE("physics: with fix_table_overrun E2 cascade reads outside DEFOtab throw",
+          "[T1][physics]") {
+    data::TableSet tables = jeff33();
+    tables.fix_table_overrun = true;
+    // DEFOtab is (N 0..236) x (Z 0..136); with the fix of QUIRK(Q-042) reads outside it throw.
     REQUIRE_THROWS_AS(physics::e2_cascade(tables, 137, 250, 4.0F, 4.0F, 0.0F, 0, 0),
                       std::out_of_range);
     REQUIRE_THROWS_AS(physics::e2_cascade(tables, 50, 287, 4.0F, 4.0F, 0.0F, 0, 0),

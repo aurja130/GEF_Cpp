@@ -607,10 +607,13 @@ TEST_CASE("physics: TRusanov equals BASIC on the driver grids", "[T1][physics][s
     m5::check_grid("m5-level_density", random_grid);
 }
 
-// Table reads outside the table throw std::out_of_range (fb::Array). Every point that the grid
-// excludes for this reason is listed here; the in-table neighbours must not throw.
-TEST_CASE("physics: level_density rejects table reads outside the table", "[T1][physics]") {
-    auto const tables = level_density_tables();
+// With the fix of QUIRK(Q-042), table reads outside the table throw std::out_of_range
+// (fb::Array). Every point that the grid excludes for this reason is listed here; the in-table
+// neighbours must not throw.
+TEST_CASE("physics: with fix_table_overrun level_density rejects table reads outside the table",
+          "[T1][physics]") {
+    auto tables = level_density_tables();
+    tables.fix_table_overrun = true;
     REQUIRE_THROWS_AS(physics::u_levdens_fg(tables, 137, 233, 0.0F, 0, 0, 1.0F, 2.0F, 9.5F, 1.0F),
                       std::out_of_range);
     REQUIRE_THROWS_AS(physics::u_levdens_fg(tables, 92, 296, 0.0F, 0, 0, 1.0F, 2.0F, 9.5F, 1.0F),

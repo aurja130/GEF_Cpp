@@ -282,4 +282,78 @@ std::string first_line_difference(std::string_view basic, std::string_view print
     }
     return "the texts differ in line endings only";
 }
+
+std::map<std::int64_t, PlanMode> read_plan_modes(std::vector<std::string> const& lines) {
+    std::map<std::int64_t, PlanMode> modes;
+    std::optional<std::int64_t> current;
+    bool has_mode = false;
+    for (std::string const& line : lines) {
+        std::vector<std::string_view> const fields = split_fields(line);
+        if (fields.empty()) {
+            continue;
+        }
+        if (fields.front() == "run") {
+            plan_check(!current.has_value() && fields.size() == 4,
+                       "m6-plan: bad run line '" + line + "'");
+            current = to_int(fields.at(1));
+            has_mode = false;
+            PlanMode const mode{.capture = std::string{fields.at(2)},
+                                .run_dir = std::string{fields.at(3)},
+                                .full = false,
+                                .exit = {}};
+            plan_check(modes.try_emplace(*current, mode).second,
+                       "m6-plan: repeated run " + std::to_string(*current));
+        } else if (fields.front() == "mode" || fields.front() == "exit") {
+            if (!current.has_value()) {
+                throw std::runtime_error("m6-plan: '" + line + "' outside a run");
+            }
+            PlanMode& run = modes.at(*current);
+            if (fields.front() == "mode") {
+                plan_check(!has_mode && fields.size() == 2 &&
+                               (fields.at(1) == "setup" || fields.at(1) == "full"),
+                           "m6-plan: bad mode line '" + line + "'");
+                run.full = fields.at(1) == "full";
+                has_mode = true;
+            } else {
+                plan_check(fields.size() >= 2, "m6-plan: bad exit line '" + line + "'");
+                // `exit fit back edge` has spaces: the rest of the line after "exit ".
+                run.exit = line.substr(line.find(' ') + 1);
+            }
+        } else if (fields.front() == "endrun") {
+            plan_check(current.has_value() && has_mode && !modes.at(*current).exit.empty(),
+                       "m6-plan: endrun without a run, its mode and its exit");
+            current.reset();
+        }
+    }
+    return modes;
+}
+
+std::string describe_end(run::RunEnd end) {
+    switch (end) {
+    case run::RunEnd::Finished:
+        return "terminated";
+    case run::RunEnd::EndStatement:
+        return "end";
+    case run::RunEnd::FitBackEdge:
+        return "fit back edge";
+    case run::RunEnd::Hang:
+        return "hang";
+    case run::RunEnd::None:
+        break;
+    }
+    return "not over";
+}
+
+RunRoot::RunRoot(PlanRun const& run, fs::path const& repo,
+                 std::map<std::int64_t, PlanFile> const& files, std::string_view tag)
+    : stored_{store_run(run)} {
+    if (stored_.has_value()) {
+        root_ = *stored_ / "work";
+        return;
+    }
+    root_ = process_scratch_root(tag) / ("run-" + std::to_string(run.number));
+    scratch_.emplace(root_);
+    fill_scratch(run, repo, files, root_);
+}
+
 } // namespace gef::test

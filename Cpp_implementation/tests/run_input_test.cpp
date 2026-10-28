@@ -43,7 +43,6 @@ using gef::run::ProbeSink;
 using gef::run::ProcessState;
 using gef::run::SequenceFileState;
 using gef::run::WorkDir;
-using gef::test::fill_scratch;
 using gef::test::find_line_start;
 using gef::test::first_line_difference;
 using gef::test::Plan;
@@ -304,17 +303,9 @@ void replay_run(PlanRun const& run, std::map<std::int64_t, PlanFile> const& file
                 Tally& tally) {
     INFO("run " + std::to_string(run.number) + " " + run.capture + " " + run.run_dir);
 
-    std::optional<fs::path> const stored = store_run(run);
-    std::optional<ScopedDir> scratch;
-    fs::path root;
-    if (stored.has_value()) {
-        root = *stored / "work";
-    } else {
-        root = process_scratch_root() / ("run-" + std::to_string(run.number));
-        scratch.emplace(root);
-        fill_scratch(run, repo, files, root);
-    }
-    WorkDir const workdir{root};
+    gef::test::RunRoot const run_root{run, repo, files, "m6-p0"};
+    std::optional<fs::path> const& stored = run_root.stored();
+    WorkDir const workdir{run_root.root()};
 
     ProcessState process{tables};
     std::vector<std::string> parameter_console;

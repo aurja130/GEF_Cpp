@@ -26,6 +26,7 @@
 #include <cstdint>
 #include <exception>
 #include <filesystem>
+#include <functional>
 #include <map>
 #include <optional>
 #include <set>
@@ -49,6 +50,7 @@ using gef::run::SequenceFileState;
 using gef::run::SetupStages;
 using gef::run::StepState;
 using gef::run::WorkDir;
+using gef::test::logic_error_of;
 using gef::test::plan_check;
 using gef::test::PlanRun;
 using gef::test::ProbeDump;
@@ -307,22 +309,6 @@ std::vector<std::string> basic_p1_lines(fs::path const& path,
 
 // ---- One run ----------------------------------------------------------------------------------
 
-std::string describe_end(RunEnd end) {
-    switch (end) {
-    case RunEnd::Finished:
-        return "terminated";
-    case RunEnd::EndStatement:
-        return "end";
-    case RunEnd::FitBackEdge:
-        return "fit back edge";
-    case RunEnd::Hang:
-        return "hang";
-    case RunEnd::None:
-        break;
-    }
-    return "not over";
-}
-
 // What the driver did in one run.
 struct DriverResult {
     std::int64_t steps = 0;
@@ -357,7 +343,7 @@ DriverResult drive(RunDriver& driver, DriverRun const& run, std::vector<std::str
                 run_passes(driver, result.pass_lines);
             }
         }
-        result.exit = describe_end(driver.end());
+        result.exit = gef::test::describe_end(driver.end());
     } catch (gef::params::GefHangs const&) {
         result.exit = "hang";
     }
@@ -463,17 +449,9 @@ void check_run(DriverRun const& run, PlanRun const& source, fs::path const& repo
                std::map<std::int64_t, gef::test::PlanFile> const& files,
                data::TableSet const& tables, std::vector<std::string> const& names) {
     INFO("run " + std::to_string(run.number) + " " + run.capture + " " + run.run_dir);
-    std::optional<fs::path> const stored = gef::test::store_run(source);
-    std::optional<ScopedDir> scratch;
-    fs::path root;
-    if (stored.has_value()) {
-        root = *stored / "work";
-    } else {
-        root = gef::test::process_scratch_root("m6-plan") / ("run-" + std::to_string(run.number));
-        scratch.emplace(root);
-        gef::test::fill_scratch(source, repo, files, root);
-    }
-    WorkDir const workdir{root};
+    gef::test::RunRoot const run_root{source, repo, files, "m6-plan"};
+    std::optional<fs::path> const& stored = run_root.stored();
+    WorkDir const workdir{run_root.root()};
 
     ProcessState process{tables};
     std::vector<std::string> parameter_console;
@@ -638,6 +616,36 @@ public:
     }
 };
 
+// Stages whose system and step set-up are given as functions: a test makes them return a Flow
+// their BASIC block cannot produce, or leave a state BASIC cannot reach (D10).
+class HookStages final : public SetupStages {
+public:
+    using SystemHook = std::function<Flow(ProcessState&)>;
+    using StepHook = std::function<Flow(ProcessState&, InputRoundState&, SequenceFileState&)>;
+
+    HookStages(SystemHook on_system, StepHook on_step)
+        : on_system_{std::move(on_system)}, on_step_{std::move(on_step)} {}
+
+    void begin_round(ProcessState& /*process*/, WorkDir const& /*workdir*/) override {}
+    Flow begin_system(ProcessState& process, InputRoundState& /*round*/,
+                      SequenceFileState& /*file*/) override {
+        return on_system_(process);
+    }
+    Flow set_up_step(ProcessState& process, InputRoundState& round, SequenceFileState& file,
+                     StepState& /*step*/, WorkDir const& /*workdir*/) override {
+        process.fenhance = 1.0;
+        return on_step_(process, round, file);
+    }
+
+private:
+    SystemHook on_system_;
+    StepHook on_step_;
+};
+
+Flow proceed_system(ProcessState& /*process*/) {
+    return Flow::Proceed;
+}
+
 // A scratch working directory with file.in and in/a.in.
 struct SmallRun {
     SmallRun(std::string_view name, std::string const& filein, std::string const& sequence)
@@ -790,4 +798,96 @@ TEST_CASE("run: a hang in the first round's set-up ends the run as a hang", "[ru
     CHECK_THROWS_AS(driver.next_step(), gef::params::GefHangs);
     CHECK(driver.end() == RunEnd::Hang);
     CHECK_FALSE(driver.next_step());
+}
+
+// MILESTONE_6_PLAN.md D10: the driver's branches that BASIC cannot take in batch mode throw
+// std::logic_error. Each test reaches one through a stage that does what no ported stage does.
+TEST_CASE("run: the driver's unreachable branches throw logic_error", "[run]") {
+    data::TableSet const tables = data::load_tables(data::ProgramData(data::NuclideData::Jeff33));
+    ScopedDir const scratch{gef::test::process_scratch_root("m6-driver")};
+    std::string const filein = "\"in/a.in\"\nEND\n";
+    std::string const one_line = " 1\n0.0253E-6\n 92, 236, \"EN\"\n";
+    auto const proceed = [](ProcessState&, InputRoundState&, SequenceFileState&) {
+        return Flow::Proceed;
+    };
+
+    SECTION("a system set-up that restarts the input (GEF.bas:3313-3440 cannot)") {
+        SmallRun const small{"d10-system", filein, one_line};
+        ProcessState process{tables};
+        HookStages stages{[](ProcessState&) { return Flow::Restart; }, proceed};
+        RunDriver driver{process, WorkDir{small.root}, stages};
+        CHECK(logic_error_of([&driver] {
+                  static_cast<void>(driver.next_step());
+              }).starts_with("GEF.bas:3313-3440"));
+    }
+    SECTION("a step set-up that leaves the system line (GEF.bas:3499-3972 cannot)") {
+        SmallRun const small{"d10-step", filein, one_line};
+        ProcessState process{tables};
+        HookStages stages{proceed_system, [](ProcessState&, InputRoundState&, SequenceFileState&) {
+                              return Flow::NextLine;
+                          }};
+        RunDriver driver{process, WorkDir{small.root}, stages};
+        CHECK(logic_error_of([&driver] {
+                  static_cast<void>(driver.next_step());
+              }).starts_with("GEF.bas:3499-3972"));
+    }
+    SECTION("Nextfitloop in dialogue mode (GEF.bas:2626)") {
+        SmallRun const small{"d10-2626", filein, one_line};
+        ProcessState process{tables};
+        HookStages stages{proceed_system,
+                          [](ProcessState& p, InputRoundState&, SequenceFileState&) {
+                              p.bfilein = 0;
+                              return Flow::Restart;
+                          }};
+        RunDriver driver{process, WorkDir{small.root}, stages};
+        CHECK(logic_error_of([&driver] {
+                  static_cast<void>(driver.next_step());
+              }).starts_with("GEF.bas:2626"));
+    }
+    SECTION("a system line without a sequence file (GEF.bas:3142)") {
+        SmallRun const small{"d10-3142", filein,
+                             " 1\n0.0253E-6\n 92, 236, \"EN\"\n 94, 240, \"EN\"\n"};
+        ProcessState process{tables};
+        HookStages stages{proceed_system,
+                          [](ProcessState& p, InputRoundState&, SequenceFileState&) {
+                              p.bfilein = 1;
+                              return Flow::Proceed;
+                          }};
+        RunDriver driver{process, WorkDir{small.root}, stages};
+        REQUIRE(driver.next_step());
+        CHECK(logic_error_of([&driver] {
+                  static_cast<void>(driver.next_step());
+              }).starts_with("GEF.bas:3142"));
+    }
+    SECTION("a two-system line with several energies (GEF.bas:3152)") {
+        SmallRun const small{"d10-3152", filein,
+                             " 1\n5\n 92, 236, \"EB\"\n 92, 236, 94, 240, 5, \"EB\"\n"};
+        ProcessState process{tables};
+        HookStages stages{proceed_system,
+                          [](ProcessState&, InputRoundState& r, SequenceFileState&) {
+                              r.n_e_values = 2;
+                              return Flow::Proceed;
+                          }};
+        RunDriver driver{process, WorkDir{small.root}, stages};
+        REQUIRE(driver.next_step());
+        CHECK(logic_error_of([&driver] {
+                  static_cast<void>(driver.next_step());
+              }).starts_with("GEF.bas:3152"));
+    }
+    SECTION("N_E_steps 2 without RANDOM (GEF.bas:3472)") {
+        SmallRun const small{"d10-3472", filein,
+                             " 1\n0.0253E-6\nOptions(RANDOM)\n 92, 236, \"EN\"\n"};
+        ProcessState process{tables};
+        HookStages stages{proceed_system,
+                          [](ProcessState&, InputRoundState&, SequenceFileState& f) {
+                              f.b_random_on = 0;
+                              return Flow::Proceed;
+                          }};
+        RunDriver driver{process, WorkDir{small.root}, stages};
+        REQUIRE(driver.next_step());
+        CHECK(process.n_e_steps == 2);
+        CHECK(logic_error_of([&driver] {
+                  static_cast<void>(driver.next_step());
+              }).starts_with("GEF.bas:3472"));
+    }
 }

@@ -87,7 +87,8 @@ public:
     // without begin_pass() leaves the step as the GEF_SETUP_ONLY build does (`Continue For`);
     // once a pass has begun, the passes must run until end_pass() returns false. Throws
     // params::GefHangs where BASIC never ends (the run is then over), std::runtime_error without
-    // file.in, std::out_of_range where a table read leaves its table (M5 plan D3), and
+    // file.in, std::out_of_range where a table read leaves the known table memory (Q-042) or a
+    // sequence file has more than 5000 system lines (`S_par`, GEF.bas:2664), and
     // std::logic_error where the port reaches a state BASIC cannot: a stage returning a Flow its
     // BASIC block cannot produce, a `Bfilein = 0` branch, an input file found but not readable.
     bool next_step();

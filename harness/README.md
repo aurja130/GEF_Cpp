@@ -79,6 +79,8 @@ python3 -m harness.patch_check SETUP_DIR FULL_DIR [--json OUT]
 
 `setup_golden` derives the C++ test golden `m6-setup` (the P1 and P1b records of every BASIC run of those captures, one digest per record; format in its module docstring): `python3 -m harness.setup_golden [--replace]`.
 
+`stdout_golden` derives the C++ test golden `m6-stdout` (for every BASIC run of those captures: its mode, the line of `stdout.log` where the console range of MILESTONE_6_PLAN.md D3 starts, and the length and FNV-1a 64 digest of the range; format in its module docstring): `python3 -m harness.stdout_golden [--replace]`.
+
 ## Reference store
 
 ```sh

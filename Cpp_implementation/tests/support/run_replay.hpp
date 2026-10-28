@@ -3,12 +3,13 @@
 // Licensed under the GNU GPL v3 or later, WITHOUT ANY WARRANTY; see LICENSE.txt.
 
 // Replaying the BASIC runs of the M6 captures in C++: the run list of the golden m6-p0
-// (tests/golden/m6-p0/plan.txt, harness/p0_golden.py), the working directory of a run (the
-// store's work/ directory, or a scratch copy filled from the repository) and GEF's start-up.
-// Shared by run_input_test.cpp (M6.1) and run_driver_test.cpp (M6.2).
+// (tests/golden/m6-p0/plan.txt, harness/p0_golden.py), the modes and ends of m6-plan, the working
+// directory of a run (the store's work/ directory, or a scratch copy filled from the repository)
+// and GEF's start-up. Shared by the run_*_test.cpp files.
 
 #pragma once
 
+#include "run/driver.hpp"
 #include "run/state.hpp"
 #include "run/workdir.hpp"
 
@@ -16,6 +17,7 @@
 #include <filesystem>
 #include <map>
 #include <optional>
+#include <stdexcept>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -118,5 +120,53 @@ void start_up(run::ProcessState& process, run::WorkDir const& workdir,
 
 // The lines of `text` without their '\n'; a final '\n' does not begin another line.
 [[nodiscard]] std::vector<std::string_view> split_lines(std::string_view text);
+
+// A run of m6-plan: its capture and run directory, whether its passes are taken (`mode full`) and
+// how BASIC's run ended (`exit`).
+struct PlanMode {
+    std::string capture;
+    std::string run_dir;
+    bool full = false;
+    std::string exit;
+};
+
+// tests/golden/m6-plan/plan.txt: `run <n> <capture> <run_dir>`, `mode setup|full`, `exit <how>`,
+// `endrun`, by run number. The plan's other lines are not read.
+[[nodiscard]] std::map<std::int64_t, PlanMode>
+read_plan_modes(std::vector<std::string> const& lines);
+
+// How a C++ run ended, in m6-plan's words (harness/plan_golden.py `_exit_state`).
+[[nodiscard]] std::string describe_end(run::RunEnd end);
+
+// The working directory a replayed run reads: the store's work/ when the store holds the run,
+// else a scratch directory under process_scratch_root(tag), filled from the repository and
+// removed with this object.
+class RunRoot {
+public:
+    RunRoot(PlanRun const& run, std::filesystem::path const& repo,
+            std::map<std::int64_t, PlanFile> const& files, std::string_view tag);
+
+    [[nodiscard]] std::filesystem::path const& root() const noexcept { return root_; }
+    // The run's directory in the store, when the store holds it.
+    [[nodiscard]] std::optional<std::filesystem::path> const& stored() const noexcept {
+        return stored_;
+    }
+
+private:
+    std::optional<std::filesystem::path> stored_;
+    std::filesystem::path root_;
+    std::optional<ScopedDir> scratch_;
+};
+
+// The std::logic_error message of `call`, or "" when it throws none (D10 tests).
+template <typename Call>
+[[nodiscard]] std::string logic_error_of(Call call) {
+    try {
+        call();
+    } catch (std::logic_error const& error) {
+        return error.what();
+    }
+    return {};
+}
 
 } // namespace gef::test

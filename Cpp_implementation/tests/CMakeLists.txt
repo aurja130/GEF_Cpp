@@ -42,10 +42,13 @@ add_executable(gef_tests
     probe_dump_test.cpp
     program_data_test.cpp
     rng_test.cpp
+    run_console_test.cpp
     run_corpus_test.cpp
     run_driver_test.cpp
     run_input_test.cpp
+    run_setup_test.cpp
     strings_test.cpp
+    table_memory_test.cpp
     tables_test.cpp
     text_test.cpp
     utilities_test.cpp

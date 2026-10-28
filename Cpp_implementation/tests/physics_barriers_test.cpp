@@ -182,10 +182,12 @@ TEST_CASE("physics: barriers replay the captured GEF calls", "[T1][physics]") {
     }
 }
 
-TEST_CASE("physics: barrier table reads outside the tables throw", "[T1][physics]") {
-    auto const tables = barrier_tables();
-    // I_Switch 1..5 read BEexp (N 0..203 x Z 0..136, as in the masses test) through ame2020; a
-    // read outside it throws std::out_of_range (plan D3).
+TEST_CASE("physics: with fix_table_overrun barrier table reads outside the tables throw",
+          "[T1][physics]") {
+    auto tables = barrier_tables();
+    tables.fix_table_overrun = true;
+    // I_Switch 1..5 read BEexp (N 0..203 x Z 0..136, as in the masses test) through ame2020; with
+    // the fix of QUIRK(Q-042) a read outside it throws std::out_of_range.
     REQUIRE_THROWS_AS(physics::bftf(tables, 137.0F, 137.0F, 1), std::out_of_range);
     REQUIRE_THROWS_AS(physics::bftf(tables, 137.0F, 137.0F, 2), std::out_of_range);
     REQUIRE_THROWS_AS(physics::bftf(tables, 1.0F, 300.0F, 2), std::out_of_range);
