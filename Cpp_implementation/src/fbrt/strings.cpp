@@ -85,20 +85,58 @@ std::int64_t find_bm(std::int64_t start, std::string_view text, std::string_view
     return ret;
 }
 
+// fb_hStrSkipCharRev: the end of s without its trailing run of ASCII 32 and NUL.
+std::size_t trailing_end(std::string_view s) {
+    std::size_t last = s.size();
+    while (last > 0 && (s.at(last - 1) == ' ' || s.at(last - 1) == '\0')) {
+        --last;
+    }
+    return last;
+}
+
 } // namespace
 
 // str_trim.c fb_TRIM: fb_hStrSkipCharRev strips the trailing run of ASCII 32 and NUL (fixed-length
 // padding); fb_hStrSkipChar then strips the leading run of ASCII 32 only (str_hskip.c).
 std::string trim(std::string_view s) {
-    std::size_t last = s.size();
-    while (last > 0 && (s.at(last - 1) == ' ' || s.at(last - 1) == '\0')) {
-        --last;
-    }
+    std::size_t const last = trailing_end(s);
     std::size_t first = 0;
     while (first < last && s.at(first) == ' ') {
         ++first;
     }
     return std::string(s.substr(first, last - first));
+}
+
+// str_trimex.c fb_TrimEx: whole copies of pattern are removed from the left end, then from the
+// right end, each repeatedly (golden m6-strings: Trim("ababa", "aba") is "ba"). A one-character
+// pattern goes through fb_hStrSkipChar/fb_hStrSkipCharRev, so on the right a run of that
+// character and NUL is removed, as fb_TRIM does for blanks (Trim("ab"+Chr(0)+" ", " ") is "ab");
+// a longer pattern does not touch NUL. An empty pattern leaves s unchanged.
+std::string trim(std::string_view s, std::string_view pattern) {
+    if (pattern.empty()) {
+        return std::string(s);
+    }
+    std::size_t first = 0;
+    std::size_t last = s.size();
+    while (last - first >= pattern.size() && s.substr(first, pattern.size()) == pattern) {
+        first += pattern.size();
+    }
+    if (pattern.size() == 1) {
+        while (last > first && (s.at(last - 1) == pattern.front() || s.at(last - 1) == '\0')) {
+            --last;
+        }
+    } else {
+        while (last - first >= pattern.size() &&
+               s.substr(last - pattern.size(), pattern.size()) == pattern) {
+            last -= pattern.size();
+        }
+    }
+    return std::string(s.substr(first, last - first));
+}
+
+// str_rtrim.c fb_RTRIM: the trailing run of ASCII 32 and NUL is removed (fb_hStrSkipCharRev).
+std::string rtrim(std::string_view s) {
+    return std::string(s.substr(0, trailing_end(s)));
 }
 
 std::string ucase(std::string_view s) {
@@ -147,6 +185,25 @@ std::string mid(std::string_view s, std::int64_t start, std::int64_t len) {
     // start + len > src_len, without overflowing for huge len
     len = std::min(len, src_len - start);
     return std::string(s.substr(static_cast<std::size_t>(start), static_cast<std::size_t>(len)));
+}
+
+// str_left.c fb_LEFT: the first n bytes. n <= 0 gives "", and n beyond the length gives the
+// whole string.
+std::string left(std::string_view s, std::int64_t n) {
+    if (n <= 0) {
+        return {};
+    }
+    auto const count = std::min(s.size(), static_cast<std::size_t>(n));
+    return std::string(s.substr(0, count));
+}
+
+// str_right.c fb_RIGHT: the last n bytes, clipped in the same way as left.
+std::string right(std::string_view s, std::int64_t n) {
+    if (n <= 0) {
+        return {};
+    }
+    auto const count = std::min(s.size(), static_cast<std::size_t>(n));
+    return std::string(s.substr(s.size() - count));
 }
 
 } // namespace gef::fb

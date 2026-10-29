@@ -5,6 +5,7 @@
 
 #include "physics/masses.hpp"
 
+#include "data/table_memory.hpp"
 #include "fbrt/convert.hpp"
 
 #include <cmath>
@@ -70,12 +71,14 @@ float ld_mass(data::TableSet const& tables, float z, float a, float beta) {
     float betab = 0.0F;
     // GEF.bas:16224: the generated test is `BEexp <= -1.E10`, so a NaN table entry takes the
     // table branch (BASIC's `>` test would take the LyMass branch)
-    if (static_cast<double>(tables.be_exp(fb::f2l(n), fb::f2l(z))) <= -0x1.2A05F2p+33) {
+    // QUIRK(Q-042): reads outside the tables return the memory next to them (data/table_memory).
+    if (static_cast<double>(data::read_mass_table(tables, data::MassTable::BeExp, fb::f2l(n),
+                                                  fb::f2l(z))) <= -0x1.2A05F2p+33) {
         // GEF.bas:16232
         betab = ly_mass(z, a, beta);
     } else {
         // GEF.bas:16227: BEtab = BEldmTF(CInt(N), CInt(Z))
-        betab = tables.beldm_tf(fb::f2l(n), fb::f2l(z));
+        betab = data::read_mass_table(tables, data::MassTable::BeldmTf, fb::f2l(n), fb::f2l(z));
         // GEF.bas:16230
         float const vr19 = fedefo_lys(z, a, beta);
         betab = betab + vr19;
@@ -93,7 +96,8 @@ float ld_mass(data::TableSet const& tables, float z, float a, float beta) {
 float ame2020(data::TableSet const& tables, std::int64_t iz, std::int64_t ia) {
     // GEF.bas:16249, 16253
     std::int64_t const ineu = fb::sub(ia, iz);
-    float const beexpval = tables.be_exp(ineu, iz);
+    // QUIRK(Q-042): reads outside the table return the memory next to it (data/table_memory).
+    float const beexpval = data::read_mass_table(tables, data::MassTable::BeExp, ineu, iz);
     // GEF.bas:16254: `<= -1.E10` as in the generated C (a NaN entry is returned unchanged)
     if (static_cast<double>(beexpval) <= -0x1.2A05F2p+33) {
         // GEF.bas:16250-16252, 16257
@@ -112,7 +116,8 @@ float ame2020(data::TableSet const& tables, std::int64_t iz, std::int64_t ia) {
 float u_shell(data::TableSet const& tables, std::int64_t z, std::int64_t a) {
     // GEF.bas:16265-16266
     std::int64_t const n = fb::sub(a, z);
-    float res = tables.shell_mo(n, z);
+    // QUIRK(Q-042): reads outside the table return the memory next to it (data/table_memory).
+    float res = data::read_mass_table(tables, data::MassTable::ShellMo, n, z);
     // GEF.bas:16267: Res = 0.3 * Res for Res > 0. The generated test is `Res <= 0`, so a NaN
     // Res is scaled as well.
     if (!(static_cast<double>(res) <= 0.0)) {

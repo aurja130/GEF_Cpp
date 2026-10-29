@@ -1,0 +1,25 @@
+{
+  "created_utc": "2026-10-16T14:12:27Z",
+  "file_count": 14,
+  "files": {
+    "exx/run.json": "349786a6b40ca6870e4b92fcd4f9f52fa34873930c5ef40f4b0c77d32e6ff164",
+    "exx/stderr.log": "9d97b35e55a22c0e0dbf2759a5ff507121caf24068fe4dc5a4dcb1f10d3fbfe3",
+    "exx/stdout.log": "f13bd1d541efd3e89561d442556bbf062f602ddb5a3cfbe6bf87753e6fb125de",
+    "exx/work/ctl/thread.ctl": "3c74cc5a439fcbb935a78ce9dc754d485071006c6b8efcfacea697101a9d6743",
+    "exx/work/file.in": "3772588d2cb5d1199ef6cce7dc6f0c6b33b59a51448a6645d6bf91b36ad3212d",
+    "exx/work/in/x_s_par_overflow.in": "7807efd325088f171015246654c5623cc2e40e219f4c7e566afc0c61433f5afe",
+    "exx/work/tmp/ParameterUpdate.dat": "73275dd87db4fe236e429feb09925a3144aab2b88f59171f3c5baaff5aade15b",
+    "unchecked/run.json": "5efe3d37cd1defb4e41f2b4f444c2a6977569efcbc92ac0005297d56345e8a27",
+    "unchecked/stderr.log": "ad2b75d820ade3deb7f5a2fca85c60bb393158497e88c3e01896864541a69dbd",
+    "unchecked/stdout.log": "f13bd1d541efd3e89561d442556bbf062f602ddb5a3cfbe6bf87753e6fb125de",
+    "unchecked/work/ctl/thread.ctl": "83b71536d2332c41e96a4d0f2d5c25e606920a9b80a93704567497a55f0b86b8",
+    "unchecked/work/file.in": "3772588d2cb5d1199ef6cce7dc6f0c6b33b59a51448a6645d6bf91b36ad3212d",
+    "unchecked/work/in/x_s_par_overflow.in": "7807efd325088f171015246654c5623cc2e40e219f4c7e566afc0c61433f5afe",
+    "unchecked/work/tmp/ParameterUpdate.dat": "9112ce21684f51cefd1f69dd591a8c3417465d650f42a347a734619dc354e750"
+  },
+  "id": "m6-s-par-overflow",
+  "kind": "capture",
+  "note": "M6.0: 5001 system lines (harness/inputs/m6/edge/x_s_par_overflow.in). exx: seed-probes -exx GEF_SETUP_ONLY build seed-probes-8e8d693f2fa4, runtime error 6 at GEF.bas:3058; unchecked: seed-probes-32c3cfccb98c, SIGABRT",
+  "schema": 1,
+  "total_bytes": 166625
+}

@@ -259,11 +259,11 @@ Tool commands are run from the repository root: `python3 -m tools.fbsrc.fbline <
   - `FitparRead.bas` runs at 1017 and again at 2555 (GEF.c:22096 and 35999). Per system, `If B_Fit = 0 Then #include "Parameters.bas"` (3317–3321; e.g. `Parameters.bas:52` appears twice in the C, GEF.c:20405 and 41448) resets every nominal parameter.
   - The `Var_*` widths are computed once at 2574ff, after `FitparRead` at 2555 and before the per-system reset (`Var_P_A_Width_S2 = _P_A_Width_S2 * 0.03 …`, 2578; `fbdef`: no other assignment).
 - **Effect (expected):** `MyParameters.dat` has no effect on the calculation in any mode, although the results file still prints "Values of Parameters found in MyParameters.dat are replaced." and lists them (`GEF.bas:12039-12066`). In non-fit runs `Fitpar.dat` values are overwritten before every system, but relative perturbation widths derived from them remain. Seed said "ignored in batch"; the source shows it is ignored in every mode.
-- **Evidence status:** *confirmed by fbc C*
-- **Evidence:** `fbline MyparRead.bas:3`, `fbline GEF.bas:2360`, `fbline GEF.bas:2866`, `fbline GEF.bas:2155` (exit 1), `fbline FitparRead.bas:2`, `fbline Parameters.bas:52`, `fbline GEF.bas:3316-3321`; `fbdef B_MyParameters --refs`, `fbdef MyparRead --refs`. M4.4: capture `m4-t0-fitpar` (a `Fitpar.dat` in the working directory) confirms the Fitpar part: P1 of the first system holds the `Parameters.bas` values again for every parameter that file sets, while those it does not set (`D_Par_Fac`, `EOscale`, `_Delta_S0`, `Chisqr_Fit_min`) and `Var_P_A_Width_S2` (computed from the Fitpar value at 2578) keep the Fitpar values. MyParameters.dat: end-to-end confirmation in M15 (override-path runs).
+- **Evidence status:** *confirmed in output* (M6; before: *confirmed by fbc C*)
+- **Evidence:** `fbline MyparRead.bas:3`, `fbline GEF.bas:2360`, `fbline GEF.bas:2866`, `fbline GEF.bas:2155` (exit 1), `fbline FitparRead.bas:2`, `fbline Parameters.bas:52`, `fbline GEF.bas:3316-3321`; `fbdef B_MyParameters --refs`, `fbdef MyparRead --refs`. M4.4: capture `m4-t0-fitpar` (a `Fitpar.dat` in the working directory) confirms the Fitpar part: P1 of the first system holds the `Parameters.bas` values again for every parameter that file sets, while those it does not set (`D_Par_Fac`, `EOscale`, `_Delta_S0`, `Chisqr_Fit_min`) and `Var_P_A_Width_S2` (computed from the Fitpar value at 2578) keep the Fitpar values. M6 (run flow): the setup-only capture `m6-patch-check-m1/setup/m4-fitpar` (same `Fitpar.dat`) shows the same in P1 (`_P_DZ_Mean_S1` −0.35 = `BEB33333` and `_P_Shell_S1` −2.3 from `Parameters.bas`, where the file sets −0.3 and −2.1; `Chisqr_Fit_min` 12.5 and `Var_P_A_Width_S2` from the file), and `run_corpus_test.cpp` reproduces that run's P0/P1/P1b with the real `begin_round` (FitparRead at 2555) and `begin_system` (the reset at 3317-3321); fit-mode corpus entries skip the reset (`B_Fit` 1). Capture `m6-setup-edge-7/edge-e_options-myparameters` (`Options(… MYPARAMETERS …)` with a `MyParameters.dat` in the working directory): GEF prints the option's notice `User-defined parameter values will be used.` (GEF.bas:2867) but never `File MyParameters.dat found.` (`MyparRead.bas:14`), so the file is not read. MyParameters.dat: end-to-end confirmation in M15 (override-path runs).
 - **Fidelity switch:** `fix_parameter_file_overrides`
-- **C++ symbol:** `gef::params::mypar_read` (gated by `Parameters::b_myparameters`), `gef::params::fitpar_read`, `gef::params::load_parameters_bas` (`Cpp_implementation/src/params/`, M4.4); the per-system call order belongs to the M6 run flow
-- **Owning milestone:** M15 (per-system reset in M6, `Var_*` in M4)
+- **C++ symbol:** `gef::params::mypar_read` (gated by `Parameters::b_myparameters`), `gef::params::fitpar_read`, `gef::params::load_parameters_bas` (`Cpp_implementation/src/params/`, M4.4); per round and per system `gef::run::begin_round` and `gef::run::begin_system` (`Cpp_implementation/src/run/system_setup.cpp`, M6.3)
+- **Owning milestone:** M15 (per-system reset done in M6, `Var_*` in M4)
 
 ### Q-019 `Var_PZ_S3_olap_curv` is zero, so `PZ_S3_olap_curv` is never perturbed
 
@@ -293,12 +293,12 @@ Tool commands are run from the repository root: `python3 -m tools.fbsrc.fbline <
 
 - **BASIC location:** `NucProp_Functions.mac:11-63` (seed said 28–49; the file I/O spans 37–58)
 - **Mechanism:** for a nuclide missing from `NucTab`, the lookup does `CHDIR("ctl")` (37; GEF.c:4668 `fb_ChDir`), reads `IMATmax.ctl` for an earlier assignment (38–49), otherwise assigns `IMAT_max + 1`, appends `IZ, IA, IMAT` to the file (51–56) and returns with `CHDIR("..")` (58). The file is never deleted (no `Kill` in the source). "Missing" is `IMAT = 0`, so Z = 0, A = 0, which matches the empty record `NucTab(0)`, is treated as missing too and gets a MAT number from the file (the first one of a fresh `ctl/` in the M4.6 grid: 3853 for JEFF-3.3).
-- **Effect (expected):** MAT numbers of nuclides outside `NucTab` depend on the history of earlier runs in the same working directory, and the lookup changes the process working directory temporarily. Callers (`fbdef I_MAT_ENDF --refs`) include the event loop (`GEF.bas:9259, 9379`), the isomeric-yield output (14246), set-up (3562, 3707, 3751) and the ENDF writer (`ENDF.bas:332, 695, 934`).
+- **Effect (expected):** MAT numbers of nuclides outside `NucTab` depend on the history of earlier runs in the same working directory, and the lookup changes the process working directory temporarily. Callers (`fbdef I_MAT_ENDF --refs`) include the event loop (`GEF.bas:9259, 9379`), the isomeric-yield output (14246), set-up (3562, 3707, 3751) and the ENDF writer (`ENDF.bas:332, 695, 934`). Within one run, numbers assigned by a step body shift those of later systems (M6, full run F4 below).
 - **Evidence status:** *confirmed in output*
-- **Evidence:** `fbline NucProp_Functions.mac:37`, `fbline NucProp_Functions.mac:52-53` as quoted. Not exercised in `validation/test_run`: `ctl/` holds no `IMATmax.ctl` and `run.log` has no `<I> IMAT =` line. M4.6 T1: captures `m4-lookups-jeff33` and `m4-lookups-nubase2016` (harness patch `lookups`, the full (Z, A) grid in a fresh `ctl/`): 720 and 713 assignments in `ctl/IMATmax.ctl`, reproduced line by line by the C++ (`lookups_test.cpp`). Edge systems in M15.
+- **Evidence:** `fbline NucProp_Functions.mac:37`, `fbline NucProp_Functions.mac:52-53` as quoted. Not exercised in `validation/test_run`: `ctl/` holds no `IMATmax.ctl` and `run.log` has no `<I> IMAT =` line. M4.6 T1: captures `m4-lookups-jeff33` and `m4-lookups-nubase2016` (harness patch `lookups`, the full (Z, A) grid in a fresh `ctl/`): 720 and 713 assignments in `ctl/IMATmax.ctl`, reproduced line by line by the C++ (`lookups_test.cpp`). M6: capture `edge-e_missing_nuclide` (U-250 `EN`, target U-249 not in `NucTab`, then Pu-252 `EN1`): the set-up assigns `<I> IMAT = 3853 assigned to Z = 92, A = 249`; in the full run (`m6-full-f1-f7`, F4) the first system's events assign 3854-3954 to fission fragments missing from `NucTab`, so the second system's target gets 3955 where the setup-only run gives 3854. `run_corpus_test.cpp` reproduces the set-up's assignments and `run_console_test.cpp` their console lines (in full runs offset by the assignments BASIC printed in the step body); further assignments in `m6-setup-corpus` (`gefy_sfy`, `SFred`, `SFtest`, `FM256S`). Edge systems in M15.
 - **Fidelity switch:** `fix_imat_no_persistent_state`
-- **C++ symbol:** `gef::data::i_mat_endf` with `gef::data::MatNumberState` (`Cpp_implementation/src/data/lookups.cpp`, M4.6): the state holds `I_message` and the bytes of `ctl/IMATmax.ctl`; reading and writing the file belong to the run flow (M6)
-- **Owning milestone:** M4
+- **C++ symbol:** `gef::data::i_mat_endf` with `gef::data::MatNumberState` (`Cpp_implementation/src/data/lookups.cpp`, M4.6): the state holds `I_message` and the bytes of `ctl/IMATmax.ctl`. M6: one state for the whole run, `gef::run::ProcessState::mat` (plan D7: no `CHDIR`, the file in memory); the set-up lookups (3562, 3707, 3751) go through `mat_number` in `Cpp_implementation/src/run/step_setup.cpp`. Reading an `IMATmax.ctl` left by an earlier run and writing it to disk go with Q-026 (M13/M14).
+- **Owning milestone:** M4 (in-process state in M6; the file on disk in M13/M14)
 
 ### Q-022 TXE printed with the TKE uncertainty
 
@@ -524,6 +524,215 @@ Tool commands are run from the repository root: `python3 -m tools.fbsrc.fbline <
 - **C++ symbol:** `gef::physics::beta_equi` (`Cpp_implementation/src/physics/shape.cpp`)
 - **Owning milestone:** M5 (condition), M7/M13 (destination)
 
+### Q-042 Mass-table reads past the bounds read the neighbouring table or a malloc header
+
+- **BASIC location:** the readers of `BEldmTF`, `BEexp`, `DEFOtab`, `ShellMO` (`ReDim Shared` at `GEF.bas:1222, 1233, 1244, 1255`; `EVOD` at 1266, never read): `LDMass` (16224, 16227), `AME2020` (16253), `U_SHELL` (16266), the system set-up (3361, 3368), `P_Egamma_low` (16987), the E2 cascade (9313, 9433) (`fbdef --refs`); reached through `BFTF`, `U_SHELL_exp`, `U_SHELL_EO_exp` and every caller of these.
+- **Mechanism:** fbc compiles GEF without `-exx`; `BEexp(N, Z)` is `*(float*)(((N * 137 + Z) << 2) + data)` (e.g. GEF.c at `fbline GEF.bas:3361`), with no check. The five tables (with `EVOD`, declared and never filled) are allocated one after the other at start-up (GEF.c:25524-25620: nothing else is allocated between the five `fb_ArrayRedimEx` calls; each table is dimensioned once and never erased), each one glibc malloc chunk: `BEldmTF | 16 | BEexp | 16 | DEFOtab | 12 | ShellMO | 16 | EVOD`. A gap is the end of a chunk, zeroed because libfb allocates with `calloc` (which clears up to the next chunk's size word), then the next chunk's 8-byte size word (chunk size with PREV_INUSE set: `0x1B4C1` for the 204 × 137 tables, `0x1FB61` for DEFOtab). An index past one table therefore reads the next table, or a header word. The layout depends on glibc's main arena (DEFOtab's 129888-byte chunk is below the default 128 KiB mmap threshold); another allocator or a lowered `MALLOC_MMAP_THRESHOLD_` would change it.
+- **Effect:** for a CN beyond the tables GEF computes with values of other nuclides' tables. Capture `edge-f_second_system_outside_table` (line `92, 236, 82, 300, 5, "EB"`): `AME2020(82, 300)` reads `BEexp(218, 82)` = `DEFOtab(14, 78)` = 0, `BEldmTF(218, 82)` reads `BEexp(14, 78)` = −1.E11; BASIC prints `Inner saddle =-1e+11 MeV`, `exp. Mass =  0 MeV`, and ends at GEF.bas:3869 (`Eabsgs < 0`). Reads before `BEldmTF` or after `EVOD` would read other heap data, which the C++ does not model.
+- **Evidence status:** *confirmed in output*
+- **Evidence:** gdb on build `seed-probes-32c3cfccb98c` at the first `AME2020(82, 300)` call of that capture (M6.4, 2026-10-28): the five tables' data pointers and sizes, and a dump of the memory from 256 bytes before `BEldmTF` to 256 bytes past `EVOD`; from `BEldmTF`'s first element to `EVOD`'s last it equals the C++ tables plus the gap model byte for byte; builds `none-8ee226bf3241` and `seed-probes-9bc237a66eec` place the tables at the same relative offsets. Reproduced by `table_memory_test.cpp` (values read from the dump, including reads that land on filled elements of the next table) and by `run_corpus_test.cpp` and `run_console_test.cpp`, whose runs of the capture equal BASIC's P0/P1/P1b records, console and run end.
+- **Fidelity switch:** `fix_table_overrun` (`gef::data::TableSet::fix_table_overrun`; true: a read outside the bounds throws `std::out_of_range`). The C++ has no `Fidelity` configuration yet; the switch moves there when it exists.
+- **C++ symbol:** `gef::data::read_mass_table` (`Cpp_implementation/src/data/table_memory.cpp`), called by `gef::physics::ld_mass`, `ame2020`, `u_shell`, `e2_cascade`, `p_egamma_low_table` and `gef::run::begin_system`
+- **Owning milestone:** M6.4 (user decision 2026-10-28, `MILESTONE_6_PLAN.md` §8; amends M5 plan D3)
+
+### Q-043 The average-spin check of the energy line reads a stale `Emode`
+
+- **BASIC location:** `GEF.bas:2801` (in the energy-line parse 2795-2825); `Emode` start value `GEF.bas:898`, batch assignments `GEF.bas:3227-3277`
+- **Mechanism:** an energy value written `E/spin` is refused unless `Abs(Emode) <= 1 Or Emode = 3` (GEF.c:38535 `if( ((int64)-(__builtin_llabs( EMODE$ ) > 1ll) & (int64)-(EMODE$ != 3ll)) == 0ll ) goto …`). The check runs while the sequence file is parsed, before any of its system lines is read; in batch mode `Emode` is set only by the system loop from each line's channel (3227-3277, after the parse and after the `done.ctl` and `U_Valid` skips). It therefore tests the channel of the last system line of an earlier file that got that far, or the start value 1.
+- **Effect:** whether `E/spin` is accepted depends on the file before: an `E/spin` energy line is accepted in the first file (`Emode` 1) and refused (`<E> Error in input line:` … `Press Enter key to leave GEF!`, then `End`) after a file whose last computed line was `EN` (`Emode` 2), whatever the new file's channels are; by the condition the same holds after `EP` (12), `EM` (13) and `EA` (22). The missing-isomer restart (Q-049) re-parses with the `Emode` the earlier round left, so a restart can end here.
+- **Evidence status:** *confirmed in output*
+- **Evidence:** `fbline GEF.bas:2795-2803` as quoted; `fbdef Emode --refs`. Captures (M6.0-M6.2, setup-only build `seed-probes-32c3cfccb98c`): `m6-setup-edge-7/edge-l_espin_stale` (file 1 an ENDF `EN` line, file 2 `2/10` for `EB`: refused, stdout ends with the error text), `edge-e_eb` (an `E/spin` line for `EB` as the first file: accepted), `m6-setup-restart/edge-l_restart_emode` (five rounds, the last two differing only in `Emode`, then this end). Reproduced by `run_input_test.cpp` (the P0 parses and their outcome), `run_driver_test.cpp` and `run_corpus_test.cpp` (run end), `run_console_test.cpp` (text).
+- **Fidelity switch:** `fix_espin_check_channel` (check the channel of each system line instead); the C++ has no `Fidelity` configuration yet
+- **C++ symbol:** `read_energy_table` in `Cpp_implementation/src/run/input_files.cpp` (via `gef::run::read_sequence_file`)
+- **Owning milestone:** M6
+
+### Q-044 The energy of a two-system line is ignored
+
+- **BASIC location:** `GEF.bas:3150` (`P_E_exc_Double = S_par(Iline).E_double`), `GEF.bas:3304` (`P_E_exc = P_E_exc_Double`), overwritten at `GEF.bas:3449-3497`
+- **Mechanism:** for the second system of a 6-field line (`Z1, A1, Z2, A2, E, channel`) 3304 sets `P_E_exc` from the line's own energy (GEF.c:41349), but the batch step schedule (3449-3497) assigns `P_E_exc` again for every `Emode` before any reader (`fbdef P_E_exc_Double --refs`: no other reader in batch mode).
+- **Effect:** both systems run at the file's energy table; the line's energy changes nothing. Capture `edge-e_two_system` (`92, 236, 94, 240, 7, "EB"` with energy line 5): P1 of both systems has `P_E_exc` = 5 (`40A00000`) and `P_E_exc_Double` = 7 (`40E00000`), `Csystem` `Z92_A236_EB_E5MeV` and `Z94_A240_EB_E5MeV`.
+- **Evidence status:** *confirmed in output*
+- **Evidence:** `fbline GEF.bas:3150`, `fbline GEF.bas:3304`, `fbline GEF.bas:3459-3497`; capture `m6-setup-edge-7/edge-e_two_system` and the full run `m6-full-f1-f7/edge-e_two_system` (F2); reproduced by `run_corpus_test.cpp`.
+- **Fidelity switch:** `fix_two_system_energy`; the C++ has no `Fidelity` configuration yet
+- **C++ symbol:** `gef::run::RunDriver::system_iteration` (3301-3305) and `RunDriver::step_energy` (`Cpp_implementation/src/run/driver.cpp`)
+- **Owning milestone:** M6
+
+### Q-045 Single-step channels run `Energy_table(1)` but are named and deduplicated by `En_max`
+
+- **BASIC location:** `GEF.bas:3225` (`P_E_exc = En_max`), `GEF.bas:3217` (`done.ctl` record), `GEF.bas:3412-3422` (`_sf`/`_cf`/`_fc` suffix of `CFileout`), `GEF.bas:3494-3495` (step energy)
+- **Mechanism:** `FC`, `IS`, `ES` and `EM` keep `N_E_steps = 1` and run `P_E_exc = Energy_table(I_E_step)` = `Energy_table(1)` (GEF.c:43218), the lowest energy of the line, while the `done.ctl` key (3217, `En_max`, GEF.c:40890) and the output-file name use `En_max`: `CFileout` is built in the system set-up, where `P_E_exc` still holds `En_max` (3225, GEF.c:40927; `If P_E_exc = 0` at 3413, GEF.c:42216).
+- **Effect:** a single-step line with several energies computes only the first one, under a `done.ctl` key (all four channels) and, for `FC` and `IS`, an output-file suffix (`_sf` or `_cf`/`_fc`, 3412-3422) that refer to the last; `ES` and `EM` get `_ed`/`_em` whatever the energy. Capture `edge-e_is` (`0, 1.5` with `IS1` for Am-242): `Cfileout` `GEF_95_242f1_cf` (`En_max` 1.5 ≠ 0) while the step runs at 0 MeV plus the isomer energy, `Csystem` `Z95_A242f1_sf_E0MeV`; `edge-e_fc` (`6, 8`, `FC`): one step at 6 MeV, `En_max` 8.
+- **Evidence status:** *confirmed in output*
+- **Evidence:** `fbline GEF.bas:3225`, `fbline GEF.bas:3217`, `fbline GEF.bas:3413`, `fbline GEF.bas:3459-3497`; captures `m6-setup-edge-7/edge-e_is`, `edge-e_fc`, `edge-l_channels`; reproduced by `run_corpus_test.cpp` (P1) and `run_driver_test.cpp` (the steps and the `done.ctl` decisions).
+- **Fidelity switch:** `fix_single_step_energy`; the C++ has no `Fidelity` configuration yet
+- **C++ symbol:** `gef::run::RunDriver::step_energy`, `RunDriver::register_done` (`driver.cpp`); `name_output_file` in `Cpp_implementation/src/run/system_setup.cpp` (via `gef::run::begin_system`)
+- **Owning milestone:** M6
+
+### Q-046 A spectrum-file energy line keeps the energy table of an earlier file
+
+- **BASIC location:** `GEF.bas:2780-2787` (quoted file name: the numeric branch 2788-2825 is skipped); readers `GEF.bas:3072` (two-system check), `3217`/`3225` (`En_max`), `3495` (step energy)
+- **Mechanism:** when the energy line is a quoted spectrum file name, the parse sets `C_Espectrum1` (2781, GEF.c:38387) and leaves `N_E_values`, `Energy_Table`, `Spin_Table`, `En_min` and `En_max` as earlier files left them: the first three as the round's earlier files (or the `Dim`s after `Nextfitloop`, 2648-2650) left them; `En_min` and `En_max` are `Static` (2652-2653), so after a restart they even keep the previous round's values. The `ES`/`EM` step energy (3495), the `done.ctl` key (3217) and the two-system check (3072) read them.
+- **Effect:** `ES`/`EM` lines carry the energy table of whatever file came before: capture `edge-l_spectrum_stale` (files `e_lines_spectrum`, `e_lines`, `e_es`): the first file's `EM` steps run at the start-up `Energy_Table(1)` = 0; the third file's `ES` line for U-236 gets `En_max` 5 from the second file, so its `done.ctl` key equals that of the second file's `EB` line for U-236 at 5 MeV and it is skipped (`… E =  5 Fenhance =  1 I_Mode_selected = -1 skipped (already in done.ctl).`, with Q-048). In `edge-l_channels` the `ES` line runs with `P_E_exc` = 25 (`41C80000`) from the `EA` file before it.
+- **Evidence status:** *confirmed in output*
+- **Evidence:** `fbline GEF.bas:2780-2787`, `fbline GEF.bas:2824`, `fbline GEF.bas:3459-3497`; captures `m6-setup-edge-7/edge-l_spectrum_stale`, `edge-l_channels`; reproduced by `run_input_test.cpp` (P0), `run_corpus_test.cpp` (P1, run end) and `run_console_test.cpp`.
+- **Fidelity switch:** `fix_spectrum_line_energy_table`; the C++ has no `Fidelity` configuration yet
+- **C++ symbol:** `read_energy_table` in `input_files.cpp` (via `gef::run::read_sequence_file`); `gef::run::RunDriver::step_energy`
+- **Owning milestone:** M6
+
+### Q-047 The excitation-energy spectrum is normalised 0/0 without a spectrum, and again at every step
+
+- **BASIC location:** `GEF.bas:3682-3689`; start-up `GEF.bas:2671` (`Redim As Single W_spectrum(1)`)
+- **Mechanism:** the loop `Norm = Σ W_spectrum(I)`, `W_spectrum(I) = W_spectrum(I) / Norm` (GEF.c:44312-44377) runs at every energy step for every `Emode`, not only for `ES`/`EM`. Without a spectrum `W_spectrum(1)` is the cleared start-up element, so the division is 0/0 = NaN (`FFC00000`, x86's default NaN); a spectrum read once is divided again by its (already 1) sum at every later step.
+- **Effect:** after a step without a spectrum, as long as no spectrum has been read in the round, `W_spectrum(1)` is NaN and `W_spectrum_max` 0; P1 shows both (capture `edge-e_gs`: `W_spectrum 1 S FFC00000`, `W_spectrum_max - S 00000000`). Once a spectrum has been read it stays and is normalised again (`edge-l_spectrum_stale`, record 3: `W_spectrum 1` `3DCCCCCD`).
+- **Evidence status:** *confirmed in output*
+- **Evidence:** `fbline GEF.bas:2671`, `fbline GEF.bas:3682-3691`; captures `m6-setup-edge-7/edge-e_gs` and every setup-only capture with a non-spectrum step before any spectrum of the round; reproduced by `run_corpus_test.cpp` (P1 `W_spectrum`, `W_spectrum_max`).
+- **Fidelity switch:** `fix_spectrum_normalisation`; the C++ has no `Fidelity` configuration yet
+- **C++ symbol:** `normalise_spectrum` in `Cpp_implementation/src/run/step_setup.cpp` (via `gef::run::set_up_step`)
+- **Owning milestone:** M6
+
+### Q-048 The `done.ctl` key: no channel, and a `Fenhance` read back as `Single`
+
+- **BASIC location:** `GEF.bas:3174-3217` (check 3176-3212, record 3217)
+- **Mechanism:** the record is `Print #Fdone, P_Z_CN, P_A_CN, En_max, Fenhance, I_Mode_selected` (GEF.c:40884-40894; `Fenhance` printed as `Double`), read back with `Input #Fdone` into the `Single`s `Zdone, Adone, Edone, Fenhance_done` and the `Integer` `Imode_done` (GEF.c:40702-40712), and compared field by field, `Fenhance` as `(double)Fenhance_done != Fenhance` (GEF.c:40727). The channel is not part of the key. The record of a system is written at 3217, before `If Fenhance = 0 Then Fenhance = 1` (3922). The check is off in fit mode (`If B_Fit = 0`, 3174).
+- **Effect:** (1) a repeated line is never recognised when `Fenhance` is not exact in `Single` (0.1): capture `edge-e_dup3` computes both repeats; (2) a second line with the same Z, A and `En_max` but another channel is skipped (`edge-e_dup2`: the `GS` line after `EN` for U-236; `edge-l_spectrum_stale`, Q-046); (3) with `Fenhance` 0 the first system's record holds 0 and every later one 1, so a repeat of the first system is computed again (`edge-e_fen0`).
+- **Evidence status:** *confirmed in output*
+- **Evidence:** `fbline GEF.bas:3174-3182`, `fbline GEF.bas:3217`, `fbline GEF.bas:3922`; captures `m6-setup-edge-7/edge-e_dup1`, `edge-e_dup2`, `edge-e_dup3`, `edge-e_fen0`, `edge-l_dedupe`; reproduced by `run_driver_test.cpp` (the skips, against stdout) and `run_corpus_test.cpp` (the computed systems). The C++ keeps `done.ctl` in memory (plan D2) and reads it back with `fb::InputFile`.
+- **Fidelity switch:** `fix_done_key`; the C++ has no `Fidelity` configuration yet
+- **C++ symbol:** `gef::run::RunDriver::find_done`, `RunDriver::register_done` (`driver.cpp`)
+- **Owning milestone:** M6
+
+### Q-049 A missing isomer restarts the whole input, and can do so for ever
+
+- **BASIC location:** `GEF.bas:3563-3567` (`Goto RepeatInput`), `RepeatInput:` `GEF.bas:1909`
+- **Mechanism:** when the isomer number of the entrance channel exceeds `N_ISO_MAT` (3563), GEF prints `Please stop GEF, complete table and restart GEF.` and jumps to `RepeatInput` (GEF.c:43660-43680: the step's arrays are erased, then `goto label$1568`). In batch mode that runs 1910, 2515-2517, `Nextfitloop` (FitparRead, the `Var_*` widths, 2647-2684) and reads `file.in` again from the first file. The round ends only when `done.ctl` holds every line that restarts, or when a value left by the earlier round (`Emode` at 2801, Q-043; `En_max` in the `done.ctl` key) leads to an `End`. In fit mode the `done.ctl` check is off, so only such a stale value can end it; otherwise it never ends.
+- **Effect:** every system before the faulty line is computed again (in non-fit mode skipped through `done.ctl` only if its key repeats exactly, Q-048), and the widths of 2575-2620 are recomputed with the working copy `PZ_S3_olap_curv` the earlier round left (Q-019). Capture `edge-e_restart` (system, system with a missing isomer, system) restarts once and ends through `done.ctl`; `edge-l_restart_stale`, `m6-setup-restart/edge-l_restart_emode` (five rounds, the last two differing only in `Emode`) and `edge-l_restart_fit_stale` (fit mode) end at the `E/spin` check with a stale `Emode` (Q-043); a fit-mode run without such a value, run directly in M6.2, did not end.
+- **Evidence status:** *confirmed in output*
+- **Evidence:** `fbline GEF.bas:3560-3566`, `fbline GEF.bas:3567`; captures `m6-setup-edge-7/edge-e_restart`, `edge-l_restart_stale`, `m6-setup-restart` (`edge-l_restart_emode`, `edge-l_restart_fit_stale`), full run `m6-full-f1-f7/edge-e_restart` (F6); `MILESTONE_6_PLAN.md` §4 "Missing isomer in batch", §9 M6.2. Reproduced by `run_driver_test.cpp` (the rounds of every capture; restart unit tests: fit mode, `Fenhance` 0.1, 1 and 0, two missing isomers, stale `Emode`) and `run_corpus_test.cpp`.
+- **Fidelity switch:** `fix_missing_isomer_skip` (skip the line instead of restarting); the C++ has no `Fidelity` configuration yet. The C++ cannot loop for ever: `RunDriver::restart` throws `gef::params::GefHangs` when a round would start from a state an earlier round started from (`RunDriver::RoundStart`; the proof holds for the empty step body of M6, plan §8).
+- **C++ symbol:** `set_isomer` in `step_setup.cpp` (returns false; its caller `gef::run::set_up_step` returns `Flow::Restart`), `gef::run::RunDriver::restart` and `RunDriver::round_start` (`driver.cpp`)
+- **Owning milestone:** M6
+
+### Q-050 The per-file reset leaves most options set and clears the `B_Error_On` of `FIT`
+
+- **BASIC location:** `GEF.bas:2829-2842` (per-file reset); option assignments in `GEF.bas:2843-3118`; `B_Fit` written only at 868, 2729, 2987; `B_Error_On = 1` by `FIT` in `file.in` at 2730
+- **Mechanism:** before each sequence file's options are read (after its energy line), the reset sets `B_Error_On`, `Brec`, `Bcov`, `Bcor`, `B_supp`, `B_ENDF`, `B_Random_On`, `CFileoutlmd`, `Clocal_file_option` and `I_Mode_selected` (GEF.c:38676-38703). It does not reset `EOscale` (`NEO`), `D_Par_Fac` (`DPARFAC`), `B_MyParameters`, `Bplot`, the list-mode `P*` flags, `Cfileoutlmd_full`, `N_iter`, `C_Fitoption` or `B_Fit`, so a later file inherits them; and it clears the `B_Error_On = 1` that `FIT` in `file.in` set (2730), before the first file's options are read.
+- **Effect:** options of one sequence file apply to every later file of the run: capture `edge-l_sticky` (file 1 with `NEO`, `DPARFAC(2)`, `LMD`, `FIT`; file 2 plain): P0 of file 2 still has `EOscale` 0, `D_Par_Fac` 2, the LMD flags and `B_Fit` 1. `edge-l_options_reset` shows the fields the reset does clear; `m6-setup-restart/edge-l_restart_fit_stale` (`FIT` in `file.in`) has `B_Error_On` 0 in P0 of its first file.
+- **Evidence status:** *confirmed in output*
+- **Evidence:** `fbline GEF.bas:2829-2842`, `fbline GEF.bas:868`, `fbline GEF.bas:2729`, `fbline GEF.bas:2730`, `fbline GEF.bas:2987`; captures `m6-setup-edge-7/edge-l_sticky`, `edge-l_options_reset`, `edge-e_sticky1`, `edge-e_sticky2`, `m6-setup-restart/edge-l_restart_fit_stale`; reproduced by `run_input_test.cpp` (every P0 field) and `run_corpus_test.cpp`.
+- **Fidelity switch:** `fix_per_file_option_reset`; the C++ has no `Fidelity` configuration yet
+- **C++ symbol:** `reset_file_options` in `input_files.cpp` (via `gef::run::read_sequence_file`); the surviving options are fields of `gef::run::ProcessState`
+- **Owning milestone:** M6
+
+### Q-051 `B_Error_On`, `B_ENDF` and `B_Random_On` carry over from one system line to the next
+
+- **BASIC location:** `GEF.bas:3459-3490` (ENDF step schedule), `GEF.bas:3268-3275` (`ES` with `B_ENDF`)
+- **Mechanism:** in an ENDF file the schedule sets `B_Error_On` per step (GEF.c:43046-43194) and leaves it 0 after the last step of a multi-energy line (3487-3488); nothing resets it per system line, so a following line whose schedule does not assign it (a non-`EN` line: 3459 applies only to neutron-induced lines) runs with the value left. An `ES` line in an ENDF file prints `<W> ENDF output not available for option 'ES'.` and clears `B_ENDF` and `B_random_on` (GEF.c:41218-41221) for the rest of the file.
+- **Effect:** capture `edge-e_sched_mixed` (`EN` with several energies, then `GS`, in one ENDF file): the `GS` line runs with `B_Error_On` 0, i.e. without the error analysis the file asked for; `edge-e_sched_es_endf`: the `EM` line after an `ES` line runs without ENDF output.
+- **Evidence status:** *confirmed in output*
+- **Evidence:** `fbline GEF.bas:3268-3277`, `fbline GEF.bas:3459-3497`; captures `m6-setup-edge-7/edge-e_sched_mixed`, `edge-e_sched_es_endf`, full run `m6-full-f1-f7/edge-e_sched_mixed` (F7, with its pass schedule); reproduced by `run_corpus_test.cpp` (P1 `B_Error_On`, `B_ENDF`, `B_Random_on`) and `run_driver_test.cpp` (pass schedule).
+- **Fidelity switch:** `fix_per_line_error_flags`; the C++ has no `Fidelity` configuration yet
+- **C++ symbol:** `gef::run::RunDriver::endf_step_energy`, `RunDriver::select_channel` (`driver.cpp`)
+- **Owning milestone:** M6
+
+### Q-052 `DPARFAC` takes effect only from the next input round
+
+- **BASIC location:** `GEF.bas:2888-2892`; widths `GEF.bas:2575-2620`
+- **Mechanism:** `DPARFAC(x)` sets `D_Par_Fac = Val(Cval)` (GEF.c:39058-39060) and prints `<W> Sorry, this option is not yet available!!!!!!!`. The perturbation widths `Var_*` that use `D_Par_Fac` are computed at 2575-2620, before `file.in` and the sequence files are read, and again only at the next pass through `Nextfitloop` (a fit iteration, or the restart of Q-049). `D_Par_Fac` is not reset per file (Q-050).
+- **Effect:** in the round that reads it the option changes nothing, as the warning says; after a restart or in fit iteration 2 and later the widths are scaled by it. P1 `Var_P_DZ_Mean_S1` is `3CF5C28F` with `DPARFAC(2)` (captures `edge-e_options`, `edge-l_sticky`: `D_Par_Fac` `40000000`) and without it (`edge-e_gs`: `D_Par_Fac` `3F800000`).
+- **Evidence status:** *confirmed in output*
+- **Evidence:** `fbline GEF.bas:2888-2892`; `fbline GEF.bas:2610` (Q-019, B-004); captures `m6-setup-edge-7/edge-e_options`, `edge-l_sticky`, `edge-e_gs`; reproduced by `run_corpus_test.cpp` (P1 widths). The later-round effect is not captured (M16 owns fit iterations after the first).
+- **Fidelity switch:** `fix_dparfac_widths`; the C++ has no `Fidelity` configuration yet
+- **C++ symbol:** `read_option` in `input_files.cpp`; `gef::run::begin_round` (`system_setup.cpp`) calls `gef::params::update_widths`
+- **Owning milestone:** M6 (M16 for the fit iterations)
+
+### Q-053 `S_par(5000)` is filled without a bound
+
+- **BASIC location:** `GEF.bas:2664` (`Static S_par(5000) As S_par_type`), writes `GEF.bas:3050-3055`, `3057-3061`, `3087-3091`
+- **Mechanism:** each system line (and each nucleus of an A range) does `Iline = Iline + 1` and writes `S_par(Iline)` (GEF.c:40055-40060: `*(int64*)(… + (ILINE$0 << 6)) = …`), with no check against 5000; GEF is built without `-exx`. `Cfilein(1000)` is checked (2738), `S_par` is not.
+- **Effect:** a sequence file with more than 5000 systems writes past the array: capture `m6-s-par-overflow` (5001 system lines): the `-exx` build stops with runtime error 6 at GEF.bas:3058, the normal build aborts (SIGABRT). No corpus file comes near the limit (the largest, `gefy_sfy`, has 251 system lines).
+- **Evidence status:** *confirmed in output*
+- **Evidence:** `fbline GEF.bas:3050`, `fbline GEF.bas:3051`, `fbline GEF.bas:3057`, `fbline GEF.bas:3087`; capture `m6-s-par-overflow` (M6.0). `run_input_test.cpp` checks that the C++ throws `std::out_of_range` at the 5001st line.
+- **Fidelity switch:** none. Undefined behaviour is not reproduced (as Q-039): `ProcessState::s_par` is an `fb::Array`, whose bound check throws.
+- **C++ symbol:** `read_system_line`, `read_pair_line`, `read_data_line` in `input_files.cpp`
+- **Owning milestone:** M6
+
+### Q-054 `ES` and `EM` steps read `Spin_CN` and `Eabsgs` left by earlier code
+
+- **BASIC location:** `GEF.bas:3698-3843` (no assignment for `Emode` 3 and 13), readers `GEF.bas:3849`, `3869` and probe P1; writers `GEF.bas:4248-4249` (pre-pass), `5552`, `5558` (bins); `Spin_CN` is `Static` (1749)
+- **Mechanism:** the set-up assigns `Spin_CN` and `Eabsgs` for `Emode` 0, ±1, 2, 12 and 22 (`fbdef Spin_CN --refs`, `fbdef Eabsgs --refs`); `Case 3` and `Case 13` of the `Select Case Emode` at 3785 assign nothing. The energy checks (3849, 3869: GEF.c:45124, 45219) and P1 read what the previous system's set-up, the pre-pass (`Eabsgs = E_spectrum(I_Estep)`, `Spin_CN = L_spectrum(I_Estep)`, GEF.c:47924-47927) or the bins (`Spin_CN = 0` at 5552, `L_spectrum(I_E_distr)` at 5558) wrote last. The pre-pass decision (3967) does not depend on the stale value: `ES` skips the block of 3948 (GEF.c:45793), and for `EM` `Or Emode = 13` decides (GEF.c:45843 evaluates both operands).
+- **Effect:** the `Eabsgs < 0` end (3869) of an `ES` or `EM` step depends on the system computed before it, and P1 shows the stale values. Capture `edge-l_channels`, record 13 (an `ES` line for U-236 after the `EA` line of Pu-242 at 40 MeV): `Spin_CN` 10.705837 (`412B4B1C`) and `Eabsgs` 34.355244 (`42096BC5`), both the `EA` record's values. In the full run F1 (`m6-full-f1-f7/edge-l_spectra`) the only computed step is the first of the run (its `EM` line is skipped through `done.ctl`, Q-046, Q-048), so both runs show the start value 0; `Spin_CN` stays in the corpus test's list of step-body fields left out of full runs, as a write of 5552 and 5558.
+- **Evidence status:** *confirmed in output*
+- **Evidence:** `fbline GEF.bas:3947-3972`, `fbline GEF.bas:4248-4249`, `fbline GEF.bas:5552`, `fbline GEF.bas:5558`, `fbline GEF.bas:3849-3874`; capture `m6-setup-edge-7/edge-l_channels` (P1b record 13: `Harness_Prepass` 0); `m6-full-f1-f7/edge-l_spectra` with `patch_check.json`; reproduced by `run_corpus_test.cpp` (P1, P1b). The step-body writers belong to M9 (`ProcessState::spin_cn`, `eabsgs`).
+- **Fidelity switch:** `fix_spectrum_step_spin_energy`; the C++ has no `Fidelity` configuration yet
+- **C++ symbol:** `set_excitation`, `check_energy` in `step_setup.cpp` (via `gef::run::set_up_step`)
+- **Owning milestone:** M6 (set-up), M9 (the pre-pass and bin writes)
+
+### Q-055 No excitation-energy limit in batch mode; `Emax_valid` is never read
+
+- **BASIC location:** `GEF.bas:894` (`Dim Shared As Single Emax_valid = 100 /' Maximum allowed excitation energy '/`), `GEF.bas:3849-3868`
+- **Mechanism:** `fbdef Emax_valid --refs` shows the declaration and a comment line printed by `ParameterUpdate.mac:25` only. The energy checks test the literals 100 and 120 (GEF.c:45124, 45139), and in batch mode (`If Bfilein Then`, 3850) the branch is empty: neither the `<W> … beyond validity limit of 100 MeV` nor the `<E> Energy of CN > 120 MeV is not supported.` text is printed and the run goes on.
+- **Effect:** batch runs above 100 or 120 MeV run without a message: capture `edge-e_high_energy` (`EN` at 150 MeV; `Eabsgs` 155.9 MeV, `431BE8F2`): no warning in stdout. Only `Eabsgs < 0` (3869) and the alpha check (3835) end GEF.
+- **Evidence status:** *confirmed in output*
+- **Evidence:** `fbline GEF.bas:894` (no C), `fbline GEF.bas:3849-3874`; capture `m6-setup-edge-7/edge-e_high_energy`; reproduced by `run_corpus_test.cpp` and `run_console_test.cpp`.
+- **Fidelity switch:** `fix_batch_energy_limit`; the C++ has no `Fidelity` configuration yet
+- **C++ symbol:** `check_energy` in `step_setup.cpp`
+- **Owning milestone:** M6
+
+### Q-056 A sequence file whose first line holds a second, blank-separated item is never finished
+
+- **BASIC location:** `GEF.bas:2777-2778` (`Input #Ffilein,Fenhance_global`, `Line Input #Ffilein,C_Energy_Table`), `GEF.bas:2843-2844` (`Do Until EOF(Ffilein)`)
+- **Mechanism:** after an `Input #` item that ends at a blank, libfb's `hSkipDelimiter` skips the blanks and puts the next byte back unless it is `,`, LF, CR LF or the end of file. For a first line such as `' original: …` (the item `'`, read as 0) or `6.9  9.8` that byte stays in the put-back buffer: `EOF(f)` counts it as unread, `Line Input` ignores it, so once the data is used up `EOF` stays 0 and every `Line Input` returns "" (GEF.c:38706-38714): the `Do Until EOF` loop never ends. A first line with one item (`5`, or `'ab` without a blank) does not hang. The same put-back can make the energy line read as "".
+- **Effect:** GEF hangs while parsing the file. Corpus inputs `wrkdir/in/Espectrum.in` (13 blanks, then `'   E/MeV   spin   weight`), `Jeremi.in` (`' original: 238U_9Be.in`) and `filefitall.in` (`'Full file name: filefitALL.in`, a `file.in` list used as a sequence file) time out (exit −1 in `m6-setup-corpus`; gdb: `fb_DevFileReadLine` at GEF.bas:2844). Capture `edge-h_energy_line_lost` shows the lost energy line.
+- **Evidence status:** *confirmed in output*
+- **Evidence:** `fbline GEF.bas:2843-2844`; driver golden `m6-strings` (`hang.txt`: inputs `quote` and `number` end, `quote_noeol`, `blank_first` and `number_noeol` hang, with fbc 1.10.1's runtime); `hSkipDelimiter` as ported in `Cpp_implementation/src/fbrt/input.cpp` (`InputFile::skip_delimiter`); captures `m6-setup-corpus` (the three inputs above), `m6-setup-edge-7/edge-h_energy_line_lost`; M6.0/M6.1 notes in `MILESTONE_6_PLAN.md` §9. Reproduced by `run_input_test.cpp` (four hang parses) and the run end of `run_driver_test.cpp`/`run_corpus_test.cpp`.
+- **Fidelity switch:** none planned (as Q-035): the C++ throws `gef::params::GefHangs` when the data is used up while `EOF` stays false (`fb::InputFile::data_at_end`).
+- **C++ symbol:** `read_sequence_lines` in `input_files.cpp` (via `gef::run::read_sequence_file`); `gef::fb::InputFile`
+- **Owning milestone:** M6
+
+### Q-057 `Options(PLOT)` in a batch run waits for console input after the first pass
+
+- **BASIC location:** `GEF.bas:15506-15524` (`Input " ",Icontinue` at 15522; 15512 at the nominal pass of the last step)
+- **Mechanism:** outside fit mode, with `Bplot` set by `Options(PLOT)`, every pass ends with the plotting code and a console `Input` (GEF.c:210004-210008 `fb_ConsoleInput`, 191188-191192 for 15512), also in batch mode. With stdin at EOF the console `Input` does not return (`fb_ConReadLine` waits for ever).
+- **Effect:** an unattended batch run with `PLOT` stops after its first pass. Full runs `m6-full-plot` (`Options(PLOT)` and `Options(PLOT, ERR)`) hang there (gdb in `fb_ConReadLine`); `Bplot` survives the per-file reset (Q-050), so `PLOT` in one file affects every later file.
+- **Evidence status:** *confirmed in output*
+- **Evidence:** `fbline GEF.bas:15512`, `fbline GEF.bas:15522`; full runs `m6-full-plot/edge-e_plot`, `edge-e_plot_err` (exit −1); the setup-only runs of the same inputs (`m6-setup-edge-7`) end normally, since they skip the passes; reproduced by `run_driver_test.cpp` and `run_console_test.cpp` (the run end and the text before it).
+- **Fidelity switch:** none planned (a hang): the C++ throws `gef::params::GefHangs` from `RunDriver::end_pass`. Plotting itself is not ported (vision §3).
+- **C++ symbol:** `gef::run::RunDriver::end_pass` (`driver.cpp`)
+- **Owning milestone:** M6
+
+### Q-058 A `file.in` that names no sequence file waits for a key for ever
+
+- **BASIC location:** `GEF.bas:3129-3132` (`Bfilein = 0`), `GEF.bas:15618-15631` (key loop)
+- **Mechanism:** when `file.in` lists no sequence file (`Nfilein = 0`), the `Else` branch clears `Bfilein` (GEF.c:40508). At the end of the run `If Bfilein Then kin = "Q" Else Do … kin = Inkey … If kin <> "" Then Exit Do : Sleep 1,1 : Loop` (GEF.c:229241-229312); with stdin at EOF `Inkey` returns "" every time.
+- **Effect:** GEF prints `No file with input data specified in file.in.` and never ends. Captures `edge-l_empty` (a comment only) and `edge-l_fit_only` (`FIT` and `NITER(1)` only): exit −1 (timeout).
+- **Evidence status:** *confirmed in output*
+- **Evidence:** `fbline GEF.bas:3129-3132`, `fbline GEF.bas:15615-15631`; captures `m6-setup-edge-7/edge-l_empty`, `edge-l_fit_only`; reproduced by `run_driver_test.cpp` (run end) and `run_console_test.cpp`.
+- **Fidelity switch:** none planned (a hang): the C++ throws `gef::params::GefHangs` from `RunDriver::finish`.
+- **C++ symbol:** `gef::run::RunDriver::finish` (`driver.cpp`)
+- **Owning milestone:** M6
+
+### Q-059 An empty energy line makes GEF read `Energy_Table(1)` and `Spin_Table(1)` past `Redim (0)`
+
+- **BASIC location:** `GEF.bas:2824-2825` (`En_min = Energy_Table(1)`, `En_max = Energy_Table(N_E_values)`), the step schedule `GEF.bas:3454-3456` (`IS`: `Energy_Table(1)`, `Spin_Table(1)`), `3462` (single-energy ENDF), `3495` (`FC`, `IS`, `ES`, `EM`)
+- **Mechanism:** an empty energy line (or `k:` with nothing after it) gives `N_E_values` 0, `Redim Energy_Table(0)` and `Redim Spin_Table(0)` (2795-2796). GEF.bas:2824 then reads element 1 (GEF.c:38661 `*(float*)(… + 4ll)`), past the array, without `-exx`; the single-step schedule reads `Energy_Table(1)` the same way (`FC`, `IS`, `ES`, `EM`: 3455, 3495; an ENDF `EN` line, which gets `N_E_steps` 1 at 3241-3252: 3462), and `IS` also `Spin_Table(1)` (3456). libfb allocates with `calloc`, and the 4 bytes after the one element lie inside the cleared chunk, so the reads give +0.0F.
+- **Effect:** the run goes on at 0 MeV instead of reporting the missing energy: captures `edge-e_energy_empty`, `edge-e_energy_k_empty` (P0 `En_min`, `En_max` 0), `edge-e_fc_energy_empty`, `edge-e_endf_energy_empty` (P1 `P_E_exc` 0), `edge-e_is_energy_empty` (P1 `E_EXC_TRUE` 0 and `P_I_rms_CN` 0; `P_E_exc` is the isomer energy 0.0486, `3D473040`).
+- **Evidence status:** *confirmed in output*
+- **Evidence:** `fbline GEF.bas:2795-2803`, `fbline GEF.bas:2824`, `fbline GEF.bas:3459-3497`; the captures above (`m6-setup-edge-7`); reproduced by `run_input_test.cpp` (P0) and `run_corpus_test.cpp` (P1). Reads further past the element are not modelled.
+- **Fidelity switch:** `fix_empty_energy_line`; the C++ has no `Fidelity` configuration yet
+- **C++ symbol:** `read_energy_table` in `input_files.cpp`; `energy_table_at`, `spin_table_at` in `driver.cpp` (element 1 of a `(0)` table reads +0.0F, any other index outside the bounds throws `std::out_of_range`)
+- **Owning milestone:** M6
+
+### Q-060 `FileExists` does not convert backslashes, `Open` does
+
+- **BASIC location:** `GEF.bas:2775` (sequence file, opened at 2776), `GEF.bas:2782`, `3094` and `3619` (spectrum files, opened at 3625)
+- **Mechanism:** on Linux, libfb's `fb_DevFileOpen` passes the name through `fb_hConvertPath`, which turns `\` into `/`; `fb_FileExists` opens the name as given (`fopen(name, "r")`). GEF is a Windows program (its own output names are `out\GEF_….dat`), so a name written with a backslash fails the `Fileexists` test although `Open` would find the file.
+- **Effect:** a sequence or spectrum file named with a backslash is reported missing, on Linux only: capture `edge-f_backslash_name` (`file.in` line `in\e_gs.in`: `<S> File in\e_gs.in not found.`), `edge-f_spectrum_backslash` (`<S> File in\e_spectrum2.dat does not exist.`, then `End`). GEF's own output names (`Cfileout_full` = `out\GEF_….dat`) are opened, not tested, so they work.
+- **Evidence status:** *confirmed in output*
+- **Evidence:** fbc 1.10.1 runtime checked directly (M6.1: a probe program with both calls on a backslash name); captures `m6-setup-edge-7/edge-f_backslash_name`, `edge-f_spectrum_backslash`; reproduced by `run_input_test.cpp` (P0 parses and their `End`), the `WorkDir` cases of `run_input_test.cpp`, and `run_corpus_test.cpp`.
+- **Fidelity switch:** `fix_file_exists_backslash`; the C++ has no `Fidelity` configuration yet
+- **C++ symbol:** `gef::run::WorkDir::exists` (no conversion) and `WorkDir::read` (converts), `Cpp_implementation/src/run/workdir.cpp`
+- **Owning milestone:** M6
+
 ## 5. Build notes (not GEF quirks)
 
 These describe how the toolchain, not GEF, can make the C++ results differ from the reference binary. They have no fidelity switch.
@@ -586,10 +795,10 @@ These describe how the toolchain, not GEF, can make the C++ results differ from 
 | Q-015 | Isomer row overwrites `R_alpha` | `Branchings.bas:157-158` | confirmed by fbc C | `fix_branch_alpha_isomer` | M4 |
 | Q-016 | 3rd-isomer fallback uses state 2 | `Branchings.bas:430-437` | confirmed by fbc C | `fix_third_isomer_fallback` | M11 |
 | Q-017 | Branch table stops at Ra-234 | `Branchings.bas:225-228` | confirmed by fbc C | `fix_branch_table_full_load` | M4 |
-| Q-018 | `MyParameters.dat` never applied; `Fitpar.dat` reset per system | `GEF.bas:1017, 2555, 3317-3321` | confirmed by fbc C | `fix_parameter_file_overrides` | M15 |
+| Q-018 | `MyParameters.dat` never applied; `Fitpar.dat` reset per system | `GEF.bas:1017, 2555, 3317-3321` | confirmed in output | `fix_parameter_file_overrides` | M15 (reset: M6) |
 | Q-019 | `Var_PZ_S3_olap_curv` is zero | `GEF.bas:2610` | confirmed in output | `fix_pz_s3_olap_curv_width` | M12 |
 | Q-020 | Analyzer registry naming errors | `Spectra.bas:557-577, 1082-1096` | confirmed in output | `fix_analyzer_registry_names` | M4 |
-| Q-021 | `I_MAT_ENDF` persists `ctl/IMATmax.ctl` | `NucProp_Functions.mac:11-63` | confirmed in output | `fix_imat_no_persistent_state` | M4 |
+| Q-021 | `I_MAT_ENDF` persists `ctl/IMATmax.ctl` | `NucProp_Functions.mac:11-63` | confirmed in output | `fix_imat_no_persistent_state` | M4 (in-process state: M6; file on disk: M13/M14) |
 | Q-022 | TXE printed with TKE uncertainty | `GEF.bas:14402-14403` | confirmed in output | `fix_txe_uncertainty` | M13 |
 | Q-023 | "Width" prints variance | `GEF.bas:13753, 13773` | confirmed in output | `fix_width_standard_deviation` | M13 |
 | Q-024 | ENDF `R_Norm` in `Single` | `ENDF.bas:157, 496-502` | confirmed in output | `fix_endf_norm_double` | M13 |
@@ -610,6 +819,25 @@ These describe how the toolchain, not GEF, can make the C++ results differ from 
 | Q-039 | `Array_Eg2_*(100)` written without a bound | `GEF.bas:9353, 9469` | confirmed by fbc C | — | M5 |
 | Q-040 | TRusanov computes a pairing floor and does not use it | `GEF.bas:16100-16107` | confirmed by fbc C | `fix_trusanov_pairing_floor` | M5 |
 | Q-041 | Beta_Equi prints to whatever file number `f` holds | `GEF.bas:16628` | read only (destination) | — | M5, M7/M13 |
+| Q-042 | Mass-table reads past the bounds read the neighbouring table | `GEF.bas:1222-1266` and readers | confirmed in output | `fix_table_overrun` | M6.4 |
+| Q-043 | `E/spin` check reads a stale `Emode` | `GEF.bas:2801` | confirmed in output | `fix_espin_check_channel` | M6 |
+| Q-044 | Two-system line energy ignored | `GEF.bas:3150, 3304, 3449-3497` | confirmed in output | `fix_two_system_energy` | M6 |
+| Q-045 | Single-step channels run `Energy_table(1)`, named by `En_max` | `GEF.bas:3217, 3225, 3412-3422, 3495` | confirmed in output | `fix_single_step_energy` | M6 |
+| Q-046 | Spectrum-file line keeps an earlier energy table | `GEF.bas:2780-2787` and readers | confirmed in output | `fix_spectrum_line_energy_table` | M6 |
+| Q-047 | Spectrum normalised 0/0, and at every step | `GEF.bas:2671, 3682-3689` | confirmed in output | `fix_spectrum_normalisation` | M6 |
+| Q-048 | `done.ctl` key: no channel, `Fenhance` as `Single` | `GEF.bas:3174-3217` | confirmed in output | `fix_done_key` | M6 |
+| Q-049 | Missing isomer restarts the input, possibly for ever | `GEF.bas:3563-3567` | confirmed in output | `fix_missing_isomer_skip` | M6 |
+| Q-050 | Per-file reset keeps most options, clears `FIT`'s `B_Error_On` | `GEF.bas:2829-2842` | confirmed in output | `fix_per_file_option_reset` | M6 |
+| Q-051 | `B_Error_On`/`B_ENDF` carry over between system lines | `GEF.bas:3268-3275, 3459-3490` | confirmed in output | `fix_per_line_error_flags` | M6 |
+| Q-052 | `DPARFAC` effective only from the next round | `GEF.bas:2888-2892, 2575-2620` | confirmed in output | `fix_dparfac_widths` | M6, M16 |
+| Q-053 | `S_par(5000)` filled without a bound | `GEF.bas:3050, 3057, 3087` | confirmed in output | — | M6 |
+| Q-054 | `ES`/`EM` steps read stale `Spin_CN` and `Eabsgs` | `GEF.bas:3698-3843, 3869` | confirmed in output | `fix_spectrum_step_spin_energy` | M6, M9 |
+| Q-055 | No energy limit in batch mode; `Emax_valid` unread | `GEF.bas:894, 3849-3868` | confirmed in output | `fix_batch_energy_limit` | M6 |
+| Q-056 | A second blank-separated item on a sequence file's first line hangs GEF | `GEF.bas:2777, 2843-2844` | confirmed in output | — | M6 |
+| Q-057 | `Options(PLOT)` in batch waits for console input | `GEF.bas:15512, 15522` | confirmed in output | — | M6 |
+| Q-058 | `file.in` without a sequence file waits for a key | `GEF.bas:3130, 15618-15631` | confirmed in output | — | M6 |
+| Q-059 | Empty energy line reads `Energy_Table(1)` past `Redim (0)` | `GEF.bas:2824, 3455, 3462, 3495` | confirmed in output | `fix_empty_energy_line` | M6 |
+| Q-060 | `FileExists` does not convert backslashes, `Open` does | `GEF.bas:2775, 2782, 3094, 3619` | confirmed in output | `fix_file_exists_backslash` | M6 |
 | B-001 | Optimisation level vs fbc `-O0` | (toolchain) | open risk | — | M3, M5 |
 | B-002 | fbc gcc passes `-fwrapv -fno-strict-aliasing` | (toolchain) | resolved for the runtime layer (M3.3) | — | M3 |
 | B-003 | `Compilationstamp` needs `SOURCE_DATE_EPOCH` | `GEF.bas:17` | handled (M1) | — | M1 |

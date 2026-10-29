@@ -1,0 +1,480 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2026 Aurora Jahan
+# Licensed under the GNU GPL v3 or later, WITHOUT ANY WARRANTY; see LICENSE.txt.
+# M6 edge inputs (MILESTONE_6_PLAN.md M6.0), written by hand. Schema: harness/corpus.py.
+
+[[entry]]
+id = "edge-e_dup1"
+group = "edge"
+input = "harness/inputs/m6/edge/e_dup1.in"
+tree = "harness/inputs/m6/edge"
+note = "repeated system in one file"
+
+[[entry]]
+id = "edge-e_dup2"
+group = "edge"
+input = "harness/inputs/m6/edge/e_dup2.in"
+tree = "harness/inputs/m6/edge"
+note = "same CN with another channel (done.ctl ignores the channel)"
+
+[[entry]]
+id = "edge-e_dup3"
+group = "edge"
+input = "harness/inputs/m6/edge/e_dup3.in"
+tree = "harness/inputs/m6/edge"
+note = "Fenhance 0.1: repeats are not recognised"
+
+[[entry]]
+id = "edge-e_ea"
+group = "edge"
+input = "harness/inputs/m6/edge/e_ea.in"
+tree = "harness/inputs/m6/edge"
+note = "EA alpha-induced"
+
+[[entry]]
+id = "edge-e_eb"
+group = "edge"
+input = "harness/inputs/m6/edge/e_eb.in"
+tree = "harness/inputs/m6/edge"
+note = "EB with E/spin list"
+
+[[entry]]
+id = "edge-e_em"
+group = "edge"
+input = "harness/inputs/m6/edge/e_em.in"
+tree = "harness/inputs/m6/edge"
+note = "EM with a 3-column spectrum file"
+
+[[entry]]
+id = "edge-e_en1"
+group = "edge"
+input = "harness/inputs/m6/edge/e_en1.in"
+tree = "harness/inputs/m6/edge"
+note = "EN1: target isomer Am-242m1"
+
+[[entry]]
+id = "edge-e_ep"
+group = "edge"
+input = "harness/inputs/m6/edge/e_ep.in"
+tree = "harness/inputs/m6/edge"
+note = "EP proton-induced"
+
+[[entry]]
+id = "edge-e_es"
+group = "edge"
+input = "harness/inputs/m6/edge/e_es.in"
+tree = "harness/inputs/m6/edge"
+note = "ES with a 2-column spectrum file"
+
+[[entry]]
+id = "edge-e_fc"
+group = "edge"
+input = "harness/inputs/m6/edge/e_fc.in"
+tree = "harness/inputs/m6/edge"
+note = "FC with two energies: one step at Energy_table(1)"
+
+[[entry]]
+id = "edge-e_fen0"
+group = "edge"
+input = "harness/inputs/m6/edge/e_fen0.in"
+tree = "harness/inputs/m6/edge"
+note = "Fenhance 0 (set to 1 at GEF.bas:3922)"
+
+[[entry]]
+id = "edge-e_gs"
+group = "edge"
+input = "harness/inputs/m6/edge/e_gs.in"
+tree = "harness/inputs/m6/edge"
+note = "GS at 0 (sf, ground-state spin) and 5 MeV with spin"
+
+[[entry]]
+id = "edge-e_high_energy"
+group = "edge"
+input = "harness/inputs/m6/edge/e_high_energy.in"
+tree = "harness/inputs/m6/edge"
+note = "EN at 150 MeV and GS at 150 MeV (no limit in batch mode)"
+
+[[entry]]
+id = "edge-e_is"
+group = "edge"
+input = "harness/inputs/m6/edge/e_is.in"
+tree = "harness/inputs/m6/edge"
+note = "IS1: spontaneous fission from isomer 1 of Am-242, one step"
+
+[[entry]]
+id = "edge-e_lines"
+group = "edge"
+input = "harness/inputs/m6/edge/e_lines.in"
+tree = "harness/inputs/m6/edge"
+note = "A ranges with and without step, 6-field line with energy, 4-field line, blank lines"
+
+[[entry]]
+id = "edge-e_lines_spectrum"
+group = "edge"
+input = "harness/inputs/m6/edge/e_lines_spectrum.in"
+tree = "harness/inputs/m6/edge"
+note = "6-field line with a spectrum file for the second system"
+
+[[entry]]
+id = "edge-e_missing_nuclide"
+group = "edge"
+input = "harness/inputs/m6/edge/e_missing_nuclide.in"
+tree = "harness/inputs/m6/edge"
+note = "EN on a target missing from NucTab (IMATmax.ctl assignment), then EN1 on another missing target (second assignment, missing isomer, restart)"
+
+[[entry]]
+id = "edge-e_options"
+group = "edge"
+input = "harness/inputs/m6/edge/e_options.in"
+tree = "harness/inputs/m6/edge"
+note = "every Options keyword, an unknown one, MODE(S2), MODE(9), MODE(s1); MyParameters.dat absent"
+
+[[entry]]
+id = "edge-e_options_local"
+group = "edge"
+input = "harness/inputs/m6/edge/e_options_local.in"
+tree = "harness/inputs/m6/edge"
+note = "LOCAL, LMD, MODE(3)"
+
+[[entry]]
+id = "edge-e_restart"
+group = "edge"
+input = "harness/inputs/m6/edge/e_restart.in"
+tree = "harness/inputs/m6/edge"
+note = "missing isomer (EN9): restart through RepeatInput"
+
+[[entry]]
+id = "edge-e_sched_endf1"
+group = "edge"
+input = "harness/inputs/m6/edge/e_sched_endf1.in"
+tree = "harness/inputs/m6/edge"
+note = "ENDF with one energy"
+
+[[entry]]
+id = "edge-e_sched_es_endf"
+group = "edge"
+input = "harness/inputs/m6/edge/e_sched_es_endf.in"
+tree = "harness/inputs/m6/edge"
+note = "ES line in an ENDF file clears B_ENDF for the next line"
+
+[[entry]]
+id = "edge-e_sched_k"
+group = "edge"
+input = "harness/inputs/m6/edge/e_sched_k.in"
+tree = "harness/inputs/m6/edge"
+note = "k: prefix, ENDF, COV, COR"
+
+[[entry]]
+id = "edge-e_sched_mixed"
+group = "edge"
+input = "harness/inputs/m6/edge/e_sched_mixed.in"
+tree = "harness/inputs/m6/edge"
+note = "ENDF file: EN (N+3 schedule), GS (B_Error_On carried), EN"
+
+[[entry]]
+id = "edge-e_sched_random1"
+group = "edge"
+input = "harness/inputs/m6/edge/e_sched_random1.in"
+tree = "harness/inputs/m6/edge"
+note = "RANDOM with one energy (two steps)"
+
+[[entry]]
+id = "edge-e_skips"
+group = "edge"
+input = "harness/inputs/m6/edge/e_skips.in"
+tree = "harness/inputs/m6/edge"
+note = "U_Valid failure, unbound second system of a 6-field line (Goto Next_Iline_label), U_Valid rejects an unbound first system, CN missing from NucTab, done.ctl repeat"
+
+[[entry]]
+id = "edge-e_sticky1"
+group = "edge"
+input = "harness/inputs/m6/edge/e_sticky1.in"
+tree = "harness/inputs/m6/edge"
+prepend = ["NITER(1)"]
+note = "NEO, DPARFAC(2), LMD, FIT(APOST), MODE(S1)"
+
+[[entry]]
+id = "edge-e_sticky2"
+group = "edge"
+input = "harness/inputs/m6/edge/e_sticky2.in"
+tree = "harness/inputs/m6/edge"
+note = "plain EN after e_sticky1"
+
+[[entry]]
+id = "edge-e_threshold"
+group = "edge"
+input = "harness/inputs/m6/edge/e_threshold.in"
+tree = "harness/inputs/m6/edge"
+note = "GS at the multi-chance threshold and one Single ULP on each side"
+
+[[entry]]
+id = "edge-f_alpha_low"
+group = "edge"
+input = "harness/inputs/m6/edge/f_alpha_low.in"
+tree = "harness/inputs/m6/edge"
+note = "EA below the barrier: GEF ends"
+
+[[entry]]
+id = "edge-f_eabsgs_negative"
+group = "edge"
+input = "harness/inputs/m6/edge/f_eabsgs_negative.in"
+tree = "harness/inputs/m6/edge"
+note = "GS at -1 MeV: GEF ends"
+
+[[entry]]
+id = "edge-f_espin_after_en"
+group = "edge"
+input = "harness/inputs/m6/edge/f_espin_after_en.in"
+tree = "harness/inputs/m6/edge"
+note = "E/spin with EB (first file, Emode 1: accepted)"
+
+[[entry]]
+id = "edge-f_invalid_channel"
+group = "edge"
+input = "harness/inputs/m6/edge/f_invalid_channel.in"
+tree = "harness/inputs/m6/edge"
+note = "invalid channel XX: GEF ends"
+
+[[entry]]
+id = "edge-f_nonascending"
+group = "edge"
+input = "harness/inputs/m6/edge/f_nonascending.in"
+tree = "harness/inputs/m6/edge"
+note = "energies not ascending: GEF ends"
+
+[[entry]]
+id = "edge-f_second_system_outside_table"
+group = "edge"
+input = "harness/inputs/m6/edge/f_second_system_outside_table.in"
+tree = "harness/inputs/m6/edge"
+note = "second system beyond the mass tables: AME2020 0, Eabsgs < 0, GEF ends"
+
+[[entry]]
+id = "edge-f_spectrum_channel"
+group = "edge"
+input = "harness/inputs/m6/edge/f_spectrum_channel.in"
+tree = "harness/inputs/m6/edge"
+note = "spectrum file with an EN line: GEF ends"
+
+[[entry]]
+id = "edge-f_spectrum_missing"
+group = "edge"
+input = "harness/inputs/m6/edge/f_spectrum_missing.in"
+tree = "harness/inputs/m6/edge"
+note = "missing spectrum file: GEF ends"
+
+[[entry]]
+id = "edge-f_two_system_energies"
+group = "edge"
+input = "harness/inputs/m6/edge/f_two_system_energies.in"
+tree = "harness/inputs/m6/edge"
+note = "6-field line with two energies: GEF ends"
+
+[[entry]]
+id = "edge-e_options-myparameters"
+group = "edge"
+input = "harness/inputs/m6/edge/e_options.in"
+tree = "harness/inputs/m6/edge"
+work_files = [{ src = "harness/inputs/m6/edge/MyParameters.dat", dest = "MyParameters.dat" }]
+note = "e_options with MyParameters.dat present"
+
+[[entry]]
+id = "edge-l_channels"
+group = "edge"
+input = "harness/inputs/m6/lists/l_channels.in"
+tree = "harness/inputs/m6/edge"
+file_in = "harness/inputs/m6/lists/l_channels.in"
+note = "every channel in one run: settings carried from file to file"
+
+[[entry]]
+id = "edge-l_dedupe"
+group = "edge"
+input = "harness/inputs/m6/lists/l_dedupe.in"
+tree = "harness/inputs/m6/edge"
+file_in = "harness/inputs/m6/lists/l_dedupe.in"
+note = "done.ctl across files"
+
+[[entry]]
+id = "edge-l_espin_stale"
+group = "edge"
+input = "harness/inputs/m6/lists/l_espin_stale.in"
+tree = "harness/inputs/m6/edge"
+file_in = "harness/inputs/m6/lists/l_espin_stale.in"
+note = "E/spin check reads the Emode of the previous file (EN): GEF ends"
+
+[[entry]]
+id = "edge-l_options_reset"
+group = "edge"
+input = "harness/inputs/m6/lists/l_options_reset.in"
+tree = "harness/inputs/m6/edge"
+file_in = "harness/inputs/m6/lists/l_options_reset.in"
+note = "per-file reset after every option"
+
+[[entry]]
+id = "edge-l_spectrum_stale"
+group = "edge"
+input = "harness/inputs/m6/lists/l_spectrum_stale.in"
+tree = "harness/inputs/m6/edge"
+file_in = "harness/inputs/m6/lists/l_spectrum_stale.in"
+note = "energy table left over after spectrum-file lines"
+
+[[entry]]
+id = "edge-l_sticky"
+group = "edge"
+input = "harness/inputs/m6/lists/l_sticky.in"
+tree = "harness/inputs/m6/edge"
+file_in = "harness/inputs/m6/lists/l_sticky.in"
+note = "settings that survive the per-file reset (fit mode, NITER(1) in file.in)"
+
+[[entry]]
+id = "edge-e_two_system"
+group = "edge"
+input = "harness/inputs/m6/edge/e_two_system.in"
+tree = "harness/inputs/m6/edge"
+note = "two-system covariance line (both systems computed; full run F2)"
+
+[[entry]]
+id = "edge-l_spectra"
+group = "edge"
+input = "harness/inputs/m6/lists/l_spectra.in"
+tree = "harness/inputs/m6/edge"
+file_in = "harness/inputs/m6/lists/l_spectra.in"
+note = "ES then EM in one run (full run F1: Spin_CN from the previous bin)"
+
+[[entry]]
+id = "edge-e_energy_empty"
+group = "edge"
+input = "harness/inputs/m6/edge/e_energy_empty.in"
+tree = "harness/inputs/m6/edge"
+note = "empty energy line: N_E_values 0, GEF.bas:2824 reads Energy_Table(1) beyond its bounds (M6.1 review)"
+
+[[entry]]
+id = "edge-e_energy_k_empty"
+group = "edge"
+input = "harness/inputs/m6/edge/e_energy_k_empty.in"
+tree = "harness/inputs/m6/edge"
+note = "energy line `3:` with no energy: I_first_E_step 3, N_E_values 0 (M6.1 review)"
+
+[[entry]]
+id = "edge-h_energy_line_lost"
+group = "edge"
+input = "harness/inputs/m6/edge/h_energy_line_lost.in"
+tree = "harness/inputs/m6/edge"
+timeout_s = 20
+note = "comment as the first line: Input # leaves a put-back byte, the energy line reads as empty, EOF never comes (M6.1 review)"
+
+[[entry]]
+id = "edge-f_spectrum_backslash"
+group = "edge"
+input = "harness/inputs/m6/edge/f_spectrum_backslash.in"
+tree = "harness/inputs/m6/edge"
+note = "spectrum file named with a backslash: FileExists does not convert it (M6.1 review)"
+
+[[entry]]
+id = "edge-f_backslash_name"
+group = "edge"
+input = "harness/inputs/m6/lists/f_backslash_name.in"
+tree = "harness/inputs/m6/edge"
+file_in = "harness/inputs/m6/lists/f_backslash_name.in"
+note = "sequence file named with a backslash in file.in: FileExists does not convert it (M6.1 review)"
+
+[[entry]]
+id = "edge-l_empty"
+group = "edge"
+input = "harness/inputs/m6/lists/l_empty.in"
+tree = "harness/inputs/m6/edge"
+file_in = "harness/inputs/m6/lists/l_empty.in"
+timeout_s = 20
+note = "file.in names no sequence file: Bfilein = 0, GEF waits for a key at GEF.bas:15621 (M6.2)"
+
+[[entry]]
+id = "edge-l_fit_only"
+group = "edge"
+input = "harness/inputs/m6/lists/l_fit_only.in"
+tree = "harness/inputs/m6/edge"
+file_in = "harness/inputs/m6/lists/l_fit_only.in"
+timeout_s = 20
+note = "FIT and NITER(1) but no sequence file: past the fit end, the key wait of GEF.bas:15621 (M6.2)"
+
+[[entry]]
+id = "edge-e_plot"
+group = "edge"
+input = "harness/inputs/m6/edge/e_plot.in"
+tree = "harness/inputs/m6/edge"
+timeout_s = 60
+note = "Options(PLOT): a full run waits in Input at GEF.bas:15512 after the nominal pass (M6.2)"
+
+[[entry]]
+id = "edge-e_plot_err"
+group = "edge"
+input = "harness/inputs/m6/edge/e_plot_err.in"
+tree = "harness/inputs/m6/edge"
+timeout_s = 60
+note = "Options(PLOT, ERR): a full run waits in Input at GEF.bas:15522 after its first pass (M6.2)"
+
+[[entry]]
+id = "edge-e_pass_fen10"
+group = "edge"
+input = "harness/inputs/m6/edge/e_pass_fen10.in"
+tree = "harness/inputs/m6/edge"
+timeout_s = 900
+note = "pass schedule at Fenhance 10 with ERR: 31 perturbed passes and the nominal one (M6.2 full run)"
+
+[[entry]]
+id = "edge-e_pass_fen01"
+group = "edge"
+input = "harness/inputs/m6/edge/e_pass_fen01.in"
+tree = "harness/inputs/m6/edge"
+note = "pass schedule at Fenhance 0.1 with ERR: 3 perturbed passes, the warning before the nominal one (M6.2 full run)"
+
+[[entry]]
+id = "edge-e_pass_fen01_nominal"
+group = "edge"
+input = "harness/inputs/m6/edge/e_pass_fen01_nominal.in"
+tree = "harness/inputs/m6/edge"
+note = "Fenhance 0.1 without ERR: the warning of GEF.bas:5055-5058 (M6.2 full run)"
+
+[[entry]]
+id = "edge-e_is_energy_empty"
+group = "edge"
+input = "harness/inputs/m6/edge/e_is_energy_empty.in"
+tree = "harness/inputs/m6/edge"
+note = "IS line after an empty energy line: GEF.bas:3455-3456 read Energy_Table(1) and Spin_Table(1) past Redim (0) (M6.2 review)"
+
+[[entry]]
+id = "edge-e_fc_energy_empty"
+group = "edge"
+input = "harness/inputs/m6/edge/e_fc_energy_empty.in"
+tree = "harness/inputs/m6/edge"
+note = "FC line after an empty energy line: GEF.bas:3495 reads Energy_Table(1) past Redim (0) (M6.2 review)"
+
+[[entry]]
+id = "edge-e_endf_energy_empty"
+group = "edge"
+input = "harness/inputs/m6/edge/e_endf_energy_empty.in"
+tree = "harness/inputs/m6/edge"
+note = "ENDF EN line after an empty energy line: N_E_steps 1, GEF.bas:3462 reads Energy_Table(1) past Redim (0) (M6.2 review)"
+
+[[entry]]
+id = "edge-l_restart_stale"
+group = "edge"
+input = "harness/inputs/m6/lists/l_restart_stale.in"
+tree = "harness/inputs/m6/edge"
+file_in = "harness/inputs/m6/lists/l_restart_stale.in"
+note = "restarts whose rounds start from different stale En_max and Emode: two equal rounds, then GEF ends in the third (M6.2 review)"
+
+[[entry]]
+id = "edge-l_restart_emode"
+group = "edge"
+input = "harness/inputs/m6/lists/l_restart_emode.in"
+tree = "harness/inputs/m6/edge"
+file_in = "harness/inputs/m6/lists/l_restart_emode.in"
+note = "five restart rounds; rounds 4 and 5 start from the same done.ctl records and differ only in the stale Emode, which ends GEF at the E/spin check (M6.2 review)"
+
+[[entry]]
+id = "edge-l_restart_fit_stale"
+group = "edge"
+input = "harness/inputs/m6/lists/l_restart_fit_stale.in"
+tree = "harness/inputs/m6/edge"
+file_in = "harness/inputs/m6/lists/l_restart_fit_stale.in"
+note = "fit mode: the restart leaves Emode 2, so round 2 ends at the E/spin check of the first file (M6.2 review)"

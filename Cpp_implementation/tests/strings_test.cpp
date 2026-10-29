@@ -3,8 +3,9 @@
 // Licensed under the GNU GPL v3 or later, WITHOUT ANY WARRANTY; see LICENSE.txt.
 
 // Tests for the FreeBASIC string runtime (fbrt/strings.hpp): fb_TRIM, fb_StrUcase2, fb_StrInstr
-// and fb_StrMid, against the FreeBASIC driver golden m4-line-input (strings.txt). The formats
-// of the golden lines are defined by harness/drivers/line_input.bas.
+// and fb_StrMid, against the FreeBASIC driver golden m4-line-input (strings.txt), and fb_TrimEx,
+// fb_RTRIM, fb_LEFT and fb_RIGHT against the golden m6-strings (strings.txt). The formats of the
+// golden lines are defined by harness/drivers/line_input.bas and harness/drivers/m6_strings.bas.
 
 #include "fbrt/strings.hpp"
 #include "support/golden.hpp"
@@ -12,7 +13,6 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include <cstddef>
-#include <cstdint>
 #include <sstream>
 #include <string>
 #include <string_view>
@@ -21,7 +21,10 @@
 namespace {
 
 using gef::fb::instr;
+using gef::fb::left;
 using gef::fb::mid;
+using gef::fb::right;
+using gef::fb::rtrim;
 using gef::fb::trim;
 using gef::fb::ucase;
 using gef::test::golden_file;
@@ -99,6 +102,32 @@ TEST_CASE("TRIM, UCASE, InStr and Mid reproduce fbc 1.10.1 output", "[fbrt]") {
             REQUIRE(f.size() == 5);
             CHECK(hex_of(mid(bytes_of(f.at(1)), std::stoll(f.at(2)), std::stoll(f.at(3)))) ==
                   f.at(4));
+        } else {
+            FAIL("unknown golden line kind: " << kind);
+        }
+    }
+}
+
+TEST_CASE("TRIM with a pattern, RTrim, Left and Right reproduce fbc 1.10.1 output", "[fbrt]") {
+    auto const lines = read_lines(golden_file("m6-strings", "strings.txt"));
+    REQUIRE(!lines.empty());
+    for (auto const& line : lines) {
+        INFO(line);
+        auto const f = fields(line);
+        REQUIRE(!f.empty());
+        std::string const& kind = f.at(0);
+        if (kind == "TRIMEX") {
+            REQUIRE(f.size() == 4);
+            CHECK(hex_of(trim(bytes_of(f.at(1)), bytes_of(f.at(2)))) == f.at(3));
+        } else if (kind == "RTRIM") {
+            REQUIRE(f.size() == 3);
+            CHECK(hex_of(rtrim(bytes_of(f.at(1)))) == f.at(2));
+        } else if (kind == "LEFT") {
+            REQUIRE(f.size() == 4);
+            CHECK(hex_of(left(bytes_of(f.at(1)), std::stoll(f.at(2)))) == f.at(3));
+        } else if (kind == "RIGHT") {
+            REQUIRE(f.size() == 4);
+            CHECK(hex_of(right(bytes_of(f.at(1)), std::stoll(f.at(2)))) == f.at(3));
         } else {
             FAIL("unknown golden line kind: " << kind);
         }

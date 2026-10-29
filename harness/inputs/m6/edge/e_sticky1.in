@@ -1,0 +1,6 @@
+ 1
+0.0253E-6
+Options(NEO, DPARFAC(2), LMD)
+FIT(APOST)
+MODE(S1)
+ 92, 236, "EN"

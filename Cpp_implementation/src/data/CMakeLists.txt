@@ -18,6 +18,7 @@ add_library(gef_data STATIC
     lookups.cpp
     nuclide_tables.cpp
     program_data.cpp
+    table_memory.cpp
     tables.cpp)
 target_include_directories(gef_data PUBLIC "${PROJECT_SOURCE_DIR}/Cpp_implementation/src")
 target_link_libraries(gef_data PUBLIC gef_fbrt)

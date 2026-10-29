@@ -21,7 +21,8 @@
 
 namespace gef::params {
 
-// Thrown where the BASIC program never returns (an endless loop, QUIRK(Q-035)).
+// Thrown where the BASIC program never returns: an endless loop such as the `/'` comment in
+// ReadParameters.mac (QUIRK(Q-035)) or a sequence file's `Do Until EOF` (run/input_files.cpp).
 class GefHangs : public std::runtime_error {
 public:
     using std::runtime_error::runtime_error;

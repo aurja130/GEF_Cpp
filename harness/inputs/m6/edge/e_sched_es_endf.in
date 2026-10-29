@@ -1,0 +1,5 @@
+ 1
+"in/e_spectrum2.dat"
+Options(ENDF)
+ 92, 236, "ES"
+ 94, 240, "EM"

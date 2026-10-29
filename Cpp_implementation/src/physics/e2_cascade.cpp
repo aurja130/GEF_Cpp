@@ -8,6 +8,7 @@
 // with the heavy variables (checked by normalising the emitted C of both ranges; the only
 // difference is the Dim of E_E2_tot at GEF.bas:9310, which the heavy copy reuses).
 
+#include "data/table_memory.hpp"
 #include "fbrt/convert.hpp"
 #include "fbrt/gef_math.hpp"
 #include "fbrt/strings.hpp"
@@ -27,7 +28,9 @@ E2Cascade e2_cascade(data::TableSet const& tables, std::int64_t i_z_sci, std::in
     E2Cascade out;
     // GEF.bas:9312-9315: moment of inertia with the deformation factor of Hasse & Myers.
     out.ifrag_eff = u_iredff(static_cast<float>(i_z_sci), static_cast<float>(i_a_post));
-    out.beta1 = tables.defo_tab(i_a_post - i_z_sci, i_z_sci);
+    // QUIRK(Q-042): reads outside the table return the memory next to it (data/table_memory).
+    out.beta1 =
+        data::read_mass_table(tables, data::MassTable::DefoTab, i_a_post - i_z_sci, i_z_sci);
     // alph = beta1 / Sqr(4 pi / 5), the divisor folded to the Double 0x1.95D834874E488p+0.
     out.alph = static_cast<float>(static_cast<double>(out.beta1) / 0x1.95D834874E488p+0);
     out.ifrag_eff =

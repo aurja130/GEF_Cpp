@@ -1,0 +1,19 @@
+{
+  "binary_sha256": "7be42254a053197085546acdb2564ac084e5e17b032c70a44ba38ce042976bf8",
+  "command": [
+    "m6_console"
+  ],
+  "cuts": [],
+  "driver": "m6_console",
+  "driver_includes": [],
+  "driver_sha256": "8327b7abf096722df873d9836e1444a2daf069d109f0298fddec71f3881e410d",
+  "fbc_version": "1.10.1",
+  "includes": [],
+  "outputs": {
+    "console_file.txt": "b8287bc14fae208a9b4d5acd315b7be88a395a09878d24673fb4131fce0f5f66",
+    "stdout.txt": "0ed2a9ac06df5a55a90495c00b2aa4942bc4d6b4093bb88969e2d90a04c9f195"
+  },
+  "returncode": 0,
+  "run_wall_time_s": 0.001,
+  "work_files": []
+}

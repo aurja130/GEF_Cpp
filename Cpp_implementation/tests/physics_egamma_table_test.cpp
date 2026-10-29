@@ -171,9 +171,12 @@ TEST_CASE("physics: P_Egamma_low table replays the captured GEF calls", "[T1][ph
     }
 }
 
-TEST_CASE("physics: P_Egamma_low table reads outside the tables throw", "[T1][physics]") {
-    data::TableSet const tables = data::load_tables(data::ProgramData(data::NuclideData::Jeff33));
-    // DEFOtab is (N 0..236) x (Z 0..136); U_Temp reads ShellMO, (N 0..203) x (Z 0..136).
+TEST_CASE("physics: with fix_table_overrun P_Egamma_low table reads outside the tables throw",
+          "[T1][physics]") {
+    data::TableSet tables = data::load_tables(data::ProgramData(data::NuclideData::Jeff33));
+    tables.fix_table_overrun = true;
+    // DEFOtab is (N 0..236) x (Z 0..136); U_Temp reads ShellMO, (N 0..203) x (Z 0..136). With the
+    // fix of QUIRK(Q-042) reads outside them throw.
     REQUIRE_THROWS_AS(physics::p_egamma_low_table(tables, 137.0F, 250.0F, 5.0F, 1.0F, 2.0F, 9.5F),
                       std::out_of_range);
     REQUIRE_THROWS_AS(physics::p_egamma_low_table(tables, 50.0F, 254.0F, 5.0F, 1.0F, 2.0F, 9.5F),

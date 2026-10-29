@@ -1,0 +1,18 @@
+abc
+Fission barrier of CN (Z = 86, A = 215):
+CN: Z = 86, A = 215, E =  2.53e-08 MeV 
+ 1.5-2.25 0 2.53e-08 4.920654
+ 0.1-1e+300 100000
+ 86-7 215
+Z, A, #iso     86            215          -7.
+ 1.5          -2.25          0.1           86           abc
+exactly14chars              abc
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 86 2.53e-08
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx   abc           abc           abc           abc
+exactly14chars              exactly14chars              exactly14chars              exactly14chars              exactly14chars              exactly14chars              exactly14chars              abc
+abc           -7
+
+Possible options are: local, global, err, dparfac(..), ptb, cov, cor, lmd, neo, ENDF, random.
+

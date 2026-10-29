@@ -11,7 +11,7 @@ Known defects of the original are reproduced by default and documented in a quir
 
 ## Status
 
-**Milestones 0–5 are complete; Milestone 6 (input parsing, run planning and system/step setup) is planned.** The repository has:
+**Milestones 0–5 are complete; Milestone 6 (input parsing, run planning and system/step setup) is in progress: its BASIC oracle (M6.0) is done.** The repository has:
 - its build, test, lint and CI infrastructure, and tooling to inspect the BASIC source;
 - a reference harness that turns the original BASIC program into a repeatable, observable test oracle;
 - a comparison toolkit that parses every output file and compares runs field by field, or statistically against seeded ensembles;
@@ -30,7 +30,7 @@ No complete GEF calculation runs in C++ yet. The next milestones add the run con
 | Comparison toolkit | Lossless parsers for every GEF output; exact field-level comparison; calibrated statistical verdicts with false-alarm control |
 | Toolchain and data pinning | Toolchain check with fbc 1.10.1 pin; SHA-256 manifests for the validation data and the reference store |
 | Quirk register | 41 known BASIC quirks with their evidence; each is reproduced by the milestone that ports its code (`Planning/QUIRKS.md`) |
-| Plans | 19 milestones (M0–M18); plans and completion notes for M0–M5, plan for M6; see `Planning/` |
+| Plans | 19 milestones (M0–M18); plans and completion notes for M0–M5, plan and M6.0 notes for M6; see `Planning/` |
 
 ## Repository layout
 

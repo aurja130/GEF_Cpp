@@ -5,29 +5,45 @@
 +#Include "harness_probe_t0.bi"
 +#line 1570
  
-@@ -3881,2 +3883,4 @@
+@@ -3128,2 +3130,4 @@
+       Fenhance = Fenhance_global
++#Include "harness_probe_p0.bi"
++#line 3128
+     Else
+@@ -3881,2 +3885,4 @@
      
 +#Include "harness_probe_p1.bi"
 +#line 3881
        /'  *** Erase spectra of gammas and nucleons from CN here *** '/
-@@ -4800,2 +4804,4 @@
+@@ -3947,2 +3953,4 @@
+           Bmulti = 0
++#Include "harness_probe_p1b_skip.bi"
++#line 3947
+           If (EMode Mod 10 < 3 And EMode >= 0) Or Emode = 13 Then
+@@ -3966,2 +3974,4 @@
+             End If  
++#Include "harness_probe_p1b.bi"
++#line 3966
+             IF Eabsgs >= Eexc_min_multi Or Emode = 13 Then  
+@@ -4800,2 +4810,4 @@
            End If  ' If Emode < 3 etc.   
 +#Include "harness_probe_p2.bi"
 +#line 4800
      
-@@ -7920,2 +7926,4 @@
+@@ -7920,2 +7932,4 @@
                      Racc = 100.E0 / NEVTtot * P_selected  ' Normalization of spectra  
 +#Include "harness_probe_p3.bi"
 +#line 7920
       
 --- /dev/null
 +++ b/harness_probes.bi
-@@ -0,0 +1,336 @@
+@@ -0,0 +1,346 @@
 +' SPDX-License-Identifier: GPL-3.0-or-later
 +' Copyright (C) 2026 Aurora Jahan
 +' Licensed under the GNU GPL v3 or later, WITHOUT ANY WARRANTY; see LICENSE.txt.
 +' Harness patch "probes" (define GEF_PROBES): shared writer procedures and dump macros.
-+' The probe points (harness_probe_t0.bi, _p1.bi, _p2.bi, _p3.bi) include this file once.
++' The probe points (harness_probe_t0.bi, _p0.bi, _p1.bi, _p1b.bi, _p1b_skip.bi, _p2.bi, _p3.bi)
++' include this file once.
 +' Everything here only READS GEF variables: no ReDim, no random draw, no change of any
 +' value or of control flow. The format is specified in harness/PROBES.md.
 +'
@@ -44,7 +60,8 @@
 +
 +Dim Shared As Long HP_File = 0
 +Dim Shared As String HP_Prefix
-+Dim Shared As Long HP_Count(0 To 3)
++' Invocation counters: 0 T0, 1 P1, 2 P2, 3 P3, 4 P0, 5 P1b.
++Dim Shared As Long HP_Count(0 To 5)
 +
 +Function HP_Esc(ByRef Cin As String) As String
 +  Dim As String Cout = """"
@@ -88,6 +105,11 @@
 +
 +Function HP_Nz Overload (ByVal x As ULongInt) As Long
 +  Return x <> 0
++End Function
++
++' A string counts as zero when it is empty (sparse string arrays omit empty elements).
++Function HP_Nz Overload (ByRef x As String) As Long
++  Return Len(x) <> 0
 +End Function
 +
 +Sub HP_Begin(ByVal Iprobe As Long, ByRef Cid As String, ByRef Cstep As String, ByRef Cpass As String, ByRef Cbin As String)
@@ -228,6 +250,9 @@
 +
 +' Scalar.
 +#define HP_V(a) HP_Val(#a, "-", a)
++
++' Scalar under an explicit NAME (a value the harness derives with GEF's own expression).
++#define HP_VN(n, x) HP_Val(n, "-", x)
 +
 +' Array, dense (every element over the current bounds) or sparse (only elements whose
 +' bit pattern is non-zero; the bounds record says "BS"). Rank 1 to 4.
@@ -834,6 +859,84 @@
 +
 +#endif ' GEF_PROBES
 --- /dev/null
++++ b/harness_probe_p0.bi
+@@ -0,0 +1,75 @@
++' SPDX-License-Identifier: GPL-3.0-or-later
++' Copyright (C) 2026 Aurora Jahan
++' Licensed under the GNU GPL v3 or later, WITHOUT ANY WARRANTY; see LICENSE.txt.
++' Harness patch "probes", probe P0: one sequence file as GEF parsed it (after GEF.bas:3128,
++' `Fenhance = Fenhance_global`). Written for every file, independent of GEF_TRACE_STEPS.
++' List: harness/PROBES.md. Needs harness_probe_t0.bi (included earlier) for the writer procedures.
++
++#ifdef GEF_PROBES
++HP_Begin(4, "P0", "-", "-", "-")
++' --- file list (file.in)
++HP_V(Nfilein)
++HP_S1(Cfilein)
++HP_V(Ifilein)
++' --- statistics and energy line
++HP_V(Fenhance_global)
++HP_V(Fenhance)
++HP_V(C_Energy_Table)
++HP_V(I_first_E_step)
++HP_V(N_E_values)
++HP_A1(Energy_Table)
++HP_A1(Spin_Table)
++HP_V(En_min)
++HP_V(En_max)
++HP_V(C_Espectrum1)
++HP_V(C_Espectrum2)
++' --- system lines
++HP_V(Iline_tot)
++HP_F1(S_par, Z, 1, Iline_tot)
++HP_F1(S_par, A, 1, Iline_tot)
++HP_F1(S_par, Z_double, 1, Iline_tot)
++HP_F1(S_par, A_double, 1, Iline_tot)
++HP_F1(S_par, E_double, 1, Iline_tot)
++HP_F1(S_par, CE, 1, Iline_tot)
++' --- options reset for every file (GEF.bas:2827-2842)
++HP_V(B_Error_On)
++HP_V(Brec)
++HP_V(Bcov)
++HP_V(Bcor)
++HP_V(B_supp)
++HP_V(B_ENDF)
++HP_V(B_Random_on)
++HP_V(Cfileoutlmd)
++HP_V(Cfileoutlmd_full)
++HP_V(Clocal_file_option)
++HP_V(I_Mode_selected)
++' --- settings the per-file reset does not cover
++HP_V(B_Fit)
++HP_V(N_iter)
++HP_V(C_Fitoption)
++HP_V(Bplot)
++HP_V(B_MyParameters)
++HP_V(D_Par_Fac)
++HP_V(EOscale)
++HP_V(Emode)
++HP_V(PZ1)
++HP_V(PZ2)
++HP_V(PA1pre)
++HP_V(PA2pre)
++HP_V(PA1post)
++HP_V(PA2post)
++HP_V(PI1)
++HP_V(PI2)
++HP_V(Pn1)
++HP_V(Pn2)
++HP_V(PTKEpre)
++HP_V(PTKEpost)
++HP_V(PnCN)
++HP_V(PEnpost)
++HP_V(PEgpost)
++HP_V(Pdir)
++HP_V(PXE)
++HP_V(PXEdetails)
++HP_V(Pndel)
++HP_End()
++#endif ' GEF_PROBES
+--- /dev/null
 +++ b/harness_probe_p1.bi
 @@ -0,0 +1,225 @@
 +' SPDX-License-Identifier: GPL-3.0-or-later
@@ -1059,6 +1162,59 @@
 +  HP_V(Var_POLARadd)
 +  HP_V(Var_Jscaling)
 +  HP_End()
++End If
++#endif ' GEF_PROBES
+--- /dev/null
++++ b/harness_probe_p1b.bi
+@@ -0,0 +1,23 @@
++' SPDX-License-Identifier: GPL-3.0-or-later
++' Copyright (C) 2026 Aurora Jahan
++' Licensed under the GNU GPL v3 or later, WITHOUT ANY WARRANTY; see LICENSE.txt.
++' Harness patch "probes", probe P1b: the multi-chance threshold and the pre-pass decision, for
++' the entrance channels inside `If (EMode Mod 10 < 3 And EMode >= 0) Or Emode = 13` (GEF.bas:3948),
++' between the threshold (3949-3966) and the decision (3967). harness_probe_p1b_skip.bi writes P1b
++' for the other channels. Written for energy steps selected by GEF_TRACE_STEPS. List:
++' harness/PROBES.md. With GEF_SETUP_ONLY defined, `Continue For` ends the energy step here.
++
++#ifdef GEF_PROBES
++If Harness_StepSelected() Then
++  HP_Begin(5, "P1b", Trim(Str(Harness_Step)), "-", "-")
++  ' --- pre-pass decision
++  HP_VN("Harness_Prepass", CLng(Eabsgs >= Eexc_min_multi Or Emode = 13))
++  HP_V(Eexc_min_multi)
++  HP_V(Fenhance)
++  HP_V(N_multi_sample)
++  HP_End()
++End If
++#ifdef GEF_SETUP_ONLY
++Continue For
++#endif
++#endif ' GEF_PROBES
+--- /dev/null
++++ b/harness_probe_p1b_skip.bi
+@@ -0,0 +1,24 @@
++' SPDX-License-Identifier: GPL-3.0-or-later
++' Copyright (C) 2026 Aurora Jahan
++' Licensed under the GNU GPL v3 or later, WITHOUT ANY WARRANTY; see LICENSE.txt.
++' Harness patch "probes", probe P1b for the entrance channels that skip the multi-chance block
++' (`If (EMode Mod 10 < 3 And EMode >= 0) Or Emode = 13`, GEF.bas:3948, is false): written after
++' 3947, where these channels already hold every value they have at 4800. Same variables as
++' harness_probe_p1b.bi; the decision is 0. With GEF_SETUP_ONLY defined, `Continue For` ends the step here.
++
++#ifdef GEF_PROBES
++If Not ((EMode Mod 10 < 3 And EMode >= 0) Or Emode = 13) Then
++  If Harness_StepSelected() Then
++    HP_Begin(5, "P1b", Trim(Str(Harness_Step)), "-", "-")
++    ' --- pre-pass decision
++    HP_VN("Harness_Prepass", CLng(0))
++    HP_V(Eexc_min_multi)
++    HP_V(Fenhance)
++    HP_V(N_multi_sample)
++    HP_End()
++  End If
++  #ifdef GEF_SETUP_ONLY
++  Continue For
++  #endif
 +End If
 +#endif ' GEF_PROBES
 --- /dev/null

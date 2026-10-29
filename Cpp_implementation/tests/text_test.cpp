@@ -321,3 +321,107 @@ TEST_CASE("fbrt: Print # file matches the FreeBASIC driver", "[T1][fbrt]") {
                                                << "\n  actual:   " << show(actual));
     }
 }
+
+namespace {
+
+// The statement sequence of the m6_console driver (each statement goes once to the console and
+// once to console_file.txt).
+void m6_console_statements(gef::fb::PrintFile& pf) {
+    using gef::fb::PrintEnd;
+    float const s1 = 1.5F;
+    float const s2 = -2.25F;
+    float const s3 = 0.0F;
+    float const s4 = 2.53e-08F;
+    float const s5 = 4.920654F;
+    double const d1 = 0.1;
+    double const d2 = -1e300;
+    double const d3 = 1e5;
+    std::int64_t const i1 = 86;
+    std::int64_t const i2 = -7;
+    std::int64_t const i3 = 215;
+    std::string const t1 = "abc";
+    std::string const t2;
+    std::string const t3 = "exactly14chars";
+    std::string const tl(95, 'x');
+    std::string const tll(170, 'y');
+
+    pf.print(std::string_view(t1), PrintEnd::Newline);
+    pf.print("Fission barrier of CN (Z =", PrintEnd::None);
+    pf.print(i1, PrintEnd::None);
+    pf.print(", A =", PrintEnd::None);
+    pf.print(i3, PrintEnd::None);
+    pf.print("):", PrintEnd::Newline);
+    pf.print("CN: Z =", PrintEnd::None);
+    pf.print(i1, PrintEnd::None);
+    pf.print(", A =", PrintEnd::None);
+    pf.print(i3, PrintEnd::None);
+    pf.print(", E = ", PrintEnd::None);
+    pf.print(s4, PrintEnd::None);
+    pf.print(" MeV", PrintEnd::None);
+    pf.print(" ", PrintEnd::Newline);
+    for (float const s : {s1, s2, s3, s4}) {
+        pf.print(s, PrintEnd::None);
+    }
+    pf.print(s5, PrintEnd::Newline);
+    pf.print(d1, PrintEnd::None);
+    pf.print(d2, PrintEnd::None);
+    pf.print(d3, PrintEnd::Newline);
+    pf.print(i1, PrintEnd::None);
+    pf.print(i2, PrintEnd::None);
+    pf.print(i3, PrintEnd::Newline);
+    pf.print("Z, A, #iso ", PrintEnd::Pad);
+    pf.print(i1, PrintEnd::Pad);
+    pf.print(i3, PrintEnd::Pad);
+    pf.print(i2, PrintEnd::None);
+    pf.print(".", PrintEnd::Newline);
+    pf.print(s1, PrintEnd::Pad);
+    pf.print(s2, PrintEnd::Pad);
+    pf.print(d1, PrintEnd::Pad);
+    pf.print(i1, PrintEnd::Pad);
+    pf.print(std::string_view(t1), PrintEnd::Newline);
+    pf.print(std::string_view(t3), PrintEnd::Pad);
+    pf.print(std::string_view(t1), PrintEnd::Newline);
+    pf.print(std::string_view(tl), PrintEnd::Newline);
+    pf.print(std::string_view(tll), PrintEnd::Newline);
+    pf.print(std::string_view(tl), PrintEnd::None);
+    pf.print(i1, PrintEnd::None);
+    pf.print(s4, PrintEnd::Newline);
+    pf.print(std::string_view(tl), PrintEnd::Pad);
+    for (int k = 0; k < 3; ++k) {
+        pf.print(std::string_view(t1), PrintEnd::Pad);
+    }
+    pf.print(std::string_view(t1), PrintEnd::Newline);
+    for (int k = 0; k < 7; ++k) {
+        pf.print(std::string_view(t3), PrintEnd::Pad);
+    }
+    pf.print(std::string_view(t1), PrintEnd::Newline);
+    pf.print(std::string_view(t1), PrintEnd::Pad);
+    pf.print(i2, PrintEnd::Newline);
+    pf.print_void(PrintEnd::Newline);
+    pf.print("Possible options are: local, global, err, dparfac(..), ptb, cov, cor, lmd, neo, "
+             "ENDF, random.",
+             PrintEnd::Newline);
+    pf.print(std::string_view(t2), PrintEnd::Newline);
+}
+
+} // namespace
+
+TEST_CASE("fbrt: console Print to redirected stdout matches the FreeBASIC driver", "[T1][fbrt]") {
+    // The screen device has width 80 (line_length modulo 80, zones past column 80 start a new
+    // line); the same statements to a file have width 0. Sleep with stdin at EOF returns.
+    std::string const stdout_text = read_bytes(gef::test::golden_file("m6-console", "stdout.txt"));
+    std::string const file_text =
+        read_bytes(gef::test::golden_file("m6-console", "console_file.txt"));
+    std::string_view const after_sleep = "after Sleep\n";
+    REQUIRE(stdout_text.ends_with(after_sleep));
+    std::string const console_expected =
+        stdout_text.substr(0, stdout_text.size() - after_sleep.size());
+
+    gef::fb::PrintFile console = gef::fb::PrintFile::console();
+    gef::fb::PrintFile file;
+    m6_console_statements(console);
+    m6_console_statements(file);
+    CHECK(console.text() == console_expected);
+    CHECK(file.text() == file_text);
+    CHECK(console.text() != file.text());
+}

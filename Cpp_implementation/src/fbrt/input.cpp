@@ -238,6 +238,10 @@ bool InputFile::eof() const noexcept {
     return at_end();
 }
 
+bool InputFile::data_at_end() const noexcept {
+    return pos_ >= contents_.size();
+}
+
 // file_input_tok.c hReadChar (device branch): putback bytes first, then the file.
 int InputFile::read_char() noexcept {
     if (!putback_.empty()) {

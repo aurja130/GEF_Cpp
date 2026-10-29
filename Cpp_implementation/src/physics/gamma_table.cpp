@@ -3,6 +3,7 @@
 // Licensed under the GNU GPL v3 or later, WITHOUT ANY WARRANTY; see LICENSE.txt.
 // Ported from GEF 2025/1.2, Copyright (C) 2009-2025 Karl-Heinz Schmidt and Beatriz Jurado.
 
+#include "data/table_memory.hpp"
 #include "fbrt/array.hpp"
 #include "fbrt/convert.hpp"
 #include "physics/gamma.hpp"
@@ -35,7 +36,9 @@ PEgammaLowTable p_egamma_low_table(data::TableSet const& tables, float zi, float
     out.tm = u_temp(tables, zi, ai, ei, 1, 1, tscale, econd, etrans);
 
     // GEF.bas:16987: DEFOtab(Ai-Zi, Zi); the Single indices convert with CInt (round half to even).
-    out.betadef = tables.defo_tab(fb::f2l(ai - zi), fb::f2l(zi));
+    // QUIRK(Q-042): reads outside the table return the memory next to it (data/table_memory).
+    out.betadef =
+        data::read_mass_table(tables, data::MassTable::DefoTab, fb::f2l(ai - zi), fb::f2l(zi));
 
     // GEF.bas:16988: -120 * betadef in Single, + 47.4 in Double, then Single.
     out.gammadef = static_cast<float>(static_cast<double>(out.betadef * -120.0F) + 47.4);
