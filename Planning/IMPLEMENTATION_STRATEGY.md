@@ -149,7 +149,7 @@ BASIC's shared globals (about 470 `Dim/ReDim/Static Shared` statements across `G
 | `SystemState` | nothing in M6: no BASIC variable is re-initialised by a per-system `Dim`. The `Parameters.bas` reload (`GEF.bas:3320`) re-assigns the nominal parameters in the one `Parameters` object of `ProcessState`; CN and names are `ProcessState` fields that each system overwrites | per system (`GEF.bas:3320`) |
 | `StepState` | energy, CN kinematics, pre-pass results, error accumulators, ENDF state machine; in M6 the multi-chance `Dim`s and the pre-pass decision | per step (`CLEARerrors`, `GEF.bas:3446`; the multi-chance `Dim`s at 3914–3945) |
 | `PassState` | working parameters (nominal or perturbed), spectra | per pass (`CLEARspectra`, `GEF.bas:4816`) |
-| `BinTables` | per-nucleus model tables plus the persistent arrays they overwrite only partly | per bin, with deliberate carry-over |
+| `BinTables` | per-nucleus model tables plus the persistent arrays they overwrite only partly | never: held in `ProcessState`, since the arrays are `ReDim Shared` once and never cleared (amended 2026-10-29, M7 plan D7); `EMpot` is cleared per pass by `CLEARspectra` |
 | `Event` | per-event values handed from stage to stage | per event |
 
 Every leak across scopes is an explicit field, documented in the quirk register.
@@ -506,10 +506,10 @@ Two tracks run in parallel after M5 and meet at M14:
 - Faithful leaks: mode-7 `E_tunn`/`E_diss_Scission`, uncleared `EPART`/`PEOZ`/`PEON`, `Beta(4,1,·)` = 0, the global `Z` written by the Z(A) loop.
 
 **Proven by:**
-- **T1 bit-exact** against probe P3. Run for nominal parameters and for parameter sets injected from BASIC `tmp/*.par` captures (this removes the RNG dependency), across a set of coverage systems: pre-actinide, actinide and superheavy, odd/even Z/N, thermal to 30 MeV.
+- **T1 bit-exact** against probe P3. Run for nominal parameters and for perturbed parameter sets injected from the P3in probe's hex working copies (this removes the RNG dependency; amended 2026-10-29, M7 plan D3: `tmp/*.par` prints `Single`s with 7 significant digits and is not exact), across a set of coverage systems: pre-actinide, actinide and superheavy, odd/even Z/N, thermal to 30 MeV. Each bin starts from its P3in record (the state earlier bins left, M7 plan D1); nominal first-chance runs are also replayed from process start without injection (D2).
 - **Zero-patch cross-checks:** the `out/` `<Control>` block, `XE.dmp` Epart sections and `EMpot.dmp`, at printed precision.
 
-**Exit:** for first-chance energies, every input to the event loop except the random stream is proven.
+**Exit:** every input to the event loop except the random stream is proven for every bin whose inputs are given, first-chance and multi-chance; M7 also ports the bin enumeration (amended 2026-10-29, M7 plan D4).
 
 ---
 
