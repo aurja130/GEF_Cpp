@@ -1,0 +1,55 @@
+{
+  "created_utc": "2026-10-30T17:10:19Z",
+  "file_count": 16,
+  "files": {
+    "run.json": "413744fc10e3a3d72cd81576882f6f2cf1e445af22cad4ef508dc0491eecf61a",
+    "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout.log": "f0a27522c4b8ccc695a7dc87828eb76cbecf91ed3df9f135abf72bfa0f0480fa",
+    "work/ctl/IMATmax.ctl": "251d1be51367d8024ae97599ee60bff5a3358d26cfc7efc0272df94a8c77c4b9",
+    "work/ctl/done.ctl": "cebe18d8bfea84797ece30479cc3b0ed6fd23186187e477c8abad00da86f6afd",
+    "work/ctl/thread.ctl": "f2506d20a69250f94a7b791d1bd0278aebc979acba8dc186ef46e61f1b936148",
+    "work/file.in": "a93abf9d4188b429ab2e22618eea66e7a31cb052c6d6d7903abb06d154453ff6",
+    "work/in/q061_z120_a385.in": "9f02adc0d28be31f54844db897d0af43ba60c50ce51af18319c3f87180cb895d",
+    "work/probes/P0.txt": "86d53a29c649e33db4a05d624f0605d023b7dfe4dbdad9011aa4009b6d2b68a2",
+    "work/probes/P1.txt": "c6ba2c601a728de22e885b1e9f8c8aae6a92cc8f9bcb943be55ff66fe3c16af0",
+    "work/probes/P1b.txt": "53f2d105b282959801bc3166070e15345a235f5606e0442307b3316c4fbcfea9",
+    "work/probes/P2.txt": "553026020d7ec9bec596d97917ad484b1effda3dfce0bbdfb57bc1ba8d5f7355",
+    "work/probes/P3.txt": "2aa22e12d6dc9a444bd60383fee5c22dc3d9224640d5ee001285d56a95ed7f37",
+    "work/probes/P3in.txt": "b00ca952a46274a5f883d55d6e58b7ffdcba856f31121230b842bdb936a3bf67",
+    "work/probes/T0.txt": "9cc19392dad9b09c730423f804c59e4d2dce1852bb9ce180533d4b2292e8e082",
+    "work/tmp/ParameterUpdate.dat": "37db51aa682448681f59e97c8532bbb2a951e03fa18280569477d8667e905e2f"
+  },
+  "id": "m7-q061-z120a385",
+  "kind": "capture",
+  "note": "QUIRKS Q-061 (M7.1): Z 120, A 385 GS, accepted by U_Valid (A/Z <= 289/90); the table builder indexes Zmean/Zshift past 350 (unchecked), writes P3, and the reference binary then dies with SIGSEGV (exit -11) in the event loop of the same bin. Binary seed-probes-9ddf9e1b6099, steps=1 passes=0.",
+  "run_json": {
+    "binary": {
+      "build_id": "seed-probes-9ddf9e1b6099",
+      "path": "/home/aurja/Programming/GEF_Cpp/build/harness/seed-probes-9ddf9e1b6099/GEF",
+      "sha256": "54b0e32ba44e705714d689314ea38b1230929de7233421549af240351a8cf793"
+    },
+    "command": [
+      "/home/aurja/Programming/GEF_Cpp/build/harness/seed-probes-9ddf9e1b6099/GEF"
+    ],
+    "cwd": "/home/aurja/Programming/GEF_Cpp/build/m7_1/q061/run/work",
+    "end_utc": "2026-10-30T17:10:19+00:00",
+    "env_set": {
+      "GEF_SEED": "20261061",
+      "GEF_TRACE_PASSES": "0",
+      "GEF_TRACE_STEPS": "1"
+    },
+    "exit_code": -11,
+    "input": {
+      "name": "q061_z120_a385.in",
+      "sha256": "9f02adc0d28be31f54844db897d0af43ba60c50ce51af18319c3f87180cb895d"
+    },
+    "mode": "normal",
+    "reseed": false,
+    "schema": 1,
+    "seed": 20261061,
+    "start_utc": "2026-10-30T17:10:19+00:00",
+    "wall_time_s": 0.479
+  },
+  "schema": 1,
+  "total_bytes": 15389178
+}

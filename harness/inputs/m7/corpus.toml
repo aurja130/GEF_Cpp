@@ -232,3 +232,14 @@ timeout_s = 3600
 cells = ["Heavy actinides / transfermium (Z = 99–103, sf)", "Even-Z / even-N"]
 note = "Fm-212 GS: Beta_Equi (GEF.bas:5722) does not converge for IZ1 = 10 and prints to f = 0, the console (Q-041, plan D6)"
 
+
+[[entry]]
+id = "cm232-gs25"
+group = "m7"
+input = "harness/inputs/m7/cm232_gs25.in"
+seed = 20261050
+steps = "1"
+passes = "0"
+timeout_s = 3600
+cells = ["Actinides (Z = 89–98; U-235, U-238, Pu-239 n-induced)"]
+note = "Cm-232 GS at 25 MeV (M7.1, plan §8): multi-chance bins with I_Z_Multi > 0 (a proton emitted before fission; 5 of 85 bins in a scan with another seed), so I_Z_CN < P_Z_CN"

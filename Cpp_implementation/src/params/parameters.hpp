@@ -11,7 +11,7 @@
 // Every Single is a float and every Integer an int64 (exact mode). Members keep the BASIC name
 // in snake_case; the nominal parameters that GEF perturbs carry a leading underscore in BASIC
 // (`_P_DZ_Mean_S1`), which the members drop: within `Parameters` every value is nominal. The
-// perturbed working copies (`P_DZ_Mean_S1`) belong to the pass state (M12).
+// perturbed working copies (`P_DZ_Mean_S1`) are tables::WorkingParameters (M7, M12).
 
 #pragma once
 
@@ -313,7 +313,8 @@ struct PerturbationWidths {
 
 // GEF.bas:2575-2620: the widths recomputed with `D_Par_Fac`, once per process after the input
 // is read. `pz_s3_olap_curv` is the working copy `PZ_S3_olap_curv` (not the nominal value) that
-// GEF.bas:2610 reads (QUIRK(Q-019)); it is zero unless a perturbation pass has set it.
+// GEF.bas:2610 reads (QUIRK(Q-019)); it is zero until the first pass assigns it (GEF.bas:5451,
+// or the perturbed values of 5128 and 5399).
 void update_widths(PerturbationWidths& w, Parameters const& p, float pz_s3_olap_curv);
 
 // One nominal parameter: its BASIC name (as declared, the probe name) and member.

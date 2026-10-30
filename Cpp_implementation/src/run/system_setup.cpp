@@ -212,7 +212,7 @@ void begin_round(ProcessState& process, WorkDir const& workdir) {
     params::fitpar_read(workdir.read("Fitpar.dat"), process.params, lines);
     print_lines(process, lines);
     // GEF.bas:2575-2620. QUIRK(Q-019): 2610 reads the working copy PZ_S3_olap_curv.
-    params::update_widths(process.widths, process.params, process.pz_s3_olap_curv);
+    params::update_widths(process.widths, process.params, process.working.pz_s3_olap_curv);
     // GEF.bas:2622-2624
     if (process.bfilein != 0) {
         process.clocal = "localoff";

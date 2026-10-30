@@ -17,7 +17,8 @@
 namespace gef::run {
 
 // GEF.bas:2555 (FitparRead: params::fitpar_read) and 2575-2624 (the Var_* widths with the
-// working copy ProcessState::pz_s3_olap_curv, params::update_widths; `Clocal = "localoff"`).
+// working copy ProcessState::working.pz_s3_olap_curv, params::update_widths;
+// `Clocal = "localoff"`).
 void begin_round(ProcessState& process, WorkDir const& workdir);
 
 // GEF.bas:3313-3440, one pass of `For I_Double_Covar` after the driver set the system's CN

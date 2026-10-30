@@ -20,6 +20,8 @@ find_package(Threads REQUIRED)
 add_executable(gef_tests
     analyzer_registry_test.cpp
     array_test.cpp
+    bin_tables_bins_test.cpp
+    bin_tables_deformations_test.cpp
     conversion_test.cpp
     data_input_test.cpp
     fbc_arithmetic_test.cpp
@@ -52,9 +54,11 @@ add_executable(gef_tests
     tables_test.cpp
     text_test.cpp
     utilities_test.cpp
+    support/bin_tables_p3.cpp
     support/golden.cpp
     support/m5.cpp
     support/probe_dump.cpp
+    support/probe_records.cpp
     support/run_p0.cpp
     support/run_p1.cpp
     support/run_replay.cpp)
@@ -65,7 +69,7 @@ target_compile_definitions(gef_tests PRIVATE
     GEF_TEST_REPO_DIR="${PROJECT_SOURCE_DIR}"
     GEF_TEST_STORE_CAPTURES_DIR="${PROJECT_SOURCE_DIR}/validation/reference_store/captures")
 target_link_libraries(gef_tests PRIVATE gef_analysis gef_data gef_fbrt gef_params gef_physics
-    gef_run gef_util
+    gef_run gef_tables gef_util
     Catch2::Catch2WithMain Threads::Threads)
 gef_apply_policy(gef_tests)
 

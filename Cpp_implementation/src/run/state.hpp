@@ -30,6 +30,9 @@
 #include "fbrt/text.hpp"
 #include "params/parameters.hpp"
 #include "run/probes.hpp"
+#include "tables/bin_plan.hpp"
+#include "tables/bin_tables.hpp"
+#include "tables/working_parameters.hpp"
 
 #include <cstdint>
 #include <string>
@@ -155,11 +158,21 @@ struct ProcessState {
     float bprot = 0.0F;                // 772 Shared
     float balpha = 0.0F;               // 772 Shared
 
-    // --- written by later stages (step body), read by the set-up or dumped at P1. M6 never
-    // writes them; a step body may (MILESTONE_6_PLAN.md M6.0 patch check).
-    float z = 0.0F;               // 790 Shared `Z` (table builder; Q-007)
-    float t = 0.0F;               // 823 Shared `T`
-    float pz_s3_olap_curv = 0.0F; // working copy read by GEF.bas:2610 (Q-019; set by M12)
+    // --- written by the step body, read by the set-up or dumped at P1.
+    float z = 0.0F; // 790 Shared `Z` (table builder 5876-5991; read by the pre-pass, Q-007)
+    float t = 0.0F; // 823 Shared `T`
+
+    // --- the passes and bins of a step (M7, MILESTONE_7_PLAN.md D7).
+    // The working copies of the perturbed parameters, shared: GEF.bas:2610 reads
+    // PZ_S3_olap_curv when the next input round recomputes the widths (QUIRK(Q-019)).
+    tables::WorkingParameters working;
+    // The current bin's loop counters and inputs. I_Z_CN, I_A_CN, R_NEVTspectrum and E_rot_CN
+    // are process-level in BASIC; the counters, limits, R_E_exc_used, I_rigid_spher, I_eff_CN,
+    // NEVTused and IEVTtot are `Dim`s of the pass, which tables::BinPlan's constructor resets.
+    tables::BinInput bin;
+    // The per-nucleus model tables: `ReDim Shared` once and never cleared, so they carry what
+    // the last bin left (Q-010).
+    tables::BinTables bin_tables;
 };
 
 // GEF.bas:2647-2684.

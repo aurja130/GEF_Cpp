@@ -1,0 +1,86 @@
+{
+  "created_utc": "2026-10-30T17:25:41Z",
+  "file_count": 43,
+  "files": {
+    "run.json": "a3c373539310b952e61433a7e1593201923e55166b17233eea0b509a8846a839",
+    "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout.log": "e224ba9f0e7de2129c3053ca8c1387e93707cc310131ed463d363b6c98dbded3",
+    "work/ctl/done.ctl": "9e6e744ac9e5ff980a3e74a2b8a91f05f7d3b4649f8ade95b00fd82e4e0bd631",
+    "work/ctl/sync.ctl": "082f1b30dfd690d2eb56f15099a07810daa4555b553e0f0a8f7cb61e5f0aff94",
+    "work/ctl/thread.ctl": "675775ea52b9d48233eda1cc3f0734f88b7c4303a6694664cbea7ca1523eb851",
+    "work/dmp/Z96_A232_cf_E25MeV/Apost.dmp": "e3fe129cff86ac7528e76084cf27ef80ede8398c1dd3ca3b805a127e0221c905",
+    "work/dmp/Z96_A232_cf_E25MeV/Apre.dmp": "bf005331b07d9cad4831934c9dd59cc150778c5d50d27bb8352973562a156d30",
+    "work/dmp/Z96_A232_cf_E25MeV/Aprov.dmp": "6f9c97f07edd1f66cdea1e7ddd2e7339025080d8f42c49cf98e6a5de76df8ac5",
+    "work/dmp/Z96_A232_cf_E25MeV/DNlocal.dmp": "1d45e86ea793dc9337ceb4b0f5e397c408b1003a942d751495fb5fd32dd46942",
+    "work/dmp/Z96_A232_cf_E25MeV/DPlocal.dmp": "13ad8ccc8258174f483d1e2bc39ef2206b89b6c0307c94d40bf7d77637e91063",
+    "work/dmp/Z96_A232_cf_E25MeV/Decay.dmp": "8d9bd6f0085fb7b891ee66be9c9b27fcac6a2e821c344ea898d5863937115b46",
+    "work/dmp/Z96_A232_cf_E25MeV/EMpot.dmp": "7f55d84c8210da1adaec7536eefa1923b89f2403fbf23337cadad852b5e3f45b",
+    "work/dmp/Z96_A232_cf_E25MeV/EN.dmp": "653a372f02dc41e2feace15bb9472cf6f130178b0c9470c0c8def64604cfc3d9",
+    "work/dmp/Z96_A232_cf_E25MeV/Eexc.dmp": "e9be584fed7be3ac539f29f73842d5ab3ab25e3abd2ef7b6a1d0bc8fedcee85f",
+    "work/dmp/Z96_A232_cf_E25MeV/Egamma.dmp": "26e70d41b0d730912a11ecaad278bfa822988b39fd022fd149fbba5f50fb8c32",
+    "work/dmp/Z96_A232_cf_E25MeV/Ekin.dmp": "a9a471a93205b776835a84e48e05a5c2dcb2ed7c46df7d6724826b37efb418c0",
+    "work/dmp/Z96_A232_cf_E25MeV/Multichance.dmp": "bc359def084639c1f7a050723423fd097a425425bd3ecd8d64cbc9faceeea94d",
+    "work/dmp/Z96_A232_cf_E25MeV/NA.dmp": "13b1d79f3a75f2f2a5fec01a211b3a08edcc5d76087c83b0d10cadfac149682a",
+    "work/dmp/Z96_A232_cf_E25MeV/NN.dmp": "1e9d02da38b0b60befda110e25850bfd9d355dddf9d67f7c863def0f44b50a73",
+    "work/dmp/Z96_A232_cf_E25MeV/NP.dmp": "6472d9683bfdfd52b82ecef626f7403f3dab739e5c741b918730bc7dd7338c98",
+    "work/dmp/Z96_A232_cf_E25MeV/Ngammatot.dmp": "099bca09169f4110bd67c37783f130650241bfb117bb5f8ad94c37c1987f8cfc",
+    "work/dmp/Z96_A232_cf_E25MeV/Npost.dmp": "7f6113ff276118a612aab0fd62866e6480cb6a6bfb8ec0bcd68d17a1cc334914",
+    "work/dmp/Z96_A232_cf_E25MeV/Npre.dmp": "465960a4fd13e046b8bdbdc47e0b75dbcfa235891106baceec976dcd8b50436a",
+    "work/dmp/Z96_A232_cf_E25MeV/Qvalues.dmp": "bfe25644cff87eaac74ba8d7dd3c8172703df256e7a9870d48ae2ad8a0974363",
+    "work/dmp/Z96_A232_cf_E25MeV/SigmaZpost.dmp": "931813360e40cd65a2911c2e6be383874308f4b9a1e09f857676f20641685cf0",
+    "work/dmp/Z96_A232_cf_E25MeV/SigmaZpre.dmp": "4939e7b7bdd761b91fb42a2916ccb698b3b4e6fb89963d49ba06226c8cef185a",
+    "work/dmp/Z96_A232_cf_E25MeV/XE.dmp": "ce90bbb5443326c02f086dfc64fc66fe3bd6aeb5a07b66d234be9c5e7b6f13a4",
+    "work/dmp/Z96_A232_cf_E25MeV/ZApost.dmp": "ac52d06e1deb47b2e47ce01d8051b02d6f19d64c01fb48420956e7a9a7280019",
+    "work/dmp/Z96_A232_cf_E25MeV/ZApre.dmp": "86279d17f502866c3433c626214709a3ba2ebeb14dd9e516a3bc6ebaa253b238",
+    "work/dmp/Z96_A232_cf_E25MeV/ZPolarpost.dmp": "93b148e1644699c474acbc41cb38ed5a2497c250096a6bcbcd05de8e90421f4e",
+    "work/dmp/Z96_A232_cf_E25MeV/ZPolarpre.dmp": "5959ae5421213d8c1b51242de8343d682829007dcb60718be3c3a9f859f648ff",
+    "work/dmp/Z96_A232_cf_E25MeV/Zpost.dmp": "19021e21c4d1fe72d76f6548abc8d976f42ddd535430b53ae92d12364fd59574",
+    "work/file.in": "fdd4f031ad113267d5d329df86148ba6435c45b65c4d9c69373fa5b6e4ffc0ed",
+    "work/in/cm232_gs25.in": "5ed695939eb6b86b3071ef7d0578bf5c57f4e89d127dd2b761589a88973dea00",
+    "work/out/GEF_96_232_cf.dat": "f080439db73eec7f823278d58a11a7647f3809e29076d9e65357ef7552391f29",
+    "work/probes/P0.txt": "3d92a1cb0280b9857806f3b5720aa8e8596c10660c45c69622db4b543f6dde7b",
+    "work/probes/P1.txt": "1c8bd1bd92f994b09ad93fb5a4c416fb47b5c66ba64b94f9375a6cce24167a61",
+    "work/probes/P1b.txt": "6a464f728beead02599122883e10b9c4f0b1e2810f91a0860e9c98fe971f3eeb",
+    "work/probes/P2.txt": "737df273b84cafee3b46714f896fce6fb2be861da62270f9467a073b481fbc9a",
+    "work/probes/P3.txt": "323a7b0be4dcafe83ee1dd5e56bb2d6f49f1346a7f14215ea5b0d428dcef9503",
+    "work/probes/P3in.txt": "3c2898cd4a856e3d1aa717edd6bfa50fe9a6555e4c8e0fd2f66faffc394f7a1f",
+    "work/tmp/ParameterUpdate.dat": "c00038997123c6270b4fa3e19fab83505c4ff7bbe8272e0a6e96d4b454141131"
+  },
+  "id": "m7-p3-cm232-gs25",
+  "kind": "capture",
+  "note": "M7.1 (MILESTONE_7_PLAN.md \u00a78): Cm-232 GS 25 MeV, corpus entry cm232-gs25; 89 multi-chance bins of pass 0, 4 with I_Z_Multi = 1 (a proton emitted before fission). Binary seed-probes-9ddf9e1b6099.",
+  "run_json": {
+    "binary": {
+      "build_id": "seed-probes-9ddf9e1b6099",
+      "path": "/home/aurja/Programming/GEF_Cpp/build/harness/seed-probes-9ddf9e1b6099/GEF",
+      "sha256": "54b0e32ba44e705714d689314ea38b1230929de7233421549af240351a8cf793"
+    },
+    "command": [
+      "/home/aurja/Programming/GEF_Cpp/build/harness/seed-probes-9ddf9e1b6099/GEF"
+    ],
+    "cwd": "/home/aurja/Programming/GEF_Cpp/build/m7_1/corpus/cm232-gs25/work",
+    "end_utc": "2026-10-30T17:25:36+00:00",
+    "env_set": {
+      "GEF_SEED": "20261050",
+      "GEF_TRACE_PASSES": "0",
+      "GEF_TRACE_STEPS": "1"
+    },
+    "exit_code": 0,
+    "file_in": {
+      "sha256": "fdd4f031ad113267d5d329df86148ba6435c45b65c4d9c69373fa5b6e4ffc0ed"
+    },
+    "input": {
+      "dest": "in/cm232_gs25.in",
+      "name": "cm232_gs25.in",
+      "sha256": "5ed695939eb6b86b3071ef7d0578bf5c57f4e89d127dd2b761589a88973dea00"
+    },
+    "mode": "normal",
+    "reseed": false,
+    "schema": 1,
+    "seed": 20261050,
+    "start_utc": "2026-10-30T17:25:19+00:00",
+    "wall_time_s": 17.363
+  },
+  "schema": 1,
+  "total_bytes": 703184424
+}

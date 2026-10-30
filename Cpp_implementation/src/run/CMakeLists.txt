@@ -10,5 +10,5 @@ add_library(gef_run STATIC
     system_setup.cpp
     workdir.cpp)
 target_include_directories(gef_run PUBLIC "${PROJECT_SOURCE_DIR}/Cpp_implementation/src")
-target_link_libraries(gef_run PUBLIC gef_physics gef_params gef_data gef_util gef_fbrt)
+target_link_libraries(gef_run PUBLIC gef_tables gef_physics gef_params gef_data gef_util gef_fbrt)
 gef_apply_policy(gef_run)

@@ -157,9 +157,9 @@ Tool commands are run from the repository root: `python3 -m tools.fbsrc.fbline <
 - **Mechanism:** the Mode-4 loop computes the light-fragment deformation but writes `Beta(5,1,I_short) = rbeta` (GEF.c:59700 indexes `BETA$` with `* 5ll) + 1ll`). The Mode-5 loop then overwrites `Beta(5,1,I_short)` over the same `I_short` range (5848). `fbdef Beta --refs` lists every write; none targets `Beta(4,1,·)`, which keeps the 0 from `ReDim Shared Beta(-1 To 7,1 To 2,150)` (1084). `Edefo(4,1,·)` (5835) is computed with the correct `rbeta`.
 - **Effect (expected):** readers of `Beta(4,1,·)` (`GEF.bas:5958`, Z(A) for mode 4; `GEF.bas:7433`, the rigid moment of inertia in `SpinRMSNZ`) see a spherical light fragment for mode 4.
 - **Evidence status:** *confirmed by fbc C*
-- **Evidence:** `fbline GEF.bas:5831` as quoted; `fbdef Beta --refs`.
-- **Fidelity switch:** `fix_beta_mode4_light`
-- **C++ symbol:** not yet ported
+- **Evidence:** `fbline GEF.bas:5831` as quoted; `fbdef Beta --refs`. M7.1: the C++ port reproduces `Beta` as BASIC leaves it after the M7.1 blocks in all 148 P3 records of the M7 captures (`tables: mode centres and deformations equal BASIC from P3in`, every `Beta` element M7.1 writes last, `Beta(4,1,·)` included); upgraded to *confirmed in output* with the capture IDs in M7.5.
+- **Fidelity switch:** `fix_beta_mode4_light`; the C++ has no `Fidelity` configuration yet
+- **C++ symbol:** `gef::tables::mode_centres_and_deformations` (`deformations_modes`, `Cpp_implementation/src/tables/deformations.cpp`)
 - **Owning milestone:** M7
 
 ### Q-010 `EPART`/`PEOZ`/`PEON` never cleared outside the filled range
@@ -273,7 +273,7 @@ Tool commands are run from the repository root: `python3 -m tools.fbsrc.fbline <
 - **Evidence status:** *confirmed in output*
 - **Evidence:** `fbline GEF.bas:2610` as quoted. Output `validation/test_run/tmp/GEF_86_215_n.par`: all 1860 `PZ_S3_olap_curv =` lines read `0.004088318` (the `Parameters.bas:52` value), while `P_DZ_Mean_S2` takes 1859 distinct values.
 - **Fidelity switch:** `fix_pz_s3_olap_curv_width`
-- **C++ symbol:** `gef::params::update_widths` (argument `pz_s3_olap_curv`, M4.4; matches P1)
+- **C++ symbol:** `gef::params::update_widths` (argument `pz_s3_olap_curv`, M4.4; matches P1), called with the working copy `run::ProcessState::working.pz_s3_olap_curv` (`tables::WorkingParameters`, M7.1)
 - **Owning milestone:** M12 (registry list in M4)
 
 ### Q-020 Analyzer registry naming errors
@@ -521,7 +521,7 @@ Tool commands are run from the repository root: `python3 -m tools.fbsrc.fbline <
 - **Evidence status:** *confirmed in output* for the condition in batch runs (M7.0); *read only* for the destination when `f` <> 0
 - **Evidence:** `python3 -m tools.fbsrc.fbline GEF.bas:16628`; driver output `Beta_Equi_print.txt` of store golden `m5-shape-2`, rebuilt by `physics: Beta_Equi equals BASIC on the driver grids`; `physics: Beta_Equi replays the captured GEF calls`; captures `m7-p3-fm212-sf` and `m7-p3-ds270-sf` (`stdout.log`; `f` in P3in).
 - **Fidelity switch:** none yet (the C++ returns the condition as `BetaEquiResult::print_not_converged` with N, plan D7; the caller decides the destination in M7/M13)
-- **C++ symbol:** `gef::physics::beta_equi` (`Cpp_implementation/src/physics/shape.cpp`)
+- **C++ symbol:** `gef::physics::beta_equi` (`Cpp_implementation/src/physics/shape.cpp`); the builder's call (5722) hands the messages to its caller through the out-parameter `messages` of `gef::tables::mode_centres_and_deformations` (`gef::tables::BetaEquiMessage`, M7.1, plan D6; also when the bin then stops at Q-061); the M7.1 test checks them against the console lines of every M7 capture (fm212-sf and ds270-sf print one each)
 - **Owning milestone:** M5 (condition), M7/M13 (destination)
 
 ### Q-042 Mass-table reads past the bounds read the neighbouring table or a malloc header
@@ -664,8 +664,8 @@ Tool commands are run from the repository root: `python3 -m tools.fbsrc.fbline <
 - **Evidence status:** *confirmed in output*
 - **Evidence:** `fbline GEF.bas:3947-3972`, `fbline GEF.bas:4248-4249`, `fbline GEF.bas:5552`, `fbline GEF.bas:5558`, `fbline GEF.bas:3849-3874`; capture `m6-setup-edge-7/edge-l_channels` (P1b record 13: `Harness_Prepass` 0); `m6-full-f1-f7/edge-l_spectra` with `patch_check.json`; reproduced by `run_corpus_test.cpp` (P1, P1b). The step-body writers belong to M9 (`ProcessState::spin_cn`, `eabsgs`).
 - **Fidelity switch:** `fix_spectrum_step_spin_energy`; the C++ has no `Fidelity` configuration yet
-- **C++ symbol:** `set_excitation`, `check_energy` in `step_setup.cpp` (via `gef::run::set_up_step`)
-- **Owning milestone:** M6 (set-up), M9 (the pre-pass and bin writes)
+- **C++ symbol:** `set_excitation`, `check_energy` in `step_setup.cpp` (via `gef::run::set_up_step`); the bin writes 5552, 5558: `gef::tables::BinPlan::next` (M7.1, every loop iteration, populated or not; `tables: EM and ES passes leave the last iteration's spin, populated or not`)
+- **Owning milestone:** M6 (set-up), M7 (the bin writes), M9 (the pre-pass writes)
 
 ### Q-055 No excitation-energy limit in batch mode; `Emax_valid` is never read
 
@@ -732,6 +732,17 @@ Tool commands are run from the repository root: `python3 -m tools.fbsrc.fbline <
 - **Fidelity switch:** `fix_file_exists_backslash`; the C++ has no `Fidelity` configuration yet
 - **C++ symbol:** `gef::run::WorkDir::exists` (no conversion) and `WorkDir::read` (converts), `Cpp_implementation/src/run/workdir.cpp`
 - **Owning milestone:** M6
+
+### Q-061 `Zmean`/`Zshift` are indexed beyond 350 for A_CN > 360
+
+- **BASIC location:** `GEF.bas:5879-5991` (the Z(A) loops `For I_short = 10 To I_A_CN - 10`, writes `Zmean(m,k,I_short)`, `Zmean(m,k',I_A_CN - I_short)` and the same for `Zshift`); arrays `ReDim Shared Zmean(0 To 5,1 To 2,350)` (1109), `Zshift(…)` (1121); `U_Valid` (15818-15824)
+- **Mechanism:** the loops run up to `I_A_CN - 10` and the C indexes the descriptors without a bound check (GEF.c:59938-60306, e.g. 59944 `… + I_A_CN$) - I_SHORT$0) << 2 …`). `U_Valid` admits A/Z up to 289/90, so a CN up to A 385 at Z 120 (A > 360 from Z 113 on). From A_CN 361 the writes of modes 0-4 and of `(5,1,·)` land in other rows of the same array (linear index (m·2 + k − 1)·351 + i), those of `(5,2,≥351)` past the end of the allocation (heap corruption).
+- **Effect:** capture `m7-q061-z120a385` (Z 120, A 385, `GS`, binary `seed-probes-9ddf9e1b6099`): BASIC prints the builder's `Beta_Equi` message, writes P3 for the bin, then the event loop warns `Estimated TKEmin > Qvalue … Z_heavy = -9223372036854775808` and the process dies with SIGSEGV (exit −11). No corpus input comes near: the largest A_CN of the M7 captures is 270 (Ds-270). Later blocks index other `(·,·,350)` arrays (`Temp`, `TempFF`, `Eshell`, `PEOZ`, `PEON`, `EPART`) by A the same way (M7.2-M7.4).
+- **Evidence status:** *confirmed in output*
+- **Evidence:** `fbline GEF.bas:5884-5887`, `fbline GEF.bas:15818-15824`; capture `m7-q061-z120a385` (`run.json` exit −11, `stdout.log`, P3); the M7.0 D6 sweep lists accepted CN up to A 385 (`m7-d6-sweep/out_dneck1_v2.txt`); `tables: a CN with A above 360 stops at the bound of Zmean and Zshift` (A 360 runs, A 361 and 385 throw).
+- **Fidelity switch:** none. Undefined behaviour is not reproduced (as Q-039, Q-053): the C++ throws `std::out_of_range` at the start of the Z(A) loops when `I_A_CN - 10 > 350` (the bin would always reach the writes past the end of `Zmean`). Open for the user's decision (M7.1 completion notes): emulate the in-array aliasing and the heap layout, as Q-042 does for reads.
+- **C++ symbol:** `gef::tables::mode_centres_and_deformations` (`mean_z`, `Cpp_implementation/src/tables/deformations.cpp`)
+- **Owning milestone:** M7
 
 ## 5. Build notes (not GEF quirks)
 
@@ -838,6 +849,7 @@ These describe how the toolchain, not GEF, can make the C++ results differ from 
 | Q-058 | `file.in` without a sequence file waits for a key | `GEF.bas:3130, 15618-15631` | confirmed in output | — | M6 |
 | Q-059 | Empty energy line reads `Energy_Table(1)` past `Redim (0)` | `GEF.bas:2824, 3455, 3462, 3495` | confirmed in output | `fix_empty_energy_line` | M6 |
 | Q-060 | `FileExists` does not convert backslashes, `Open` does | `GEF.bas:2775, 2782, 3094, 3619` | confirmed in output | `fix_file_exists_backslash` | M6 |
+| Q-061 | `Zmean`/`Zshift` indexed beyond 350 for A_CN > 360 | `GEF.bas:5879-5991` | confirmed in output | — | M7 |
 | B-001 | Optimisation level vs fbc `-O0` | (toolchain) | open risk | — | M3, M5 |
 | B-002 | fbc gcc passes `-fwrapv -fno-strict-aliasing` | (toolchain) | resolved for the runtime layer (M3.3) | — | M3 |
 | B-003 | `Compilationstamp` needs `SOURCE_DATE_EPOCH` | `GEF.bas:17` | handled (M1) | — | M1 |
