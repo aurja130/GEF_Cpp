@@ -1,6 +1,6 @@
 # tools/fbsrc — BASIC-source tooling
 
-Four tools for working out what a GEF BASIC line computes. Run them from the repository
+Five tools for working out what a GEF BASIC line computes. Run them from the repository
 root:
 
 | Tool | Purpose |
@@ -9,6 +9,7 @@ root:
 | `python3 -m tools.fbsrc.fbline` | Show BASIC line(s) next to the C generated from them |
 | `python3 -m tools.fbsrc.fbdef` | Find where a symbol is defined, and optionally every reference |
 | `python3 -m tools.fbsrc.fn_c_equiv` | Check that a standalone driver's C equals GEF's C |
+| `python3 -m tools.fbsrc.rbw` | Read-before-write, writer and read-site analysis of a stretch of GEF's C |
 
 Requirements: fbc 1.10.1 (found through `GEF_FBC` or the default path, see
 `tools/toolchain/fbc.py`), Universal Ctags, `git`, and GNU `patch` for `--patch-dir`.
@@ -185,6 +186,52 @@ comments removed:
 **References** skip comments: `'` to end of line, `Rem` at the start of a statement, and
 nested multi-line `/' ... '/` blocks. The comment scanner follows FreeBASIC's string
 rules (`""` inside `"..."`, backslash escapes inside `!"..."`).
+
+## rbw
+
+```
+python3 -m tools.fbsrc.rbw reads|writers|escapes <file>:<first>-<last> [--json] [--patch-dir DIR]
+```
+
+Analyses the C that fbc emits for a run of BASIC lines that is one contiguous stretch of
+`GEF.c` (every `#line` directive inside it points into the range; otherwise it refuses). The
+stretch is a control-flow graph: one node per statement, `goto label$N` and
+`if( … ) goto label$N` as edges, a jump to a label outside the stretch as an exit, the first
+statement as entry. Written for M7.0 (the P3in probe of the table builder,
+`Planning/MILESTONE_7_PLAN.md` D1, D7, D9).
+
+- `reads`: every variable that some path from the entry reads before writing it (forward
+  must-defined analysis, intersection at joins). A scalar is defined by `X = …;` and by fbc's
+  `__builtin_memset( &X, … )`; an array only by its own `Dim`/`ReDim` inside the stretch, so an
+  array that is read and not created there is always reported (writes to a new array's
+  descriptor are its set-up, not element writes; `ReDim` bounds are reads). `&X` passed to a
+  procedure is a read and defines nothing. A call to a GEF procedure reads the `Shared` globals
+  that procedure (or one it calls) reads before writing them, from the same analysis of its
+  body (`via` names the procedure). The `Static` variables of the procedures called are listed
+  (`static <proc>: …`): they carry state between calls that no probe of module variables sees.
+- `writers`: the BASIC lines of the stretch that write each variable, in program order; an
+  element write of an array carries the BASIC text of the target (`Beta(1,1,IZ1)`); a scalar
+  passed `ByRef` to a procedure counts as written at that line (the procedure may write it); a
+  `Shared` global that a called GEF procedure writes (transitively) is listed at the call as
+  `<line>@<PROCEDURE>`. Text output: BASIC spelling, fbc name, writes; `--json` gives one record
+  per fbc name (two variables can share a BASIC name, e.g. the `Shared` `I` and a local `I`).
+- `escapes`: for each variable the stretch writes, the BASIC lines outside it whose C reads it
+  (module code and procedure bodies). A superset of what later code consumes: such a line may
+  read only what its own code wrote first.
+
+Names: `NAME$` is a `Dim Shared` global, `NAME$0` a module-level `Dim`/`Static`, `NAME$<n>` a
+block or procedure local; fbc temporaries (`vr$N`, `tmp$N`, `TMP$N$M`) are not tracked. Text
+output: BASIC spelling, type (`S`, `D`, `I`, `Z`, `A` array), fbc name, first read site.
+Limits: paths are not checked for feasibility (a conditionally written variable is reported
+even if the condition always holds); array elements are not distinguished; a `ByRef` argument
+is a read for `reads` and a write for `writers`. Each of these makes the result of its mode a
+superset. Not seen by `writers`: element writes through a pointer passed to a runtime function
+(the `DATA` loaders' `fb_DataReadSingle( (float*)… )`) and whole arrays passed to a GEF procedure
+that writes them through its parameter (`Extend_2dim(_NZPOST(), …)`; none in the table builder).
+Recursive procedures are refused (GEF
+has none). Tests: `tools/fbsrc/tests/test_rbw.py`
+(synthetic C) and `harness/tests/test_probes.py` (the P3in list against the analysis of
+`GEF.bas:5578-7920`).
 
 ## fn_c_equiv
 

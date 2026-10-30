@@ -1,20 +1,22 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Copyright (C) 2026 Aurora Jahan
 # Licensed under the GNU GPL v3 or later, WITHOUT ANY WARRANTY; see LICENSE.txt.
-"""The M6 input corpus: GEF batch inputs run through the BASIC program (M6 plan, M6.0).
+"""The batch-input corpora: GEF inputs run through the BASIC program (M6.0, M7.0).
 
-Two manifests in ``harness/inputs/m6/`` list the entries (same schema):
+Manifests (same schema):
 
-* ``corpus.toml`` is written by ``generate``: every distinct ``*.in`` sequence file under
-  ``Reference/GEF_code/wrkdir/in/`` (identical copies, e.g. under ``fit/``, once), every
+* ``inputs/m6/corpus.toml`` is written by ``generate``: every distinct ``*.in`` sequence file
+  under ``Reference/GEF_code/wrkdir/in/`` (identical copies, e.g. under ``fit/``, once), every
   ``file*.in`` list in ``Reference/GEF_code/wrkdir/`` and the sequence files of
   ``validation/reference/``.
-* ``edge.toml`` is written by hand: the M6 edge inputs.
+* ``inputs/m6/edge.toml`` is written by hand: the M6 edge inputs.
+* ``inputs/m7/corpus.toml`` is written by hand: the M7 table-builder captures
+  (``MILESTONE_7_PLAN.md`` D5); each entry fixes its own seed and trace selection.
 
 Entry keys::
 
     id          unique name; the entry's run directory is <out>/<id>
-    group       "wrkdir", "validation" or "edge"
+    group       "wrkdir", "validation", "edge" or "m7"
     input       repository-relative sequence file (or file.in list, see file_in)
     tree        optional repository-relative directory whose files are copied to work/in/
     file_in     optional repository-relative file used as work/file.in (default: the
@@ -24,18 +26,26 @@ Entry keys::
     work_files  optional list of {src, dest}: repository-relative file to work/<dest>
     timeout_s   optional run time limit (default 300)
     note        optional free text
+    seed        optional GEF_SEED of this entry (default: ``run --seed``)
+    steps       optional GEF_TRACE_STEPS of this entry (default: every step)
+    passes      optional GEF_TRACE_PASSES of this entry (default: ``run --passes``)
+    cells       optional list of COVERAGE_MATRIX.md rows the entry covers
+    chain       optional bool: a run of the M7 end-to-end chain (plan D2: nominal passes and
+                first-chance steps only)
 
 Usage::
 
     python3 -m harness.corpus generate
-    python3 -m harness.corpus list [--group G]
-    python3 -m harness.corpus run --binary <path|build-id> --out DIR [--group G ...] [--id ID ...]
-                                  [--jobs N] [--seed S] [--keep-t0] [--passes LIST]
-                                  [--timeout S]
+    python3 -m harness.corpus list [--manifest m6|m7] [--group G]
+    python3 -m harness.corpus run --binary <path|build-id> --out DIR [--manifest m6|m7]
+                                  [--group G ...] [--id ID ...] [--jobs N] [--seed S]
+                                  [--keep-t0] [--passes LIST] [--timeout S]
 
-``run`` runs every selected entry with ``harness.run`` into ``DIR/<id>/`` (all energy steps
-traced; passes ``--passes``, default 0, which writes P3 only in pass 0) and writes
-``DIR/corpus.json`` (per entry: exit code, error). A non-zero exit or a timeout is recorded,
+``run`` runs every selected entry with ``harness.run`` into ``DIR/<id>/`` (the entry's
+``steps``, default every energy step; the entry's ``passes``, default ``--passes``, default 0,
+which writes P3 only in pass 0; the entry's ``seed``, default ``--seed``) and writes
+``DIR/corpus.json`` (per entry: exit code, error, seed, scope). ``--manifest`` picks the M6
+manifests (default) or the M7 one. A non-zero exit or a timeout is recorded,
 not fatal: some inputs end GEF on purpose or never end. ``--timeout`` replaces every entry's
 ``timeout_s`` (full runs). For full runs, ``--passes 1000000`` selects no pass, so no P3 is
 written. ``probes/T0.txt`` is deleted from every run unless ``--keep-t0``: it is the same for
@@ -66,6 +76,8 @@ from harness.run import run
 __all__ = [
     "CORPUS_MANIFEST",
     "EDGE_MANIFEST",
+    "M7_MANIFEST",
+    "MANIFESTS",
     "Entry",
     "generate",
     "load_entries",
@@ -75,6 +87,11 @@ __all__ = [
 M6_INPUTS = INPUTS_DIR / "m6"
 CORPUS_MANIFEST = M6_INPUTS / "corpus.toml"
 EDGE_MANIFEST = M6_INPUTS / "edge.toml"
+M7_MANIFEST = INPUTS_DIR / "m7" / "corpus.toml"
+MANIFESTS: dict[str, tuple[Path, ...]] = {
+    "m6": (CORPUS_MANIFEST, EDGE_MANIFEST),
+    "m7": (M7_MANIFEST,),
+}
 WRKDIR = Path("Reference/GEF_code/wrkdir")
 VALIDATION_SEQUENCES = (
     Path("validation/reference/gefy_nfy"),
@@ -100,6 +117,11 @@ class Entry:
     work_files: tuple[tuple[Path, str], ...] = ()
     timeout_s: float = DEFAULT_TIMEOUT_S
     note: str = ""
+    seed: int | None = None
+    steps: str | None = None
+    passes: str | None = None
+    cells: tuple[str, ...] = ()
+    chain: bool = False
 
     def input_dest(self) -> str:
         """Where the input goes in the working directory: a file.in list (already the bytes of
@@ -130,6 +152,11 @@ def _entry_from_table(table: dict[str, Any], where: str) -> Entry:
         "work_files",
         "timeout_s",
         "note",
+        "seed",
+        "steps",
+        "passes",
+        "cells",
+        "chain",
     }
     unknown = set(table) - known
     if unknown:
@@ -155,6 +182,11 @@ def _entry_from_table(table: dict[str, Any], where: str) -> Entry:
         work_files=tuple(work),
         timeout_s=float(table.get("timeout_s", DEFAULT_TIMEOUT_S)),
         note=str(table.get("note", "")),
+        seed=int(table["seed"]) if "seed" in table else None,
+        steps=str(table["steps"]) if "steps" in table else None,
+        passes=str(table["passes"]) if "passes" in table else None,
+        cells=tuple(str(x) for x in table.get("cells", [])),
+        chain=bool(table.get("chain", False)),
     )
 
 
@@ -323,6 +355,14 @@ def _run_one(
     timeout_s: float | None,
 ) -> dict[str, Any]:
     record: dict[str, Any] = {"id": entry.id, "group": entry.group}
+    run_seed = seed if entry.seed is None else entry.seed
+    scope = {
+        "steps": STEPS if entry.steps is None else entry.steps,
+        "passes": passes if entry.passes is None else entry.passes,
+    }
+    if entry.seed is not None or entry.steps is not None or entry.passes is not None:
+        record["seed"] = run_seed
+        record["scope"] = scope
     with tempfile.TemporaryDirectory() as tmp:
         file_in = Path(tmp) / "file.in"
         file_in.write_bytes(entry.file_in_bytes())
@@ -331,8 +371,8 @@ def _run_one(
                 binary,
                 REPO_ROOT / entry.input,
                 out / entry.id,
-                seed,
-                scope={"steps": STEPS, "passes": passes},
+                run_seed,
+                scope=scope,
                 timeout_s=entry.timeout_s if timeout_s is None else timeout_s,
                 work_files=_work_files(entry),
                 file_in=file_in,
@@ -388,10 +428,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     sub = parser.add_subparsers(dest="cmd", required=True)
     sub.add_parser("generate", help="rewrite harness/inputs/m6/corpus.toml")
     lst = sub.add_parser("list", help="list entries")
+    lst.add_argument("--manifest", choices=sorted(MANIFESTS), default="m6")
     lst.add_argument("--group", action="append", default=[])
     rn = sub.add_parser("run", help="run entries")
     rn.add_argument("--binary", required=True)
     rn.add_argument("--out", required=True, type=Path)
+    rn.add_argument("--manifest", choices=sorted(MANIFESTS), default="m6")
     rn.add_argument("--group", action="append", default=[])
     rn.add_argument("--id", action="append", default=[])
     rn.add_argument("--jobs", type=int, default=1)
@@ -407,7 +449,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             CORPUS_MANIFEST.write_text(_render(entries), encoding="utf-8")
             print(f"{len(entries)} entries written to {CORPUS_MANIFEST.relative_to(REPO_ROOT)}")
             return 0
-        entries = load_entries()
+        entries = load_entries(MANIFESTS[args.manifest])
         if args.group:
             entries = [e for e in entries if e.group in args.group]
         if getattr(args, "id", None):

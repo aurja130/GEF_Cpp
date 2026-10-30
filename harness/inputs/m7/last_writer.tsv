@@ -1,0 +1,363 @@
+# m7 last-writer map 1
+# <name> <kind> <last part> <writers>
+I_E_distr I input -
+I_N_Multi I input -
+I_Z_Multi I input -
+I_E_Multi I input -
+N_E_distr I input -
+N_N_Multi I input -
+N_Z_Multi I input -
+N_E_Multi I input -
+I_N_Multi_Max I M7.1 5597:M7.1
+I_Z_Multi_Max I M7.1 5598:M7.1
+I_A_Multi I input -
+I_E_iso I input -
+P_Z_CN I input -
+P_A_CN I input -
+P_E_exc S input -
+Emode I input -
+I_Z_CN I input -
+I_A_CN I input -
+I_N_CN I M7.1 5694:M7.1
+R_E_exc_used S input -
+R_NEVTspectrum S input -
+Eabsgs S input -
+Spin_CN S input -
+Spin_target S input -
+I_rigid_spher S M7.4 7427:M7.4
+I_eff_CN S input -
+E_rot_CN S input -
+NEVTtot I input -
+NEVTused I input -
+IEVTtot I input -
+Racc S M7.3 7920:M7.3
+Inofirst I input -
+Imulti I input -
+Escission_lim S M7.1 5610:M7.1 5616:M7.1
+ZC_Mode_0 S M7.1 5640:M7.1
+ZC_Mode_1 S M7.3 5643:M7.1 6599:M7.3
+ZC_Mode_2 S M7.3 5648:M7.1 6601:M7.3
+ZC_Mode_3 S M7.3 5658:M7.1 5661:M7.1 6603:M7.3
+ZC_Mode_4 S M7.3 5665:M7.1 6605:M7.3
+ZC_Mode_5 S M7.3 5677:M7.1 6607:M7.3
+ZC_Mode_3_shift S M7.1 5659:M7.1
+P_Z_Mean_S0 S M7.3 6598:M7.3
+P_Z_Mean_S1 S M7.3 5688:M7.1 6600:M7.3
+P_Z_Mean_S2 S M7.3 5689:M7.1 6602:M7.3
+P_Z_Mean_S3 S M7.3 5690:M7.1 6604:M7.3
+P_Z_Mean_S4 S M7.3 5691:M7.1 6606:M7.3
+P_Z_Mean_S5 S M7.3 5692:M7.1 6608:M7.3
+AC_Mode_0 S M7.3 6002:M7.1 6829:M7.3
+AC_Mode_1 S M7.3 6011:M7.1 6837:M7.3
+AC_Mode_2 S M7.3 6020:M7.1 6845:M7.3
+AC_Mode_3 S M7.3 6029:M7.1 6853:M7.3
+AC_Mode_4 S M7.3 6038:M7.1 6861:M7.3
+AC_Mode_5 S M7.3 6047:M7.1 6869:M7.3
+NC_Mode_0 S M7.3 6003:M7.1 6830:M7.3
+NC_Mode_1 S M7.3 6012:M7.1 6838:M7.3
+NC_Mode_2 S M7.3 6021:M7.1 6846:M7.3
+NC_Mode_3 S M7.3 6030:M7.1 6854:M7.3
+NC_Mode_4 S M7.3 6039:M7.1 6862:M7.3
+NC_Mode_5 S M7.3 6048:M7.1 6870:M7.3
+RZpol S M7.3 5997:M7.1 6000:M7.1 6006:M7.1 6009:M7.1 6015:M7.1 6018:M7.1 6024:M7.1 6027:M7.1 6033:M7.1 6036:M7.1 6042:M7.1 6045:M7.1 6824:M7.3 6827:M7.3 6832:M7.3 6835:M7.3 6840:M7.3 6843:M7.3 6848:M7.3 6851:M7.3 6856:M7.3 6859:M7.3 6864:M7.3 6867:M7.3
+RA S M7.3 5999:M7.1 6008:M7.1 6017:M7.1 6026:M7.1 6035:M7.1 6044:M7.1 6451:M7.2 6826:M7.3 6834:M7.3 6842:M7.3 6850:M7.3 6858:M7.3 6866:M7.3
+RZ S M7.2 6450:M7.2
+ZUCD S M7.1 5880:M7.1 5892:M7.1 5917:M7.1 5938:M7.1 5956:M7.1 5970:M7.1
+R_Z_Curv_S0 S M7.1 6053:M7.1
+R_Z_Curv1_S0 S M7.1 6055:M7.1
+R_A_Curv1_S0 S M7.1 6056:M7.1
+R_Z_Curv2_S0 S M7.1 6057:M7.1
+R_A_Curv2_S0 S M7.1 6058:M7.1
+R_E_exc_Eb S M7.2 6064:M7.2
+R_E_exc_GS S M7.2 6065:M7.2
+B_F S M7.2 6070:M7.2
+B_F_ld S M7.2 6071:M7.2
+E_B S M7.2 6072:M7.2
+E_B_ld S M7.2 6073:M7.2
+E_A S M7.2 6074:M7.2
+DE_AB S M7.2 6075:M7.2
+Delta_NZ_Pol S M7.2 6082:M7.2
+R_Shell_S1_eff S M7.2 6083:M7.2 6084:M7.2 6086:M7.2 6137:M7.2 6163:M7.2
+R_Shell_S2_eff S M7.2 6166:M7.2
+R_Shell_S3_eff S M7.2 6168:M7.2 6177:M7.2
+R_Shell_S4_eff S M7.2 6184:M7.2
+R_Shell_S5_eff S M7.2 6186:M7.2 6188:M7.2 6217:M7.2
+S1_enhance S M7.2 6116:M7.2 6126:M7.2
+S1_enhance_S2 S M7.2 6158:M7.2
+E_LD_S1 S M7.2 6191:M7.2 6193:M7.2
+E_LD_S2 S M7.2 6197:M7.2 6199:M7.2
+E_LD_S3 S M7.2 6203:M7.2 6205:M7.2
+E_LD_S4 S M7.2 6209:M7.2 6211:M7.2
+E_LD_S5 S M7.2 6216:M7.2
+DZ_asym S M7.2 6192:M7.2 6198:M7.2 6204:M7.2 6210:M7.2
+B_S1 S M7.2 6194:M7.2
+B_S2 S M7.2 6200:M7.2
+B_S3 S M7.2 6206:M7.2
+B_S4 S M7.2 6212:M7.2
+B_S5 S M7.2 6218:M7.2 6221:M7.2
+B_S11 S M7.2 6229:M7.2 6247:M7.2
+B_S22 S M7.2 6262:M7.2
+DES11ZPM S M7.2 6232:M7.2 6236:M7.2
+E_exc_S0_prov S M7.2 6079:M7.2
+E_exc_S1_prov S M7.2 6195:M7.2
+E_exc_S2_prov S M7.2 6201:M7.2
+E_exc_S3_prov S M7.2 6207:M7.2
+E_exc_S4_prov S M7.2 6213:M7.2
+E_exc_S5_prov S M7.2 6219:M7.2 6222:M7.2
+E_exc_S11_prov S M7.2 6249:M7.2
+E_exc_S22_prov S M7.2 6268:M7.2
+E_Min_Barr S M7.2 6270:M7.2 6271:M7.2 6272:M7.2 6273:M7.2 6274:M7.2 6275:M7.2 6276:M7.2
+E_Exc_S0 S M7.2 6280:M7.2
+E_Exc_S1 S M7.2 6281:M7.2
+E_Exc_S2 S M7.2 6282:M7.2
+E_Exc_S3 S M7.2 6283:M7.2
+E_Exc_S4 S M7.2 6284:M7.2
+E_Exc_S5 S M7.2 6285:M7.2
+E_Exc_S11 S M7.2 6286:M7.2
+E_Exc_S22 S M7.2 6287:M7.2
+E_exc_Barr S M7.2 6299:M7.2 6300:M7.2 6301:M7.2 6302:M7.2 6303:M7.2 6304:M7.2 6305:M7.2
+E_tunn S M7.4 6311:M7.2 7213:M7.4
+E_tunn_S1 S M7.2 6312:M7.2
+E_tunn_S2 S M7.2 6313:M7.2
+E_tunn_S3 S M7.2 6314:M7.2
+E_tunn_S4 S M7.2 6315:M7.2
+R_E_exc_eff S M7.2 6316:M7.2
+T_Rusanov S M7.2 6326:M7.2 6327:M7.2
+T_Coll_Mode_0 S M7.2 6318:M7.2 6320:M7.2 6331:M7.2
+T_coll_Mode_1 S M7.2 6381:M7.2 6384:M7.2
+T_coll_Mode_2 S M7.2 6389:M7.2 6392:M7.2
+T_coll_Mode_3 S M7.2 6415:M7.2 6418:M7.2
+T_coll_Mode_4 S M7.2 6433:M7.2 6436:M7.2
+T_coll_Mode_5 S M7.2 6441:M7.2 6444:M7.2
+T_Pol_Mode_0 S M7.2 6336:M7.2
+T_Pol_Mode_1 S M7.2 6386:M7.2
+T_Pol_Mode_2 S M7.2 6394:M7.2
+T_Pol_Mode_3 S M7.2 6420:M7.2
+T_Pol_Mode_4 S M7.2 6438:M7.2
+T_Pol_Mode_5 S M7.2 6446:M7.2
+T_asym_Mode_0 S M7.2 6338:M7.2
+T_asym_Mode_1 S M7.2 6387:M7.2
+T_asym_Mode_2 S M7.2 6155:M7.2 6396:M7.2
+T_asym_Mode_3 S M7.2 6421:M7.2
+T_asym_Mode_4 S M7.2 6439:M7.2
+T_asym_Mode_5 S M7.2 6447:M7.2
+T_low_S1_used S M7.2 6376:M7.2
+E_POT_SCISSION S M7.4 6342:M7.2 7216:M7.4
+E_diss_Scission S M7.4 6344:M7.2 7218:M7.4 7219:M7.4
+EINTR_SCISSION S M7.4 7225:M7.4
+R_Pol_Curv_S0 S M7.2 6454:M7.2
+R_Pol_Curv_S1 S M7.2 6469:M7.2
+R_Pol_Curv_S2 S M7.2 6470:M7.2
+R_Pol_Curv_S3 S M7.2 6471:M7.2
+R_Pol_Curv_S4 S M7.2 6472:M7.2
+R_Pol_Curv_S5 S M7.2 6473:M7.2
+P_POL_CURV_S0 S M7.2 6466:M7.2
+R_E_intr_S1 S M7.2 6478:M7.2 6498:M7.2
+R_E_intr_S2 S M7.2 6478:M7.2 6511:M7.2
+R_E_intr_S3 S M7.2 6478:M7.2 6527:M7.2
+R_E_intr_S4 S M7.2 6479:M7.2 6538:M7.2
+R_E_intr_S5 S M7.2 6479:M7.2 6549:M7.2
+R_Att A M7.2 6499:M7.2=R_Att(1) 6500:M7.2=R_Att(6) 6512:M7.2=R_Att(2) 6513:M7.2=R_Att(7) 6528:M7.2=R_Att(3) 6539:M7.2=R_Att(4) 6550:M7.2=R_Att(5)
+R_Att_Sad A M7.2 6501:M7.2=R_Att_Sad(1) 6502:M7.2=R_Att_Sad(6) 6514:M7.2=R_Att_Sad(2) 6515:M7.2=R_Att_Sad(7) 6529:M7.2=R_Att_Sad(3) 6540:M7.2=R_Att_Sad(4) 6551:M7.2=R_Att_Sad(5)
+E_coll_saddle A M7.4 7183:M7.4=E_coll_saddle(I_Mode) 7197:M7.4=E_coll_saddle(I_Mode)
+SigZ_Mode_0 S M7.2 6486:M7.2
+SigZ_Mode_1 S M7.2 6503:M7.2
+SigZ_Mode_2 S M7.2 6156:M7.2 6516:M7.2
+SigZ_Mode_3 S M7.2 6530:M7.2
+SigZ_Mode_4 S M7.2 6541:M7.2
+SigZ_Mode_5 S M7.2 6552:M7.2
+SigZ_SL5 S M7.2 6518:M7.2
+Sigpol_Mode_0 S M7.2 6491:M7.2 6494:M7.2
+Sigpol_Mode_1 S M7.2 6505:M7.2 6508:M7.2
+Sigpol_Mode_2 S M7.2 6521:M7.2 6524:M7.2
+Sigpol_Mode_3 S M7.2 6532:M7.2 6535:M7.2
+Sigpol_Mode_4 S M7.2 6543:M7.2 6546:M7.2
+Sigpol_Mode_5 S M7.2 6554:M7.2 6557:M7.2
+SigA_Mode_0 S M7.3 7022:M7.3
+SigA_Mode_1 S M7.3 7023:M7.3 7024:M7.3
+SigA_Mode_2 S M7.3 6157:M7.2 7025:M7.3 7026:M7.3
+SigA_Mode_3 S M7.3 7027:M7.3 7028:M7.3
+SigA_Mode_4 S M7.3 7029:M7.3 7030:M7.3
+SigA_Mode_5 S M7.3 7031:M7.3 7032:M7.3
+SigA_Mode_11 S M7.3 7033:M7.3 7034:M7.3
+SigA_Mode_22 S M7.3 7035:M7.3 7036:M7.3
+EsciS0 S M7.3 6614:M7.3
+EsciS1 S M7.3 6615:M7.3 6630:M7.3
+EsciS2 S M7.3 6616:M7.3 6631:M7.3
+EsciS3 S M7.3 6617:M7.3 6632:M7.3
+EsciS4 S M7.3 6618:M7.3 6633:M7.3
+EsciS5 S M7.3 6619:M7.3 6634:M7.3
+DEsupp S M7.3 6645:M7.3 6646:M7.3
+R_supp_S0 S M7.3 6648:M7.3 6664:M7.3
+R_supp_S1 S M7.3 6649:M7.3 6668:M7.3
+R_supp_S2 S M7.3 6650:M7.3
+R_Supp_S3 S M7.3 6651:M7.3 6677:M7.3 6696:M7.3
+R_slope_S2 S M7.3 6679:M7.3 6684:M7.3
+B_supp I input -
+B_nopot S input -
+Yield_Mode_0 S M7.3 6875:M7.3 6877:M7.3 6982:M7.3
+Yield_Mode_1 S M7.3 6879:M7.3 6883:M7.3 6912:M7.3 6983:M7.3
+Yield_Mode_2 S M7.3 6885:M7.3 6889:M7.3 6922:M7.3 6984:M7.3
+Yield_Mode_3 S M7.3 6891:M7.3 6895:M7.3 6985:M7.3
+Yield_Mode_4 S M7.3 6897:M7.3 6986:M7.3
+Yield_Mode_5 S M7.3 6902:M7.3 6987:M7.3
+Yield_Mode_11 S M7.3 6907:M7.3 6914:M7.3 6988:M7.3
+Yield_Mode_22 S M7.3 6917:M7.3 6924:M7.3 6989:M7.3
+Yield_Norm S M7.3 6980:M7.3
+P_selected S M7.3 6991:M7.3 6995:M7.3 6997:M7.3 6999:M7.3 7001:M7.3 7003:M7.3 7005:M7.3 7007:M7.3 7009:M7.3 7011:M7.3
+I_Mode_selected I input -
+DU0 S M7.4 7048:M7.4
+DU1 S M7.4 7051:M7.4 7052:M7.4
+DU2 S M7.4 7055:M7.4 7056:M7.4
+DU3 S M7.4 7059:M7.4 7060:M7.4
+DU4 S M7.4 7063:M7.4 7064:M7.4
+DU5 S M7.4 7067:M7.4 7068:M7.4
+T_intr_Mode_0 S M7.4 7076:M7.4
+T_intr_Mode_1_heavy S M7.4 7077:M7.4
+T_intr_Mode_1_light S M7.4 7078:M7.4
+T_intr_Mode_2_heavy S M7.4 7079:M7.4
+T_intr_Mode_2_light S M7.4 7080:M7.4
+T_intr_Mode_3_heavy S M7.4 7081:M7.4
+T_intr_Mode_3_light S M7.4 7082:M7.4
+T_intr_Mode_4_heavy S M7.4 7083:M7.4
+T_intr_Mode_4_light S M7.4 7084:M7.4
+T_intr_Mode_5_heavy S M7.4 7085:M7.4
+T_intr_Mode_5_light S M7.4 7086:M7.4
+beta1 S M7.4 5881:M7.1 5894:M7.1 5919:M7.1 5940:M7.1 5958:M7.1 5972:M7.1 6452:M7.2 7433:M7.4
+beta2 S M7.4 5882:M7.1 5896:M7.1 5920:M7.1 5941:M7.1 5959:M7.1 5973:M7.1 6453:M7.2 7471:M7.4
+rbeta S M7.1 5756:M7.1 5758:M7.1 5760:M7.1 5761:M7.1 5768:M7.1 5783:M7.1 5784:M7.1 5786:M7.1 5793:M7.1 5794:M7.1 5809:M7.1 5810:M7.1 5817:M7.1 5818:M7.1 5829:M7.1 5830:M7.1 5836:M7.1 5846:M7.1 5847:M7.1 5859:M7.1 5860:M7.1 5869:M7.1 5870:M7.1
+beta1_opt S M7.1 5702:M7.1 5722:M7.1
+beta2_opt S M7.1 5703:M7.1 5722:M7.1
+beta1_prev S M7.1 5700:M7.1 5732:M7.1
+beta2_prev S M7.1 5701:M7.1 5733:M7.1
+E_defo S M7.2 5716:M7.1 5718:M7.1 5734:M7.1 5737:M7.1 5764:M7.1 5770:M7.1 5789:M7.1 5798:M7.1 5799:M7.1 5813:M7.1 5822:M7.1 5823:M7.1 5834:M7.1 5838:M7.1 5850:M7.1 6149:M7.2
+Z1 S M7.2 5706:M7.1 5746:M7.1 5777:M7.1 5796:M7.1 5805:M7.1 5820:M7.1 5832:M7.1 5844:M7.1 5857:M7.1 5867:M7.1 5883:M7.1 5898:M7.1 5899:M7.1 5901:M7.1 5903:M7.1 5906:M7.1 5922:M7.1 5923:M7.1 5925:M7.1 5927:M7.1 5942:M7.1 5943:M7.1 5945:M7.1 5960:M7.1 5961:M7.1 6143:M7.2
+Z2 S M7.1 5708:M7.1 5747:M7.1 5778:M7.1 5806:M7.1 5858:M7.1 5868:M7.1 5974:M7.1 5975:M7.1
+A1 S M7.2 5709:M7.1 5748:M7.1 5779:M7.1 5797:M7.1 5807:M7.1 5821:M7.1 5833:M7.1 5845:M7.1 6144:M7.2
+A2 S M7.1 5710:M7.1 5749:M7.1 5780:M7.1 5808:M7.1
+IZ1 I M7.4 5705:M7.1 7421:M7.4 7506:M7.4
+IN1 I M7.4 7424:M7.4
+IZ2 I M7.1 5707:M7.1
+IN2 I input -
+IA1 I M7.4 7230:M7.4 7378:M7.4 7423:M7.4 7505:M7.4
+IA2 I M7.4 7232:M7.4
+Z S M7.1 5893:M7.1 5895:M7.1 5918:M7.1 5939:M7.1 5957:M7.1 5971:M7.1
+T S M7.4 7092:M7.4 7094:M7.4 7097:M7.4 7104:M7.4 7106:M7.4 7109:M7.4 7116:M7.4 7118:M7.4 7126:M7.4 7128:M7.4 7131:M7.4 7138:M7.4 7140:M7.4 7143:M7.4 7150:M7.4 7152:M7.4 7155:M7.4 7162:M7.4 7164:M7.4 7167:M7.4 7439:M7.4 7444:M7.4 7477:M7.4 7482:M7.4
+beta A M7.2 5713:M7.1=Beta(-1,1,IZ1) 5715:M7.1=Beta(-1,2,IZ2) 5728:M7.1=Beta(0,1,IZ1) 5730:M7.1=Beta(0,2,IZ2) 5763:M7.1=Beta(1,1,I_short) 5769:M7.1=Beta(1,2,I_short) 5788:M7.1=Beta(2,1,I_short) 5795:M7.1=Beta(2,2,I_short) 5812:M7.1=Beta(3,1,I_short) 5819:M7.1=Beta(3,2,I_short) 5831:M7.1=Beta(5,1,I_short) 5837:M7.1=Beta(4,2,I_short) 5848:M7.1=Beta(5,1,I_short) 5849:M7.1=Beta(5,2,I_short) 5861:M7.1=Beta(6,1,Int(Z1)) 5862:M7.1=Beta(6,2,Int(Z1)) 5871:M7.1=Beta(7,1,Int(Z1)) 5872:M7.1=Beta(7,2,Int(Z1)) 6146:M7.2=Beta(1,1,I) 6148:M7.2=Beta(1,1,I)
+Edefo A M7.2 5717:M7.1=Edefo(-1,1,IZ1) 5719:M7.1=Edefo(-1,2,IZ2) 5735:M7.1=Edefo(0,1,IZ1) 5738:M7.1=Edefo(0,2,IZ2) 5765:M7.1=Edefo(1,1,I_short) 5771:M7.1=Edefo(1,2,I_short) 5790:M7.1=Edefo(2,1,I_short) 5800:M7.1=Edefo(2,2,I_short) 5814:M7.1=Edefo(3,1,I_short) 5824:M7.1=Edefo(3,2,I_short) 5835:M7.1=Edefo(4,1,I_short) 5839:M7.1=Edefo(4,2,I_short) 5851:M7.1=Edefo(5,1,I_short) 5852:M7.1=Edefo(5,2,I_short) 6150:M7.2=Edefo(1,1,I)
+Zmean A M7.1 5884:M7.1=Zmean(0,1,I_short) 5886:M7.1=Zmean(0,2,I_A_CN-I_short) 5909:M7.1=Zmean(1,1,I_short) 5911:M7.1=Zmean(1,2,I_A_CN-I_short) 5930:M7.1=Zmean(2,1,I_short) 5932:M7.1=Zmean(2,2,I_A_CN-I_short) 5948:M7.1=Zmean(3,1,I_short) 5950:M7.1=Zmean(3,2,I_A_CN-I_short) 5962:M7.1=Zmean(4,1,I_short) 5964:M7.1=Zmean(4,2,I_A_CN-I_short) 5976:M7.1=Zmean(5,2,I_short) 5978:M7.1=Zmean(5,1,I_A_CN-I_short)
+Zshift A M7.3 5885:M7.1=Zshift(0,1,I_short) 5887:M7.1=Zshift(0,2,I_A_CN-I_short) 5910:M7.1=Zshift(1,1,I_short) 5912:M7.1=Zshift(1,2,I_A_CN-I_short) 5931:M7.1=Zshift(2,1,I_short) 5933:M7.1=Zshift(2,2,I_A_CN-I_short) 5949:M7.1=Zshift(3,1,I_short) 5951:M7.1=Zshift(3,2,I_A_CN-I_short) 5963:M7.1=Zshift(4,1,I_short) 5965:M7.1=Zshift(4,2,I_A_CN-I_short) 5977:M7.1=Zshift(5,2,I_short) 5979:M7.1=Zshift(5,1,I_A_CN-I_short) 6792:M7.3=Zshift(J,K,I)
+Temp A M7.4 7093:M7.4=Temp(0,1,I) 7095:M7.4=Temp(0,2,I) 7105:M7.4=Temp(1,1,I) 7107:M7.4=Temp(1,2,I) 7117:M7.4=Temp(2,1,I) 7119:M7.4=Temp(2,2,I) 7127:M7.4=Temp(2,1,I) 7129:M7.4=Temp(2,2,I) 7139:M7.4=Temp(3,1,I) 7141:M7.4=Temp(3,2,I) 7151:M7.4=Temp(4,1,I) 7153:M7.4=Temp(4,2,I) 7163:M7.4=Temp(5,1,I) 7165:M7.4=Temp(5,2,I)
+TempFF A M7.4 7098:M7.4=TempFF(0,1,I) 7099:M7.4=TempFF(0,2,I) 7110:M7.4=TempFF(1,1,I) 7111:M7.4=TempFF(1,2,I) 7132:M7.4=TempFF(2,1,I) 7133:M7.4=TempFF(2,2,I) 7144:M7.4=TempFF(3,1,I) 7145:M7.4=TempFF(3,2,I) 7156:M7.4=TempFF(4,1,I) 7157:M7.4=TempFF(4,2,I) 7168:M7.4=TempFF(5,1,I) 7169:M7.4=TempFF(5,2,I)
+Eshell A M7.4 7046:M7.4=EShell(J,1,I) 7049:M7.4=EShell(0,2,I) 7053:M7.4=EShell(1,2,I) 7057:M7.4=EShell(2,2,I) 7061:M7.4=EShell(3,2,I) 7065:M7.4=EShell(4,2,I) 7069:M7.4=EShell(5,2,I)
+PEOZ A M7.4 7259:M7.4=PEOZ(I_Mode,1,IA1) 7260:M7.4=PEOZ(I_Mode,2,IA2) 7275:M7.4=PEOZ(I_Mode,1,IA1) 7278:M7.4=PEOZ(I_Mode,2,IA2) 7281:M7.4=PEOZ(I_Mode,2,IA2) 7294:M7.4=PEOZ(I_Mode,1,IA1) 7296:M7.4=PEOZ(I_Mode,2,IA2) 7322:M7.4=PEOZ(I_Mode,1,IA1) 7323:M7.4=PEOZ(I_Mode,2,IA2)
+PEON A M7.4 7261:M7.4=PEON(I_Mode,1,IA1) 7262:M7.4=PEON(I_Mode,2,IA2) 7284:M7.4=PEON(I_Mode,1,IA1) 7287:M7.4=PEON(I_Mode,2,IA2) 7290:M7.4=PEON(I_Mode,2,IA2) 7295:M7.4=PEON(I_Mode,1,IA1) 7297:M7.4=PEON(I_Mode,2,IA2) 7324:M7.4=PEON(I_Mode,1,IA1) 7325:M7.4=PEON(I_Mode,2,IA2)
+EPART A M7.4 7376:M7.4=EPART(I_Mode,1,IA1) 7377:M7.4=EPART(I_Mode,2,IA2)
+SpinRMSNZ A M7.4 7464:M7.4=SpinRMSNZ(I_Mode,1,IA1-IZ1,IZ1) 7499:M7.4=SpinRMSNZ(I_Mode,2,IA1-IZ1,IZ1)
+EMpot A M7.3 6745:M7.3=EMPot(0,I) 6747:M7.3=EMPot(1,I) 6752:M7.3=EMPot(2,I) 6757:M7.3=EMPot(3,I) 6762:M7.3=EMPot(4,I) 6767:M7.3=EMPot(5,I) 6772:M7.3=EMPot(6,I) 6777:M7.3=EMPot(7,I)
+P_DZ_Mean_S1 S input -
+P_corr_S1 S input -
+P_DZ_Mean_S2 S input -
+P_DZ_Mean_S3 S input -
+P_DZ_Mean_S4 S input -
+P_DZ_Mean_SL5 S input -
+P_DZ_Mean_S5 S input -
+P_Z_Curv_S1 S input -
+P_Z_Curv_S2 S input -
+S2leftmod S input -
+P_A_Width_S2 S input -
+P_Z_Curv_S3 S input -
+P_Z_Curv_S4 S input -
+P_Z_Curv_SL5 S input -
+P_Z_Curv_S5 S input -
+PZ_S3_olap_pos S input -
+PZ_S3_olap_curv S input -
+Delta_S0 S input -
+P_Shell_S1 S input -
+P_Shell_S2 S input -
+P_Shell_S3 S input -
+P_Shell_S4 S input -
+P_Shell_SL5 S input -
+P_Shell_S5 S input -
+dE_Defo_S1 S input -
+dE_Defo_S2 S input -
+dE_Defo_S3 S input -
+dE_Defo_S4 S input -
+dE_Defo_S5 S input -
+betaL0 S input -
+betaL1 S input -
+betaH0 S input -
+betaH1 S input -
+dbeta_S3 S input -
+T_low_S1 S input -
+T_low_S2 S input -
+T_low_S3 S input -
+T_low_S4 S input -
+T_low_S5 S input -
+T_low_SL S input -
+ECOLLFRAC S input -
+EDISSFRAC S input -
+P_att_pol S input -
+P_att_rel S input -
+HOMPOL S input -
+POLARadd S input -
+Jscaling S input -
+Emax_valid S input -
+EOscale S input -
+ZC_Mode_SL5 S input -
+P_Z_Curvmod_S1 S input -
+P_Z_Curvmod_S2 S input -
+P_Cut_S2 S input -
+Fmod_slope_S2 S input -
+P_Z_Curvmod_S3 S input -
+P_Z_Curvmod_S4 S input -
+P_Z_Curvmod_S5 S input -
+P_S5_mod S input -
+ETHRESHSUPPS1 S input -
+ESIGSUPPS1 S input -
+Level_S11 S input -
+Shell_fading S input -
+T_low_S11 S input -
+T_low_S22 S input -
+P_att_pol2 S input -
+P_att_pol3 S input -
+kappa S input -
+kappa4 S input -
+BFC S input -
+TCOLLFRAC S input -
+TFCOLL S input -
+TCOLLMIN S input -
+ESHIFTSASCI_intr S input -
+ESHIFTSASCI_coll S input -
+Epot_shift S input -
+SIGDEFO S input -
+SIGDEFO_0 S input -
+SIGDEFO_slope S input -
+SIGENECK S input -
+EexcSIGrel S input -
+DNECK S input -
+FTRUNC50 S input -
+ZTRUNC50 S input -
+FTRUNC28 S input -
+ZTRUNC28 S input -
+ZMAX_S2 S input -
+NTRANSFEREO S input -
+NTRANSFERE S input -
+Csort S input -
+PZ_EO_symm S input -
+PN_EO_Symm S input -
+R_EO_THRESH S input -
+R_EO_SIGMA S input -
+R_EO_MAX S input -
+POLARfac S input -
+T_POL_RED S input -
+ZPOL1 S input -
+P_n_x S input -
+Tscale S input -
+Econd S input -
+Etrans S input -
+T_orbital S input -
+Spin_odd S input -
+Esort_extend S input -
+Esort_slope S input -
+Esort_slope_S0 S input -

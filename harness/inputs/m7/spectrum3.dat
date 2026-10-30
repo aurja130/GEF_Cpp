@@ -1,0 +1,5 @@
+' three-column E* spectrum (MeV, spin, weight)
+ 5.0 4 0.1
+ 6.5 6 0.4
+ 8.0 8 0.3
+ 9.5 10 0.2

@@ -13,6 +13,7 @@ group. `python3 -m harness.probes` reads the files (see below). Line numbers ref
 | **P1** | before line 3882, after the entrance-channel kinematics and the validity checks (inside `For I_E_step`) | every energy step selected by `GEF_TRACE_STEPS` | M6 (input, run plan, step setup) |
 | **P1b** | after line 3966 (threshold computed, before the pre-pass decision at 3967) for the channels inside the `If` of 3948; after line 3947 for the others | every energy step selected by `GEF_TRACE_STEPS` | M6 (threshold, pre-pass decision) |
 | **P2** | after line 4800 (`End If ' If Emode < 3 etc.`, end of the multi-chance pre-pass) | every energy step selected by `GEF_TRACE_STEPS` | M9 (pre-pass), M10 (packed emission records) |
+| **P3in** | after line 5577 (`If NEVTused > 0 Then`), at the entry of the table builder of a bin | the same bins as P3 | M7 (input state of the table builder, carried from earlier bins, passes, steps and systems) |
 | **P3** | after line 7920 (`Racc = ...`), just before `For ILoop` | every bin with `NEVTused > 0`, in every pass selected by `GEF_TRACE_PASSES`, of every selected step | M7 (table builder), M10 (event-loop inputs) |
 
 Deviations from the plan text (`MILESTONE_1_PLAN.md` M1.8), all checked with `fbline`:
@@ -26,12 +27,16 @@ Deviations from the plan text (`MILESTONE_1_PLAN.md` M1.8), all checked with `fb
 * Line 4800 is the last line of the pre-pass block, so P2 is placed right after it.
 * P3 is placed after line 7920 so that `Racc` is included. Bins with `NEVTused = 0` skip the table
   builder entirely and write no P3 record; their weights are visible in P2.
+* P3in (M7.0) is placed inside the `If NEVTused > 0` of line 5577, so it pairs one to one with P3.
+  Its variable list is derived in `MILESTONE_7_PLAN.md` M7.0 with `python3 -m tools.fbsrc.rbw reads
+  GEF.bas:5578-7920` (the read-before-write set of the builder, see the P3in section).
 
 ## File format
 
-One file per probe in the working directory: `probes/T0.txt`, `probes/P1.txt`, `probes/P2.txt`,
-`probes/P3.txt` (the directory is created by the probe; files are opened for appending, a clean run
-directory has none). One value per line, fields separated by single spaces:
+One file per probe in the working directory: `probes/T0.txt`, `probes/P0.txt`, `probes/P1.txt`,
+`probes/P1b.txt`, `probes/P2.txt`, `probes/P3in.txt`, `probes/P3.txt` (the directory is created by
+the probe; files are opened for appending, a clean run directory has none). One value per line,
+fields separated by single spaces:
 
 ```
 <ID> <context> <NAME> <idx1,idx2,...|-> <type> <value>
@@ -39,8 +44,8 @@ directory has none). One value per line, fields separated by single spaces:
 
 | Field | Content |
 |---|---|
-| `ID` | `T0`, `P1`, `P2` or `P3` |
-| `context` | T0: `-`. Otherwise `step=<s> pass=<p> bin=<e>:<n>:<z>:<m> rec=<k>`: `s` = `I_E_step`; `p` = `I_Error` (P3) or `-` (P1, P2: the pre-pass belongs to no pass); `bin` = `I_E_Distr:I_N_Multi:I_Z_Multi:I_E_Multi` (P3) or `-`; `rec` = 1-based count of invocations of this probe in the process. `rec` separates records of different systems, which can repeat the same step number |
+| `ID` | `T0`, `P0`, `P1`, `P1b`, `P2`, `P3in` or `P3` |
+| `context` | T0: `-`. Otherwise `step=<s> pass=<p> bin=<e>:<n>:<z>:<m> rec=<k>`: `s` = `I_E_step`; `p` = `I_Error` (P3in, P3) or `-` (P0, P1, P1b, P2: the pre-pass belongs to no pass); `bin` = `I_E_Distr:I_N_Multi:I_Z_Multi:I_E_Multi` (P3in, P3) or `-`; `rec` = 1-based count of invocations of this probe in the process. `rec` separates records of different systems, which can repeat the same step number |
 | `NAME` | BASIC spelling, as in the declaration. Fields of user-defined types are `Array.Field` (`NucTab.I_Z`, `Isotab.R_Lim`, `Anl_Par.C_Name`) |
 | `idx` | `-` for a scalar, otherwise the comma-separated indices in declaration order, using the array's own bounds (a `0`-based `ReDim a(10)` has indices 0..10). For an array field of a UDT array the record index comes first (`Isotab.R_SPI 12,3` is `Isotab(12).R_SPI(3)`) |
 | `type` | `S` Single: 8 upper-case hex digits of the IEEE-754 binary32 bit pattern. `D` Double: 16 hex digits of the binary64 pattern. `I` any integer type (`Byte`, `Integer`, `Long`, `LongInt`, `UInteger`, `ULongInt`, ...): decimal. `Z` string: double-quoted, `\\` and `\"` escaped, bytes outside 32..126 as `\xHH`; fixed-length `String*N` fields are cut at the first NUL byte. `B`, `BS`: bounds record, see below |
@@ -66,9 +71,9 @@ bounds as zero. Sparse dumping is used for arrays that are large and mostly zero
 contiguous, and the lines of one probe invocation are contiguous in the file.
 
 **Size** (Rn-215 samples, `Fenhance = 10`): T0 292 123 lines, 10.0 MB; P1 about 220 lines; P2 about
-275 lines; one P3 record about 50 000 lines, 3.2 MB (`SpinRMSNZ` is about two thirds of it). A step
-with many populated multi-chance bins writes one P3 record per bin and pass, so select steps and
-passes narrowly.
+275 lines; one P3 record about 50 000 lines, 3.2 MB (`SpinRMSNZ` is about two thirds of it); a P3in
+record about the same as the P3 record of its bin. A step with many populated multi-chance bins
+writes one P3in and one P3 record per bin and pass, so select steps and passes narrowly.
 
 **Reading**: `python3 -m harness.probes summary <file> [--names]` and
 `python3 -m harness.probes show <file> <NAME> [--limit N]`; in Python
@@ -79,8 +84,9 @@ passes narrowly.
 
 * `GEF_TRACE_STEPS`, `GEF_TRACE_PASSES` (comma-separated integers or ranges such as `1,3-5`; unset
   selects nothing) come from the `scope` patch. T0 and P0 are always written. P1, P1b and P2 use
-  `Harness_StepSelected()`; P3 uses `Harness_Traced()` (step and pass selected; the event selector
-  is not consulted outside the event loop). Without `-d GEF_PROBES` the inserted lines are empty.
+  `Harness_StepSelected()`; P3in and P3 use `Harness_Traced()` (step and pass selected; the event
+  selector is not consulted outside the event loop). Without `-d GEF_PROBES` the inserted lines are
+  empty.
 * **Setup-only mode** (M6): with `-d GEF_SETUP_ONLY` in addition to `-d GEF_PROBES`, P1b ends
   every energy step with `Continue For` after it has been written (written or not, depending on
   the step selection), so the multi-chance pre-pass, the passes, the events and every writer are
@@ -101,8 +107,8 @@ passes narrowly.
 * `#line` directives after each inserted `#Include` keep the original BASIC line numbers for every
   later statement, so the `rnd.log` site tags (`__LINE__`) are unchanged.
 * The patch must apply after `seed`, `scope`, `reseed`, `rndlog` in this order (it touches only
-  lines 1570/1571, 3128/3129, 3881/3882, 3947/3948, 3966/3967, 4800/4801 and 7920/7921, with one
-  line of patch context). Patch sets that contain it: `seed-probes`, `seed-rndlog-probes`,
+  lines 1570/1571, 3128/3129, 3881/3882, 3947/3948, 3966/3967, 4800/4801, 5577/5578 and 7920/7921,
+  with one line of patch context). Patch sets that contain it: `seed-probes`, `seed-rndlog-probes`,
   `seed-reseed-rndlog-probes` (where `reseed.patch` exists).
 
 ## Not captured
@@ -469,6 +475,22 @@ Consumer: M9 (`NNCNtot`/`NPCNtot` are normalised in place at GEF.bas:4711-4751 b
 | `_ENCN` | D | 0:1028 | sparse |
 | `_EPCN` | D | 0:1000 | sparse |
 | `_EGammaCN` | D | 0:1000 | sparse |
+
+## P3in: input state of the table builder of one bin
+
+Written at the entry of the table builder (after GEF.bas:5577, inside `If NEVTused > 0 Then`) for the same bins as P3, so P3in record `k` and P3 record `k` describe the same bin. Context as P3. Written in the same order as P3: every P3 variable (section P3) except the ten that the bin block declares itself, then the group below.
+
+**Derivation** (M7.0, `MILESTONE_7_PLAN.md` D1): `python3 -m tools.fbsrc.rbw reads GEF.bas:5578-7920` computes, on the C that fbc emits for the builder, every variable that some path from the bin entry reads before writing it, including the `Shared` globals read by the procedures it calls. At `ba9f0aa` the set is 105 variables: 101 of them are P3 variables, the others are the file number `f` (added below) and the tables `BEexp`, `BEldmTF`, `ShellMO` (read by `BFTF`/`BFTFA`/`BFTFB`/`U_Temp`; written only by their loaders, so they are T0's). The called procedures hold two `Static` variables, `AME2020`'s `Izaehl` (declared, never used) and `U_Temp`'s `fgamma` (a constant), so no procedure carries state between bins. Arrays count as read before written as soon as any element is read, so every P3 array the builder reads is included whole.
+
+**Not in P3in:** `Escission_lim`, `T_Rusanov`, `R_E_intr_S1`, `R_E_intr_S2`, `R_E_intr_S3`, `R_E_intr_S4`, `R_E_intr_S5`, `R_Att`, `R_Att_Sad`, `E_coll_saddle`. The bin block declares them (`Dim`/`ReDim` inside the `If` of 5577), so they do not exist yet at the probe point and start from zero in every bin.
+
+### read before written by the table builder, not in P3
+
+Consumer: M7 (the file number `Beta_Equi` prints its non-convergence message to, QUIRKS Q-041)
+
+| Type | Scalars |
+|---|---|
+| I | `f` |
 
 ## P3: per-nucleus model tables of one bin
 

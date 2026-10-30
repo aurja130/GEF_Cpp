@@ -1,0 +1,309 @@
+{
+  "kind": "store-derived",
+  "outputs": {
+    "fingerprints.txt": "5c8f12d201d48f534f1889fb6e26cf8b376318b654763feda9aed75e923c55eb"
+  },
+  "sources": [
+    {
+      "capture": "m7-p3-cf252-sf",
+      "file": "run.json",
+      "sha256": "f89366661b99c0b6eb08ce8973e5932d49010ac76c4b734f518e3d34f3ef6045"
+    },
+    {
+      "capture": "m7-p3-cf252-sf",
+      "file": "work/probes/P3.txt",
+      "sha256": "93ac728f14522ca56378d6cd82c3afb635992d6a6e693549f5bdb3c0fb9d8dd0"
+    },
+    {
+      "capture": "m7-p3-cf252-sf",
+      "file": "work/probes/P3in.txt",
+      "sha256": "ccb3ae8e5483f7cb93ee93429171227699d6d3ca872b92086ae1aa5498383e39"
+    },
+    {
+      "capture": "m7-p3-chain-en",
+      "file": "run.json",
+      "sha256": "d45811fdd1fee1d1f17e9e8ef35ab4329dd875df6b82f4a666db4800c2500ef5"
+    },
+    {
+      "capture": "m7-p3-chain-en",
+      "file": "work/probes/P3.txt",
+      "sha256": "3bcebd79a4b19ab203ff3664334b5d88b35d478005fb52f040024e1bc1b752e0"
+    },
+    {
+      "capture": "m7-p3-chain-en",
+      "file": "work/probes/P3in.txt",
+      "sha256": "f6269d2e40dbcee9ce4b0f527647e8052b25c095f9bbbcd01e1e09de0b25d99b"
+    },
+    {
+      "capture": "m7-p3-chain-odd",
+      "file": "run.json",
+      "sha256": "97399fd83c2eabcf984a3cac7b0f7de5711a10018a809c2facb90d7a02218327"
+    },
+    {
+      "capture": "m7-p3-chain-odd",
+      "file": "work/probes/P3.txt",
+      "sha256": "eb4a49c7ed9b6e9b5a22f38bdbc64bc1609eae3b4ab7f87f317c17aa9040ab1d"
+    },
+    {
+      "capture": "m7-p3-chain-odd",
+      "file": "work/probes/P3in.txt",
+      "sha256": "f9b40a5930692ea340c07848e7ef9ddff280b69224b950fce5e72034654ac960"
+    },
+    {
+      "capture": "m7-p3-ds270-sf",
+      "file": "run.json",
+      "sha256": "68091a7c4325a1f312cbae11cc7d3d9c4e190d1271ed6a8c1f41fe228ec870df"
+    },
+    {
+      "capture": "m7-p3-ds270-sf",
+      "file": "work/probes/P3.txt",
+      "sha256": "f880fb92dba54b8c1be73965d595bc1cd73885bf7fe9da9d3a8b1443ccb15f95"
+    },
+    {
+      "capture": "m7-p3-ds270-sf",
+      "file": "work/probes/P3in.txt",
+      "sha256": "ca4a29f54fbf4966f4d28dbb6b8445e2950d717df50b05f04ac76394acbd10e7"
+    },
+    {
+      "capture": "m7-p3-fm212-sf",
+      "file": "run.json",
+      "sha256": "7f9b599857a9249cde80f9538083347b127537c913f47148d0cfd81374fea360"
+    },
+    {
+      "capture": "m7-p3-fm212-sf",
+      "file": "work/probes/P3.txt",
+      "sha256": "cdaed746d01e4d37fbae7a21cf6620c18be5c8f3966b414254f206e8d1211b6a"
+    },
+    {
+      "capture": "m7-p3-fm212-sf",
+      "file": "work/probes/P3in.txt",
+      "sha256": "8807e759b7e2620884c4e77fc502ff8e665dbbb973d7f9950c24452cb3ed41ce"
+    },
+    {
+      "capture": "m7-p3-fm258-sf",
+      "file": "run.json",
+      "sha256": "396246020974f8fbc282befe8e44cd13570eb865263b59f5cdaa8afc3709291b"
+    },
+    {
+      "capture": "m7-p3-fm258-sf",
+      "file": "work/probes/P3.txt",
+      "sha256": "139bc695ebdbdfecfd065f69f881703c9d681a0f00f005fe0acc0f58912280d4"
+    },
+    {
+      "capture": "m7-p3-fm258-sf",
+      "file": "work/probes/P3in.txt",
+      "sha256": "a4e2074c3212dc0396556583cf15414a68bb059137b22ff993c3e8fefd2fcde6"
+    },
+    {
+      "capture": "m7-p3-hg180-fc",
+      "file": "run.json",
+      "sha256": "faebb8aa346fd6305767ecdc4382a8a8f4a79c5bdad075052ad474b8d02fd8c6"
+    },
+    {
+      "capture": "m7-p3-hg180-fc",
+      "file": "work/probes/P3.txt",
+      "sha256": "111ae714996029f1b394ce0d7d56e04e6b21dbd022fe6d5beffb7729910caa16"
+    },
+    {
+      "capture": "m7-p3-hg180-fc",
+      "file": "work/probes/P3in.txt",
+      "sha256": "6a6cfdae6c4ce853424e38eec388bac0729a36062957d21bd910373c1896b63a"
+    },
+    {
+      "capture": "m7-p3-np238-n",
+      "file": "run.json",
+      "sha256": "fc3c06754c1b82e7851df14bf78f378eb9b169eafa8a9c7ccd7b0ea411a81443"
+    },
+    {
+      "capture": "m7-p3-np238-n",
+      "file": "work/probes/P3.txt",
+      "sha256": "1c7495d699950875c658e05d9641016a5d2f58988e484b68a874d149980d9b84"
+    },
+    {
+      "capture": "m7-p3-np238-n",
+      "file": "work/probes/P3in.txt",
+      "sha256": "da182389374b7689c78f170a23c399203fc427f43a2e3021897711162c17ff0a"
+    },
+    {
+      "capture": "m7-p3-po210-fc",
+      "file": "run.json",
+      "sha256": "0d2704ef4dd8cab12b22149a11c5c2873f59da9ada28859520f8ae2ce11a9757"
+    },
+    {
+      "capture": "m7-p3-po210-fc",
+      "file": "work/probes/P3.txt",
+      "sha256": "ee2ab8576e772188117a88e04b264366bc917ac191c95c2c183660d51dce43d3"
+    },
+    {
+      "capture": "m7-p3-po210-fc",
+      "file": "work/probes/P3in.txt",
+      "sha256": "004e5ac987562fe717b43521a4f693286637b4a4c5e9306d3816930ded6c344b"
+    },
+    {
+      "capture": "m7-p3-pu240-n",
+      "file": "run.json",
+      "sha256": "7725ab43967fef8f0e36fe0d171b5bca72233e2df24cb3673097356ffae52964"
+    },
+    {
+      "capture": "m7-p3-pu240-n",
+      "file": "work/probes/P3.txt",
+      "sha256": "23b136d69d6412876e083e81f51dfefd758fed03d72692b92ea21becea871377"
+    },
+    {
+      "capture": "m7-p3-pu240-n",
+      "file": "work/probes/P3in.txt",
+      "sha256": "fed32b8e82d6d4f7607e37eaa43ea0af83ff2324fca828282c3a17294723d2bf"
+    },
+    {
+      "capture": "m7-p3-rn215-n",
+      "file": "run.json",
+      "sha256": "f2f413000396c3a4d61e9b8cd8784fcd9844c45e58e79f8fade80ac39cf03d08"
+    },
+    {
+      "capture": "m7-p3-rn215-n",
+      "file": "work/probes/P3.txt",
+      "sha256": "c0e28b29e35b1e5243a89ff9ae6c777c258ac3315b45ba59f0b0fff02140f735"
+    },
+    {
+      "capture": "m7-p3-rn215-n",
+      "file": "work/probes/P3in.txt",
+      "sha256": "24333aa8e439bdaf880646bf9d46cf12e5431d527ea4cf531e7d9a1495ddab7a"
+    },
+    {
+      "capture": "m7-p3-sg264-sf",
+      "file": "run.json",
+      "sha256": "add398a8ca256758a2a53d51858b951a11340e3d0dd47e37e7c7d6bc2d5b51fb"
+    },
+    {
+      "capture": "m7-p3-sg264-sf",
+      "file": "work/probes/P3.txt",
+      "sha256": "be02867527318f6b7f928cbec7bfa4097ca9d8652e0102f2c20292d5df2ffa5e"
+    },
+    {
+      "capture": "m7-p3-sg264-sf",
+      "file": "work/probes/P3in.txt",
+      "sha256": "a32828e9bb233302050ea3db9ea85df0988bdec63839c2540cc54c05bbbe068c"
+    },
+    {
+      "capture": "m7-p3-spectra",
+      "file": "run.json",
+      "sha256": "7ec7a3716bdd917d72a9a3b37f1b169ab8597b11c026fd64ededd43431762afe"
+    },
+    {
+      "capture": "m7-p3-spectra",
+      "file": "work/probes/P3.txt",
+      "sha256": "2ca7222a0488d6cc90eb6268a522d51a2bcd82696e99e549d23a6ad7144b7ead"
+    },
+    {
+      "capture": "m7-p3-spectra",
+      "file": "work/probes/P3in.txt",
+      "sha256": "4a43bef4d5041081324856d85b6e1c1f6452e6322ab8b397aa06f1fdbcc8685d"
+    },
+    {
+      "capture": "m7-p3-u-heavy-light",
+      "file": "run.json",
+      "sha256": "bc7a407d5abe1d0b20404966f4250ec8b7a435aa2f4114f751a1334814d2816e"
+    },
+    {
+      "capture": "m7-p3-u-heavy-light",
+      "file": "work/probes/P3.txt",
+      "sha256": "d4e6e88e1765e41bb175baa10afa632237b78a6666af8c3610ceafd38455fcfb"
+    },
+    {
+      "capture": "m7-p3-u-heavy-light",
+      "file": "work/probes/P3in.txt",
+      "sha256": "307e5baa1562733c469103e92f094c664b6196b7daefa877cc033495b980a5f7"
+    },
+    {
+      "capture": "m7-p3-u236-9",
+      "file": "run.json",
+      "sha256": "b11f87ad9730fbd498f909dd055add14648ab3aac60ebdc607e35a1160b6f9cb"
+    },
+    {
+      "capture": "m7-p3-u236-9",
+      "file": "work/probes/P3.txt",
+      "sha256": "b78622be4cddd0132f5d7304356992f4be94a49911f2c82b68b0d4f7350e855f"
+    },
+    {
+      "capture": "m7-p3-u236-9",
+      "file": "work/probes/P3in.txt",
+      "sha256": "977857fbe0f583279961d1ea9c16049d6177535f7c4cccc06ca60b73bac80b28"
+    },
+    {
+      "capture": "m7-p3-u236-eoscale",
+      "file": "run.json",
+      "sha256": "12ea5126a43c296fc16e1c37fbb1103db99a087044ca99a55ebec46f1aec7ab5"
+    },
+    {
+      "capture": "m7-p3-u236-eoscale",
+      "file": "work/probes/P3.txt",
+      "sha256": "e94a260bcef0e0923112c92ebcb89e507137618f10030ce0801ed0baee66439b"
+    },
+    {
+      "capture": "m7-p3-u236-eoscale",
+      "file": "work/probes/P3in.txt",
+      "sha256": "1db68330ab9e50ba594c9e61ad7c105cd98f68d9252c20ef0844bea3bd83aa13"
+    },
+    {
+      "capture": "m7-p3-u236-mode",
+      "file": "run.json",
+      "sha256": "f46c6df95d35c052e575a7ee68900bde105d257b0fcf62ed9e1b16cc9a123bf0"
+    },
+    {
+      "capture": "m7-p3-u236-mode",
+      "file": "work/probes/P3.txt",
+      "sha256": "42a4dd11a2517a0f8167e42b0ebc2c93da8747173dc3ef1403bc5fb525924cbf"
+    },
+    {
+      "capture": "m7-p3-u236-mode",
+      "file": "work/probes/P3in.txt",
+      "sha256": "f5e7065e7fc43642e857c98581b6f26865a0a8dd61b8173d64b4c88bd560d69f"
+    },
+    {
+      "capture": "m7-p3-u236-n",
+      "file": "run.json",
+      "sha256": "d3ca8ccb7df68a161049df42cebd2ea3536dbb575cb58a4803f247a446e5cb65"
+    },
+    {
+      "capture": "m7-p3-u236-n",
+      "file": "work/probes/P3.txt",
+      "sha256": "b4ae76dc5c45970ab5741f4bf40adc89df48d1832181a8a6a2f6f70edde93abc"
+    },
+    {
+      "capture": "m7-p3-u236-n",
+      "file": "work/probes/P3in.txt",
+      "sha256": "a50846079a18dcb769a3216e223d8a65d3e4a61954a26289a673c9dea8a1b25f"
+    },
+    {
+      "capture": "m7-p3-u236-neo",
+      "file": "run.json",
+      "sha256": "b9d00bc317e575fb73f58d4a2588946861f3b50f5640df5c320c805fdf500086"
+    },
+    {
+      "capture": "m7-p3-u236-neo",
+      "file": "work/probes/P3.txt",
+      "sha256": "206033a1ba5e83d730dc3867602d63162ba8912a149a1d2ad18face6eba39f8c"
+    },
+    {
+      "capture": "m7-p3-u236-neo",
+      "file": "work/probes/P3in.txt",
+      "sha256": "c90c413898a176732ed6ee8fc9a9b342409988a0fd88f04c7659fa0256260fd6"
+    },
+    {
+      "capture": "m7-p3-u236-nosupp",
+      "file": "run.json",
+      "sha256": "43b00a5d98908759eacb8c2084e7c43c6b9b25dc3844ca25a76eb6e0b672cf7c"
+    },
+    {
+      "capture": "m7-p3-u236-nosupp",
+      "file": "work/probes/P3.txt",
+      "sha256": "ad5be2585ebfed6daaf095b0ffd0a73860cc3692eb1f1f8ee70407600b571bfa"
+    },
+    {
+      "capture": "m7-p3-u236-nosupp",
+      "file": "work/probes/P3in.txt",
+      "sha256": "b83b58f64fb9c07e1ba034997e49510d475f1f4e463cf6492809ae1b1fe9d91a"
+    }
+  ],
+  "tool": "python3 -m harness.p3_golden"
+}

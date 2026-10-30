@@ -1,0 +1,89 @@
+{
+  "created_utc": "2026-10-29T15:47:50Z",
+  "file_count": 46,
+  "files": {
+    "run.json": "b11f87ad9730fbd498f909dd055add14648ab3aac60ebdc607e35a1160b6f9cb",
+    "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout.log": "22bf783d18b776a99730073e77320fbefe0c4642b9bc6861b468d80e2a6db778",
+    "work/ctl/done.ctl": "21bb4b870e0000a748b209aa837a570e62066cc1411100f871dbe7915eab356f",
+    "work/ctl/sync.ctl": "082f1b30dfd690d2eb56f15099a07810daa4555b553e0f0a8f7cb61e5f0aff94",
+    "work/ctl/thread.ctl": "65d4faa6e352a52853aae4bf04a895417c1e067b3f092cf5f6a3295dc53771ff",
+    "work/dmp/Z92_A236_n_E9MeV/Apost.dmp": "d9350765cb9d02f3f89a3e18c892a265daf59fd4969ea7d87e4edf6da0a4d864",
+    "work/dmp/Z92_A236_n_E9MeV/Apre.dmp": "a506a4a04ed907d67d3e3d7e78c857447dcfcf18c8d113bf835f6e9f9c85b57b",
+    "work/dmp/Z92_A236_n_E9MeV/Aprov.dmp": "baa0034881724d8f6c545e02e6b3a0499e60ec8ce88bd47970bcd6af0d37d05f",
+    "work/dmp/Z92_A236_n_E9MeV/DNlocal.dmp": "5161a08f8d458eafdcb446b243a98352e7ecc0d05b04a1f7b7f121f52c24a357",
+    "work/dmp/Z92_A236_n_E9MeV/DPlocal.dmp": "3b881aa8a095783d8b1cc7f75c516c1cfa1430dddd1e59a63585c6f8576b8ac4",
+    "work/dmp/Z92_A236_n_E9MeV/Decay.dmp": "54fa9fa69f952f39b5776b5f0bd1492cc29e27fb63e6c17b2fb03741d9c04449",
+    "work/dmp/Z92_A236_n_E9MeV/EMpot.dmp": "90d5086027ae02c89d45cd3d2a9d6d4c1ee9beb4efab46fc573661736dd49de5",
+    "work/dmp/Z92_A236_n_E9MeV/EN.dmp": "94159ef9d84c7fbcdacabf9cdcd259668d4af5387168903575a6cff1af43b050",
+    "work/dmp/Z92_A236_n_E9MeV/Eexc.dmp": "33d14721be594a4c0c63872f71b5a6d3aef49eb94298609f252d14969aafd5f0",
+    "work/dmp/Z92_A236_n_E9MeV/Egamma.dmp": "62ddeb72ab3397c1a45ef4331bb28d2c70eb6198c42b80278b9101975fd40c41",
+    "work/dmp/Z92_A236_n_E9MeV/Ekin.dmp": "ed22212e97a3e2ca9c47b32882fad3a42312eb2c25268a43028dbe76c93f4ca2",
+    "work/dmp/Z92_A236_n_E9MeV/Multichance.dmp": "e3fc70098e1377d5d6cb8b05e175bb10aa4b79823e10a100934ac6200952a0e3",
+    "work/dmp/Z92_A236_n_E9MeV/NA.dmp": "cbb2ec0c4282e43fd66652877e6b69c1753a955e12681b4115db28f21fd04a74",
+    "work/dmp/Z92_A236_n_E9MeV/NN.dmp": "dd9f2d159892d0fdc707d980e8b7c65de631b504441448d38896853b4917a88f",
+    "work/dmp/Z92_A236_n_E9MeV/NP.dmp": "2462907265679797c24e2b4580ac832eef507247951ca1bd728bf1d4850fac73",
+    "work/dmp/Z92_A236_n_E9MeV/Ngammatot.dmp": "40b34b6cfb1b56459c3b0cf0b9bfc75c482ab80028887178f49d6fee72ed61cd",
+    "work/dmp/Z92_A236_n_E9MeV/Npost.dmp": "cbde491831e08e365f1e7131fe15f3af6352568c9975d6515181137a72d3521c",
+    "work/dmp/Z92_A236_n_E9MeV/Npre.dmp": "3c30649b1567191e36267bd3ba5e87d744a5efdcf4eb8d0844dd7eb8eb791fff",
+    "work/dmp/Z92_A236_n_E9MeV/Qvalues.dmp": "13654edb5fa902e8734847865bb77de7a731445c77f94040c8a4c9ad2d14b8b2",
+    "work/dmp/Z92_A236_n_E9MeV/SigmaZpost.dmp": "0b9e117883fb59fd09b18c45b55e8d6186d03e71e184aed986d449317f029462",
+    "work/dmp/Z92_A236_n_E9MeV/SigmaZpre.dmp": "f3fe1c43bb7118e6579d4916dd8a76cf831a81405ec33439260893bd9aef0444",
+    "work/dmp/Z92_A236_n_E9MeV/XE.dmp": "5754b57e143e03ba8181f9c9ef1f5105c65de8d4d921b0b2874aadb8b47c1ab4",
+    "work/dmp/Z92_A236_n_E9MeV/ZApost.dmp": "39c077474be2ba481d4d76191dfc1f2c0c327ba7c82b7d015ede274720a93659",
+    "work/dmp/Z92_A236_n_E9MeV/ZApre.dmp": "621b36569038ed65dcf888c2d0ae9a92fd6541d6bbad4bf2b7d38dc63c80b371",
+    "work/dmp/Z92_A236_n_E9MeV/ZPolarpost.dmp": "90e74d3233ae5f65c0210f066fb096fce232164e8c38c662d2eec81813df105d",
+    "work/dmp/Z92_A236_n_E9MeV/ZPolarpre.dmp": "71b20dc27d04db4248e34b6b84c65e1b2e977ae65bc11b543c7a0e2fcc9b6e5e",
+    "work/dmp/Z92_A236_n_E9MeV/Zpost.dmp": "60d3f5ff360a62fa1c100be0ba83de71f8f4b42205e66bef27836a2ca2dac4d9",
+    "work/file.in": "f83002b8a43080dd46e730a8ea21d4b281cac0b80a1ac6e57485ab140b5d6c34",
+    "work/in/u236_9.in": "321f2ed1a1abcef3c07f45e4c3c1b1d9677b62cddfb998dd9eda4d7732f25ad7",
+    "work/out/GEF_92_236_n.dat": "5d171ff22489d79b9ade10f8ec61e108e41ec29ef94a3c0cdd0ee7b2cacf13d2",
+    "work/probes/P0.txt": "2f68eb662981ec6d2b2f84440f2e0674fe3524999ece34231926b211282bd381",
+    "work/probes/P1.txt": "c41700efb7691f9668c896d79402d9a84e32a3eb4c03af1e7d0483321c5714ff",
+    "work/probes/P1b.txt": "6ef6d425acf46e1ab2919edd421d1c64d18f206668dff78209aa4fc742e982f6",
+    "work/probes/P2.txt": "77ae2c91f2d61e627e29890bd7dc1656b9ef18e5be2b9fba059396be09b09574",
+    "work/probes/P3.txt": "b78622be4cddd0132f5d7304356992f4be94a49911f2c82b68b0d4f7350e855f",
+    "work/probes/P3in.txt": "977857fbe0f583279961d1ea9c16049d6177535f7c4cccc06ca60b73bac80b28",
+    "work/tmp/GEF_92_236_n.par": "d85eee9ab2b17dc36b5b273b6c5e26814821053c48c04e7a700a0e7857204030",
+    "work/tmp/ParameterUpdate.dat": "ead8c90fbe43153c4ac87145a2e57de7fd01401f6123268910f98a06066200df",
+    "work/tmp/Z92_A236_n_E9MeV.ptb": "b3c689cb73d77f921e17a0987313e374ae831c80f5bc37e36072df0479fb7a71",
+    "work/tmp/Z92_A236_n_E9MeV_Single.mvd": "64039fb14a5d4ff1c3c340796dd37198225cf2243ac30fe0a38418a9a310a2cf"
+  },
+  "id": "m7-p3-u236-9",
+  "kind": "capture",
+  "note": "M7.0 capture of harness/inputs/m7/corpus.toml entry u236-9 (seed-probes-9ddf9e1b6099, -d GEF_PROBES)",
+  "run_json": {
+    "binary": {
+      "build_id": "seed-probes-9ddf9e1b6099",
+      "path": "/home/aurja/Programming/GEF_Cpp/build/harness/seed-probes-9ddf9e1b6099/GEF",
+      "sha256": "54b0e32ba44e705714d689314ea38b1230929de7233421549af240351a8cf793"
+    },
+    "command": [
+      "/home/aurja/Programming/GEF_Cpp/build/harness/seed-probes-9ddf9e1b6099/GEF"
+    ],
+    "cwd": "/home/aurja/Programming/GEF_Cpp/build/m7_corpus_u9/u236-9/work",
+    "end_utc": "2026-10-29T15:21:25+00:00",
+    "env_set": {
+      "GEF_SEED": "20261047",
+      "GEF_TRACE_PASSES": "0",
+      "GEF_TRACE_STEPS": "1"
+    },
+    "exit_code": 0,
+    "file_in": {
+      "sha256": "f83002b8a43080dd46e730a8ea21d4b281cac0b80a1ac6e57485ab140b5d6c34"
+    },
+    "input": {
+      "dest": "in/u236_9.in",
+      "name": "u236_9.in",
+      "sha256": "321f2ed1a1abcef3c07f45e4c3c1b1d9677b62cddfb998dd9eda4d7732f25ad7"
+    },
+    "mode": "normal",
+    "reseed": false,
+    "schema": 1,
+    "seed": 20261047,
+    "start_utc": "2026-10-29T15:19:59+00:00",
+    "wall_time_s": 86.024
+  },
+  "schema": 1,
+  "total_bytes": 479850325
+}

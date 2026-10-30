@@ -1,0 +1,234 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2026 Aurora Jahan
+# Licensed under the GNU GPL v3 or later, WITHOUT ANY WARRANTY; see LICENSE.txt.
+# M7 table-builder captures (MILESTONE_7_PLAN.md D5), written by hand. Schema: harness/corpus.py.
+# Every entry: Fenhance 1, its own seed and GEF_TRACE_STEPS/GEF_TRACE_PASSES; captured with a
+# seed-probes build (-d GEF_PROBES) into store entry m7-p3-<id> (python3 -m harness.corpus run
+# --manifest m7). `cells` names COVERAGE_MATRIX.md rows; `chain` marks the D2 end-to-end runs.
+
+[[entry]]
+id = "rn215-n"
+group = "m7"
+input = "harness/inputs/m7/rn215_n.in"
+seed = 20261029
+steps = "1-2"
+passes = "0"
+timeout_s = 3600
+cells = ["Pre-actinides (Z = 86–88, e.g. Rn-215)", "Odd-Z and/or odd-N", "Thermal (0.0253 eV)"]
+note = "Rn-215 (n,f), Options(ERR): the thermal first-chance bin and the 30 MeV multi-chance bins of perturbed pass 0 (D3, D4)"
+
+[[entry]]
+id = "u236-n"
+group = "m7"
+input = "harness/inputs/m7/u236_n.in"
+seed = 20261030
+steps = "1-2"
+passes = "0"
+timeout_s = 3600
+cells = ["Actinides (Z = 89–98; U-235, U-238, Pu-239 n-induced)", "Even-Z / even-N", "Thermal (0.0253 eV)", "Fast, first-chance only (below `Eexc_min_multi`)"]
+note = "U-235 (n,f) nominal at thermal and 2 MeV (fast first chance)"
+
+[[entry]]
+id = "u236-9"
+group = "m7"
+input = "harness/inputs/m7/u236_9.in"
+seed = 20261047
+steps = "1"
+passes = "0"
+timeout_s = 3600
+cells = ["Actinides (Z = 89–98; U-235, U-238, Pu-239 n-induced)"]
+note = "U-235 (n,f) at 9 MeV, Options(ERR): the first- and second-chance bins of perturbed pass 0 (D3, D4; 14 MeV writes 111 bins, about 830 MB)"
+
+[[entry]]
+id = "pu240-n"
+group = "m7"
+input = "harness/inputs/m7/pu240_n.in"
+seed = 20261031
+steps = "1"
+passes = "0"
+timeout_s = 3600
+cells = ["Actinides (Z = 89–98; U-235, U-238, Pu-239 n-induced)", "Even-Z / even-N", "Thermal (0.0253 eV)"]
+note = "Pu-239 (n,f) thermal: S1 enhancement around Pu (GEF.bas:6105)"
+
+[[entry]]
+id = "np238-n"
+group = "m7"
+input = "harness/inputs/m7/np238_n.in"
+seed = 20261032
+steps = "1"
+passes = "0"
+timeout_s = 3600
+cells = ["Actinides (Z = 89–98; U-235, U-238, Pu-239 n-induced)", "Odd-Z and/or odd-N", "Thermal (0.0253 eV)"]
+note = "Np-237 (n,f) thermal: odd-odd compound nucleus"
+
+[[entry]]
+id = "cf252-sf"
+group = "m7"
+input = "harness/inputs/m7/cf252_sf.in"
+seed = 20261033
+steps = "1"
+passes = "0"
+timeout_s = 3600
+cells = ["Actinides (Z = 89–98; U-235, U-238, Pu-239 n-induced)", "Even-Z / even-N"]
+note = "Cf-252 spontaneous fission"
+
+[[entry]]
+id = "fm258-sf"
+group = "m7"
+input = "harness/inputs/m7/fm258_sf.in"
+seed = 20261034
+steps = "1"
+passes = "0"
+timeout_s = 3600
+cells = ["Heavy actinides / transfermium (Z = 99–103, sf)", "Even-Z / even-N"]
+note = "Fm-258 spontaneous fission (symmetric)"
+
+[[entry]]
+id = "sg264-sf"
+group = "m7"
+input = "harness/inputs/m7/sg264_sf.in"
+seed = 20261035
+steps = "1"
+passes = "0"
+timeout_s = 3600
+cells = ["Superheavies (Z = 104–106 reference range; up to Z = 120 in T1 grids)", "Even-Z / even-N"]
+note = "Sg-264 spontaneous fission"
+
+[[entry]]
+id = "ds270-sf"
+group = "m7"
+input = "harness/inputs/m7/ds270_sf.in"
+seed = 20261036
+steps = "1"
+passes = "0"
+timeout_s = 3600
+cells = ["Superheavies (Z = 104–106 reference range; up to Z = 120 in T1 grids)", "Even-Z / even-N"]
+note = "Ds-270 spontaneous fission: a system at Z >= 110; Beta_Equi (GEF.bas:5722) prints its non-convergence message once (Q-041)"
+
+[[entry]]
+id = "u-heavy-light"
+group = "m7"
+input = "harness/inputs/m7/u_heavy_light.in"
+seed = 20261037
+steps = "1"
+passes = "0"
+timeout_s = 3600
+cells = ["Light vs. heavy isotopes of one element", "State persisting across energy steps (incl. stale `Z`, `EPART`/`PEOZ`/`PEON`)"]
+chain = true
+note = "U-240 then U-230, FC at E* = 8 MeV in one sequence file: what the heavy system leaves for the light one"
+
+[[entry]]
+id = "hg180-fc"
+group = "m7"
+input = "harness/inputs/m7/hg180_fc.in"
+seed = 20261038
+steps = "1"
+passes = "0"
+timeout_s = 3600
+cells = ["Very low fissility"]
+note = "Hg-180 FC at E* = 12 MeV"
+
+[[entry]]
+id = "po210-fc"
+group = "m7"
+input = "harness/inputs/m7/po210_fc.in"
+seed = 20261039
+steps = "1"
+passes = "0"
+timeout_s = 3600
+cells = ["Very low fissility"]
+note = "Po-210 FC at E* = 40 MeV (high excitation energy, mode 5)"
+
+[[entry]]
+id = "u236-nosupp"
+group = "m7"
+input = "harness/inputs/m7/u236_nosupp.in"
+seed = 20261040
+steps = "1"
+passes = "0"
+timeout_s = 3600
+cells = ["`NOSUPP`"]
+note = "U-235 (n,f) thermal with Options(NOSUPP)"
+
+[[entry]]
+id = "u236-mode"
+group = "m7"
+input = "harness/inputs/m7/u236_mode.in"
+seed = 20261041
+steps = "1"
+passes = "0"
+timeout_s = 3600
+cells = ["`MODE(i)`"]
+note = "U-235 (n,f) thermal with MODE(S2)"
+
+[[entry]]
+id = "u236-neo"
+group = "m7"
+input = "harness/inputs/m7/u236_neo.in"
+seed = 20261042
+steps = "1"
+passes = "0"
+timeout_s = 3600
+cells = []
+note = "U-235 (n,f) thermal with Options(NEO): EOscale 0"
+
+[[entry]]
+id = "u236-eoscale"
+group = "m7"
+input = "harness/inputs/m7/u236_eoscale.in"
+work_files = [{ src = "harness/inputs/m7/Fitpar_eoscale.dat", dest = "Fitpar.dat" }]
+seed = 20261043
+steps = "1"
+passes = "0"
+timeout_s = 3600
+cells = []
+note = "U-235 (n,f) thermal with a Fitpar.dat setting EOscale = 0.5 (Q-011)"
+
+[[entry]]
+id = "spectra"
+group = "m7"
+input = "harness/inputs/m7/lists/spectra.in"
+tree = "harness/inputs/m7"
+file_in = "harness/inputs/m7/lists/spectra.in"
+seed = 20261044
+steps = "1"
+passes = "0"
+timeout_s = 3600
+cells = []
+note = "U-236 ES then Pu-240 EM with a three-column spectrum: the print of GEF.bas:5584, Spin_CN from the spectrum, then the EM bins (multi-chance loops) with Spin_CN = 0 (5552)"
+
+[[entry]]
+id = "chain-en"
+group = "m7"
+input = "harness/inputs/m7/chain_en.in"
+seed = 20261045
+steps = "1-3"
+passes = "0"
+timeout_s = 3600
+cells = ["Thermal (0.0253 eV)", "Fast, first-chance only (below `Eexc_min_multi`)", "State persisting across energy steps (incl. stale `Z`, `EPART`/`PEOZ`/`PEON`)"]
+chain = true
+note = "D2 chain: U-235 and Pu-239 (n,f) at thermal, 0.5 and 1.5 MeV, nominal, first chance only"
+
+[[entry]]
+id = "chain-odd"
+group = "m7"
+input = "harness/inputs/m7/chain_odd.in"
+seed = 20261049
+steps = "1-3"
+passes = "0"
+timeout_s = 3600
+cells = ["Odd-Z and/or odd-N", "State persisting across energy steps (incl. stale `Z`, `EPART`/`PEOZ`/`PEON`)"]
+chain = true
+note = "D2 chain: Np-237 and Am-241 (n,f) (odd-odd CN) at thermal, 0.5 and 1.5 MeV, nominal; no step runs the multi-chance pre-pass (P2 Bmulti 0)"
+
+[[entry]]
+id = "fm212-sf"
+group = "m7"
+input = "harness/inputs/m7/fm212_sf.in"
+seed = 20261048
+steps = "1"
+passes = "0"
+timeout_s = 3600
+cells = ["Heavy actinides / transfermium (Z = 99–103, sf)", "Even-Z / even-N"]
+note = "Fm-212 GS: Beta_Equi (GEF.bas:5722) does not converge for IZ1 = 10 and prints to f = 0, the console (Q-041, plan D6)"
+

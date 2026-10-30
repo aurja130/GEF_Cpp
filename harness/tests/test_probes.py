@@ -275,13 +275,85 @@ def test_p1b_skip_writes_the_same_variables_as_p1b() -> None:
     )
 
 
+# Declared by the bin block of GEF.bas:5577 (Dim/ReDim inside the If): absent at P3in.
+P3IN_BIN_LOCALS = (
+    "Escission_lim",
+    "T_Rusanov",
+    "R_E_intr_S1",
+    "R_E_intr_S2",
+    "R_E_intr_S3",
+    "R_E_intr_S4",
+    "R_E_intr_S5",
+    "R_Att",
+    "R_Att_Sad",
+    "E_coll_saddle",
+)
+# Read before written by the table builder but loaded once before T0 and never written again.
+P3IN_T0_TABLES = frozenset({"BEexp", "BEldmTF", "ShellMO"})
+
+
+def test_p3in_writes_p3s_variables_without_the_bin_locals_then_its_own_group() -> None:
+    files = _patch_new_files()
+    p3 = _emitted_names(files["harness_probe_p3.bi"])
+    p3in = _emitted_names(files["harness_probe_p3in.bi"])
+    section = _md_section("P3in")
+    table_rows = [ln for ln in section.splitlines() if ln.startswith("|")]
+    own = [n for ln in table_rows for n in re.findall(r"`([A-Za-z_][\w.]*)`", ln)]
+    assert set(P3IN_BIN_LOCALS) <= set(p3)
+    assert p3in == [n for n in p3 if n not in P3IN_BIN_LOCALS] + own
+    assert not set(own) & set(p3)
+    for name in P3IN_BIN_LOCALS:
+        assert f"`{name}`" in section
+
+
+def test_every_probe_has_its_own_id_and_counter() -> None:
+    begins = [
+        (m.group(1), m.group(2), name)
+        for name, text in _patch_new_files().items()
+        if (m := re.search(r'HP_Begin\((\d+), "(\w+)"', text)) is not None
+    ]
+    ids = {probe: counter for counter, probe, _ in begins}
+    assert ids == {"T0": "0", "P1": "1", "P2": "2", "P3": "3", "P0": "4", "P1b": "5", "P3in": "6"}
+    for _, probe, name in begins:
+        assert name in (f"harness_probe_{probe.lower()}.bi", "harness_probe_p1b_skip.bi")
+    assert "HP_Count(0 To 6)" in _patch_new_files()["harness_probes.bi"]
+
+
 def test_every_probe_group_names_a_consumer() -> None:
-    for probe in ("T0", "P0", "P1", "P1b", "P2", "P3"):
+    for probe in ("T0", "P0", "P1", "P1b", "P2", "P3in", "P3"):
         section = _md_section(probe)
         groups = re.findall(r"^### .*$", section, re.M)
         assert groups
         assert section.count("Consumer: ") == len(groups)
         assert "Consumer: ?" not in section
+
+
+@needs_source
+@pytest.mark.fbc
+def test_p3in_covers_the_read_before_write_set_of_the_table_builder() -> None:
+    """G1 of MILESTONE_7_PLAN.md: everything the builder reads before writing it is in P3in or
+    is a T0 table; the P3 variables P3in leaves out are declared inside the builder's block."""
+    from tools.fbsrc.rbw import analyse, basic_spelling, c_span, program_for
+    from tools.toolchain.fbc import FbcError, resolve_fbc
+
+    try:
+        resolve_fbc()
+    except FbcError:
+        pytest.skip("pinned fbc is not available")
+    analysis = analyse("GEF.bas:5578-7920")
+    program = program_for()
+    read = {basic_spelling(program, r.variable).upper() for r in analysis.reads}
+    p3in = {n.upper() for n in _emitted_names(_patch_new_files()["harness_probe_p3in.bi"])}
+    assert read - p3in == {n.upper() for n in P3IN_T0_TABLES}
+    assert analysis.statics == {
+        "BFTF": ("AME2020.IZAEHL$1",),
+        "BFTFA": ("AME2020.IZAEHL$1",),
+        "BFTFB": ("AME2020.IZAEHL$1",),
+        "U_TEMP": ("U_TEMP.FGAMMA$1",),
+    }
+    start, end = c_span(program, "GEF.bas", 5578, 7920)
+    inside = {basic_spelling(program, v).upper() for v in program.declared(start, end)}
+    assert {n.upper() for n in P3IN_BIN_LOCALS} <= inside
 
 
 def test_probe_files_are_guarded_by_gef_probes() -> None:
@@ -356,7 +428,7 @@ def test_probes_patch_applies_in_every_patch_set(tmp_path: Path, patchset: str) 
     _apply(src, PROBES_PATCH)
     with_probes = (src / "GEF.bas").read_bytes().splitlines()
     inserted = [ln for ln in with_probes if ln.startswith((b'#Include "harness_probe_', b"#line "))]
-    assert len(inserted) == 14
+    assert len(inserted) == 16
     assert [ln for ln in with_probes if ln not in inserted] == without
 
 
@@ -405,7 +477,7 @@ def test_probes_build_and_write_every_probe_file(tmp_path: Path) -> None:
     )
     probe_dir = outcome.work_dir / "probes"
     names = sorted(p.name for p in probe_dir.iterdir())
-    assert names == ["P0.txt", "P1.txt", "P1b.txt", "P2.txt", "P3.txt", "T0.txt"]
+    assert names == ["P0.txt", "P1.txt", "P1b.txt", "P2.txt", "P3.txt", "P3in.txt", "T0.txt"]
     t0 = read_probe_file(probe_dir / "T0.txt")[0]
     assert t0.scalar("N_MAT_MAX") == 3852
     assert t0.var("NucTab.I_Z").get((1,)) == 0 and t0.var("BEldmTF").bounds == ((0, 203), (0, 136))
@@ -413,6 +485,11 @@ def test_probes_build_and_write_every_probe_file(tmp_path: Path) -> None:
     assert (p1.scalar("P_Z_CN"), p1.scalar("P_A_CN"), p1.scalar("Emode")) == (86, 215, 2)
     p3 = read_probe_file(probe_dir / "P3.txt")[0]
     assert p3.bin == (1, 0, 0, 0) and p3.pass_ == 0
+    p3in = read_probe_file(probe_dir / "P3in.txt")
+    assert [(r.step, r.pass_, r.bin) for r in p3in] == [
+        (r.step, r.pass_, r.bin) for r in read_probe_file(probe_dir / "P3.txt")
+    ]
+    assert p3in[0].scalar("NEVTused") == p3.scalar("NEVTused")
     p1b = read_probe_file(probe_dir / "P1b.txt")[0]
     p2 = read_probe_file(probe_dir / "P2.txt")[0]
     assert p1b.scalar("Eexc_min_multi") == p2.scalar("Eexc_min_multi")

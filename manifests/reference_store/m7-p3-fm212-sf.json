@@ -1,0 +1,87 @@
+{
+  "created_utc": "2026-10-29T15:50:36Z",
+  "file_count": 44,
+  "files": {
+    "run.json": "7f9b599857a9249cde80f9538083347b127537c913f47148d0cfd81374fea360",
+    "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout.log": "bcc56a884b95a7d0e2db68dbc6c8a64a24a72252f0d70e86be8ab06f4a252d88",
+    "work/ctl/IMATmax.ctl": "9ec63cc69e6196a2470c51ead3742cb0326d1f7bbee861c522f5e3b878af54fe",
+    "work/ctl/done.ctl": "eea93cc3051a30ca647103711dd420c9b471556cbd6a7e7c7347003ef8b7b29c",
+    "work/ctl/sync.ctl": "082f1b30dfd690d2eb56f15099a07810daa4555b553e0f0a8f7cb61e5f0aff94",
+    "work/ctl/thread.ctl": "b45306593ecfa78a07c4025e2e448910e5c2b889f547006d6cb3ddb81e9d205a",
+    "work/dmp/Z100_A212_sf_E0MeV/Apost.dmp": "7c9831018ff06063aa833b872076a498110a6e3c975aff808d128684f49130d3",
+    "work/dmp/Z100_A212_sf_E0MeV/Apre.dmp": "b0cc391b4d96c77a99c2e153dc11136a333de455f00ce65976b724637df19f97",
+    "work/dmp/Z100_A212_sf_E0MeV/Aprov.dmp": "4abcdb1b796d0011cd0193349dec5e0900d55ed36fcdc43fe39f68c543f00503",
+    "work/dmp/Z100_A212_sf_E0MeV/DNlocal.dmp": "c6f2d8b0b56841fd854a0bae0b47fda0b8b15029890ef9ca5fd840bb636f56c8",
+    "work/dmp/Z100_A212_sf_E0MeV/DPlocal.dmp": "59fab7badb7371ab932e350519fb1a95fc7134adcc061295477b23309e98b839",
+    "work/dmp/Z100_A212_sf_E0MeV/Decay.dmp": "60ca3aeaa282e6f99e4f3740f0dda86d1b23fe188bb8ee20073708d1faa9ce71",
+    "work/dmp/Z100_A212_sf_E0MeV/EMpot.dmp": "ced64b532ef1c6902b8759a14d76bfc229b483f7984e01c239a775a94598bf12",
+    "work/dmp/Z100_A212_sf_E0MeV/EN.dmp": "f9b1bdaa13026c851d35615421009aaa0d0ac42c3ee35bf79cea80e34ad0dbd9",
+    "work/dmp/Z100_A212_sf_E0MeV/Eexc.dmp": "36934c379bd22fdcecf8cf181ce6ef537b676743dd53c3612c5c6145d8aebb4a",
+    "work/dmp/Z100_A212_sf_E0MeV/Egamma.dmp": "cafe1c107bbfc711f3c82fae891db10a1f7c67238239396066816fdc69427561",
+    "work/dmp/Z100_A212_sf_E0MeV/Ekin.dmp": "d1e2e6a39cc0f3a151ef826546598e01103634ad8ccda6a81a89b257302cf0ed",
+    "work/dmp/Z100_A212_sf_E0MeV/Multichance.dmp": "6ed8d3d9830040bc3c13183ddcba20ef253b06888163062ba9ce1024501a850b",
+    "work/dmp/Z100_A212_sf_E0MeV/NA.dmp": "881382f2638542f24b1cde910b293ec3b1996fb2fdac76460e819b4b2bcbf6a2",
+    "work/dmp/Z100_A212_sf_E0MeV/NN.dmp": "5c3b4897b78acd49441dd62f38e100a93b2eaf2257bf72476fdcaa1f71d63b35",
+    "work/dmp/Z100_A212_sf_E0MeV/NP.dmp": "65d2df116ebb6a23e35556f937abe0ce7e6b2fc22ab975f6a0471c95ec06ec2a",
+    "work/dmp/Z100_A212_sf_E0MeV/Ngammatot.dmp": "b8d05eda70ce9681847e31f73f9dccfc2d1db8077f33a46006983d7f34f4e319",
+    "work/dmp/Z100_A212_sf_E0MeV/Npost.dmp": "d8aff1b27aebbaa54de510942f9ae6b48bd0dbb7f13a4c6cd34350df0a96c078",
+    "work/dmp/Z100_A212_sf_E0MeV/Npre.dmp": "d98d8d1e24b234ca536717ed5e7529012576efeffe62cf39eb6086596e350a37",
+    "work/dmp/Z100_A212_sf_E0MeV/Qvalues.dmp": "d2f546824bc33b4f197a8a34e9b2fb9a9be1745846b4a129d064281446b2c653",
+    "work/dmp/Z100_A212_sf_E0MeV/SigmaZpost.dmp": "5b0964823f68ba346688c7ed718254474afd87509bcc9164418f6f44ef7c3cc5",
+    "work/dmp/Z100_A212_sf_E0MeV/SigmaZpre.dmp": "d294f6c3da6a3f8358694877761f5922ee7105598061cb911fef7d8d660bb330",
+    "work/dmp/Z100_A212_sf_E0MeV/XE.dmp": "837f22815214f2f3d7b27ac4e54d165f9680bdf5efefc580173c198902e90a0a",
+    "work/dmp/Z100_A212_sf_E0MeV/ZApost.dmp": "004196c6c803479fffa5d34b762883bfa0fef728877f554facac3eb25c094b1a",
+    "work/dmp/Z100_A212_sf_E0MeV/ZApre.dmp": "8de1d41fe8b4b31c0a164a92c9f5bd2cd2400978cb5c4ddf01cb5262ea46893e",
+    "work/dmp/Z100_A212_sf_E0MeV/ZPolarpost.dmp": "71ab1e737acd3005866ecbabbf456f5b54c40000b9819eaca66f93140968d5da",
+    "work/dmp/Z100_A212_sf_E0MeV/ZPolarpre.dmp": "d2f4fa8e92271e9bac6c8af93eda4b67ce6f7dbe278f7d2b5c2478e30338f553",
+    "work/dmp/Z100_A212_sf_E0MeV/Zpost.dmp": "973682763c298758e804e45a65acbe92eb24e6c8ce4e198e3d5ae6401a9382bd",
+    "work/file.in": "a0306b7e6b4584dca27268d1526450d1e30d1af2857331d6e63e803a95e309c1",
+    "work/in/fm212_sf.in": "220cfc111a3dec1d4611fad23cf891f1bfbfbe5c21a8dcee77c05026a0ce6a97",
+    "work/out/GEF_100_212_sf.dat": "31caae8e7aad7de98386862ab4725a6129bc49ad281a58ac494576441e26625e",
+    "work/probes/P0.txt": "8248931a381d341ee5766d473b312b2466019a0335bf66463629538f75f89b80",
+    "work/probes/P1.txt": "3ca5a2bd367a2bd8f56046f683ca45d376808302951d71af8226d540f8bfd5e7",
+    "work/probes/P1b.txt": "53f2d105b282959801bc3166070e15345a235f5606e0442307b3316c4fbcfea9",
+    "work/probes/P2.txt": "553026020d7ec9bec596d97917ad484b1effda3dfce0bbdfb57bc1ba8d5f7355",
+    "work/probes/P3.txt": "cdaed746d01e4d37fbae7a21cf6620c18be5c8f3966b414254f206e8d1211b6a",
+    "work/probes/P3in.txt": "8807e759b7e2620884c4e77fc502ff8e665dbbb973d7f9950c24452cb3ed41ce",
+    "work/tmp/ParameterUpdate.dat": "8960a27776b0fd3ca5527405259aa9b3717eade6f31c8f0ddd90d7ec991fa2fd"
+  },
+  "id": "m7-p3-fm212-sf",
+  "kind": "capture",
+  "note": "M7.0 capture of harness/inputs/m7/corpus.toml entry fm212-sf (seed-probes-9ddf9e1b6099, -d GEF_PROBES)",
+  "run_json": {
+    "binary": {
+      "build_id": "seed-probes-9ddf9e1b6099",
+      "path": "/home/aurja/Programming/GEF_Cpp/build/harness/seed-probes-9ddf9e1b6099/GEF",
+      "sha256": "54b0e32ba44e705714d689314ea38b1230929de7233421549af240351a8cf793"
+    },
+    "command": [
+      "/home/aurja/Programming/GEF_Cpp/build/harness/seed-probes-9ddf9e1b6099/GEF"
+    ],
+    "cwd": "/home/aurja/Programming/GEF_Cpp/build/m7_corpus_fm/fm212-sf/work",
+    "end_utc": "2026-10-29T15:50:36+00:00",
+    "env_set": {
+      "GEF_SEED": "20261048",
+      "GEF_TRACE_PASSES": "0",
+      "GEF_TRACE_STEPS": "1"
+    },
+    "exit_code": 0,
+    "file_in": {
+      "sha256": "a0306b7e6b4584dca27268d1526450d1e30d1af2857331d6e63e803a95e309c1"
+    },
+    "input": {
+      "dest": "in/fm212_sf.in",
+      "name": "fm212_sf.in",
+      "sha256": "220cfc111a3dec1d4611fad23cf891f1bfbfbe5c21a8dcee77c05026a0ce6a97"
+    },
+    "mode": "normal",
+    "reseed": false,
+    "schema": 1,
+    "seed": 20261048,
+    "start_utc": "2026-10-29T15:50:25+00:00",
+    "wall_time_s": 10.298
+  },
+  "schema": 1,
+  "total_bytes": 6715128
+}

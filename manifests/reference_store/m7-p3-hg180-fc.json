@@ -1,0 +1,86 @@
+{
+  "created_utc": "2026-10-29T15:47:49Z",
+  "file_count": 43,
+  "files": {
+    "run.json": "faebb8aa346fd6305767ecdc4382a8a8f4a79c5bdad075052ad474b8d02fd8c6",
+    "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout.log": "245c690a196d6f83399c49e85e82743cca40cad27296ad27bd342700981b7309",
+    "work/ctl/done.ctl": "c5a9bf22106c1eb7103dabb1edd7bd88f6342fc0e1451ffbae0f8680cb76297f",
+    "work/ctl/sync.ctl": "082f1b30dfd690d2eb56f15099a07810daa4555b553e0f0a8f7cb61e5f0aff94",
+    "work/ctl/thread.ctl": "78c766c92e992d5c5adf0070d8405434e05a0d3846c8cf97f0c9f69d4ce1ae46",
+    "work/dmp/Z80_A180_fc_E12MeV/Apost.dmp": "ee688a0ac58bd7384fb5f197c42c0cae5d4edbd6eeeb8a1527662d1da45ca7c5",
+    "work/dmp/Z80_A180_fc_E12MeV/Apre.dmp": "b1f02246ee18a630bfcd14700af7e80c9599218f969da1ec9d24522e6fd343cc",
+    "work/dmp/Z80_A180_fc_E12MeV/Aprov.dmp": "1336329c2b3290c14462ad02bfd25bc99d898be57ada4142efba2ed8f7d797b8",
+    "work/dmp/Z80_A180_fc_E12MeV/DNlocal.dmp": "5319c376bc34352ba47ded6c47b67104daecc78c2e4da1c77cd525fd49851bed",
+    "work/dmp/Z80_A180_fc_E12MeV/DPlocal.dmp": "d5a004af5dc95386bc6d2edbbd8acaf13c6b1589671a176ffea542cf6915f91f",
+    "work/dmp/Z80_A180_fc_E12MeV/Decay.dmp": "1554000d7de8d082ddfcd425c21360d58c6561a5f70f64ab2d123d43875a8f29",
+    "work/dmp/Z80_A180_fc_E12MeV/EMpot.dmp": "70008fd881eb70dda36af91d4528d124e17ee8922faa583686691ae0c12af365",
+    "work/dmp/Z80_A180_fc_E12MeV/EN.dmp": "72c4e16324cb51faba74a62365bfe5c637651833a379db57cb146d53e119806a",
+    "work/dmp/Z80_A180_fc_E12MeV/Eexc.dmp": "ab2f3e7414ec40a0302a0890460c90e9c9d1198b457c672acd9c1299b6123f22",
+    "work/dmp/Z80_A180_fc_E12MeV/Egamma.dmp": "131fb071d4c27d32144afb0aec218a65e3f57232471fd59ff4d9d63792ab30b2",
+    "work/dmp/Z80_A180_fc_E12MeV/Ekin.dmp": "13a5becd087d33b5eea449b07dc7166d48b4a4a8a185b59f42089f05b2b8de55",
+    "work/dmp/Z80_A180_fc_E12MeV/Multichance.dmp": "6ed8d3d9830040bc3c13183ddcba20ef253b06888163062ba9ce1024501a850b",
+    "work/dmp/Z80_A180_fc_E12MeV/NA.dmp": "0f4ca68ab7bdcc9fd9343d9bad0509a8af066fe5b9c4bd5118752aafb94b2af7",
+    "work/dmp/Z80_A180_fc_E12MeV/NN.dmp": "8e918bd5cd5dbf133feaff5e14b275502b49f39501fb209bca9dd418dd184884",
+    "work/dmp/Z80_A180_fc_E12MeV/NP.dmp": "012ade7758e16e6cd82367a29b6d165fbda9625ff7ae42677b62088136d09e29",
+    "work/dmp/Z80_A180_fc_E12MeV/Ngammatot.dmp": "a08417ab4f0fedd7baf6ea529a26138adedf80676ba6143fee1e0a9913a508dd",
+    "work/dmp/Z80_A180_fc_E12MeV/Npost.dmp": "b944d1f9117380f375e8820ab8dfd3c00b9e6d4290978e6dfd236b330d15ecc0",
+    "work/dmp/Z80_A180_fc_E12MeV/Npre.dmp": "3933c81a49159cbdcff35be31287763a35c649cb53fd5d828b1925691a4a163b",
+    "work/dmp/Z80_A180_fc_E12MeV/Qvalues.dmp": "098b614724a41072a75a69477af90ff21d709e934a5c1ab8d75c99c981d833bf",
+    "work/dmp/Z80_A180_fc_E12MeV/SigmaZpost.dmp": "c96da8c51f0468f1ab3c5f448ab443bb926b50629ec2b14aebe9c357376fd5bd",
+    "work/dmp/Z80_A180_fc_E12MeV/SigmaZpre.dmp": "a7909c8a1b1026a4eb2c5f583424ab316de51a5dfd7543d663d809970e473b35",
+    "work/dmp/Z80_A180_fc_E12MeV/XE.dmp": "b8950a51ffc0fbd87339d591a425c93338d9b560f8978dc5f7c7b45b71ed33b3",
+    "work/dmp/Z80_A180_fc_E12MeV/ZApost.dmp": "ddc24e8ed6e97863d4dab1e7017394a3da4dd5c32e46faaadeb41085a630efc6",
+    "work/dmp/Z80_A180_fc_E12MeV/ZApre.dmp": "ec47bbe3712d737982f52353f963aa83071719abe55a4f46c08bb6862efc056a",
+    "work/dmp/Z80_A180_fc_E12MeV/ZPolarpost.dmp": "95277a0d211ac7ab9d7d8b1fc66c147f43778f4528ad9c53790a3fec86f4a1b5",
+    "work/dmp/Z80_A180_fc_E12MeV/ZPolarpre.dmp": "cd1710ea5d1f62ca3164594e0c3ab6368c8fedb198b4d0b824d50b488e2debe4",
+    "work/dmp/Z80_A180_fc_E12MeV/Zpost.dmp": "69b3eb78629bb0399960961d7403b92236a58461a6ec10b5e256efc9e1b6995a",
+    "work/file.in": "934c77596a1ce62156f7dcf309feb0024b44aa1c65aaa7fc3aa76c34d229b700",
+    "work/in/hg180_fc.in": "2710374e748c08de313efffaf35b309338311be25e2aa0c45dab349c4b7ba281",
+    "work/out/GEF_80_180_fc.dat": "facf9125af9d189cc0a40fdc0134c4b81b5a3056d2c2616d241c3006fbd6c9f8",
+    "work/probes/P0.txt": "5940b00d2c4d54786cdd021da4b2603ed614ede1830abc8a19dbd469ff04c666",
+    "work/probes/P1.txt": "2f14d93a617c9467b4e5d74f2188df6ce6623f5201f0d3f8e1bd079808b08b46",
+    "work/probes/P1b.txt": "77b4f9c80764df27b7e660a4384eeace56475f07c31808b4053f6c29348b236f",
+    "work/probes/P2.txt": "52e1f7ab2fa77e7b5540dfb531ea5eae5775a2b877dd213e72deb1f4ec9815c7",
+    "work/probes/P3.txt": "111ae714996029f1b394ce0d7d56e04e6b21dbd022fe6d5beffb7729910caa16",
+    "work/probes/P3in.txt": "6a6cfdae6c4ce853424e38eec388bac0729a36062957d21bd910373c1896b63a",
+    "work/tmp/ParameterUpdate.dat": "3f4ffe85828e286d22e63627752ee05219a4fa1700fa0d8bf3b5255a6d7f39c7"
+  },
+  "id": "m7-p3-hg180-fc",
+  "kind": "capture",
+  "note": "M7.0 capture of harness/inputs/m7/corpus.toml entry hg180-fc (seed-probes-9ddf9e1b6099, -d GEF_PROBES)",
+  "run_json": {
+    "binary": {
+      "build_id": "seed-probes-9ddf9e1b6099",
+      "path": "/home/aurja/Programming/GEF_Cpp/build/harness/seed-probes-9ddf9e1b6099/GEF",
+      "sha256": "54b0e32ba44e705714d689314ea38b1230929de7233421549af240351a8cf793"
+    },
+    "command": [
+      "/home/aurja/Programming/GEF_Cpp/build/harness/seed-probes-9ddf9e1b6099/GEF"
+    ],
+    "cwd": "/home/aurja/Programming/GEF_Cpp/build/m7_corpus/hg180-fc/work",
+    "end_utc": "2026-10-29T15:14:20+00:00",
+    "env_set": {
+      "GEF_SEED": "20261038",
+      "GEF_TRACE_PASSES": "0",
+      "GEF_TRACE_STEPS": "1"
+    },
+    "exit_code": 0,
+    "file_in": {
+      "sha256": "934c77596a1ce62156f7dcf309feb0024b44aa1c65aaa7fc3aa76c34d229b700"
+    },
+    "input": {
+      "dest": "in/hg180_fc.in",
+      "name": "hg180_fc.in",
+      "sha256": "2710374e748c08de313efffaf35b309338311be25e2aa0c45dab349c4b7ba281"
+    },
+    "mode": "normal",
+    "reseed": false,
+    "schema": 1,
+    "seed": 20261038,
+    "start_utc": "2026-10-29T15:14:08+00:00",
+    "wall_time_s": 12.403
+  },
+  "schema": 1,
+  "total_bytes": 4710556
+}

@@ -1,0 +1,86 @@
+{
+  "created_utc": "2026-10-29T15:47:49Z",
+  "file_count": 43,
+  "files": {
+    "run.json": "add398a8ca256758a2a53d51858b951a11340e3d0dd47e37e7c7d6bc2d5b51fb",
+    "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout.log": "95d83951ec4d1ad732d83fda5f41bb8fb59622859b553be4162358f5e86f7daa",
+    "work/ctl/done.ctl": "5843c9f909a6f78dcb9e6a9316a542552c12fdf7bbcbfdbf85cef96e4f2b30c5",
+    "work/ctl/sync.ctl": "082f1b30dfd690d2eb56f15099a07810daa4555b553e0f0a8f7cb61e5f0aff94",
+    "work/ctl/thread.ctl": "7943973368b1e2cde68b050f0e36246c7dbc984332a90691f994476dc95313e1",
+    "work/dmp/Z106_A264_sf_E0MeV/Apost.dmp": "67cf56ca562bd66c576f7f1f32167322e4cf2fa208578363edb735ca848075b9",
+    "work/dmp/Z106_A264_sf_E0MeV/Apre.dmp": "617f21218a0902421927a76beaa0c8e4c5b41e919ddc0d9e78f9261683230832",
+    "work/dmp/Z106_A264_sf_E0MeV/Aprov.dmp": "be308656bd5fcead11ea3022727f36796fd6dfbba8f135746fb43e97a2dbdb68",
+    "work/dmp/Z106_A264_sf_E0MeV/DNlocal.dmp": "8b8dc166b157ae1c14c47779d486331f230c50cd1711bad83ce8039632b3dea0",
+    "work/dmp/Z106_A264_sf_E0MeV/DPlocal.dmp": "69c67f43e467021b50e1f7d064269afa9ebe475b24a4b8fad0430b2556febe04",
+    "work/dmp/Z106_A264_sf_E0MeV/Decay.dmp": "f08be7287827048125a909ca74dc362c6943746ed85206fea443bc25c8ebc754",
+    "work/dmp/Z106_A264_sf_E0MeV/EMpot.dmp": "1cc166b4baaed3f42d315af376fa6076b1166bedeaa5d5b3ef70d4bf2f72e641",
+    "work/dmp/Z106_A264_sf_E0MeV/EN.dmp": "f9741c08daa9b0d7f6097ef0f3449765f7e79ea21949f934a96fd489fa5dd6e7",
+    "work/dmp/Z106_A264_sf_E0MeV/Eexc.dmp": "331ea4b7798406bef459565178a804b64b1e0130370984badc45bb96b8e0402a",
+    "work/dmp/Z106_A264_sf_E0MeV/Egamma.dmp": "7b3654079fa8353c9e63cdcfba94be92e7abc9d85c1e9d4fd833c5107a9fe060",
+    "work/dmp/Z106_A264_sf_E0MeV/Ekin.dmp": "15267e32ad4eb76816b2a6dd356191b245f241d7abf218009ec8789258227be7",
+    "work/dmp/Z106_A264_sf_E0MeV/Multichance.dmp": "6ed8d3d9830040bc3c13183ddcba20ef253b06888163062ba9ce1024501a850b",
+    "work/dmp/Z106_A264_sf_E0MeV/NA.dmp": "54e6eb3eede0f77d904c48032c505ec103f6712c3caaab802931b3b75cf3383a",
+    "work/dmp/Z106_A264_sf_E0MeV/NN.dmp": "c70a8d0e4552b57a99eb2c7bcc1b20d29259dee87991aaf71f4635b3c17b8d57",
+    "work/dmp/Z106_A264_sf_E0MeV/NP.dmp": "455f8d69536d4171a07353f8985b79a4761b1f271b6c8845e654a8441bb53922",
+    "work/dmp/Z106_A264_sf_E0MeV/Ngammatot.dmp": "8610a04b82affd411adcd33e8ab4c4f75f0ec9ef2ce7b56e55b9635b816b28c7",
+    "work/dmp/Z106_A264_sf_E0MeV/Npost.dmp": "8151ab815f4c2eccba1e375914d1ec9c839d798ce618fa1393ece9c7e20ced32",
+    "work/dmp/Z106_A264_sf_E0MeV/Npre.dmp": "d19f75b4f33a2cca9707c6ef84377178bbda05f567fd23e08154500bf415d5cd",
+    "work/dmp/Z106_A264_sf_E0MeV/Qvalues.dmp": "b523e2ca90b48c4ab73e5f8f06a38ebc3e8acbff1c32451706aaa12432c011b2",
+    "work/dmp/Z106_A264_sf_E0MeV/SigmaZpost.dmp": "b9b85406418748ddcde76362fce3add3b013cbeaf9e27f4d05dab62e45d7cfa9",
+    "work/dmp/Z106_A264_sf_E0MeV/SigmaZpre.dmp": "855eb57af617b0882a313e0fc1df5c0873c5376453e6dfef4e3b239b007f18ce",
+    "work/dmp/Z106_A264_sf_E0MeV/XE.dmp": "877d103f0dc8febc6e6ff475b8df10dcd046cfe4bd98d08b94c4119b25373b8b",
+    "work/dmp/Z106_A264_sf_E0MeV/ZApost.dmp": "386896639d78ba97545b03895fecf562a7c7940b84b473236167958b96d7e13b",
+    "work/dmp/Z106_A264_sf_E0MeV/ZApre.dmp": "fba0c1f3eb36c163a62d3de9501020cfab7b8662e96d2878a13ef92ac5586505",
+    "work/dmp/Z106_A264_sf_E0MeV/ZPolarpost.dmp": "7e1c26624845c50fabc9928c2799565cfe3d6f4c5af29b32126b4b74f69184ba",
+    "work/dmp/Z106_A264_sf_E0MeV/ZPolarpre.dmp": "fb5dbc98dc3f5e4edbb845a65df0726e44a497f940e846f992bb20eb87c79b93",
+    "work/dmp/Z106_A264_sf_E0MeV/Zpost.dmp": "11e23ed129ec2af85f2c5a9f54189bb4280a1fd15b88d6e6e29b735295941659",
+    "work/file.in": "a38f1ae6048090d97616e8f083ab6a234dae55b21d4aa8728f7f152612499d0d",
+    "work/in/sg264_sf.in": "6893ae60d88883dbcd2a1ee438ff5ac4af73671505a6d7e36a36d5cfba678aed",
+    "work/out/GEF_106_264_sf.dat": "1ecf5dc46ae457beec4ed2a62b4e232d59b37c0478620774e9936b27a26f8e4f",
+    "work/probes/P0.txt": "60b31c998dc383749f14bf963f88195913c26347d891746dc1ed22ddf86a37b4",
+    "work/probes/P1.txt": "151d6159c37db8e5fd9a7c80f0e177ffa31d6176309f9d7d3f311b5608c50982",
+    "work/probes/P1b.txt": "0717f2e91a5533cc70656331b2d03409897dc320dc605a3f51352ac48c5edd5d",
+    "work/probes/P2.txt": "bd3748945c45d3834b077ec13556f47d399a42c2854d6134aebec7f95c59cad0",
+    "work/probes/P3.txt": "be02867527318f6b7f928cbec7bfa4097ca9d8652e0102f2c20292d5df2ffa5e",
+    "work/probes/P3in.txt": "a32828e9bb233302050ea3db9ea85df0988bdec63839c2540cc54c05bbbe068c",
+    "work/tmp/ParameterUpdate.dat": "5ad139cdec45d13288d5e1e9d284c6be1caa78475405310f453865db4af5b62e"
+  },
+  "id": "m7-p3-sg264-sf",
+  "kind": "capture",
+  "note": "M7.0 capture of harness/inputs/m7/corpus.toml entry sg264-sf (seed-probes-9ddf9e1b6099, -d GEF_PROBES)",
+  "run_json": {
+    "binary": {
+      "build_id": "seed-probes-9ddf9e1b6099",
+      "path": "/home/aurja/Programming/GEF_Cpp/build/harness/seed-probes-9ddf9e1b6099/GEF",
+      "sha256": "54b0e32ba44e705714d689314ea38b1230929de7233421549af240351a8cf793"
+    },
+    "command": [
+      "/home/aurja/Programming/GEF_Cpp/build/harness/seed-probes-9ddf9e1b6099/GEF"
+    ],
+    "cwd": "/home/aurja/Programming/GEF_Cpp/build/m7_corpus/sg264-sf/work",
+    "end_utc": "2026-10-29T15:14:20+00:00",
+    "env_set": {
+      "GEF_SEED": "20261035",
+      "GEF_TRACE_PASSES": "0",
+      "GEF_TRACE_STEPS": "1"
+    },
+    "exit_code": 0,
+    "file_in": {
+      "sha256": "a38f1ae6048090d97616e8f083ab6a234dae55b21d4aa8728f7f152612499d0d"
+    },
+    "input": {
+      "dest": "in/sg264_sf.in",
+      "name": "sg264_sf.in",
+      "sha256": "6893ae60d88883dbcd2a1ee438ff5ac4af73671505a6d7e36a36d5cfba678aed"
+    },
+    "mode": "normal",
+    "reseed": false,
+    "schema": 1,
+    "seed": 20261035,
+    "start_utc": "2026-10-29T15:14:07+00:00",
+    "wall_time_s": 13.165
+  },
+  "schema": 1,
+  "total_bytes": 6585111
+}

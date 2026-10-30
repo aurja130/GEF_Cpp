@@ -1,0 +1,15 @@
+{
+  "created_utc": "2026-10-30T11:36:18Z",
+  "file_count": 4,
+  "files": {
+    "README.txt": "c5c94ad466fc9e65faa7d53b3d4a1fc22d03e571c09e9e27c30f7d3742ab12b3",
+    "out_dneck1_v2.txt": "13f6df3052da726c6c65064b3695fefbb11c09f19e28debf3cf6dd279767e590",
+    "out_dneck_set.txt": "5a0f8ad10752f9d6110a885aedef5ba851c7435e961a70abcb916b1a77743df8",
+    "sweep.cpp": "936fcf25795596060494db1b36fbff96ce96cec13025b8d5311e7e3f0b6d8802"
+  },
+  "id": "m7-d6-sweep",
+  "kind": "capture",
+  "note": "M7.0 D6 Beta_Equi sweep: program and outputs (Q-041)",
+  "schema": 1,
+  "total_bytes": 66999
+}

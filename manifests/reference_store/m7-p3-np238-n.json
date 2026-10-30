@@ -1,0 +1,86 @@
+{
+  "created_utc": "2026-10-29T15:47:49Z",
+  "file_count": 43,
+  "files": {
+    "run.json": "fc3c06754c1b82e7851df14bf78f378eb9b169eafa8a9c7ccd7b0ea411a81443",
+    "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout.log": "eda85109ca9e11132201f20d4cb4b64dfc40eefe59960e2224765e917af7686c",
+    "work/ctl/done.ctl": "6b7cb5e54b83d7ffccb86a3fd29f178a97488f9c8545b16289e469e7a85768ee",
+    "work/ctl/sync.ctl": "082f1b30dfd690d2eb56f15099a07810daa4555b553e0f0a8f7cb61e5f0aff94",
+    "work/ctl/thread.ctl": "403b78f97c994cf892192ee68a50b3c31681c3b6418091260e39d4eba53bcb5f",
+    "work/dmp/Z93_A238_n_E2.53e-08MeV/Apost.dmp": "e50fd11d466cd4587329d108ad539f365215e0294bb0b43c498b7a6dbdcf1a36",
+    "work/dmp/Z93_A238_n_E2.53e-08MeV/Apre.dmp": "c8ef22956504099c308af8fd81cafcc8a695c3a13a87fea7c80def4bea987987",
+    "work/dmp/Z93_A238_n_E2.53e-08MeV/Aprov.dmp": "494391841f3b1f1bd6b9bf54fd81a2864e73d78af45964500093d85225047bf0",
+    "work/dmp/Z93_A238_n_E2.53e-08MeV/DNlocal.dmp": "46b7d40c94986d90b677900b7b3cb2a30efd25807ccf16e44961fb3fdc818822",
+    "work/dmp/Z93_A238_n_E2.53e-08MeV/DPlocal.dmp": "a68ed81a590867def02c7dadd7ba4706d3591aabef3ee31762c47884776b3c37",
+    "work/dmp/Z93_A238_n_E2.53e-08MeV/Decay.dmp": "b514218c7de951e37ce724b1a39c55441ca920048d48d1a0d195cd5c1ad534c4",
+    "work/dmp/Z93_A238_n_E2.53e-08MeV/EMpot.dmp": "040011944665140dab818d02770039f0cee68082862434f68ceb78d70536461e",
+    "work/dmp/Z93_A238_n_E2.53e-08MeV/EN.dmp": "c212c4d754739a1559d271404fdf4667927574cee3ae91146eb294fce14e25c7",
+    "work/dmp/Z93_A238_n_E2.53e-08MeV/Eexc.dmp": "1a58fda2ad56f3345a48d7f2de85eb6293c47dcb3b1c195010f09f9a04b087c3",
+    "work/dmp/Z93_A238_n_E2.53e-08MeV/Egamma.dmp": "ee6975910bd559551571e719fb6dd081468fdd3eb10587b3f6a98157c02dfef9",
+    "work/dmp/Z93_A238_n_E2.53e-08MeV/Ekin.dmp": "a937ec16e20d962fa0c45807b500862742a23e5bd68cdb2578f5a7254a282ac7",
+    "work/dmp/Z93_A238_n_E2.53e-08MeV/Multichance.dmp": "6ed8d3d9830040bc3c13183ddcba20ef253b06888163062ba9ce1024501a850b",
+    "work/dmp/Z93_A238_n_E2.53e-08MeV/NA.dmp": "93ab11e704ef241db6cc8bab391d109c2b9e93c259920471dad09ceb8355f0ca",
+    "work/dmp/Z93_A238_n_E2.53e-08MeV/NN.dmp": "a1cb9717bd2ce0067993fb736165714483fbbc2539304e16c3f646d89f92682b",
+    "work/dmp/Z93_A238_n_E2.53e-08MeV/NP.dmp": "6091aedbcebedfd4094e7ffcd9fc67836a20e90f3dda087202988c9b17469ea8",
+    "work/dmp/Z93_A238_n_E2.53e-08MeV/Ngammatot.dmp": "a7cef438a87839410d5ff03b3e66314c6fe88cdc83668df14695c967ccd0aac7",
+    "work/dmp/Z93_A238_n_E2.53e-08MeV/Npost.dmp": "573974ce176ea05fa48e824392ccb1257d828f26d8869d253dd2ce9303b9001c",
+    "work/dmp/Z93_A238_n_E2.53e-08MeV/Npre.dmp": "1123dcc78c2ec5f1f38babc59600c624a5a0cad80a955cf6e7e7ee900c7f71aa",
+    "work/dmp/Z93_A238_n_E2.53e-08MeV/Qvalues.dmp": "c1a3e01926c9045ea3aa8edfb1b6e65a7bfcc02932eac22b3fcde34b2a5abbc2",
+    "work/dmp/Z93_A238_n_E2.53e-08MeV/SigmaZpost.dmp": "c957bdf1366c7ca646ee8af735a7644d94ee2b9fd1756cb64e3612ebaf0af14c",
+    "work/dmp/Z93_A238_n_E2.53e-08MeV/SigmaZpre.dmp": "bc392d5d03f91146ea09af07fc0b12a5e51c79fd92b4251da87cb5e37bbb782e",
+    "work/dmp/Z93_A238_n_E2.53e-08MeV/XE.dmp": "6122c8ed6102e4715fd5cda29aca95a08bd1d105b7504491fe0c990fdc1620c3",
+    "work/dmp/Z93_A238_n_E2.53e-08MeV/ZApost.dmp": "839849d2d5bc309933288d4a83bfcc6a89a4309c868af2bd3365a7c5d72f8675",
+    "work/dmp/Z93_A238_n_E2.53e-08MeV/ZApre.dmp": "8c85b21b972a6374093515f6cd3649cbb9b807c32a80a4742e862152ac9dd731",
+    "work/dmp/Z93_A238_n_E2.53e-08MeV/ZPolarpost.dmp": "a0b578f809517fb78ba4543dc7d29bda2512be29ecea66fe96fd334664d7d602",
+    "work/dmp/Z93_A238_n_E2.53e-08MeV/ZPolarpre.dmp": "9605b1c4067d297df1f224c8f533c1acc4aa26b7a3dd84384d1598105f4d034a",
+    "work/dmp/Z93_A238_n_E2.53e-08MeV/Zpost.dmp": "fe90af8c2aa0637350194a5e63d1eb0e010847abf2f5c84716ab6a44eb76fb1a",
+    "work/file.in": "25d72c96657ad998555259ba3b2e0e91461a69b722ff8664c87e3612dae82950",
+    "work/in/np238_n.in": "8ff06a2d08e0549864d178e123ddacce880f25f2b7b720205073fc91694250f7",
+    "work/out/GEF_93_238_n.dat": "0576def703c33631ceb86a3a58aced5d8106a0dff212192d785ca3c49d3251ec",
+    "work/probes/P0.txt": "8e109912b8b11dc2b7ea6819e188cccd5b84d4cb05e9f900b84a3ab623abc833",
+    "work/probes/P1.txt": "2510b8a2d072b9064c5bdc83972480abb4437b2a37854a9c09eed74581b7f486",
+    "work/probes/P1b.txt": "71124283d2ac6472e8abf360dd53935c7fceac5f589f8301e4410c02199f7107",
+    "work/probes/P2.txt": "b49b578e4b1e23c42bbd09f28e051da864258f33b38eb62840beea791db99bc3",
+    "work/probes/P3.txt": "1c7495d699950875c658e05d9641016a5d2f58988e484b68a874d149980d9b84",
+    "work/probes/P3in.txt": "da182389374b7689c78f170a23c399203fc427f43a2e3021897711162c17ff0a",
+    "work/tmp/ParameterUpdate.dat": "cbaa7bb3f7b39ed20fb93469475ffc4a90dd9dd504cfd231aad91256f6fa0e49"
+  },
+  "id": "m7-p3-np238-n",
+  "kind": "capture",
+  "note": "M7.0 capture of harness/inputs/m7/corpus.toml entry np238-n (seed-probes-9ddf9e1b6099, -d GEF_PROBES)",
+  "run_json": {
+    "binary": {
+      "build_id": "seed-probes-9ddf9e1b6099",
+      "path": "/home/aurja/Programming/GEF_Cpp/build/harness/seed-probes-9ddf9e1b6099/GEF",
+      "sha256": "54b0e32ba44e705714d689314ea38b1230929de7233421549af240351a8cf793"
+    },
+    "command": [
+      "/home/aurja/Programming/GEF_Cpp/build/harness/seed-probes-9ddf9e1b6099/GEF"
+    ],
+    "cwd": "/home/aurja/Programming/GEF_Cpp/build/m7_corpus/np238-n/work",
+    "end_utc": "2026-10-29T15:14:07+00:00",
+    "env_set": {
+      "GEF_SEED": "20261032",
+      "GEF_TRACE_PASSES": "0",
+      "GEF_TRACE_STEPS": "1"
+    },
+    "exit_code": 0,
+    "file_in": {
+      "sha256": "25d72c96657ad998555259ba3b2e0e91461a69b722ff8664c87e3612dae82950"
+    },
+    "input": {
+      "dest": "in/np238_n.in",
+      "name": "np238_n.in",
+      "sha256": "8ff06a2d08e0549864d178e123ddacce880f25f2b7b720205073fc91694250f7"
+    },
+    "mode": "normal",
+    "reseed": false,
+    "schema": 1,
+    "seed": 20261032,
+    "start_utc": "2026-10-29T15:13:56+00:00",
+    "wall_time_s": 11.342
+  },
+  "schema": 1,
+  "total_bytes": 5653437
+}

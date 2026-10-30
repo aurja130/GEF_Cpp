@@ -1,0 +1,94 @@
+{
+  "created_utc": "2026-10-29T15:47:50Z",
+  "file_count": 44,
+  "files": {
+    "run.json": "12ea5126a43c296fc16e1c37fbb1103db99a087044ca99a55ebec46f1aec7ab5",
+    "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout.log": "d371632cc66c236db8fd5def80414c55150286b4d02637677686c6f734320391",
+    "work/Fitpar.dat": "7c9fda6c3fd1ae93aa67051a4e2d6c3b21568620375d003ad5bc96ed4ba8a647",
+    "work/ctl/done.ctl": "b89dd86a742bcdadd3169a91092b26b109aa07a81116c0e5698b3bd2c2e426ab",
+    "work/ctl/sync.ctl": "082f1b30dfd690d2eb56f15099a07810daa4555b553e0f0a8f7cb61e5f0aff94",
+    "work/ctl/thread.ctl": "03a6b9f171e04486d298ac57ed0af43356d060574aa19ec4e77630e62dd3796d",
+    "work/dmp/Z92_A236_n_E2.53e-08MeV/Apost.dmp": "b438b2092c242b483af8837dc10405d66902917eac9e518a6a4a4ba1421eacbc",
+    "work/dmp/Z92_A236_n_E2.53e-08MeV/Apre.dmp": "c221b26b31d52c897f77b38f1b9223b1dc458366aba5cd537077eafa1ea53697",
+    "work/dmp/Z92_A236_n_E2.53e-08MeV/Aprov.dmp": "cd1a9d36aa90a89b4441a491d44e2755dbee0b8d8e83d40f2e1d0d65376e274e",
+    "work/dmp/Z92_A236_n_E2.53e-08MeV/DNlocal.dmp": "15a4cac2a68eae00e893214072fa3f6c30e69f1e50b43ea0ae4832118cb5e9ae",
+    "work/dmp/Z92_A236_n_E2.53e-08MeV/DPlocal.dmp": "cbf885d08695ab10f513a3262556594bef4fbc21459437e150d2e2b9f42541a4",
+    "work/dmp/Z92_A236_n_E2.53e-08MeV/Decay.dmp": "18b9d73bd442daf6fb88ea936a307183e7f8d0d69804654c8c94453618899787",
+    "work/dmp/Z92_A236_n_E2.53e-08MeV/EMpot.dmp": "2e0ab49cde414b8abeda4d62752eab144fddb8e8e8ecddd7a5e6702534d5f60a",
+    "work/dmp/Z92_A236_n_E2.53e-08MeV/EN.dmp": "7a91e0de0d901615a3cd6b08e85b97298c20e293dc1c0ddf632eeb014f4af180",
+    "work/dmp/Z92_A236_n_E2.53e-08MeV/Eexc.dmp": "85b0b15a608db7b9899b863354f0f9df53d6462e6d9bf65bfe036d4c6a8a30c4",
+    "work/dmp/Z92_A236_n_E2.53e-08MeV/Egamma.dmp": "a3ec975da95cfd39ef8163e9c32762d600fff71364a029bd233d95d6d49f5ad3",
+    "work/dmp/Z92_A236_n_E2.53e-08MeV/Ekin.dmp": "55dc39a29e3c863941db1399b3a81737908cbb22ecc280a7d7a2ae85c743a99d",
+    "work/dmp/Z92_A236_n_E2.53e-08MeV/Multichance.dmp": "6ed8d3d9830040bc3c13183ddcba20ef253b06888163062ba9ce1024501a850b",
+    "work/dmp/Z92_A236_n_E2.53e-08MeV/NA.dmp": "93b183553e972d2c0c183f3ff99b320f1201b16389a35d4e14752d658fee94ca",
+    "work/dmp/Z92_A236_n_E2.53e-08MeV/NN.dmp": "b19d145de608efbc2a3a67cfeb4562bd43b0fc59237d1ee92b12db17009bb47f",
+    "work/dmp/Z92_A236_n_E2.53e-08MeV/NP.dmp": "8debd68e96de435398420335abacb7a3f86cd73404f9ab5ffacf99982a7f8608",
+    "work/dmp/Z92_A236_n_E2.53e-08MeV/Ngammatot.dmp": "3c16b841f9b897ef3c45f24371ce53b297925058b4a830eefc46b225f8898cbe",
+    "work/dmp/Z92_A236_n_E2.53e-08MeV/Npost.dmp": "d1535beaaf387e3875df1283b21bc8aab6e9c76e1b30919a80c3a1ffbccc569b",
+    "work/dmp/Z92_A236_n_E2.53e-08MeV/Npre.dmp": "1e4cfe251019e3858c976274780f0ced5e1c9b43e39a9aebbfcc8bc87a80c178",
+    "work/dmp/Z92_A236_n_E2.53e-08MeV/Qvalues.dmp": "0c5da23ce38ef8063f3b8d82cbc76028c913377e96c8a7f98ad73192dc5df524",
+    "work/dmp/Z92_A236_n_E2.53e-08MeV/SigmaZpost.dmp": "15ff6a640ad5ded1912b5485ab7a9b17bedaaeacdcd05388b4d54ecc4fa904ee",
+    "work/dmp/Z92_A236_n_E2.53e-08MeV/SigmaZpre.dmp": "6493f6567592c9ec325b950a74e4979cf2dd63af909f5c9e8ac9b187017c52e9",
+    "work/dmp/Z92_A236_n_E2.53e-08MeV/XE.dmp": "25ffc1a5123069c745eb5bb39aaf25982dbe09925685fb5c3b03ef6b4b458e15",
+    "work/dmp/Z92_A236_n_E2.53e-08MeV/ZApost.dmp": "9f6d4465f0d9551a60ea45df606f4521a500ddd76fcc6f2b7bbad1c8961f82c3",
+    "work/dmp/Z92_A236_n_E2.53e-08MeV/ZApre.dmp": "c35f5704f2f6681909422c3b211048429e4de96bde56d8ed501ec6902cae6122",
+    "work/dmp/Z92_A236_n_E2.53e-08MeV/ZPolarpost.dmp": "d8d0904a75bb3a15a8a65ee8eb7b225b2f8b2e2d72d8d0729054861ce9045c55",
+    "work/dmp/Z92_A236_n_E2.53e-08MeV/ZPolarpre.dmp": "d4661071c0b22ec2caed5f694215f6c9f3aef5984fd5f2bbb792a0e04f0aecd9",
+    "work/dmp/Z92_A236_n_E2.53e-08MeV/Zpost.dmp": "5e1be083c32231f62fcd9991f081a3cb974ada2389afe112c73906a3ba17f9ae",
+    "work/file.in": "4c648a6a3d5c5bf0772f81ac1b1987d4ca196c1bc9d8143c74df1d348b6064b0",
+    "work/in/u236_eoscale.in": "bf8648f8b49e5d71183f1cd6fadec2b8118ded7ec08225af2df16aa692b15079",
+    "work/out/GEF_92_236_n.dat": "6abc1e8b76836f78df14749d67df45a90b49071ede615099eb55d4557fdda5b2",
+    "work/probes/P0.txt": "162008ac55df81dae8c3650704d9824b1778f333d3036928a98e434af7b67b17",
+    "work/probes/P1.txt": "6d3327ecf5d47a88c9a75fa666ac140f51432a0e2173cedaaba081d77683e872",
+    "work/probes/P1b.txt": "a1bf40e6356e2c5b6c788772a77fe79d20ce6dbc38ea56a8b5427f6a3aa88301",
+    "work/probes/P2.txt": "8264b341f5645876ec69eba9d2875cdf296f88c6d1882d7b84c95d8ef8d4fbc7",
+    "work/probes/P3.txt": "e94a260bcef0e0923112c92ebcb89e507137618f10030ce0801ed0baee66439b",
+    "work/probes/P3in.txt": "1db68330ab9e50ba594c9e61ad7c105cd98f68d9252c20ef0844bea3bd83aa13",
+    "work/tmp/ParameterUpdate.dat": "0c1ac6b93470bd68dfbd889bd63f5aad4e6ad43fab1cc17acf6c27d2b80ff255"
+  },
+  "id": "m7-p3-u236-eoscale",
+  "kind": "capture",
+  "note": "M7.0 capture of harness/inputs/m7/corpus.toml entry u236-eoscale (seed-probes-9ddf9e1b6099, -d GEF_PROBES)",
+  "run_json": {
+    "binary": {
+      "build_id": "seed-probes-9ddf9e1b6099",
+      "path": "/home/aurja/Programming/GEF_Cpp/build/harness/seed-probes-9ddf9e1b6099/GEF",
+      "sha256": "54b0e32ba44e705714d689314ea38b1230929de7233421549af240351a8cf793"
+    },
+    "command": [
+      "/home/aurja/Programming/GEF_Cpp/build/harness/seed-probes-9ddf9e1b6099/GEF"
+    ],
+    "cwd": "/home/aurja/Programming/GEF_Cpp/build/m7_corpus/u236-eoscale/work",
+    "end_utc": "2026-10-29T15:14:41+00:00",
+    "env_set": {
+      "GEF_SEED": "20261043",
+      "GEF_TRACE_PASSES": "0",
+      "GEF_TRACE_STEPS": "1"
+    },
+    "exit_code": 0,
+    "file_in": {
+      "sha256": "4c648a6a3d5c5bf0772f81ac1b1987d4ca196c1bc9d8143c74df1d348b6064b0"
+    },
+    "input": {
+      "dest": "in/u236_eoscale.in",
+      "name": "u236_eoscale.in",
+      "sha256": "bf8648f8b49e5d71183f1cd6fadec2b8118ded7ec08225af2df16aa692b15079"
+    },
+    "mode": "normal",
+    "reseed": false,
+    "schema": 1,
+    "seed": 20261043,
+    "start_utc": "2026-10-29T15:14:31+00:00",
+    "wall_time_s": 10.397,
+    "work_files": [
+      {
+        "dest": "Fitpar.dat",
+        "name": "Fitpar_eoscale.dat",
+        "sha256": "7c9fda6c3fd1ae93aa67051a4e2d6c3b21568620375d003ad5bc96ed4ba8a647"
+      }
+    ]
+  },
+  "schema": 1,
+  "total_bytes": 5775586
+}

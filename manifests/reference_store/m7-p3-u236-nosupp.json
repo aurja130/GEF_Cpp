@@ -1,0 +1,86 @@
+{
+  "created_utc": "2026-10-29T15:47:51Z",
+  "file_count": 43,
+  "files": {
+    "run.json": "43b00a5d98908759eacb8c2084e7c43c6b9b25dc3844ca25a76eb6e0b672cf7c",
+    "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout.log": "b80eb3bbcbfe4394c2d395c8c2bd3b75a7b26824403ad331701e9d0ae19effee",
+    "work/ctl/done.ctl": "b89dd86a742bcdadd3169a91092b26b109aa07a81116c0e5698b3bd2c2e426ab",
+    "work/ctl/sync.ctl": "082f1b30dfd690d2eb56f15099a07810daa4555b553e0f0a8f7cb61e5f0aff94",
+    "work/ctl/thread.ctl": "f9b08e80e21f612449e5415a25f2d38ad5eb8b555036f308e2f3855a1c5dfaf5",
+    "work/dmp/Z92_A236_n_E2.53e-08MeV/Apost.dmp": "130d1a25e58b05a23599c5e06fde2e4e721f1f335e452ff9d8825de17c68b99e",
+    "work/dmp/Z92_A236_n_E2.53e-08MeV/Apre.dmp": "793c69ed58aa17715f3e242956ca46c1d8dfd2c543d52d4ec910ee2905563ae0",
+    "work/dmp/Z92_A236_n_E2.53e-08MeV/Aprov.dmp": "1591fe0c4f63483dc2dc7c71d178f481a0a25295270ed8e1210f2d52d4682106",
+    "work/dmp/Z92_A236_n_E2.53e-08MeV/DNlocal.dmp": "bd7a46b48b9275cfabaf563935413daa0a57930fd577f2868b87be43c6743afc",
+    "work/dmp/Z92_A236_n_E2.53e-08MeV/DPlocal.dmp": "4bc445d83689908cb56714c7f889bf761a0d6b66b66691b5807a4b56e7a70f08",
+    "work/dmp/Z92_A236_n_E2.53e-08MeV/Decay.dmp": "273c4f4cdf3c0b615181ab5e2d2915560af7a0c1b738955568487411eddd34ad",
+    "work/dmp/Z92_A236_n_E2.53e-08MeV/EMpot.dmp": "740af3dc1a7d4f7797d6ac0c48844b4a8ed2209b78e3191b16c68abadfb4122a",
+    "work/dmp/Z92_A236_n_E2.53e-08MeV/EN.dmp": "c977167ee330d44765175ba3945765dcdd34099c0cd404e079dd84d245f4eaaa",
+    "work/dmp/Z92_A236_n_E2.53e-08MeV/Eexc.dmp": "091baa03159f0a364b3092580813da4ace21f325b3c46fc0482728bd47879f94",
+    "work/dmp/Z92_A236_n_E2.53e-08MeV/Egamma.dmp": "e54ada91d09d793f75507e7bebdc11ed6c1f4ae48d56ceca07de703e8119045e",
+    "work/dmp/Z92_A236_n_E2.53e-08MeV/Ekin.dmp": "cf093d8a65eaccb307df32fe4304b08b74781ea9c1ff33e798f1101d16782553",
+    "work/dmp/Z92_A236_n_E2.53e-08MeV/Multichance.dmp": "6ed8d3d9830040bc3c13183ddcba20ef253b06888163062ba9ce1024501a850b",
+    "work/dmp/Z92_A236_n_E2.53e-08MeV/NA.dmp": "a1ee1e310e992f27a55009559f5346a5cd356e99cf7d922ef7a56944d4f9abb8",
+    "work/dmp/Z92_A236_n_E2.53e-08MeV/NN.dmp": "da0baf1fe3018d25ac57c9bb6c8c80925ef226097a8b54606e8f735083001d93",
+    "work/dmp/Z92_A236_n_E2.53e-08MeV/NP.dmp": "eac48f8c81b76eff3570809eaedd45489e0026e0917f4ed5a6a839087dfa7757",
+    "work/dmp/Z92_A236_n_E2.53e-08MeV/Ngammatot.dmp": "6613df18547c103a5c7df226baab3673d43378a641478e31e2a5215f63f010bd",
+    "work/dmp/Z92_A236_n_E2.53e-08MeV/Npost.dmp": "978d5530479bc05d96fb6d1fea918c236382d2750342d9ba6014a494306f7ee2",
+    "work/dmp/Z92_A236_n_E2.53e-08MeV/Npre.dmp": "48e085de8eb0241951b865541c939df6de8701a78f77364c46923efb092b2c21",
+    "work/dmp/Z92_A236_n_E2.53e-08MeV/Qvalues.dmp": "7f3603c032ae13744216a4cb3aec00783681c2723865e7a0a9ff6aa48842f00b",
+    "work/dmp/Z92_A236_n_E2.53e-08MeV/SigmaZpost.dmp": "815f89a487b96bd4c4243f257da037e6c8b86b1f0a104990539dd20ddd50e0f7",
+    "work/dmp/Z92_A236_n_E2.53e-08MeV/SigmaZpre.dmp": "d0a7c347537eacbc016a7d41a892d82718bb9433e1109e0882245ae2ae32183b",
+    "work/dmp/Z92_A236_n_E2.53e-08MeV/XE.dmp": "fd495ef6db562407a6e4755c735fca734fbba48e8600cd1b497aba34ea45e3b7",
+    "work/dmp/Z92_A236_n_E2.53e-08MeV/ZApost.dmp": "5ebef8268c5d19be67ecf170d0ca5c0b3ec37a1725bcb59bd1354e4f20ac3d51",
+    "work/dmp/Z92_A236_n_E2.53e-08MeV/ZApre.dmp": "40dc17c52e292c823eda556f7ae0af5e02d64eeafe84fc942ef52a35393e11d2",
+    "work/dmp/Z92_A236_n_E2.53e-08MeV/ZPolarpost.dmp": "395eef5f0bcca7664224e7799189d2e1733879344904a72b368adaba0ef44403",
+    "work/dmp/Z92_A236_n_E2.53e-08MeV/ZPolarpre.dmp": "174bb4ba74e6ed23a3eaae8546085d8e70c25808e24e39d1465a716d2734e5cc",
+    "work/dmp/Z92_A236_n_E2.53e-08MeV/Zpost.dmp": "7da53231974a8e997e38a04875d7d27dbcf28191e282cf2eeb4bb7c983118fc2",
+    "work/file.in": "815405ce85103d76d53da5b3cd967e9b7aa25ba73b5e1951967459a55350dee6",
+    "work/in/u236_nosupp.in": "d55a10cd1e58e3087490a0711190f33a062e49017ac2fed9819ab920b06a3799",
+    "work/out/GEF_92_236_n.dat": "d21785d702eaeeb62a939e870fe7661a3944bdc565a841c5a78df14f6ff7c811",
+    "work/probes/P0.txt": "4c61434dc1c0d4f4531869efed1e56645b251b88b49e9c6a3d967550e1ab079e",
+    "work/probes/P1.txt": "85c4c05d7220829726fa81a7aff534cd46e3a7c3f18be1cfc47735c4791871da",
+    "work/probes/P1b.txt": "a1bf40e6356e2c5b6c788772a77fe79d20ce6dbc38ea56a8b5427f6a3aa88301",
+    "work/probes/P2.txt": "8264b341f5645876ec69eba9d2875cdf296f88c6d1882d7b84c95d8ef8d4fbc7",
+    "work/probes/P3.txt": "ad5be2585ebfed6daaf095b0ffd0a73860cc3692eb1f1f8ee70407600b571bfa",
+    "work/probes/P3in.txt": "b83b58f64fb9c07e1ba034997e49510d475f1f4e463cf6492809ae1b1fe9d91a",
+    "work/tmp/ParameterUpdate.dat": "7404c57c5b1f4edcab4a6d894f2fde42d89b7113943b22e879a58a7051b2126f"
+  },
+  "id": "m7-p3-u236-nosupp",
+  "kind": "capture",
+  "note": "M7.0 capture of harness/inputs/m7/corpus.toml entry u236-nosupp (seed-probes-9ddf9e1b6099, -d GEF_PROBES)",
+  "run_json": {
+    "binary": {
+      "build_id": "seed-probes-9ddf9e1b6099",
+      "path": "/home/aurja/Programming/GEF_Cpp/build/harness/seed-probes-9ddf9e1b6099/GEF",
+      "sha256": "54b0e32ba44e705714d689314ea38b1230929de7233421549af240351a8cf793"
+    },
+    "command": [
+      "/home/aurja/Programming/GEF_Cpp/build/harness/seed-probes-9ddf9e1b6099/GEF"
+    ],
+    "cwd": "/home/aurja/Programming/GEF_Cpp/build/m7_corpus/u236-nosupp/work",
+    "end_utc": "2026-10-29T15:14:31+00:00",
+    "env_set": {
+      "GEF_SEED": "20261040",
+      "GEF_TRACE_PASSES": "0",
+      "GEF_TRACE_STEPS": "1"
+    },
+    "exit_code": 0,
+    "file_in": {
+      "sha256": "815405ce85103d76d53da5b3cd967e9b7aa25ba73b5e1951967459a55350dee6"
+    },
+    "input": {
+      "dest": "in/u236_nosupp.in",
+      "name": "u236_nosupp.in",
+      "sha256": "d55a10cd1e58e3087490a0711190f33a062e49017ac2fed9819ab920b06a3799"
+    },
+    "mode": "normal",
+    "reseed": false,
+    "schema": 1,
+    "seed": 20261040,
+    "start_utc": "2026-10-29T15:14:20+00:00",
+    "wall_time_s": 11.347
+  },
+  "schema": 1,
+  "total_bytes": 5771155
+}

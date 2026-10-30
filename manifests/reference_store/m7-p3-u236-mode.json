@@ -1,0 +1,86 @@
+{
+  "created_utc": "2026-10-29T15:47:51Z",
+  "file_count": 43,
+  "files": {
+    "run.json": "f46c6df95d35c052e575a7ee68900bde105d257b0fcf62ed9e1b16cc9a123bf0",
+    "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout.log": "06f65fb0673d8f6cbfcf2faf3659a7a082d0decb24928a9b8509fa320de3373c",
+    "work/ctl/done.ctl": "110516a05041a5ad93ae8bb894d71a8ee957d9c08427301f52badfc53c0e5b99",
+    "work/ctl/sync.ctl": "082f1b30dfd690d2eb56f15099a07810daa4555b553e0f0a8f7cb61e5f0aff94",
+    "work/ctl/thread.ctl": "915f2f3b8e1510ddd2c08789d22383004fc785423daa5ee436d16dbbf6618f02",
+    "work/dmp/Z92_A236_n_E2.53e-08MeV_Mode2/Apost.dmp": "e20630e1eb416f25692ccc06a272f7dba6666c52c80e2d22d6cfaca4c9c7c264",
+    "work/dmp/Z92_A236_n_E2.53e-08MeV_Mode2/Apre.dmp": "928c5a092967fe90313fd96bea1709498d14a1e5a4db63b618bc58cc262481d0",
+    "work/dmp/Z92_A236_n_E2.53e-08MeV_Mode2/Aprov.dmp": "2445fddfdbef6b6fbaf2c7f5116f50ab83db193f948ad989181d3276d98a6973",
+    "work/dmp/Z92_A236_n_E2.53e-08MeV_Mode2/DNlocal.dmp": "bd298b9b21fb89dd31afc1d33811f97ee86fdfcf94f0570326d560cb3dc6c093",
+    "work/dmp/Z92_A236_n_E2.53e-08MeV_Mode2/DPlocal.dmp": "03e840318f9d8e9c28a7cc428c204f33563874e9ea33509a56774c3a6390cae7",
+    "work/dmp/Z92_A236_n_E2.53e-08MeV_Mode2/Decay.dmp": "23445f4cbee8047854f580926db7938b7c20a541aa43d73a03de1ff7cd84cea9",
+    "work/dmp/Z92_A236_n_E2.53e-08MeV_Mode2/EMpot.dmp": "ca72be3f8a4a889454606df0a5c9edea511c3347d459b24e46ffa1e5a1b088fa",
+    "work/dmp/Z92_A236_n_E2.53e-08MeV_Mode2/EN.dmp": "a94ae52b2b65e2b47693f426f0c1b689c15eb4fae41f4187da9e966e255c2118",
+    "work/dmp/Z92_A236_n_E2.53e-08MeV_Mode2/Eexc.dmp": "405180dc7ba05e15db1f5cc9557b06c2bed596039705b1367aa1f60bf96cc177",
+    "work/dmp/Z92_A236_n_E2.53e-08MeV_Mode2/Egamma.dmp": "8d21ecf9b05246c855192d1504b90598a2f829786a9708742957e1ab6092f26b",
+    "work/dmp/Z92_A236_n_E2.53e-08MeV_Mode2/Ekin.dmp": "acf9cf63fa4f5d04bde28987b7b8f6699788d5ae0437c55e1e76cff3df8f62ce",
+    "work/dmp/Z92_A236_n_E2.53e-08MeV_Mode2/Multichance.dmp": "6ed8d3d9830040bc3c13183ddcba20ef253b06888163062ba9ce1024501a850b",
+    "work/dmp/Z92_A236_n_E2.53e-08MeV_Mode2/NA.dmp": "8a7c7f0c9bbd5c12d8b6260926a81ba112aa4bfd5d104d13a022a4fc138999b5",
+    "work/dmp/Z92_A236_n_E2.53e-08MeV_Mode2/NN.dmp": "0f653ef421c64a9984edf7f171c8d7c5a43118787a2453e42405fe8ab3bed5a4",
+    "work/dmp/Z92_A236_n_E2.53e-08MeV_Mode2/NP.dmp": "a2b76babefef32da2e0b773574b65ace9a1ef74daab56dccc9fc1c565dce08c3",
+    "work/dmp/Z92_A236_n_E2.53e-08MeV_Mode2/Ngammatot.dmp": "96d33f8d285e88606625e1bb6fdd0fadf40e5bf1915f33e9049c0a94e8cb3cb8",
+    "work/dmp/Z92_A236_n_E2.53e-08MeV_Mode2/Npost.dmp": "144b7dfba679b1e671a9cc03b86cfb1150862fcd0ea1c84a2b8c171424be81ff",
+    "work/dmp/Z92_A236_n_E2.53e-08MeV_Mode2/Npre.dmp": "0da4bf2d15308d0f77009cd9ac47c0b60a9dca8b8408e60ca4b66edee58c4677",
+    "work/dmp/Z92_A236_n_E2.53e-08MeV_Mode2/Qvalues.dmp": "ab23c83fb2074d36d47cb9d11fe44448fb99857d1d37f42fbef91d1d33f8aaed",
+    "work/dmp/Z92_A236_n_E2.53e-08MeV_Mode2/SigmaZpost.dmp": "869fac66a8d2d7dcb42a1e2c4dffe6a14c37509fe9ddb62cd08e0608479c259d",
+    "work/dmp/Z92_A236_n_E2.53e-08MeV_Mode2/SigmaZpre.dmp": "dabaa998f8ce9ebfa4d574571174375d789c0a87ac3ca33a9717b853d23f6279",
+    "work/dmp/Z92_A236_n_E2.53e-08MeV_Mode2/XE.dmp": "df725b75b2a6945f9181669ff0c9f6f34fa723920f599e49a0bf9523e06aa8f3",
+    "work/dmp/Z92_A236_n_E2.53e-08MeV_Mode2/ZApost.dmp": "5e58f44f57239d01e7eff0ba5988c385e645b499f5881efac0c6c285ed4cfbbe",
+    "work/dmp/Z92_A236_n_E2.53e-08MeV_Mode2/ZApre.dmp": "6cd0d12e8298f8f5cbb678428614cd4005c1928590a283ac81d7aa0118969e79",
+    "work/dmp/Z92_A236_n_E2.53e-08MeV_Mode2/ZPolarpost.dmp": "b77d5c10824e5ee344b28477a7dde0beccaf353071f785a94fa81438031ac0e9",
+    "work/dmp/Z92_A236_n_E2.53e-08MeV_Mode2/ZPolarpre.dmp": "7cd652bf7f008aebea06ea4486f5df2d8c9e7064f98ff2892295937be9c609fa",
+    "work/dmp/Z92_A236_n_E2.53e-08MeV_Mode2/Zpost.dmp": "69969494cc8ec59859ee8835266c8bc76ab263c0a6ae9bf8e263ba092ee23cdf",
+    "work/file.in": "f73ccc9d705d43b016f2ed4bd551a61e45fcf50cd2ae37f649758748baf501e5",
+    "work/in/u236_mode.in": "4c320e9638b5a953761f3556c9ce0f52d251a879291cee55c9f28898724a997e",
+    "work/out/GEF_92_236_n_select.dat": "03d1497c03272acb67a3b01dbdd0c8aba72d27934d813fccb9135f988171478b",
+    "work/probes/P0.txt": "111c29866c72add56665990f0619ddcfa65791643778ea3f7f8f2cfd300c2c7b",
+    "work/probes/P1.txt": "acb2b078be3d3a551515bd26bca284c2bea7072c30a3fbee1fa3bb9aa3caee87",
+    "work/probes/P1b.txt": "a1bf40e6356e2c5b6c788772a77fe79d20ce6dbc38ea56a8b5427f6a3aa88301",
+    "work/probes/P2.txt": "8264b341f5645876ec69eba9d2875cdf296f88c6d1882d7b84c95d8ef8d4fbc7",
+    "work/probes/P3.txt": "42a4dd11a2517a0f8167e42b0ebc2c93da8747173dc3ef1403bc5fb525924cbf",
+    "work/probes/P3in.txt": "f5e7065e7fc43642e857c98581b6f26865a0a8dd61b8173d64b4c88bd560d69f",
+    "work/tmp/ParameterUpdate.dat": "7404c57c5b1f4edcab4a6d894f2fde42d89b7113943b22e879a58a7051b2126f"
+  },
+  "id": "m7-p3-u236-mode",
+  "kind": "capture",
+  "note": "M7.0 capture of harness/inputs/m7/corpus.toml entry u236-mode (seed-probes-9ddf9e1b6099, -d GEF_PROBES)",
+  "run_json": {
+    "binary": {
+      "build_id": "seed-probes-9ddf9e1b6099",
+      "path": "/home/aurja/Programming/GEF_Cpp/build/harness/seed-probes-9ddf9e1b6099/GEF",
+      "sha256": "54b0e32ba44e705714d689314ea38b1230929de7233421549af240351a8cf793"
+    },
+    "command": [
+      "/home/aurja/Programming/GEF_Cpp/build/harness/seed-probes-9ddf9e1b6099/GEF"
+    ],
+    "cwd": "/home/aurja/Programming/GEF_Cpp/build/m7_corpus/u236-mode/work",
+    "end_utc": "2026-10-29T15:14:31+00:00",
+    "env_set": {
+      "GEF_SEED": "20261041",
+      "GEF_TRACE_PASSES": "0",
+      "GEF_TRACE_STEPS": "1"
+    },
+    "exit_code": 0,
+    "file_in": {
+      "sha256": "f73ccc9d705d43b016f2ed4bd551a61e45fcf50cd2ae37f649758748baf501e5"
+    },
+    "input": {
+      "dest": "in/u236_mode.in",
+      "name": "u236_mode.in",
+      "sha256": "4c320e9638b5a953761f3556c9ce0f52d251a879291cee55c9f28898724a997e"
+    },
+    "mode": "normal",
+    "reseed": false,
+    "schema": 1,
+    "seed": 20261041,
+    "start_utc": "2026-10-29T15:14:20+00:00",
+    "wall_time_s": 11.347
+  },
+  "schema": 1,
+  "total_bytes": 5757431
+}

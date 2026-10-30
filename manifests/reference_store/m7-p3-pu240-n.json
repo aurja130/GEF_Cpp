@@ -1,0 +1,86 @@
+{
+  "created_utc": "2026-10-29T15:47:49Z",
+  "file_count": 43,
+  "files": {
+    "run.json": "7725ab43967fef8f0e36fe0d171b5bca72233e2df24cb3673097356ffae52964",
+    "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout.log": "ada582d16dc36a97ba9f23ff8d3c8f355ac6ff3625ec7024b99d4d57e7bc0d2e",
+    "work/ctl/done.ctl": "dbf574de0da32a7a1ee150337905ee84b0374710e2c5f845d492edd419cc70f5",
+    "work/ctl/sync.ctl": "082f1b30dfd690d2eb56f15099a07810daa4555b553e0f0a8f7cb61e5f0aff94",
+    "work/ctl/thread.ctl": "388e7ce3e709231228b6dc33d58ac64d71d4482e8d618a5374ccb05925c65e3e",
+    "work/dmp/Z94_A240_n_E2.53e-08MeV/Apost.dmp": "cc609fb6dedf7271853fc7dc0e3a43911767f66c368891efb2c93f5c586e8e52",
+    "work/dmp/Z94_A240_n_E2.53e-08MeV/Apre.dmp": "f8598d5092f5f63bc11e2619121ee7f29ebde9cfc00d13debf32de10dd310fd7",
+    "work/dmp/Z94_A240_n_E2.53e-08MeV/Aprov.dmp": "5c5ea1d77dd1c19046b0dee13ad0925a4f88312f9c29bbcb56eb2862284ccbd3",
+    "work/dmp/Z94_A240_n_E2.53e-08MeV/DNlocal.dmp": "e71e0ff911e5268ac4f4971f5a9e6f5ca4c849f640d5846599483d2a80432153",
+    "work/dmp/Z94_A240_n_E2.53e-08MeV/DPlocal.dmp": "c2840af8857d28caaeceea18596d90eaf1105e1b13627d21805d99ffa82ad21e",
+    "work/dmp/Z94_A240_n_E2.53e-08MeV/Decay.dmp": "76b3cbc63d457dccb22f1c57dd66bc3871945d4d8cd24f682db9274ab4db8d50",
+    "work/dmp/Z94_A240_n_E2.53e-08MeV/EMpot.dmp": "05a77cc7a7d617a6b77b229bb42491938d6ca5a2f1ea6484a8d1e6be1cb69883",
+    "work/dmp/Z94_A240_n_E2.53e-08MeV/EN.dmp": "f35c9db6ff2160b795ec836f1a01dca981cd7a4f0a29f412c0ea91e052fe29af",
+    "work/dmp/Z94_A240_n_E2.53e-08MeV/Eexc.dmp": "3c2a4d8a59615d9cf5a5cdb7fea63be9a6aaaedd4ae9178ab47a340bc2b4b465",
+    "work/dmp/Z94_A240_n_E2.53e-08MeV/Egamma.dmp": "d2ffe3060fdd940ea6de9dadbd210e8981ca5e6d46b7e6473c0bcbbd97d4c102",
+    "work/dmp/Z94_A240_n_E2.53e-08MeV/Ekin.dmp": "bfcf7fa67ced6a548fa044edfd6cce2ab918887f834357309dca4692ba891e33",
+    "work/dmp/Z94_A240_n_E2.53e-08MeV/Multichance.dmp": "6ed8d3d9830040bc3c13183ddcba20ef253b06888163062ba9ce1024501a850b",
+    "work/dmp/Z94_A240_n_E2.53e-08MeV/NA.dmp": "943abcd43b99d357f4de9feaba1970b7860310dedc67ceb845090a827b39815b",
+    "work/dmp/Z94_A240_n_E2.53e-08MeV/NN.dmp": "53e67c4ec04ed1a7663abfaaf5e4d42fe597cf3a87726fe1ac5c0e7d5030c6f7",
+    "work/dmp/Z94_A240_n_E2.53e-08MeV/NP.dmp": "bc7e6ce65d14728f804a01f7cf4b440f7c8f56b8eaf1eeb5df0d7a1e77015707",
+    "work/dmp/Z94_A240_n_E2.53e-08MeV/Ngammatot.dmp": "ef0af84099f8723952c1946c62c895bf6327f5b318bda510148df21a85dfb1e5",
+    "work/dmp/Z94_A240_n_E2.53e-08MeV/Npost.dmp": "e5437e643ffb23b11cb542481b146eb76e4c20b85f925d1c644b4a0c708835e0",
+    "work/dmp/Z94_A240_n_E2.53e-08MeV/Npre.dmp": "322dabf3bd7dd22fe57862343c2a9e4bd0e4e5290ca2c67995b6f4baf434fc17",
+    "work/dmp/Z94_A240_n_E2.53e-08MeV/Qvalues.dmp": "2d4a54568548753786ff3be6856afbec5843646f01203328082449c172a43dd1",
+    "work/dmp/Z94_A240_n_E2.53e-08MeV/SigmaZpost.dmp": "8e3aec8489fb2bb91fc12a59e8c1ebc973f275756337544962471814d817206d",
+    "work/dmp/Z94_A240_n_E2.53e-08MeV/SigmaZpre.dmp": "7ba1d8c084b488dd200a0902614badf180cd3462bf623a2a72e982bf41d5c1f8",
+    "work/dmp/Z94_A240_n_E2.53e-08MeV/XE.dmp": "888a3043fceb1b89c4d44f7d28d94c55235988fdf54beebbc174e3ee64a7d22c",
+    "work/dmp/Z94_A240_n_E2.53e-08MeV/ZApost.dmp": "0a441ae4961a5be4d39bdf2b44da3af9ad1fdfbaec38ee63d5a6d815bb5a2b22",
+    "work/dmp/Z94_A240_n_E2.53e-08MeV/ZApre.dmp": "5eca687899a53ce72d57e7644716ff7679f119dffd438c435f9ca5554d909b99",
+    "work/dmp/Z94_A240_n_E2.53e-08MeV/ZPolarpost.dmp": "e5246f88162d6455be1b3f1c5760bce492de3190505e1d6fa8b0f74be56ba315",
+    "work/dmp/Z94_A240_n_E2.53e-08MeV/ZPolarpre.dmp": "77ed28fcd14e3d88254429df5e95661bd353208daddcb738f9e4f52fab25ba8b",
+    "work/dmp/Z94_A240_n_E2.53e-08MeV/Zpost.dmp": "9cdf488bf245f346a2d850f1484e8c08630a87379d77aba9e269572c45d464ee",
+    "work/file.in": "ca5d97ffb6ebf26a2cc5e02b567d6e2fb047fefa6c8a94e09e5c2700116b3fff",
+    "work/in/pu240_n.in": "fbef1888cef3d43a9b0fe2e895c523e9b8d0a1ae7a277aec1a460310886c1e41",
+    "work/out/GEF_94_240_n.dat": "0936e2bbf961464a98716719e7156402539088e675234dc29c3388dd03a384cc",
+    "work/probes/P0.txt": "42ab46d6e55c4a676808912a0496f0e394c6064ea0dbdb5882cdcd0a50840dc5",
+    "work/probes/P1.txt": "3a55bba82d34628854fe53f307aea4fac99e5907eaa0c0b06f2f7d39315eed2b",
+    "work/probes/P1b.txt": "39e3bfa01775e966f76014340212394081db6058b264ad9f12d314b11e61055c",
+    "work/probes/P2.txt": "e23231bc4b47b20c14365047839eea2fc6373f1d80bac53c6ac6da5cd0c65a5f",
+    "work/probes/P3.txt": "23b136d69d6412876e083e81f51dfefd758fed03d72692b92ea21becea871377",
+    "work/probes/P3in.txt": "fed32b8e82d6d4f7607e37eaa43ea0af83ff2324fca828282c3a17294723d2bf",
+    "work/tmp/ParameterUpdate.dat": "cbaa7bb3f7b39ed20fb93469475ffc4a90dd9dd504cfd231aad91256f6fa0e49"
+  },
+  "id": "m7-p3-pu240-n",
+  "kind": "capture",
+  "note": "M7.0 capture of harness/inputs/m7/corpus.toml entry pu240-n (seed-probes-9ddf9e1b6099, -d GEF_PROBES)",
+  "run_json": {
+    "binary": {
+      "build_id": "seed-probes-9ddf9e1b6099",
+      "path": "/home/aurja/Programming/GEF_Cpp/build/harness/seed-probes-9ddf9e1b6099/GEF",
+      "sha256": "54b0e32ba44e705714d689314ea38b1230929de7233421549af240351a8cf793"
+    },
+    "command": [
+      "/home/aurja/Programming/GEF_Cpp/build/harness/seed-probes-9ddf9e1b6099/GEF"
+    ],
+    "cwd": "/home/aurja/Programming/GEF_Cpp/build/m7_corpus/pu240-n/work",
+    "end_utc": "2026-10-29T15:14:08+00:00",
+    "env_set": {
+      "GEF_SEED": "20261031",
+      "GEF_TRACE_PASSES": "0",
+      "GEF_TRACE_STEPS": "1"
+    },
+    "exit_code": 0,
+    "file_in": {
+      "sha256": "ca5d97ffb6ebf26a2cc5e02b567d6e2fb047fefa6c8a94e09e5c2700116b3fff"
+    },
+    "input": {
+      "dest": "in/pu240_n.in",
+      "name": "pu240_n.in",
+      "sha256": "fbef1888cef3d43a9b0fe2e895c523e9b8d0a1ae7a277aec1a460310886c1e41"
+    },
+    "mode": "normal",
+    "reseed": false,
+    "schema": 1,
+    "seed": 20261031,
+    "start_utc": "2026-10-29T15:13:56+00:00",
+    "wall_time_s": 12.405
+  },
+  "schema": 1,
+  "total_bytes": 6001264
+}
