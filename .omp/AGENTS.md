@@ -15,7 +15,7 @@ GEF 2025/1.2 (FreeBASIC, `Reference/GEF_code` at `ba9f0aa`) is ported to C++ exa
 Models come from the user's session choice, otherwise `.omp/config.yml` (`task.agentModelOverrides`: `task` → `@task`, `sonic` → `@smol`, `reviewer` → `@slow`). Disclose any substitution; never claim a model use that was not observed.
 
 - **Orchestrator** (main session): owns scope, plan, contracts, integration, verification and `Planning/` updates. It understands the code it integrates; it does not relay patches.
-- **Coding workers**: `task` for bounded slices, `sonic` for mechanical edits. Each gets the target files, the `fbline` output of the BASIC it ports, the relevant `CODING_STANDARDS.md` rules, the interfaces, non-goals and the test or golden that must match. One owner per file; parallel only for independent slices; the top-level plan is never delegated.
+- **Coding workers**: `task` for bounded slices, `sonic` for mechanical edits. Each gets the target files, the `fbline` output of the BASIC it ports, the relevant `CODING_STANDARDS.md` rules, the interfaces, non-goals, the test or golden that must match, and the DBC node IDs of its slice (`Planning/DBC/CONCEPTS.md`). It returns its concept impact (see **DBC** below). One owner per file; parallel only for independent slices; the top-level plan is never delegated.
 - **Reviewers**: `reviewer`, in a context of its own, read-only, judging against the authorities above. A worker never approves its own patch.
 - Workers and reviewers do not build or test. The orchestrator verifies each integrated batch; review approval is not runtime proof. Mechanical or documentation-only changes need no review panel.
 
@@ -28,7 +28,7 @@ At each batch boundary (before delegating a batch, before a review round, before
 ### Review cycle
 
 1. Freeze the scope and acceptance criteria; every reviewer gets the same ones.
-2. Review one verified snapshot: compiled in the affected presets, affected Catch2 and pytest tests passing, the bit-exact comparisons covering the change (T0–T3: driver goldens, probe dumps, `compare.exact`) passing, format, lint and tidy clean. A code change after approval re-verifies and voids the affected approvals.
+2. Review one verified snapshot: compiled in the affected presets, affected Catch2 and pytest tests passing, the bit-exact comparisons covering the change (T0–T3: driver goldens, probe dumps, `compare.exact`) passing, format, lint and tidy clean, the DBC updated for the change and `python3 Planning/DBC/check_dbc.py` passing. A code change after approval re-verifies and voids the affected approvals.
 3. Merge all findings into one blocker ledger: id, violated rule, evidence or counterexample, correction, regression test, status. Mark each as new defect, recurring defect or scope expansion.
 4. Check each finding against the source; reviewers can be wrong. Reject unsupported findings with evidence. Scope expansion is the user's decision.
 5. Fix the invariant, not the reported input. Check the whole class: light and heavy fragment, both copies of duplicated BASIC code, first and later calls (`Static`, ByRef carry-over), arithmetic and random-draw order, scope reset points (system, step, pass, bin, event), state leaking across scopes, NaN, ±0 and table-bound inputs. Add deterministic regressions for the failure and its symmetric and boundary cases; never weaken an assertion to pass.
@@ -67,5 +67,5 @@ Licensed under the GNU GPL v3 or later, WITHOUT ANY WARRANTY; see LICENSE.txt.
 
 ## Tracking
 
-- Only the orchestrator edits `Planning/`. When a task, sub-milestone or milestone is finished, mark it done in its plan file and record it in `CURRENT_PROJECT_STATE.md`.
+- Only the orchestrator edits `Planning/`. When a task, sub-milestone or milestone is finished, mark it done in its plan file, record it in `CURRENT_PROJECT_STATE.md`, and bring `Planning/DBC/` in line (statuses, `CODE.md`, `TESTS.md`, `CAPTURES.md`, `DEFINITIONS.md`; see **DBC**) in the same commit.
 - Commit and push when meaningful progress is achieved. If changes by the user are detected, ask if the user wants them included in the commit.
