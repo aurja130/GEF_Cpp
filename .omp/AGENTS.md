@@ -37,6 +37,19 @@ At each batch boundary (before delegating a batch, before a review round, before
 
 **Deliver** when the scope is complete, the required reviewers approve the final snapshot, the gates run are recorded, scaffolds are removed and `Planning/` is updated. Skips are not passes (tests needing `validation/` or the reference store skip without them); one preset does not certify the others (`dev-gcc`, `dev-clang`, `release-exact`); a gate run while code changed proves nothing about the final code.
 
+## DBC (Driven by Concepts)
+
+`Planning/DBC/` is the Captain's (the user's) main tool for leading the project: she reasons and decides in its concepts and terms. Keep it current without exception.
+
+- `CONCEPTS.md` draws the project as mermaid flowcharts: L1 the whole project, one L2 diagram per L1 node, deeper levels only where the depth discipline allows (a structure node with at least three pointable parts, or a rule with steps). Each diagram has a node table (ID, meaning, terms, status) and owns 3–12 nodes. No code, file names or plan names. The Captain's edits to it are directives: turn them into a plan or contract change; never revert them.
+- `CODE.md` maps every built concept to files and symbols, never line numbers. `DEFINITIONS.md` is the glossary. `TESTS.md` lists every test with the nodes it guards. `CAPTURES.md` lists every capture family (reference-store manifests, goldens, capture corpora) with its concept nodes and a Comments line.
+- The format rules are the ones `Planning/DBC/check_dbc.py` enforces; its docstring lists them. The DBC gets no meta-documents of its own.
+- Statuses track the plan: `implemented` (green) is built, `partial` (yellow) is in the current submilestone, `planned` (uncolored) is not started. When a submilestone's contract is frozen, mark the nodes it will build or change `partial` in the same commit. The orchestrator owns all DBC files. After every implementation batch: add or split nodes for concepts the batch made real (respecting the depth discipline); fix `CODE.md` rows; give every new test and capture its node IDs; run `python3 Planning/DBC/check_dbc.py` and fix the DBC files (never the checker's rules) until it passes. When the submilestone closes, flip its `partial` nodes to `implemented`, or back to `planned` if they were deferred, and mark the next submilestone's nodes `partial`. A rule that looks wrong goes to the Captain.
+- Any commit that introduces, renames, redefines or retires a term updates `DEFINITIONS.md` in the same commit; any commit that adds, changes or drops a test, golden, store entry or corpus updates `TESTS.md` or `CAPTURES.md`; any commit that changes what a node means or where it lives updates `CONCEPTS.md` or `CODE.md`. No term reaches the Captain in a message, plan or receipt before it is defined there.
+- Node IDs are stable; renaming one is a change of meaning. A changed meaning is rewritten in place with the date and the old meaning. Open questions are marked **Open:** in the definition's row.
+- Workers and reviewers do not edit DBC files. Worker briefs name the node IDs of their slice; workers report concept impact (nodes built, code that fits no node, new terms) in their return message. The one exception: any agent that finds a problem with a capture entry adds a dated, signed note to its Comments line.
+- Decisions put to the Captain use DBC terms. Read DBC files by section. A sub-milestone is not delivered (**Deliver** above) until the checker passes on its final snapshot.
+
 ## License notices
 
 The project is `GPL-3.0-or-later` (`LICENSE.txt`), a derivative of GEF. Every file of ours that contains code (C/C++, Python, shell, CMake, FreeBASIC, …) starts with these lines in its comment syntax, after any shebang or encoding line:

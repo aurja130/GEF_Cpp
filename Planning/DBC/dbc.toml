@@ -1,0 +1,24 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2026 Aurora Jahan
+# Licensed under the GNU GPL v3 or later, WITHOUT ANY WARRANTY; see LICENSE.txt.
+# Config of the DBC drift checker (check_dbc.py beside it; keys in its docstring).
+
+project = "GEF in C++"
+evidence = "CAPTURES.md"
+test_globs = [
+  "Cpp_implementation/tests/*_test.cpp",
+  "compare/tests/test_*.py",
+  "harness/tests/test_*.py",
+  "tools/**/tests/test_*.py",
+]
+evidence_globs = [
+  "manifests/reference_store/*.json",
+  "Cpp_implementation/tests/golden/*/*.json",
+  "harness/inputs/*/*.toml",
+]
+banned_patterns = [
+  '\bM[0-9]+(\.[0-9]+)?\b',
+  '\bD[0-9]+\b',
+  'MILESTONE_',
+  '\b[A-Za-z0-9_.-]+\.(bas|bi|mac|cpp|hpp|py|toml|in|dat|txt|json|sh)\b',
+]

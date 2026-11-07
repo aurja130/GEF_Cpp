@@ -25,6 +25,7 @@
 | Coverage matrix | `Planning/COVERAGE_MATRIX.md`: 114 rows × T0–T5; 48 cells covered (M3: FreeBASIC numeric semantics at T1, `FbMtRng` at T2; M4: all 21 T0 cells it owned and 4 T1 cells; M5: the 3 T1 cells it owned; M6: the 18 T1 cells it owned, entrance channels, line forms, options and limits); T4 cells owned by M17 after the exact-first decision; one cell deferred (approved 2026-10-07) |
 | Coding standards | `Planning/CODING_STANDARDS.md` |
 | Code maps | `Planning/code_maps/`: the six planning-session reports, with a README listing corrected claims |
+| DBC concept map | `Planning/DBC/` (set up 2026-11-07): `CONCEPTS.md` (L1 approved by the user; 269 nodes over L1–L3; `partial` = M7.2), `CODE.md`, `DEFINITIONS.md` (the glossary), `TESTS.md`, `CAPTURES.md` (every store manifest, golden descriptor and capture corpus), checked by `python3 Planning/DBC/check_dbc.py`; maintenance rules in `.omp/AGENTS.md` "DBC" |
 | Version control | `validation/` (including `validation/reference_store/`) and `.omp/` are gitignored, except the agent context `.omp/AGENTS.md`, `.omp/LOCAL_ENVIRONMENT.md` and the model routing `.omp/config.yml`; manifests of stored data are committed under `manifests/` |
 
 ## 2. Repository inventory
