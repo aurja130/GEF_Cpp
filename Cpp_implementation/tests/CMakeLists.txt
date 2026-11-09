@@ -27,6 +27,7 @@ add_executable(gef_tests
     fbc_arithmetic_test.cpp
     format_test.cpp
     fp_environment_test.cpp
+    fragment_memory_test.cpp
     line_input_test.cpp
     lookups_test.cpp
     maths_test.cpp

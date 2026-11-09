@@ -17,7 +17,7 @@ gcc           16.2.1    /usr/bin/gcc
 clang         22.1.8    /usr/bin/clang
 cmake         4.3.0     /usr/bin/cmake
 ninja         1.13.2    /usr/bin/ninja
-python        3.14.8    /usr/bin/python3
+python        3.14.10   /usr/bin/python3
 ruff          0.16.6    ~/.local/bin/ruff
 basedpyright  1.39.10   ~/.local/bin/basedpyright
 pytest        9.1.1     ~/.local/bin/pytest
@@ -41,7 +41,7 @@ assemble:     as --64 --strip-local-absolute "hello.asm" -o "hello.o"
 link:         ld -m elf_x86_64 -o "hello" -dynamic-linker /lib64/ld-linux-x86-64.so.2 -T "<FBC_BIN>/../lib/freebasic/linux-x86_64/fbextra.x" -L "<FBC_BIN>/../lib/freebasic/linux-x86_64" -L "." -L "/usr/lib/gcc/x86_64-redhat-linux/16" "/usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64/crt1.o" "/usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64/crti.o" "/usr/lib/gcc/x86_64-redhat-linux/16/crtbegin.o" "<FBC_BIN>/../lib/freebasic/linux-x86_64/fbrt0.o" "hello.o" "-(" -lfb -ltinfo -lm -ldl -lpthread -lgcc -lgcc_eh -lc "-)" "/usr/lib/gcc/x86_64-redhat-linux/16/crtend.o" "/usr/lib/gcc/x86_64-redhat-linux/16/../../../../lib64/crtn.o" --eh-frame-hdr
 
 [backend tool versions (first line of --version)]
-gcc:          gcc (GCC) 16.2.1 20260819 (Red Hat 16.2.1-2)
+gcc:          gcc (GCC) 16.2.1 20261029 (Red Hat 16.2.1-3)
 as:           GNU assembler version 2.46.1-1.fc44
 ld:           GNU ld version 2.46.1-1.fc44
 

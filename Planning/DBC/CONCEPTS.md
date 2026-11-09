@@ -825,9 +825,9 @@ ShellsAndTemperatures -->|temperatures| EvenOddAndSortedEnergies["Even-odd and s
 EvenOddAndSortedEnergies -->|sorted energies| FragmentSpins["Fragment spins"]
 FragmentSpins -->|fragment spins| BuilderIntegration["Builder integration"]
 BuilderIntegration -->|tables for each bin| EventGeneration["Event generation"]
-class BinVisits,NominalWorkingCopies,CarriedBinTables implemented
-class ModesAndDeformations,ModeEnergiesAndWidths partial
-class ModeShiftsAndPolarisation,ModeYields,ShellsAndTemperatures,EvenOddAndSortedEnergies,FragmentSpins,BuilderIntegration planned
+class BinVisits,NominalWorkingCopies,CarriedBinTables,ModesAndDeformations,ModeEnergiesAndWidths implemented
+class ModeShiftsAndPolarisation,ModeYields partial
+class ShellsAndTemperatures,EvenOddAndSortedEnergies,FragmentSpins,BuilderIntegration planned
 class RunControl,ModelData,PhysicsFunctions,EventGeneration external
 ```
 
@@ -836,10 +836,10 @@ class RunControl,ModelData,PhysicsFunctions,EventGeneration external
 | `BinVisits` | Hands out the bins of each step in turn and skips the bins that have no events. | bin, bin visit, candidate bin, bin event count | implemented |
 | `NominalWorkingCopies` | Copies the nominal model parameters into the working copies that the table builder may change for a bin. | working copy | implemented |
 | `CarriedBinTables` | Keeps the model tables from one bin to the next, and the last bin's spin for the next step; the scratch values are not kept. | model table, carried state, last-bin spin, scratch temporary | implemented |
-| `ModesAndDeformations` | Builds the centre, the equilibrium deformation and the mean charge and Z-A relation of every mode. | mode, mode centre, mode deformation, mean charge, Z-A relation | partial |
-| `ModeEnergiesAndWidths` | Builds the barrier and saddle energies, the overlap modes, the collective temperatures and the widths of the modes. | barrier energy, saddle energy, overlap mode, collective temperature, mode width | partial |
-| `ModeShiftsAndPolarisation` | The energy-dependent shifts of the modes, their potential-energy terms and the charge polarisation, with a second round of the Z-A relations. | mode shift, charge polarisation, Z-A relation | planned |
-| `ModeYields` | The share of the fission events that each mode receives, with the widths of the modes' mass distributions. | mode yield, mode width | planned |
+| `ModesAndDeformations` | Builds the centre, the equilibrium deformation and the mean charge and Z-A relation of every mode. | mode, mode centre, mode deformation, mean charge, Z-A relation | implemented |
+| `ModeEnergiesAndWidths` | Builds the barrier and saddle energies, the overlap modes, the collective temperatures and the widths of the modes. | barrier energy, saddle energy, overlap mode, collective temperature, mode width | implemented |
+| `ModeShiftsAndPolarisation` | The energy-dependent shifts of the modes, their potential-energy terms and the charge polarisation, with a second round of the Z-A relations. | mode shift, charge polarisation, Z-A relation | partial |
+| `ModeYields` | The share of the fission events that each mode receives, with the widths of the modes' mass distributions. | mode yield, mode width | partial |
 | `ShellsAndTemperatures` | The shell energies of the fission channels and the intrinsic temperatures of the fragments. | shell energy, intrinsic temperature | planned |
 | `EvenOddAndSortedEnergies` | The scission energies of the modes, their even-odd corrections and their order by size. | scission energy, even-odd correction, sorted energy list | planned |
 | `FragmentSpins` | The root-mean-square angular momentum of each fragment. | fragment spin | planned |
@@ -894,15 +894,14 @@ classDef planned stroke-dasharray:6 4
 classDef external fill:#eeeeee,stroke:#9e9e9e,stroke-dasharray:1 3,color:#616161
 ModeCentres["Mode centres"] -->|mode centres| ModeDeformations["Mode deformations"]
 ModeDeformations -->|deformed fragments| MeanChargeAndRelations["Mean charge and relations"]
-class ModeCentres,ModeDeformations implemented
-class MeanChargeAndRelations partial
+class ModeCentres,ModeDeformations,MeanChargeAndRelations implemented
 ```
 
 | Node | Meaning | Terms | Status |
 | --- | --- | --- | --- |
 | `ModeCentres` | The mean proton and mass numbers around which each mode is centred. | mode centre, mode | implemented |
 | `ModeDeformations` | The equilibrium deformation of each mode's fragments and the deformation energy that goes with it. **Open:** where the messages of the equilibrium solve are printed is not decided yet. | mode deformation, mode | implemented |
-| `MeanChargeAndRelations` | The mean proton number of each mode's fragments at every mass number, and the Z-A relations and curvatures fitted to it. Above mass number 360 the reference writes past the bound of its arrays; the current submilestone replaces the error the port raises there with an emulation of those writes (Q-061). | mean charge, Z-A relation, curvature, out-of-bound write | partial |
+| `MeanChargeAndRelations` | The mean proton number of each mode's fragments at every mass number, and the Z-A relations and curvatures fitted to it. Above mass number 360 the reference writes past the bound of its arrays; the port reproduces those writes, into the next row, the gap and the next table, as the reference's memory holds them (Q-061). | mean charge, Z-A relation, curvature, out-of-bound write | implemented |
 
 #### L3 · Mode energies and widths (`ModeEnergiesAndWidths`)
 
@@ -917,17 +916,17 @@ S1Corrections -->|corrected modes| OverlapModes["Overlap modes"]
 OverlapModes -->|extra modes| CollectiveTemperatures["Collective temperatures"]
 CollectiveTemperatures -->|temperatures| PolarisationStiffness["Polarisation stiffness"]
 PolarisationStiffness -->|stiffness| ModeWidths["Mode widths"]
-class BarrierEnergies,S1Corrections,OverlapModes,CollectiveTemperatures,PolarisationStiffness,ModeWidths partial
+class BarrierEnergies,S1Corrections,OverlapModes,CollectiveTemperatures,PolarisationStiffness,ModeWidths implemented
 ```
 
 | Node | Meaning | Terms | Status |
 | --- | --- | --- | --- |
-| `BarrierEnergies` | The barrier energy of each mode above the ground state, and the energy of each mode above its saddle point. | barrier energy, saddle energy | partial |
-| `S1Corrections` | Corrections to the first asymmetric mode near particular neutron and proton shells. | S1 correction, mode | partial |
-| `OverlapModes` | Two extra modes, numbered 11 and 22, that carry their own barrier and excitation energy. | overlap mode, barrier energy | partial |
-| `CollectiveTemperatures` | The collective temperatures of the modes, with the polarisation and asymmetry temperatures that go with them. | collective temperature, mode | partial |
-| `PolarisationStiffness` | The stiffness that resists the charge polarisation of each mode. | polarisation stiffness, charge polarisation | partial |
-| `ModeWidths` | The mean values and widths of the mode distributions in proton number and polarisation. | mode width, mode | partial |
+| `BarrierEnergies` | The barrier energy of each mode above the ground state, and the energy of each mode above its saddle point. | barrier energy, saddle energy | implemented |
+| `S1Corrections` | Corrections to the first asymmetric mode near particular neutron and proton shells. | S1 correction, mode | implemented |
+| `OverlapModes` | Two extra modes, numbered 11 and 22, that carry their own barrier and excitation energy. | overlap mode, barrier energy | implemented |
+| `CollectiveTemperatures` | The collective temperatures of the modes, with the polarisation and asymmetry temperatures that go with them. | collective temperature, mode | implemented |
+| `PolarisationStiffness` | The stiffness that resists the charge polarisation of each mode. | polarisation stiffness, charge polarisation | implemented |
+| `ModeWidths` | The mean values and widths of the mode distributions in proton number and polarisation. | mode width, mode | implemented |
 
 ### L2 · Event generation (`EventGeneration`)
 

@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "data/tables.hpp"
 #include "params/parameters.hpp"
 #include "tables/bin_plan.hpp"
 #include "tables/bin_tables.hpp"
@@ -34,11 +35,22 @@ struct BetaEquiMessage {
 // the deformations of modes 0-7 (`Beta`, `Edefo`), the mean Z as a function of A (`Zmean`,
 // `Zshift`; writes the global `z`, run::ProcessState::z), the Z-A relations of the modes and the
 // potential curvatures. Appends the bin's Beta_Equi messages to `messages` as BASIC prints them.
-// Throws std::out_of_range for A_CN > 360 (QUIRK(Q-061)) when it reaches the Z(A) loops, with
-// BinTables, the temporaries and `messages` written as far as the deformations.
+// For A_CN > 360 the Z(A) loops index past Zmean and Zshift and reach the next table or gap as
+// the reference binary's memory does (QUIRK(Q-061); BinTables::fix_fragment_table_overrun throws).
 void mode_centres_and_deformations(BinInput const& bin, WorkingParameters const& w,
                                    params::Parameters const& p, float spin_cn, BinTables& t,
                                    Temporaries& tmp, float& z,
                                    std::vector<BetaEquiMessage>& messages);
+
+// GEF.bas:6063-6558: the energy transformation and fission barriers (`B_F`, `E_B`, ...), the
+// barriers and excitation energies of the fission modes 0-5, S11 and S22 (updates the light
+// fragment's `Beta(1,1,·)`/`Edefo(1,1,·)` with the S1 shell enhancement, GEF.bas:6142-6151), the
+// collective temperatures, the stiffness in polarization and the mean values and standard
+// deviations (widths, shell attenuation) of the modes. `p_a_cn` is BinPlanInput::p_a_cn (the A
+// of the input compound nucleus, i.e. of the first chance; 6158 reads it directly instead of the
+// bin's `I_A_CN`).
+void barriers_temperatures_and_widths(BinInput const& bin, std::int64_t p_a_cn,
+                                      WorkingParameters const& w, params::Parameters const& p,
+                                      data::TableSet const& tables, BinTables& t, Temporaries& tmp);
 
 } // namespace gef::tables

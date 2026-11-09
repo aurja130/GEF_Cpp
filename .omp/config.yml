@@ -7,6 +7,7 @@ modelRoles:
     # Haiku workers
     smol: "anthropic/claude-haiku-5-5:high"
     task: "anthropic/claude-haiku-5-5:max"
+    # task: "anthropic/claude-sonnet-5:medium"
 
     # Auxiliary workloads
     commit: "@smol"
@@ -17,4 +18,16 @@ task:
     agentModelOverrides:
         task: "@task"
         sonic: "@smol"
+        scout: "@smol"
         reviewer: "@slow"
+    # Soft cap per coding task
+    agentSoftRequestBudget:
+        task: 150
+
+compaction:
+    # Keep orchestrator turns small
+    modelThresholds:
+        "anthropic/claude-opus-5-5": "f150000"
+        # Haiku 5.5 bills a whole request at 5x (input, output, cache) once its prompt
+        # exceeds 100,000 tokens; compact early enough that one tool result cannot cross it
+        "anthropic/claude-haiku-5-5": "f80000"

@@ -17,11 +17,10 @@
 #include "physics/masses.hpp"
 #include "physics/shape.hpp"
 #include "tables/builder.hpp"
+#include "tables/fragment_memory.hpp"
 
 #include <cmath>
 #include <cstdint>
-#include <stdexcept>
-#include <string>
 #include <vector>
 
 namespace gef::tables {
@@ -327,14 +326,16 @@ float unchanged_charge_density(std::int64_t i_short, BinInput const& bin) {
 }
 
 // Zmean and Zshift of mode `m` for the fragment with A = i_short and its partner (5884-5887 and
-// the five copies after it).
+// the five copies after it). QUIRK(Q-061): from A_CN 361 on, i_short runs past the bound 350; the
+// writes land where the reference binary's address arithmetic puts them (tables/fragment_memory).
 void store_mean_z(BinTables& t, std::int64_t m, std::int64_t k_short, std::int64_t k_partner,
                   std::int64_t i_short, BinInput const& bin, float zf) {
     std::int64_t const partner = fb::sub(bin.i_a_cn, i_short);
-    t.zmean(m, k_short, i_short) = zf;
-    t.zshift(m, k_short, i_short) = zf - t.zucd;
-    t.zmean(m, k_partner, partner) = static_cast<float>(bin.i_z_cn) - zf;
-    t.zshift(m, k_partner, partner) = t.zucd - zf;
+    fragment_element(t, FragmentTable::Zmean, m, k_short, i_short) = zf;
+    fragment_element(t, FragmentTable::Zshift, m, k_short, i_short) = zf - t.zucd;
+    fragment_element(t, FragmentTable::Zmean, m, k_partner, partner) =
+        static_cast<float>(bin.i_z_cn) - zf;
+    fragment_element(t, FragmentTable::Zshift, m, k_partner, partner) = t.zucd - zf;
 }
 
 // Z1 - 0.55 * Bell(I_short - Z1, 45, 49.5): polarisation by the N = 50 shell (5925, 5945).
@@ -349,14 +350,9 @@ void mean_z(BinInput const& bin, WorkingParameters const& w, params::Parameters 
             BinTables& t, Temporaries& tmp, float& z) {
     std::int64_t const last = fb::sub(bin.i_a_cn, ten);
     // QUIRK(Q-061): with A_CN > 360 the loops below index Zmean and Zshift beyond 350, which
-    // BASIC does not check: the first writes alias other rows, those of mode 5 run past the end of
-    // both arrays (heap corruption; the reference binary writes P3 and dies with SIGSEGV later in
-    // the bin, capture m7-q061-z120a385). Undefined behaviour is not reproduced (as Q-039, Q-053).
-    if (last > t.zmean.ubound(3)) {
-        throw std::out_of_range("GEF.bas:5879-5991: Zmean/Zshift index " + std::to_string(last) +
-                                " beyond 350 for A_CN " + std::to_string(bin.i_a_cn) +
-                                " (QUIRKS Q-061)");
-    }
+    // BASIC does not check: the writes alias other rows, those of mode 5 run past the end of both
+    // arrays into the gap and the next table (the reference binary writes P3 and dies with SIGSEGV
+    // later in the bin, capture m7-q061-z120a385). store_mean_z reproduces the writes.
     auto const z_cn = static_cast<float>(bin.i_z_cn);
     auto partner = [&](std::int64_t i_short) { return fb::sub(bin.i_a_cn, i_short); };
 
@@ -468,7 +464,7 @@ void z_a_relation(BinInput const& bin, BinTables& t, float zc, std::int64_t m, s
     t.rzpol = 0x0p+0F;
     for (int i_short = 1; i_short <= 3; ++i_short) {
         t.ra = ra_of();
-        t.rzpol = t.zshift(m, k, fb::f2l(t.ra));
+        t.rzpol = fragment_element(t, FragmentTable::Zshift, m, k, fb::f2l(t.ra));
     }
     ac = ra_of();
     nc = ac - zc;
