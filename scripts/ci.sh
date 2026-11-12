@@ -14,6 +14,10 @@
 #   --quick    dev-gcc configure/build/test without [slow] tests, and the
 #              Python steps only.
 #
+# CI_JOBS (default: nproc, which honours taskset) sets the parallel jobs of
+# ctest, clang-tidy and pytest (pytest-xdist; tests marked `serial` run
+# afterwards, alone, because they measure wall time).
+#
 # Every step runs even if an earlier one failed, except steps that need a
 # build that failed. Each step's output goes to build/ci/<step>.log; the tail
 # of the log is shown when the step fails. A one-line summary per step is
@@ -29,7 +33,7 @@ case "${1:-}" in
     "") ;;
     --quick) quick=1 ;;
     -h | --help)
-        sed -n '8,20p' "$0" | sed 's/^# \{0,1\}//'
+        sed -n '8,24p' "$0" | sed 's/^# \{0,1\}//'
         exit 0
         ;;
     *)
@@ -48,6 +52,7 @@ mkdir -p "$log_dir"
 summary=()
 failed=0
 declare -A step_ok=()
+jobs="${CI_JOBS:-$(nproc)}"
 
 # run_step NAME COMMAND...: run a command, log it, record PASS/FAIL.
 run_step() {
@@ -85,7 +90,7 @@ preset_pipeline() {
     # --quick skips [slow] tests (the exhaustive Single checks); the full run keeps them.
     [[ $quick -eq 1 ]] && exclude=(-LE slow)
     cmake --preset "$preset" && cmake --build --preset "$preset" &&
-        ctest --preset "$preset" "${exclude[@]}"
+        ctest --preset "$preset" -j "$jobs" "${exclude[@]}"
 }
 
 cpp_files() {
@@ -100,7 +105,11 @@ clang_tidy_step() {
         echo "no C++ sources found" >&2
         return 1
     fi
-    clang-tidy -p build/dev-clang --quiet "${files[@]}"
+    printf '%s\0' "${files[@]}" | xargs -0 -n 4 -P "$jobs" clang-tidy -p build/dev-clang --quiet
+}
+
+pytest_step() {
+    python3 -m pytest -n "$jobs" -m "not serial" && python3 -m pytest -m serial
 }
 
 clang_format_step() {
@@ -146,7 +155,7 @@ fi
 run_step ruff-check ruff check
 run_step ruff-format ruff format --check
 run_step basedpyright basedpyright
-run_step pytest python3 -m pytest
+run_step pytest pytest_step
 
 # skippable_step NAME COMMAND...: like run_step, but exit 77 (validation/ absent) is a SKIP.
 skippable_step() {

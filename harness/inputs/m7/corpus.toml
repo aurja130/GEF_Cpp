@@ -162,6 +162,17 @@ cells = ["`MODE(i)`"]
 note = "U-235 (n,f) thermal with MODE(S2)"
 
 [[entry]]
+id = "u236-mode11"
+group = "m7"
+input = "harness/inputs/m7/u236_mode11.in"
+seed = 20261051
+steps = "1"
+passes = "0"
+timeout_s = 3600
+cells = ["`MODE(i)`"]
+note = "U-235 (n,f) thermal with MODE(S11): Yield_Mode_11 is 0, so P_selected = 0 and the builder prints 7016-7017"
+
+[[entry]]
 id = "u236-neo"
 group = "m7"
 input = "harness/inputs/m7/u236_neo.in"

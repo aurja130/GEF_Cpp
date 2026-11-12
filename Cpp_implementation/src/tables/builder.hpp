@@ -11,6 +11,7 @@
 #pragma once
 
 #include "data/tables.hpp"
+#include "fbrt/text.hpp"
 #include "params/parameters.hpp"
 #include "tables/bin_plan.hpp"
 #include "tables/bin_tables.hpp"
@@ -52,5 +53,23 @@ void mode_centres_and_deformations(BinInput const& bin, WorkingParameters const&
 void barriers_temperatures_and_widths(BinInput const& bin, std::int64_t p_a_cn,
                                       WorkingParameters const& w, params::Parameters const& p,
                                       data::TableSet const& tables, BinTables& t, Temporaries& tmp);
+
+// GEF.bas:6561-7036: the energy-dependent shifts of the mode centres (`ZC_Mode_1..5`,
+// `P_Z_Mean_S0..5`), the mode energies at scission (`EsciS0..5`), the suppression of modes 0-3
+// at low energy (`R_supp_S*`, `R_slope_S2`; only with `b_supp` 1, cleared by Options(NOSUPP)), the
+// potential energy per mode and Z (`EMpot`, only in bin (1, 0, 0, 0)), the energy dependence of
+// the charge polarisation (`Zshift(1..5, ·, ·)`, through the QUIRK(Q-061) emulation), the Z-A
+// relations of the modes (2nd iteration), the mode yields normalised to 1, the selected mode's
+// yield `P_selected` (`i_mode_selected`, MODE(i); -1 selects all) and the mass widths
+// `SigA_Mode_*`. Prints 7016-7017 to `console` when `P_selected` is 0. `b_supp` and
+// `i_mode_selected` are the sequence file's run::SequenceFileState fields.
+void shifts_polarisation_and_yields(BinInput const& bin, std::uint8_t b_supp,
+                                    std::int64_t i_mode_selected, WorkingParameters const& w,
+                                    params::Parameters const& p, BinTables& t,
+                                    fb::PrintFile& console);
+
+// GEF.bas:7920 `Racc = 100.E0 / NEVTtot * P_selected` (normalisation of the spectra), the last
+// statement before the event loop; `nevttot` is BinPlanInput::nevttot.
+void spectra_normalisation(std::int64_t nevttot, BinTables& t);
 
 } // namespace gef::tables

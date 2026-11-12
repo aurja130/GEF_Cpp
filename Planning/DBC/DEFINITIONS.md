@@ -181,6 +181,7 @@ The glossary of the GEF port: every term a concept node uses, and the project's 
 | `mode centre` | Charge, mass and neutron centre of a mode, taken from the scission limit. | M7 plan |
 | `mode deformation` | Equilibrium deformation of each fragment of a mode, from the equilibrium solve. | Q-009 |
 | `mode shift` | Energy-dependent shift of a mode. | M7 plan |
+| `mode suppression` | Reduction of the yields of modes 0, 1 and 3 when their excitation energy above the barrier is low; the NOSUPP option switches it off. | M7 plan §3 (M7.3) |
 | `mode width` | Width of a mode's distribution: in proton number and polarisation (ModeWidths), in mass (ModeYields). One term covers both uses. | milestone plan §5 |
 | `mode yield` | Share of the fission events that a mode receives. | M7 plan |
 | model parameter | One of the named values the physics model reads. | M4 plan |
@@ -297,6 +298,7 @@ The glossary of the GEF port: every term a concept node uses, and the project's 
 | scission shape | Shape of the nucleus at the moment it splits into two fragments. | Planning/MILESTONE_5_PLAN.md §3 |
 | `scratch temporary` | A temporary that the builder uses inside one bin and does not keep for the next. | M7 plan |
 | seed capture | The clock seed of one reference run, recorded so that a later build can replay that run. | Planning/MILESTONE_1_PLAN.md; harness/README.md |
+| `selected mode` | The one mode a MODE(i) option asks for; its normalised yield scales the spectra, and a yield of zero is reported on the console. | M7 plan §3 (M7.3) |
 | self comparison | Comparison of a variable with itself in a branch condition, which the compiler folds to a constant | fbrt arithmetic rule R9 |
 | sensitivity check | A test that synthetic faults at or above the minimum detectable effect of their family are all detected by the verdict. | Planning/MILESTONE_2_PLAN.md; compare/STATISTICS.md |
 | separation energy | The energy needed to remove one neutron or one proton from a nucleus. | IMPLEMENTATION_STRATEGY milestone M8 |

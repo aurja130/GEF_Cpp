@@ -81,6 +81,7 @@ struct BinTables {
     float zc_mode_4 = 0.0F;             // 767
     float zc_mode_5 = 0.0F;             // 767
     float zc_mode_3_shift = 0.0F;       // 769
+    float p_z_mean_s0 = 0.0F;           // 1507 `Dim Shared As Single P_Z_Mean_S0 = 0`
     float p_z_mean_s1 = 0x1.A66666p+5F; // 1508 `Dim Shared As Single P_Z_Mean_S1 = 52.8`
     float p_z_mean_s2 = 0x1.B8p+5F;     // 1509 `= 55`
     float p_z_mean_s3 = 0x1.04p+6F;     // 1510 `= 65`
@@ -230,6 +231,44 @@ struct BinTables {
     // SigA_Mode_2: this block writes it (6157), M7.3 writes it again (7025, 7026) with the
     // value P3 captures.
     float siga_mode_2 = 0.0F; // 804
+
+    // --- energy-dependent shifts, suppression of the modes, potential energies, polarisation,
+    // Z-A relations (2nd iteration), yields and mass widths of the modes (GEF.bas:6561-7036)
+    float escis0 = 0.0F;     // 792
+    float escis1 = 0.0F;     // 792
+    float escis2 = 0.0F;     // 792
+    float escis3 = 0.0F;     // 792
+    float escis4 = 0.0F;     // 792
+    float escis5 = 0.0F;     // 792
+    float desupp = 0.0F;     // 795
+    float r_slope_s2 = 0.0F; // 794 (kept from the previous bin when B_supp <> 1)
+    float r_supp_s0 = 0.0F;  // 794
+    float r_supp_s1 = 0.0F;  // 794
+    float r_supp_s2 = 0.0F;  // 794
+    float r_supp_s3 = 0.0F;  // 794 `R_Supp_S3`
+    // Spectra.bas:5 `Redim EMpot(7,150) As Single`: potential energy per mode and Z, written only
+    // in bin (1, 0, 0, 0) (GEF.bas:6738-6741); CLEARspectra.bas zeroes it per pass (M7.5).
+    fb::Array<float, 2> empot{{fb::Bounds{0, 7}, fb::Bounds{0, 150}}};
+    float yield_mode_0 = 0.0F;  // 1528
+    float yield_mode_1 = 0.0F;  // 1529
+    float yield_mode_2 = 0.0F;  // 1530
+    float yield_mode_3 = 0.0F;  // 1531
+    float yield_mode_4 = 0.0F;  // 1532
+    float yield_mode_5 = 0.0F;  // 1533
+    float yield_mode_11 = 0.0F; // 1534
+    float yield_mode_22 = 0.0F; // 1535
+    float yield_norm = 0.0F;    // 778
+    float p_selected = 0.0F;    // 782
+    float siga_mode_0 = 0.0F;   // 804
+    float siga_mode_1 = 0.0F;   // 804
+    float siga_mode_3 = 0.0F;   // 804
+    float siga_mode_4 = 0.0F;   // 804
+    float siga_mode_5 = 0.0F;   // 804
+    float siga_mode_11 = 0.0F;  // 841
+    float siga_mode_22 = 0.0F;  // 841
+
+    // --- GEF.bas:5052 `Dim As Single Racc` (a local of the pass loop, written per bin at 7920)
+    float racc = 0.0F;
 };
 
 // The builder's shared scratch variables (P3 group "stale temporaries", plus `RZ` of the group

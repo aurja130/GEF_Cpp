@@ -82,11 +82,13 @@ def test_manifest_and_reuse(emission: Emission) -> None:
 
 @pytest.mark.fbc
 @pytest.mark.slow
-def test_emission_is_deterministic(emission: Emission) -> None:
+@pytest.mark.serial
+def test_emission_is_deterministic(emission: Emission, tmp_path: Path) -> None:
+    # A fresh emission of its own, so that tests running in parallel (pytest-xdist) keep
+    # reading the shared one in build/fbsrc/; the raw hash depends on the directory.
     before = emission.manifest
-    fresh = emit(force=True)
+    fresh = emit(force=True, build_root=tmp_path)
     assert not fresh.reused
-    assert fresh.manifest.gef_c_sha256 == before.gef_c_sha256
     assert fresh.manifest.gef_c_sha256_normalised == before.gef_c_sha256_normalised
     assert fresh.manifest.fbc_wall_time_s < 60
 

@@ -825,9 +825,9 @@ ShellsAndTemperatures -->|temperatures| EvenOddAndSortedEnergies["Even-odd and s
 EvenOddAndSortedEnergies -->|sorted energies| FragmentSpins["Fragment spins"]
 FragmentSpins -->|fragment spins| BuilderIntegration["Builder integration"]
 BuilderIntegration -->|tables for each bin| EventGeneration["Event generation"]
-class BinVisits,NominalWorkingCopies,CarriedBinTables,ModesAndDeformations,ModeEnergiesAndWidths implemented
-class ModeShiftsAndPolarisation,ModeYields partial
-class ShellsAndTemperatures,EvenOddAndSortedEnergies,FragmentSpins,BuilderIntegration planned
+class BinVisits,NominalWorkingCopies,CarriedBinTables,ModesAndDeformations,ModeEnergiesAndWidths,ModeShiftsAndPolarisation,ModeYields implemented
+class ShellsAndTemperatures,EvenOddAndSortedEnergies,FragmentSpins partial
+class BuilderIntegration planned
 class RunControl,ModelData,PhysicsFunctions,EventGeneration external
 ```
 
@@ -838,11 +838,11 @@ class RunControl,ModelData,PhysicsFunctions,EventGeneration external
 | `CarriedBinTables` | Keeps the model tables from one bin to the next, and the last bin's spin for the next step; the scratch values are not kept. | model table, carried state, last-bin spin, scratch temporary | implemented |
 | `ModesAndDeformations` | Builds the centre, the equilibrium deformation and the mean charge and Z-A relation of every mode. | mode, mode centre, mode deformation, mean charge, Z-A relation | implemented |
 | `ModeEnergiesAndWidths` | Builds the barrier and saddle energies, the overlap modes, the collective temperatures and the widths of the modes. | barrier energy, saddle energy, overlap mode, collective temperature, mode width | implemented |
-| `ModeShiftsAndPolarisation` | The energy-dependent shifts of the modes, their potential-energy terms and the charge polarisation, with a second round of the Z-A relations. | mode shift, charge polarisation, Z-A relation | partial |
-| `ModeYields` | The share of the fission events that each mode receives, with the widths of the modes' mass distributions. | mode yield, mode width | partial |
-| `ShellsAndTemperatures` | The shell energies of the fission channels and the intrinsic temperatures of the fragments. | shell energy, intrinsic temperature | planned |
-| `EvenOddAndSortedEnergies` | The scission energies of the modes, their even-odd corrections and their order by size. | scission energy, even-odd correction, sorted energy list | planned |
-| `FragmentSpins` | The root-mean-square angular momentum of each fragment. | fragment spin | planned |
+| `ModeShiftsAndPolarisation` | The energy-dependent shifts of the modes, their potential-energy terms and the charge polarisation, with a second round of the Z-A relations. | mode shift, charge polarisation, Z-A relation | implemented |
+| `ModeYields` | The share of the fission events that each mode receives, after the mode suppression, with the share of the selected mode and the widths of the modes' mass distributions. | mode yield, mode suppression, selected mode, mode width | implemented |
+| `ShellsAndTemperatures` | The shell energies of the fission channels and the intrinsic temperatures of the fragments. | shell energy, intrinsic temperature | partial |
+| `EvenOddAndSortedEnergies` | The scission energies of the modes, their even-odd corrections and their order by size. | scission energy, even-odd correction, sorted energy list | partial |
+| `FragmentSpins` | The root-mean-square angular momentum of each fragment. | fragment spin | partial |
 | `BuilderIntegration` | Runs the table builder for every bin of each step and hands the tables on to event generation. | bin, model table | planned |
 | `RunControl` | See GEF in C++. |  | external |
 | `ModelData` | See GEF in C++. |  | external |

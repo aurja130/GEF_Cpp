@@ -661,35 +661,36 @@ Full runs with the probe build, which records no pass trace. Seven edge inputs r
 
 ## Reference-store captures of the bin tables
 
-**Concepts:** `BinVisits`, `ModeCentres`, `ModeDeformations`, `MeanChargeAndRelations`, `ModeEnergiesAndWidths`
+**Concepts:** `BinVisits`, `ModeCentres`, `ModeDeformations`, `MeanChargeAndRelations`, `ModeEnergiesAndWidths`, `ModeShiftsAndPolarisation`, `ModeYields`
 
 **Comments:** none yet
 
-Each corpus entry is captured with a seed-probes build (`GEF_PROBES`, see `harness/inputs/m7/corpus.toml`) into the store entry `m7-p3-<id>`: its `run.json` and the P1, P3in and P3 probe files. The store holds all 21 corpus captures; `m7-p3-chain-gs` is superseded and has no corpus entry. Three test cases read the captures: each skips when none is present and requires records; two of them also require all 21 by a count check.
+Each corpus entry is captured with a seed-probes build (`GEF_PROBES`, see `harness/inputs/m7/corpus.toml`) into the store entry `m7-p3-<id>`: its `run.json` and the P1, P3in and P3 probe files. The store holds all 22 corpus captures; `m7-p3-chain-gs` is superseded and has no corpus entry. Three test cases read the captures: each skips when none is present and requires records; two of them also require all 22 by a count check.
 
 | Item | Holds | Concepts |
 | --- | --- | --- |
-| `manifests/reference_store/m7-p3-rn215-n.json` | Corpus entry `rn215-n`: Rn-215 (n,f) with Options(ERR); the thermal first-chance bin and the 30 MeV multi-chance bins of perturbed pass 0. | `BinVisits`, `ModeCentres`, `ModeDeformations`, `MeanChargeAndRelations`, `ModeEnergiesAndWidths` |
-| `manifests/reference_store/m7-p3-u236-n.json` | Corpus entry `u236-n`: U-235 (n,f) nominal at thermal and at 2 MeV (fast first chance). | `BinVisits`, `ModeCentres`, `ModeDeformations`, `MeanChargeAndRelations`, `ModeEnergiesAndWidths` |
-| `manifests/reference_store/m7-p3-u236-9.json` | Corpus entry `u236-9`: U-235 (n,f) at 9 MeV with Options(ERR); first- and second-chance bins of perturbed pass 0. | `BinVisits`, `ModeCentres`, `ModeDeformations`, `MeanChargeAndRelations`, `ModeEnergiesAndWidths` |
-| `manifests/reference_store/m7-p3-pu240-n.json` | Corpus entry `pu240-n`: Pu-239 (n,f) at thermal; S1 enhancement around Pu. | `BinVisits`, `ModeCentres`, `ModeDeformations`, `MeanChargeAndRelations`, `ModeEnergiesAndWidths` |
-| `manifests/reference_store/m7-p3-np238-n.json` | Corpus entry `np238-n`: Np-237 (n,f) at thermal; odd-odd compound nucleus. | `BinVisits`, `ModeCentres`, `ModeDeformations`, `MeanChargeAndRelations`, `ModeEnergiesAndWidths` |
-| `manifests/reference_store/m7-p3-cf252-sf.json` | Corpus entry `cf252-sf`: Cf-252 spontaneous fission. | `BinVisits`, `ModeCentres`, `ModeDeformations`, `MeanChargeAndRelations`, `ModeEnergiesAndWidths` |
-| `manifests/reference_store/m7-p3-fm258-sf.json` | Corpus entry `fm258-sf`: Fm-258 spontaneous fission, symmetric. | `BinVisits`, `ModeCentres`, `ModeDeformations`, `MeanChargeAndRelations`, `ModeEnergiesAndWidths` |
-| `manifests/reference_store/m7-p3-sg264-sf.json` | Corpus entry `sg264-sf`: Sg-264 spontaneous fission. | `BinVisits`, `ModeCentres`, `ModeDeformations`, `MeanChargeAndRelations`, `ModeEnergiesAndWidths` |
-| `manifests/reference_store/m7-p3-ds270-sf.json` | Corpus entry `ds270-sf`: Ds-270 spontaneous fission at Z 110 or more; the equilibrium solve prints its not-converged message once (Q-041). | `BinVisits`, `ModeCentres`, `ModeDeformations`, `MeanChargeAndRelations`, `ModeEnergiesAndWidths` |
-| `manifests/reference_store/m7-p3-u-heavy-light.json` | Corpus entry `u-heavy-light` (chain entry): U-240 then U-230, FC at E* 8 MeV in one sequence file; what the heavy system leaves for the light one. | `BinVisits`, `ModeCentres`, `ModeDeformations`, `MeanChargeAndRelations`, `ModeEnergiesAndWidths` |
-| `manifests/reference_store/m7-p3-hg180-fc.json` | Corpus entry `hg180-fc`: Hg-180 FC at E* 12 MeV; very low fissility. | `BinVisits`, `ModeCentres`, `ModeDeformations`, `MeanChargeAndRelations`, `ModeEnergiesAndWidths` |
-| `manifests/reference_store/m7-p3-po210-fc.json` | Corpus entry `po210-fc`: Po-210 FC at E* 40 MeV; high excitation energy, mode 5. | `BinVisits`, `ModeCentres`, `ModeDeformations`, `MeanChargeAndRelations`, `ModeEnergiesAndWidths` |
-| `manifests/reference_store/m7-p3-u236-nosupp.json` | Corpus entry `u236-nosupp`: U-235 (n,f) at thermal with Options(NOSUPP). | `BinVisits`, `ModeCentres`, `ModeDeformations`, `MeanChargeAndRelations`, `ModeEnergiesAndWidths` |
-| `manifests/reference_store/m7-p3-u236-mode.json` | Corpus entry `u236-mode`: U-235 (n,f) at thermal with MODE(S2). | `BinVisits`, `ModeCentres`, `ModeDeformations`, `MeanChargeAndRelations`, `ModeEnergiesAndWidths` |
-| `manifests/reference_store/m7-p3-u236-neo.json` | Corpus entry `u236-neo`: U-235 (n,f) at thermal with Options(NEO); EOscale 0. | `BinVisits`, `ModeCentres`, `ModeDeformations`, `MeanChargeAndRelations`, `ModeEnergiesAndWidths` |
-| `manifests/reference_store/m7-p3-u236-eoscale.json` | Corpus entry `u236-eoscale`: U-235 (n,f) at thermal with a Fitpar.dat setting EOscale 0.5 (Q-011). | `BinVisits`, `ModeCentres`, `ModeDeformations`, `MeanChargeAndRelations`, `ModeEnergiesAndWidths` |
-| `manifests/reference_store/m7-p3-spectra.json` | Corpus entry `spectra`: U-236 ES, then Pu-240 EM with a three-column spectrum; Spin_CN taken from the spectrum, then EM bins with Spin_CN = 0. | `BinVisits`, `ModeCentres`, `ModeDeformations`, `MeanChargeAndRelations`, `ModeEnergiesAndWidths` |
-| `manifests/reference_store/m7-p3-chain-en.json` | Corpus entry `chain-en` (chain entry): U-235 and Pu-239 (n,f) at thermal, 0.5 and 1.5 MeV; nominal; first chance only. | `BinVisits`, `ModeCentres`, `ModeDeformations`, `MeanChargeAndRelations`, `ModeEnergiesAndWidths` |
-| `manifests/reference_store/m7-p3-chain-odd.json` | Corpus entry `chain-odd` (chain entry): Np-237 and Am-241 (n,f), odd-odd compound nuclei, at thermal, 0.5 and 1.5 MeV; no step runs the multi-chance pre-pass. Supersedes `m7-p3-chain-gs`. | `BinVisits`, `ModeCentres`, `ModeDeformations`, `MeanChargeAndRelations`, `ModeEnergiesAndWidths` |
-| `manifests/reference_store/m7-p3-fm212-sf.json` | Corpus entry `fm212-sf`: Fm-212 ground state; the equilibrium solve does not converge for IZ1 = 10 and prints to the console (Q-041). | `BinVisits`, `ModeCentres`, `ModeDeformations`, `MeanChargeAndRelations`, `ModeEnergiesAndWidths` |
-| `manifests/reference_store/m7-p3-cm232-gs25.json` | Corpus entry `cm232-gs25`: Cm-232 ground state at 25 MeV; multi-chance bins with I_Z_Multi above 0. Manifest note: 89 multi-chance bins of pass 0, 4 with I_Z_Multi = 1 (a proton emitted before fission). | `BinVisits`, `ModeCentres`, `ModeDeformations`, `MeanChargeAndRelations`, `ModeEnergiesAndWidths` |
+| `manifests/reference_store/m7-p3-rn215-n.json` | Corpus entry `rn215-n`: Rn-215 (n,f) with Options(ERR); the thermal first-chance bin and the 30 MeV multi-chance bins of perturbed pass 0. | `BinVisits`, `ModeCentres`, `ModeDeformations`, `MeanChargeAndRelations`, `ModeEnergiesAndWidths`, `ModeShiftsAndPolarisation`, `ModeYields` |
+| `manifests/reference_store/m7-p3-u236-n.json` | Corpus entry `u236-n`: U-235 (n,f) nominal at thermal and at 2 MeV (fast first chance). | `BinVisits`, `ModeCentres`, `ModeDeformations`, `MeanChargeAndRelations`, `ModeEnergiesAndWidths`, `ModeShiftsAndPolarisation`, `ModeYields` |
+| `manifests/reference_store/m7-p3-u236-9.json` | Corpus entry `u236-9`: U-235 (n,f) at 9 MeV with Options(ERR); first- and second-chance bins of perturbed pass 0. | `BinVisits`, `ModeCentres`, `ModeDeformations`, `MeanChargeAndRelations`, `ModeEnergiesAndWidths`, `ModeShiftsAndPolarisation`, `ModeYields` |
+| `manifests/reference_store/m7-p3-pu240-n.json` | Corpus entry `pu240-n`: Pu-239 (n,f) at thermal; S1 enhancement around Pu. | `BinVisits`, `ModeCentres`, `ModeDeformations`, `MeanChargeAndRelations`, `ModeEnergiesAndWidths`, `ModeShiftsAndPolarisation`, `ModeYields` |
+| `manifests/reference_store/m7-p3-np238-n.json` | Corpus entry `np238-n`: Np-237 (n,f) at thermal; odd-odd compound nucleus. | `BinVisits`, `ModeCentres`, `ModeDeformations`, `MeanChargeAndRelations`, `ModeEnergiesAndWidths`, `ModeShiftsAndPolarisation`, `ModeYields` |
+| `manifests/reference_store/m7-p3-cf252-sf.json` | Corpus entry `cf252-sf`: Cf-252 spontaneous fission. | `BinVisits`, `ModeCentres`, `ModeDeformations`, `MeanChargeAndRelations`, `ModeEnergiesAndWidths`, `ModeShiftsAndPolarisation`, `ModeYields` |
+| `manifests/reference_store/m7-p3-fm258-sf.json` | Corpus entry `fm258-sf`: Fm-258 spontaneous fission, symmetric. | `BinVisits`, `ModeCentres`, `ModeDeformations`, `MeanChargeAndRelations`, `ModeEnergiesAndWidths`, `ModeShiftsAndPolarisation`, `ModeYields` |
+| `manifests/reference_store/m7-p3-sg264-sf.json` | Corpus entry `sg264-sf`: Sg-264 spontaneous fission. | `BinVisits`, `ModeCentres`, `ModeDeformations`, `MeanChargeAndRelations`, `ModeEnergiesAndWidths`, `ModeShiftsAndPolarisation`, `ModeYields` |
+| `manifests/reference_store/m7-p3-ds270-sf.json` | Corpus entry `ds270-sf`: Ds-270 spontaneous fission at Z 110 or more; the equilibrium solve prints its not-converged message once (Q-041). | `BinVisits`, `ModeCentres`, `ModeDeformations`, `MeanChargeAndRelations`, `ModeEnergiesAndWidths`, `ModeShiftsAndPolarisation`, `ModeYields` |
+| `manifests/reference_store/m7-p3-u-heavy-light.json` | Corpus entry `u-heavy-light` (chain entry): U-240 then U-230, FC at E* 8 MeV in one sequence file; what the heavy system leaves for the light one. | `BinVisits`, `ModeCentres`, `ModeDeformations`, `MeanChargeAndRelations`, `ModeEnergiesAndWidths`, `ModeShiftsAndPolarisation`, `ModeYields` |
+| `manifests/reference_store/m7-p3-hg180-fc.json` | Corpus entry `hg180-fc`: Hg-180 FC at E* 12 MeV; very low fissility. | `BinVisits`, `ModeCentres`, `ModeDeformations`, `MeanChargeAndRelations`, `ModeEnergiesAndWidths`, `ModeShiftsAndPolarisation`, `ModeYields` |
+| `manifests/reference_store/m7-p3-po210-fc.json` | Corpus entry `po210-fc`: Po-210 FC at E* 40 MeV; high excitation energy, mode 5. | `BinVisits`, `ModeCentres`, `ModeDeformations`, `MeanChargeAndRelations`, `ModeEnergiesAndWidths`, `ModeShiftsAndPolarisation`, `ModeYields` |
+| `manifests/reference_store/m7-p3-u236-nosupp.json` | Corpus entry `u236-nosupp`: U-235 (n,f) at thermal with Options(NOSUPP). | `BinVisits`, `ModeCentres`, `ModeDeformations`, `MeanChargeAndRelations`, `ModeEnergiesAndWidths`, `ModeShiftsAndPolarisation`, `ModeYields` |
+| `manifests/reference_store/m7-p3-u236-mode.json` | Corpus entry `u236-mode`: U-235 (n,f) at thermal with MODE(S2). | `BinVisits`, `ModeCentres`, `ModeDeformations`, `MeanChargeAndRelations`, `ModeEnergiesAndWidths`, `ModeShiftsAndPolarisation`, `ModeYields` |
+| `manifests/reference_store/m7-p3-u236-mode11.json` | Corpus entry `u236-mode11`: U-235 (n,f) at thermal with MODE(S11); the selected mode has no yield, and the builder prints that no calculation is performed. | `BinVisits`, `ModeCentres`, `ModeDeformations`, `MeanChargeAndRelations`, `ModeEnergiesAndWidths`, `ModeShiftsAndPolarisation`, `ModeYields` |
+| `manifests/reference_store/m7-p3-u236-neo.json` | Corpus entry `u236-neo`: U-235 (n,f) at thermal with Options(NEO); EOscale 0. | `BinVisits`, `ModeCentres`, `ModeDeformations`, `MeanChargeAndRelations`, `ModeEnergiesAndWidths`, `ModeShiftsAndPolarisation`, `ModeYields` |
+| `manifests/reference_store/m7-p3-u236-eoscale.json` | Corpus entry `u236-eoscale`: U-235 (n,f) at thermal with a Fitpar.dat setting EOscale 0.5 (Q-011). | `BinVisits`, `ModeCentres`, `ModeDeformations`, `MeanChargeAndRelations`, `ModeEnergiesAndWidths`, `ModeShiftsAndPolarisation`, `ModeYields` |
+| `manifests/reference_store/m7-p3-spectra.json` | Corpus entry `spectra`: U-236 ES, then Pu-240 EM with a three-column spectrum; Spin_CN taken from the spectrum, then EM bins with Spin_CN = 0. | `BinVisits`, `ModeCentres`, `ModeDeformations`, `MeanChargeAndRelations`, `ModeEnergiesAndWidths`, `ModeShiftsAndPolarisation`, `ModeYields` |
+| `manifests/reference_store/m7-p3-chain-en.json` | Corpus entry `chain-en` (chain entry): U-235 and Pu-239 (n,f) at thermal, 0.5 and 1.5 MeV; nominal; first chance only. | `BinVisits`, `ModeCentres`, `ModeDeformations`, `MeanChargeAndRelations`, `ModeEnergiesAndWidths`, `ModeShiftsAndPolarisation`, `ModeYields` |
+| `manifests/reference_store/m7-p3-chain-odd.json` | Corpus entry `chain-odd` (chain entry): Np-237 and Am-241 (n,f), odd-odd compound nuclei, at thermal, 0.5 and 1.5 MeV; no step runs the multi-chance pre-pass. Supersedes `m7-p3-chain-gs`. | `BinVisits`, `ModeCentres`, `ModeDeformations`, `MeanChargeAndRelations`, `ModeEnergiesAndWidths`, `ModeShiftsAndPolarisation`, `ModeYields` |
+| `manifests/reference_store/m7-p3-fm212-sf.json` | Corpus entry `fm212-sf`: Fm-212 ground state; the equilibrium solve does not converge for IZ1 = 10 and prints to the console (Q-041). | `BinVisits`, `ModeCentres`, `ModeDeformations`, `MeanChargeAndRelations`, `ModeEnergiesAndWidths`, `ModeShiftsAndPolarisation`, `ModeYields` |
+| `manifests/reference_store/m7-p3-cm232-gs25.json` | Corpus entry `cm232-gs25`: Cm-232 ground state at 25 MeV; multi-chance bins with I_Z_Multi above 0. Manifest note: 89 multi-chance bins of pass 0, 4 with I_Z_Multi = 1 (a proton emitted before fission). | `BinVisits`, `ModeCentres`, `ModeDeformations`, `MeanChargeAndRelations`, `ModeEnergiesAndWidths`, `ModeShiftsAndPolarisation`, `ModeYields` |
 | `manifests/reference_store/m7-p3-chain-gs.json` | Superseded capture, not in the corpus; its steps ran the multi-chance pre-pass. | `BinVisits`, `ModeCentres`, `ModeDeformations`, `MeanChargeAndRelations` |
 
 ## Golden values of the bin captures
@@ -703,7 +704,7 @@ The store-derived golden `m7-p3` holds FNV-1a 64 fingerprints of the P3in and P3
 | Item | Holds | Concepts |
 | --- | --- | --- |
 | `Cpp_implementation/tests/golden/m7-p3/derived.json` | Digests of the store files the fingerprints were derived from: `run.json`, `work/probes/P3.txt` and `work/probes/P3in.txt` of each capture. | `ModeCentres`, `ModeDeformations` |
-| `Cpp_implementation/tests/golden/m7-p3/fingerprints.txt` | Per-record fingerprints; header `# m7-p3 fingerprints 1`; 475 lines in all; the first column names the corpus entry. | `ModeCentres`, `ModeDeformations` |
+| `Cpp_implementation/tests/golden/m7-p3/fingerprints.txt` | Per-record fingerprints; header `# m7-p3 fingerprints 1`; 477 lines in all; the first column names the corpus entry. | `ModeCentres`, `ModeDeformations` |
 
 ## Equilibrium solve sweep
 
@@ -719,7 +720,7 @@ A sweep over the equilibrium solve (`Beta_Equi`) from an earlier submilestone, s
 
 ## Q-061 reference run
 
-**Concepts:** `MeanChargeAndRelations`, `ModeEnergiesAndWidths`
+**Concepts:** `MeanChargeAndRelations`, `ModeEnergiesAndWidths`, `ModeShiftsAndPolarisation`, `ModeYields`
 
 **Comments:** none yet
 
@@ -727,19 +728,19 @@ One reference run for Z 120 and A 385, a ground state. The input validity check 
 
 | Item | Holds | Concepts |
 | --- | --- | --- |
-| `manifests/reference_store/m7-q061-z120a385.json` | Run record for Z 120, A 385: exit code -11; one step, no passes. | `MeanChargeAndRelations`, `ModeEnergiesAndWidths` |
+| `manifests/reference_store/m7-q061-z120a385.json` | Run record for Z 120, A 385: exit code -11; one step, no passes. | `MeanChargeAndRelations`, `ModeEnergiesAndWidths`, `ModeShiftsAndPolarisation`, `ModeYields` |
 
 ## Harness inputs for the captures
 
-**Concepts:** `BinVisits`, `CarriedBinTables`, `ModeDeformations`, `MeanChargeAndRelations`
+**Concepts:** `BinVisits`, `CarriedBinTables`, `ModeDeformations`, `MeanChargeAndRelations`, `ModeYields`
 
 **Comments:** none yet
 
-The corpus lists the 21 inputs of the captures. Every entry sets `Fenhance` 1 and its own seed; the entries marked `chain` (`u-heavy-light`, `chain-en`, `chain-odd`) are the end-to-end runs. The last-writer map gives each P3 variable its kind, its last part and its writers (`-` means none); the later-writers test reads it through `last_writer_map()`. `python3 -m harness.last_writer` regenerates it, and the harness README gives its `--check` option.
+The corpus lists the 22 inputs of the captures. Every entry sets `Fenhance` 1 and its own seed; the entries marked `chain` (`u-heavy-light`, `chain-en`, `chain-odd`) are the end-to-end runs. The last-writer map gives each P3 variable its kind, its last part and its writers (`-` means none); the later-writers test reads it through `last_writer_map()`. `python3 -m harness.last_writer` regenerates it, and the harness README gives its `--check` option.
 
 | Item | Holds | Concepts |
 | --- | --- | --- |
-| `harness/inputs/m7/corpus.toml` | The 21 corpus entries, one `[[entry]]` each; each capture is `m7-p3-<id>`. | `BinVisits`, `CarriedBinTables`, `ModeDeformations`, `MeanChargeAndRelations` |
+| `harness/inputs/m7/corpus.toml` | The 22 corpus entries, one `[[entry]]` each; each capture is `m7-p3-<id>`; `u236-mode11` selects a mode without yield. | `BinVisits`, `CarriedBinTables`, `ModeDeformations`, `MeanChargeAndRelations`, `ModeYields` |
 | `harness/inputs/m7/last_writer.tsv` | Last-writer map: header `# m7 last-writer map 1`, 363 lines, columns name, kind, last part and writers. | `BinVisits`, `CarriedBinTables`, `ModeDeformations`, `MeanChargeAndRelations` |
 
 ## Seed-build reference captures

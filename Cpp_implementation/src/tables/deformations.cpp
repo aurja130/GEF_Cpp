@@ -18,6 +18,7 @@
 #include "physics/shape.hpp"
 #include "tables/builder.hpp"
 #include "tables/fragment_memory.hpp"
+#include "tables/z_a_relation.hpp"
 
 #include <cmath>
 #include <cstdint>
@@ -452,8 +453,9 @@ void mean_z(BinInput const& bin, WorkingParameters const& w, params::Parameters 
     }
 }
 
-// One mode of GEF.bas:5995-6048: RZpol and RA iterated three times on the Zshift of fragment
-// `k`, then the mean A and N of the mode.
+} // namespace
+
+// One mode of GEF.bas:5995-6048 and 6824-6870.
 void z_a_relation(BinInput const& bin, BinTables& t, float zc, std::int64_t m, std::int64_t k,
                   float& ac, float& nc) {
     auto ra_of = [&] {
@@ -469,6 +471,8 @@ void z_a_relation(BinInput const& bin, BinTables& t, float zc, std::int64_t m, s
     ac = ra_of();
     nc = ac - zc;
 }
+
+namespace {
 
 // GEF.bas:5995-6048: general relations between Z and A of the modes.
 void z_a_relations(BinInput const& bin, BinTables& t) {

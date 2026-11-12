@@ -9,7 +9,8 @@ add_library(gef_tables STATIC
     bin_plan.cpp
     deformations.cpp
     fragment_memory.cpp
-    working_parameters.cpp)
+    working_parameters.cpp
+    yields.cpp)
 target_include_directories(gef_tables PUBLIC "${PROJECT_SOURCE_DIR}/Cpp_implementation/src")
 target_link_libraries(gef_tables PUBLIC gef_physics gef_params gef_fbrt)
 gef_apply_policy(gef_tables)

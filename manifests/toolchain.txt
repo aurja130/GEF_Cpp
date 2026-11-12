@@ -17,10 +17,10 @@ gcc           16.2.1    /usr/bin/gcc
 clang         22.1.8    /usr/bin/clang
 cmake         4.3.0     /usr/bin/cmake
 ninja         1.13.2    /usr/bin/ninja
-python        3.14.10   /usr/bin/python3
-ruff          0.16.6    ~/.local/bin/ruff
-basedpyright  1.39.10   ~/.local/bin/basedpyright
-pytest        9.1.1     ~/.local/bin/pytest
+python        3.14.7    ~/.pyenv/versions/gef_cpp_venv/bin/python3
+ruff          0.16.6    ~/.pyenv/versions/gef_cpp_venv/bin/ruff
+basedpyright  1.39.10   ~/.pyenv/versions/gef_cpp_venv/bin/basedpyright
+pytest        9.1.1     ~/.pyenv/versions/gef_cpp_venv/bin/pytest
 clang-tidy    22.1.8    /usr/bin/clang-tidy
 clang-format  22.1.8    /usr/bin/clang-format
 ctags         6.2.1     /usr/bin/ctags

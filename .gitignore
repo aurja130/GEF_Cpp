@@ -66,6 +66,7 @@ venv/
 *.egg-info/
 .coverage
 htmlcov/
+.python-version
 
 # Editors and OS
 .vscode/

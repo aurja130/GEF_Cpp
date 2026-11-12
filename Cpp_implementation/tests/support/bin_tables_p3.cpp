@@ -115,6 +115,8 @@ void visit(Case& c, Visitor& v) {
     v.integer("IEVTtot", c.bin.ievttot);
     v.integer("Inofirst", c.plan.inofirst);
     v.integer("Imulti", c.imulti);
+    v.integer("B_supp", c.b_supp);
+    v.integer("I_Mode_selected", c.i_mode_selected);
     v.single("Escission_lim", c.tables.escission_lim);
     // mode centres, mean Z, mean A and N of the modes
     v.single("ZC_Mode_0", c.tables.zc_mode_0);
@@ -124,6 +126,7 @@ void visit(Case& c, Visitor& v) {
     v.single("ZC_Mode_4", c.tables.zc_mode_4);
     v.single("ZC_Mode_5", c.tables.zc_mode_5);
     v.single("ZC_Mode_3_shift", c.tables.zc_mode_3_shift);
+    v.single("P_Z_Mean_S0", c.tables.p_z_mean_s0);
     v.single("P_Z_Mean_S1", c.tables.p_z_mean_s1);
     v.single("P_Z_Mean_S2", c.tables.p_z_mean_s2);
     v.single("P_Z_Mean_S3", c.tables.p_z_mean_s3);
@@ -256,6 +259,38 @@ void visit(Case& c, Visitor& v) {
     v.single("Sigpol_Mode_4", c.tables.sigpol_mode_4);
     v.single("Sigpol_Mode_5", c.tables.sigpol_mode_5);
     v.single("SigA_Mode_2", c.tables.siga_mode_2);
+    // shifts, suppression, potential energies, yields and mass widths of the modes
+    v.single("EsciS0", c.tables.escis0);
+    v.single("EsciS1", c.tables.escis1);
+    v.single("EsciS2", c.tables.escis2);
+    v.single("EsciS3", c.tables.escis3);
+    v.single("EsciS4", c.tables.escis4);
+    v.single("EsciS5", c.tables.escis5);
+    v.single("DEsupp", c.tables.desupp);
+    v.single("R_slope_S2", c.tables.r_slope_s2);
+    v.single("R_supp_S0", c.tables.r_supp_s0);
+    v.single("R_supp_S1", c.tables.r_supp_s1);
+    v.single("R_supp_S2", c.tables.r_supp_s2);
+    v.single("R_Supp_S3", c.tables.r_supp_s3);
+    v.array("EMpot", c.tables.empot);
+    v.single("Yield_Mode_0", c.tables.yield_mode_0);
+    v.single("Yield_Mode_1", c.tables.yield_mode_1);
+    v.single("Yield_Mode_2", c.tables.yield_mode_2);
+    v.single("Yield_Mode_3", c.tables.yield_mode_3);
+    v.single("Yield_Mode_4", c.tables.yield_mode_4);
+    v.single("Yield_Mode_5", c.tables.yield_mode_5);
+    v.single("Yield_Mode_11", c.tables.yield_mode_11);
+    v.single("Yield_Mode_22", c.tables.yield_mode_22);
+    v.single("Yield_Norm", c.tables.yield_norm);
+    v.single("P_selected", c.tables.p_selected);
+    v.single("SigA_Mode_0", c.tables.siga_mode_0);
+    v.single("SigA_Mode_1", c.tables.siga_mode_1);
+    v.single("SigA_Mode_3", c.tables.siga_mode_3);
+    v.single("SigA_Mode_4", c.tables.siga_mode_4);
+    v.single("SigA_Mode_5", c.tables.siga_mode_5);
+    v.single("SigA_Mode_11", c.tables.siga_mode_11);
+    v.single("SigA_Mode_22", c.tables.siga_mode_22);
+    v.single("Racc", c.tables.racc);
     // stale temporaries
     v.single("beta1", c.temporaries.beta1);
     v.single("beta2", c.temporaries.beta2);

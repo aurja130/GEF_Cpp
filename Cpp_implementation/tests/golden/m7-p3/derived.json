@@ -1,7 +1,7 @@
 {
   "kind": "store-derived",
   "outputs": {
-    "fingerprints.txt": "4515246c57eddbd46f72995874206ffc6c59bc885a623b212015d844d7f54577"
+    "fingerprints.txt": "4ff2f73e5bd1f95d92f339cccabc5f9674f83c47213177cb5ec6a000da882ce0"
   },
   "sources": [
     {
@@ -273,6 +273,21 @@
       "capture": "m7-p3-u236-mode",
       "file": "work/probes/P3in.txt",
       "sha256": "f5e7065e7fc43642e857c98581b6f26865a0a8dd61b8173d64b4c88bd560d69f"
+    },
+    {
+      "capture": "m7-p3-u236-mode11",
+      "file": "run.json",
+      "sha256": "e4c5393391cb825dc3edfd42e0d1350aaf5d70720f22826ede7f25b727eab212"
+    },
+    {
+      "capture": "m7-p3-u236-mode11",
+      "file": "work/probes/P3.txt",
+      "sha256": "e77889976682f35e5f21144624f6729c8b60c27d291c78383275fce38ce75838"
+    },
+    {
+      "capture": "m7-p3-u236-mode11",
+      "file": "work/probes/P3in.txt",
+      "sha256": "6d3da4ad485fbeab8b1bb3f08f53a3929734c36866bb7817ffb81efc1c25f065"
     },
     {
       "capture": "m7-p3-u236-n",

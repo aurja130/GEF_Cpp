@@ -36,6 +36,10 @@ struct BuilderCase {
     float spin_cn = 0.0F; // Spin_CN (run::ProcessState::spin_cn)
     float z = 0.0F;       // Z (run::ProcessState::z)
     std::int64_t f = 0;   // f, the file number Beta_Equi prints to (QUIRKS Q-041)
+    // B_supp, I_Mode_selected (run::SequenceFileState::b_supp, i_mode_selected; Options(NOSUPP),
+    // MODE(i))
+    std::uint8_t b_supp = 1;
+    std::int64_t i_mode_selected = -1;
 };
 
 // The P3 names of the variables BuilderCase holds, ascending.

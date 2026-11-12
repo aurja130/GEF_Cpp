@@ -304,6 +304,7 @@ void load_single_array(ProbeRecord const& record, std::string_view name,
 }
 
 template void load_single_array<1>(ProbeRecord const&, std::string_view, fb::Array<float, 1>&);
+template void load_single_array<2>(ProbeRecord const&, std::string_view, fb::Array<float, 2>&);
 template void load_single_array<3>(ProbeRecord const&, std::string_view, fb::Array<float, 3>&);
 
 template <std::size_t rank>
@@ -328,6 +329,7 @@ fb::Array<float, rank> read_single_array(ProbeRecord const& record, std::string_
 }
 
 template fb::Array<float, 1> read_single_array<1>(ProbeRecord const&, std::string_view);
+template fb::Array<float, 2> read_single_array<2>(ProbeRecord const&, std::string_view);
 template fb::Array<float, 3> read_single_array<3>(ProbeRecord const&, std::string_view);
 
 } // namespace gef::test
