@@ -68,6 +68,26 @@ void shifts_polarisation_and_yields(BinInput const& bin, std::uint8_t b_supp,
                                     params::Parameters const& p, BinTables& t,
                                     fb::PrintFile& console);
 
+// GEF.bas:7040-7379: the shell effects per mode and fragment (`Eshell`, `DU0..5`), the mean
+// intrinsic temperatures at scission (`T_intr_Mode_*`), the temperatures per mode, fragment and A
+// (`Temp`, `TempFF`; each step writes the global `T`, run::ProcessState::t, to `temperature`),
+// and per mode 0-7 the intrinsic excitation energy at scission (`E_coll_saddle`, `E_tunn`,
+// `E_POT_SCISSION`, `E_diss_Scission`, `EINTR_SCISSION`), the even-odd effect (`PEOZ`, `PEON`,
+// QUIRK(Q-011)) and the energy sorting (`EPART`, QUIRK(Q-010)). The A loops run to A_CN - 1 and
+// reach past the tables' last A as the reference binary does (QUIRK(Q-061)).
+void shells_temperatures_and_energy_sorting(BinInput const& bin, WorkingParameters const& w,
+                                            params::Parameters const& p, BinTables& t,
+                                            Temporaries& tmp, float& temperature);
+
+// GEF.bas:7381-7507: the RMS spins of the fragments per mode, fragment, N and Z (`SpinRMSNZ`,
+// through store_spin_rms, QUIRK(Q-061)), from `EPART`, `Beta` and the CN spin `spin_cn`
+// (run::ProcessState::spin_cn). Writes `I_rigid_spher` (BinInput), the global `T` to
+// `temperature`, and `beta1`, `beta2`, `IZ1`, `IN1`, `IA1` to `tmp`. An `EPART` read past the
+// table reads the mass tables that follow it in memory (`tables`, QUIRK(Q-061)).
+void fragment_spins(BinInput& bin, WorkingParameters const& w, params::Parameters const& p,
+                    data::TableSet const& tables, BinTables& t, Temporaries& tmp, float spin_cn,
+                    float& temperature);
+
 // GEF.bas:7920 `Racc = 100.E0 / NEVTtot * P_selected` (normalisation of the spectra), the last
 // statement before the event loop; `nevttot` is BinPlanInput::nevttot.
 void spectra_normalisation(std::int64_t nevttot, BinTables& t);

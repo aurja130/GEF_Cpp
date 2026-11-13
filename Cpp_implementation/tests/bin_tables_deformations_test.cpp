@@ -2,12 +2,12 @@
 // Copyright (C) 2026 Aurora Jahan
 // Licensed under the GNU GPL v3 or later, WITHOUT ANY WARRANTY; see LICENSE.txt.
 
-// The table builder's blocks through M7.3 (GEF.bas:5584-7036 and 7920: bin entry, mode centres,
+// T1, gate G3: the whole table builder (GEF.bas:5584-7507 and 7920: bin entry, mode centres,
 // deformations, mean Z as a function of A, Z-A relations, curvatures, barriers, energies,
-// temperatures and widths, energy-dependent shifts, EMpot, polarisation, yields, mass widths and
-// Racc) run from every P3in record of the M7 captures. Each run is compared with the P3 record of
-// the same bin, per MILESTONE_7_PLAN.md D9: every P3 variable whose last writer in a bin is one
-// of these blocks, and every variable the builder does not write, must equal BASIC's bits.
+// temperatures and widths, energy-dependent shifts, EMpot, polarisation, yields, mass widths,
+// shell effects, temperatures, even-odd effect, energy sorting, fragment spins and Racc) runs from
+// every P3in record of the M7 captures. Each run is compared with the P3 record of the same bin,
+// per MILESTONE_7_PLAN.md D9: every P3 variable must equal BASIC's bits.
 
 #include "data/program_data.hpp"
 #include "data/tables.hpp"
@@ -30,50 +30,31 @@
 #include <cstdint>
 #include <limits>
 #include <set>
+#include <span>
 #include <string>
 #include <string_view>
-#include <tuple>
 #include <vector>
 
 namespace {
 
-// The indices of every element of `array`, the first index running fastest. Empty when the array
-// has no elements.
+// The index of the element `linear` places after the first one (row-major, the last index
+// running fastest), as text, for example `3,1,47`.
 template <std::size_t rank>
-std::vector<std::array<std::int64_t, rank>>
-element_indices(gef::fb::Array<float, rank> const& array) {
-    std::vector<std::array<std::int64_t, rank>> indices;
-    if (array.elements().empty()) {
-        return indices;
-    }
+std::string index_text(gef::fb::Array<float, rank> const& array, std::size_t linear) {
     std::array<std::int64_t, rank> index{};
-    for (std::size_t dimension = 0; dimension < rank; ++dimension) {
-        index.at(dimension) = array.lbound(static_cast<std::int64_t>(dimension) + 1);
+    for (std::size_t d = rank; d-- > 0;) {
+        auto const dimension = static_cast<std::int64_t>(d) + 1;
+        auto const extent =
+            static_cast<std::size_t>(array.ubound(dimension) - array.lbound(dimension) + 1);
+        index.at(d) = array.lbound(dimension) + static_cast<std::int64_t>(linear % extent);
+        linear /= extent;
     }
-    while (true) {
-        indices.push_back(index);
-        std::size_t dimension = 0;
-        while (dimension < rank &&
-               index.at(dimension) == array.ubound(static_cast<std::int64_t>(dimension) + 1)) {
-            index.at(dimension) = array.lbound(static_cast<std::int64_t>(dimension) + 1);
-            ++dimension;
-        }
-        if (dimension == rank) {
-            return indices;
-        }
-        ++index.at(dimension);
-    }
-}
-
-// An element index as text, for example `3,1,47`.
-template <std::size_t rank>
-std::string index_text(std::array<std::int64_t, rank> const& index) {
     std::string text;
-    for (std::size_t dimension = 0; dimension < rank; ++dimension) {
-        if (dimension > 0) {
+    for (std::size_t d = 0; d < rank; ++d) {
+        if (d > 0) {
             text += ",";
         }
-        text += std::to_string(index.at(dimension));
+        text += std::to_string(index.at(d));
     }
     return text;
 }
@@ -91,13 +72,17 @@ std::string array_difference(gef::fb::Array<float, rank> const& cpp,
             return "bounds differ in dimension " + std::to_string(dimension);
         }
     }
-    for (auto const& index : element_indices(cpp)) {
-        auto const want = std::bit_cast<std::uint32_t>(std::apply(basic, index));
-        auto const got = std::bit_cast<std::uint32_t>(std::apply(cpp, index));
-        if (want != got) {
-            return "element " + index_text(index) + ": C++ " + std::to_string(got) + ", BASIC " +
-                   std::to_string(want);
-        }
+    // Equal bounds: both arrays hold their elements in the same order.
+    std::span<float const> const want = basic.elements();
+    std::span<float const> const got = cpp.elements();
+    auto const [want_at, got_at] = std::ranges::mismatch(want, got, [](float a, float b) {
+        return std::bit_cast<std::uint32_t>(a) == std::bit_cast<std::uint32_t>(b);
+    });
+    if (want_at != want.end()) {
+        auto const linear = static_cast<std::size_t>(want_at - want.begin());
+        return "element " + index_text(cpp, linear) + ": C++ " +
+               std::to_string(std::bit_cast<std::uint32_t>(*got_at)) + ", BASIC " +
+               std::to_string(std::bit_cast<std::uint32_t>(*want_at));
     }
     return {};
 }
@@ -140,42 +125,29 @@ std::vector<std::string> selected_mode_lines(std::vector<std::string> const& lin
 
 } // namespace
 
-// D9 compares the builder arrays whole, which needs every writer of them to be in M7.1-M7.3.
-TEST_CASE("tables: no block after M7.3 writes beta, Edefo, Zshift or EMpot", "[unit][tables]") {
-    auto const& map = gef::test::last_writer_map();
-    auto later = [&](std::string_view name) {
-        std::vector<std::string> out;
-        for (std::string const& writer : map.at(std::string(name)).writers) {
-            if (!writer.contains(":M7.1") && !writer.contains(":M7.2") &&
-                !writer.contains(":M7.3")) {
-                out.push_back(writer);
-            }
-        }
-        return out;
-    };
-    CHECK(later("beta").empty());
-    CHECK(later("Edefo").empty());
-    CHECK(later("Zshift").empty());
-    CHECK(later("EMpot").empty());
-    CHECK(map.at("Zshift").part == "M7.3");
-    CHECK(map.at("EMpot").part == "M7.3");
+// D9 compares the whole P3, so every P3 variable must be an input of the builder or written by
+// one of its parts M7.1-M7.4, and BuilderCase must hold it.
+TEST_CASE("tables: the builder writes or carries every P3 variable", "[unit][tables]") {
+    auto const& registered = gef::test::builder_variable_names();
+    std::set<std::string_view> const parts{"input", "M7.1", "M7.2", "M7.3", "M7.4"};
+    for (auto const& [name, row] : gef::test::last_writer_map()) {
+        INFO("variable " << name << ", part " << row.part);
+        CHECK(parts.contains(row.part));
+        CHECK(registered.contains(name));
+    }
+    CHECK(gef::test::last_writer_map().at("SpinRMSNZ").part == "M7.4");
 }
 
 namespace {
 
-// D9: the variables the blocks through M7.3 write last, and those no block writes (BASIC's P3
-// equals its P3in for those).
+// D9: every P3 variable (the last-writer map holds them all).
 std::set<std::string, std::less<>> whole_variables() {
     auto const& registered = gef::test::builder_variable_names();
     std::set<std::string, std::less<>> whole;
     for (auto const& [name, row] : gef::test::last_writer_map()) {
-        if (row.part == "M7.1" || row.part == "M7.2" || row.part == "M7.3") {
-            INFO("variable " << name);
-            REQUIRE(registered.contains(name));
-            whole.insert(name);
-        } else if (row.part == "input" && registered.contains(name)) {
-            whole.insert(name);
-        }
+        INFO("variable " << name);
+        REQUIRE(registered.contains(name));
+        whole.insert(name);
     }
     return whole;
 }
@@ -189,8 +161,9 @@ gef::data::TableSet const& jeff33() {
 
 // The builder arrays, which are compared element by element rather than as P3 lines.
 bool is_builder_array(std::string_view name) {
-    constexpr std::array<std::string_view, 7> arrays{"Zmean", "beta",      "Edefo", "Zshift",
-                                                     "R_Att", "R_Att_Sad", "EMpot"};
+    constexpr std::array<std::string_view, 15> arrays{
+        "Zmean",  "beta",   "Edefo", "Zshift", "R_Att", "R_Att_Sad", "EMpot",        "Temp",
+        "TempFF", "Eshell", "PEOZ",  "PEON",   "EPART", "SpinRMSNZ", "E_coll_saddle"};
     return std::ranges::find(arrays, name) != arrays.end();
 }
 
@@ -212,8 +185,8 @@ std::vector<gef::tables::BetaEquiMessage> check_bin(gef::test::ProbeRecord const
                                                     std::vector<std::string>& console_lines) {
     gef::test::BuilderCase c;
     gef::test::load_builder_case(in, c);
-    // D7: the builder's temporaries and the global Z carry nothing into a bin; poisoned, a read
-    // before write would show in the comparison.
+    // D7: the builder's temporaries and the globals Z and T carry nothing into a bin; poisoned, a
+    // read before write would show in the comparison.
     float const poison = std::numeric_limits<float>::quiet_NaN();
     c.temporaries = gef::tables::Temporaries{.rbeta = poison,
                                              .beta1 = poison,
@@ -226,11 +199,15 @@ std::vector<gef::tables::BetaEquiMessage> check_bin(gef::test::ProbeRecord const
                                              .z2 = poison,
                                              .iz1 = -1000000,
                                              .iz2 = -1000000,
+                                             .in1 = -1000000,
+                                             .ia1 = -1000000,
+                                             .ia2 = -1000000,
                                              .a1 = poison,
                                              .a2 = poison,
                                              .e_defo = poison,
                                              .rz = poison};
     c.z = poison;
+    c.t = poison;
     // D7: the blocks through M7.2 zero these in every bin (GEF.bas:6326, 6478-6481); poisoned,
     // a missing zeroing would show in the comparison.
     c.tables.t_rusanov = poison;
@@ -239,9 +216,46 @@ std::vector<gef::tables::BetaEquiMessage> check_bin(gef::test::ProbeRecord const
     c.tables.r_e_intr_s3 = poison;
     c.tables.r_e_intr_s4 = poison;
     c.tables.r_e_intr_s5 = poison;
-    for (gef::fb::Array<float, 1>* const array : {&c.tables.r_att, &c.tables.r_att_sad}) {
+    // GEF.bas:7178 `Redim E_coll_saddle(0 To 7)` zero-fills it in every bin.
+    for (gef::fb::Array<float, 1>* const array :
+         {&c.tables.r_att, &c.tables.r_att_sad, &c.tables.e_coll_saddle}) {
         array->redim({gef::fb::Bounds{0, 7}});
         std::ranges::fill(array->elements(), poison);
+    }
+    // D7: GEF.bas:7040-7507 rewrite these in every bin, many with values that depend only on A
+    // (equal in every bin of a capture) or are 0; poisoned over the range each block writes (inside
+    // the array), a missing write would show in the comparison.
+    for (float* const scalar :
+         {&c.tables.du0, &c.tables.du1, &c.tables.du2, &c.tables.du3, &c.tables.du4, &c.tables.du5,
+          &c.tables.t_intr_mode_0, &c.tables.t_intr_mode_1_heavy, &c.tables.t_intr_mode_1_light,
+          &c.tables.t_intr_mode_2_heavy, &c.tables.t_intr_mode_2_light,
+          &c.tables.t_intr_mode_3_heavy, &c.tables.t_intr_mode_3_light,
+          &c.tables.t_intr_mode_4_heavy, &c.tables.t_intr_mode_4_light,
+          &c.tables.t_intr_mode_5_heavy, &c.tables.t_intr_mode_5_light, &c.tables.eintr_scission,
+          &c.bin.i_rigid_spher}) {
+        *scalar = poison;
+    }
+    std::int64_t const a_last = std::min<std::int64_t>(c.bin.i_a_cn - 1, 350);
+    for (std::int64_t a = 1; a <= a_last; ++a) {
+        for (std::int64_t k = 1; k <= 2; ++k) {
+            for (std::int64_t mode = 0; mode <= 5; ++mode) {
+                if (mode <= 4 || k == 2) {
+                    c.tables.eshell(mode, k, a) = poison;
+                }
+                c.tables.temp(mode, k, a) = poison;
+                c.tables.tempff(mode, k, a) = poison;
+            }
+        }
+    }
+    std::int64_t const sorted_last = std::min<std::int64_t>(c.bin.i_a_cn - 40, 350);
+    for (std::int64_t a = 40; a <= sorted_last; ++a) {
+        for (std::int64_t k = 1; k <= 2; ++k) {
+            for (std::int64_t mode = 0; mode <= 7; ++mode) {
+                c.tables.epart(mode, k, a) = poison;
+                c.tables.peoz(mode, k, a) = poison;
+                c.tables.peon(mode, k, a) = poison;
+            }
+        }
     }
     gef::fb::PrintFile console = gef::fb::PrintFile::console();
     gef::tables::enter_bin(c.bin, c.params.emode, c.spin_cn, console);
@@ -262,6 +276,10 @@ std::vector<gef::tables::BetaEquiMessage> check_bin(gef::test::ProbeRecord const
     }
     gef::tables::shifts_polarisation_and_yields(c.bin, c.b_supp, c.i_mode_selected, c.working,
                                                 c.params, c.tables, console);
+    gef::tables::shells_temperatures_and_energy_sorting(c.bin, c.working, c.params, c.tables,
+                                                        c.temporaries, c.t);
+    gef::tables::fragment_spins(c.bin, c.working, c.params, jeff33(), c.tables, c.temporaries,
+                                c.spin_cn, c.t);
     gef::tables::spectra_normalisation(c.plan.nevttot, c.tables);
     std::vector<std::string> const lines = text_lines(console.text());
     console_lines.insert(console_lines.end(), lines.begin(), lines.end());
@@ -281,6 +299,14 @@ std::vector<gef::tables::BetaEquiMessage> check_bin(gef::test::ProbeRecord const
     check_array("R_Att", c.tables.r_att, out);
     check_array("R_Att_Sad", c.tables.r_att_sad, out);
     check_array("EMpot", c.tables.empot, out);
+    check_array("Temp", c.tables.temp, out);
+    check_array("TempFF", c.tables.tempff, out);
+    check_array("Eshell", c.tables.eshell, out);
+    check_array("PEOZ", c.tables.peoz, out);
+    check_array("PEON", c.tables.peon, out);
+    check_array("EPART", c.tables.epart, out);
+    check_array("SpinRMSNZ", c.tables.spinrmsnz, out);
+    check_array("E_coll_saddle", c.tables.e_coll_saddle, out);
     return messages;
 }
 
@@ -324,6 +350,10 @@ std::size_t check_capture(std::string const& capture,
         REQUIRE(in.context == out.context);
         ++records;
         INFO("record " << out.context);
+        // QUIRK(Q-011): the capture whose Fitpar.dat sets EOscale = 0.5 runs with it.
+        if (capture == "m7-p3-u236-eoscale") {
+            CHECK(gef::test::single_value(in, "EOscale") == 0.5F);
+        }
         std::vector<gef::tables::BetaEquiMessage> const bin_messages =
             check_bin(in, out, whole, console_lines);
         messages.insert(messages.end(), bin_messages.begin(), bin_messages.end());
@@ -338,7 +368,7 @@ std::size_t check_capture(std::string const& capture,
 
 } // namespace
 
-TEST_CASE("tables: blocks through M7.3 equal BASIC from P3in", "[T1][tables]") {
+TEST_CASE("tables: the whole P3 of every bin equals BASIC from P3in", "[T1][tables]") {
     std::set<std::string, std::less<>> const whole = whole_variables();
     std::size_t captures = 0;
     std::size_t records = 0;
@@ -348,8 +378,9 @@ TEST_CASE("tables: blocks through M7.3 equal BASIC from P3in", "[T1][tables]") {
             records += check_capture("m7-p3-" + id, whole);
         }
     }
-    // QUIRK(Q-061): A_CN 385 at Z 120, where the Z(A) loops write past Zmean and Zshift; BASIC
-    // writes P3 of the bin before its run dies.
+    // QUIRK(Q-061): A_CN 385 at Z 120, where the Z(A) loops write past Zmean and Zshift, the
+    // spins read past EPART and write past SpinRMSNZ; BASIC writes P3 of the bin before its run
+    // dies.
     if (gef::test::store_file("m7-q061-z120a385", "work/probes/P3in.txt")) {
         ++captures;
         records += check_capture("m7-q061-z120a385", whole);
@@ -359,4 +390,46 @@ TEST_CASE("tables: blocks through M7.3 equal BASIC from P3in", "[T1][tables]") {
     }
     CHECK(captures == gef::test::m7_corpus_ids().size() + 1);
     CHECK(records > 0);
+}
+
+// GEF.bas:7338 `If Abs(T1 - T2) < 1.E-6`, compiled as `if (|T1 - T2| >= 1E-6) goto else`: a NaN
+// temperature difference takes the Then branch, which gives each fragment half of Etot. A NaN
+// Tscale makes every Temp NaN; the record is the first bin of a U-236 capture.
+TEST_CASE("tables: energy sorting gives each fragment half of Etot when a temperature is NaN",
+          "[unit][tables]") {
+    std::string const capture = "m7-p3-u236-n";
+    if (!gef::test::store_file(capture, "work/probes/P3in.txt")) {
+        SKIP("the reference store has no capture " << capture);
+    }
+    gef::test::ProbeRecordReader p3in(gef::test::capture_file(capture, "work/probes/P3in.txt"),
+                                      gef::test::builder_variable_names());
+    gef::test::ProbeRecord in;
+    REQUIRE(p3in.next(in));
+    gef::test::BuilderCase c;
+    gef::test::load_builder_case(in, c);
+    gef::fb::PrintFile console = gef::fb::PrintFile::console();
+    gef::tables::enter_bin(c.bin, c.params.emode, c.spin_cn, console);
+    std::vector<gef::tables::BetaEquiMessage> messages;
+    gef::tables::mode_centres_and_deformations(c.bin, c.working, c.params, c.spin_cn, c.tables,
+                                               c.temporaries, c.z, messages);
+    gef::tables::barriers_temperatures_and_widths(c.bin, c.plan.p_a_cn, c.working, c.params,
+                                                  jeff33(), c.tables, c.temporaries);
+    gef::tables::shifts_polarisation_and_yields(c.bin, c.b_supp, c.i_mode_selected, c.working,
+                                                c.params, c.tables, console);
+    c.params.tscale = std::numeric_limits<float>::quiet_NaN();
+    gef::tables::shells_temperatures_and_energy_sorting(c.bin, c.working, c.params, c.tables,
+                                                        c.temporaries, c.t);
+    std::int64_t const a_cn = c.bin.i_a_cn;
+    std::size_t positive = 0;
+    for (std::int64_t mode = 0; mode <= 7; ++mode) {
+        for (std::int64_t a1 = 40; a1 <= a_cn - 40; ++a1) {
+            INFO("mode " << mode << ", A " << a1);
+            float const e1 = c.tables.epart(mode, 1, a1);
+            float const e2 = c.tables.epart(mode, 2, a_cn - a1);
+            CHECK(e1 == e2);
+            positive += e1 > 0.0F ? 1U : 0U;
+        }
+    }
+    // With an Etot of 0 in every mode, mode 1 would split evenly on either branch.
+    CHECK(positive > 0);
 }

@@ -93,18 +93,26 @@ float read_mass_table(TableSet const& tables, MassTable table, std::int64_t i, s
     // element (0, 0); relative to the first element that is ((i - lb1) * columns + j - lb2) * 4.
     std::int64_t const linear =
         fb::add(fb::mul(fb::sub(i, a.lbound(1)), columns(a)), fb::sub(j, a.lbound(2)));
-    std::array<Placed, block_order.size()> const placed = place(tables);
     std::int64_t own_start = 0;
-    for (Placed const& p : placed) {
+    for (Placed const& p : place(tables)) {
         if (p.array == &a) {
             own_start = p.start;
         }
     }
-    std::int64_t const offset = fb::add(own_start, fb::mul(linear, single_bytes));
+    return read_mass_memory(tables, fb::add(own_start, fb::mul(linear, single_bytes)));
+}
+
+float read_mass_memory(TableSet const& tables, std::int64_t offset) {
+    // The gap before BEldmTF: EPART's chunk end and BEldmTF's size word (QUIRK(Q-061)).
+    constexpr std::int64_t gap_before_first = 16;
+    std::array<Placed, block_order.size()> const placed = place(tables);
     Placed const& last = placed.back();
-    if (offset < 0 || offset >= last.start + last.bytes) {
-        throw std::out_of_range("table read (" + std::to_string(i) + ", " + std::to_string(j) +
-                                ") outside the memory of GEF's mass tables");
+    if (offset < -gap_before_first || offset >= last.start + last.bytes) {
+        throw std::out_of_range("table read at byte " + std::to_string(offset) +
+                                " from BEldmTF outside the memory of GEF's mass tables");
+    }
+    if (offset % single_bytes != 0) {
+        throw std::logic_error("read_mass_memory: the offset is not a multiple of 4");
     }
     for (Placed const& p : placed) {
         if (offset < p.start + p.bytes) {
@@ -119,7 +127,7 @@ float read_mass_table(TableSet const& tables, MassTable table, std::int64_t i, s
                          other.lbound(2) + element % columns(other));
         }
     }
-    throw std::logic_error("read_mass_table: the offset lies in no part of the block");
+    throw std::logic_error("read_mass_memory: the offset lies in no part of the block");
 }
 
 } // namespace gef::data

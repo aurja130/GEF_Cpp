@@ -16,10 +16,12 @@
 // A gap is the zero-filled end of the previous chunk (8 bytes, libfb's ReDim allocates with
 // calloc), then the next chunk's size word (8 bytes: the chunk size with PREV_INUSE set, high half
 // 0). The gaps are state (BinTables::fragment_gaps): GEF's out-of-bound writes change them.
-// Established on both reference binaries with gdb (Planning/QUIRKS.md Q-061).
+// EPART's chunk is followed by BEldmTF's (data/table_memory.hpp): GEF.bas:7475 reads past EPART
+// into it. Established on both reference binaries with gdb (Planning/QUIRKS.md Q-061).
 
 #pragma once
 
+#include "data/tables.hpp"
 #include "tables/bin_tables.hpp"
 
 #include <cstdint>
@@ -47,5 +49,22 @@ enum class FragmentTable : std::uint8_t {
                                       std::int64_t k, std::int64_t i);
 [[nodiscard]] float fragment_element(BinTables const& t, FragmentTable table, std::int64_t m,
                                      std::int64_t k, std::int64_t i);
+// The same read, except that an address after EPART reads the memory that follows it in the
+// reference binary: 8 zero bytes, BEldmTF's size word, then the mass tables
+// (data::read_mass_memory).
+[[nodiscard]] float fragment_element(BinTables const& t, data::TableSet const& tables,
+                                     FragmentTable table, std::int64_t m, std::int64_t k,
+                                     std::int64_t i);
+
+// GEF.bas:7464/7499 `SpinRMSNZ(m, k, n, z) = value` as the reference binary performs it
+// (QUIRK(Q-061)): fbc writes the Single at `(((m * 2 + k - 1) * 200 + n - 1) * 150 + z - 1)`
+// from the first element, so an N past 200 lands in the next fragment's or mode's block. With
+// `t.fix_fragment_table_overrun` false (the default) a write past the array's end is dropped:
+// SpinRMSNZ is a mmap chunk of its own, and what follows it depends on the address-space layout
+// (the reference run lives in 15 of 20 runs, Planning/QUIRKS.md Q-061). With the switch true, any
+// write outside the bounds throws std::out_of_range. An address before the first element throws
+// either way.
+void store_spin_rms(BinTables& t, std::int64_t m, std::int64_t k, std::int64_t n, std::int64_t z,
+                    float value);
 
 } // namespace gef::tables

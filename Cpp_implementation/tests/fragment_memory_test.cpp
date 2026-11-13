@@ -6,21 +6,33 @@
 // gap words were read from both reference binaries with gdb (MILESTONE_7_PLAN.md §5, M7.2): the
 // tables lie 16 bytes apart, and each gap holds 0, 0, the next chunk's size word, 0.
 
+#include "data/program_data.hpp"
+#include "data/tables.hpp"
 #include "tables/bin_tables.hpp"
 #include "tables/fragment_memory.hpp"
 
 #include <catch2/catch_test_macros.hpp>
 
+#include <algorithm>
 #include <bit>
 #include <cstdint>
 #include <memory>
 #include <stdexcept>
+#include <vector>
 
 namespace {
 
+using gef::data::TableSet;
 using gef::tables::BinTables;
 using gef::tables::fragment_element;
 using gef::tables::FragmentTable;
+using gef::tables::store_spin_rms;
+
+TableSet const& jeff33() {
+    static TableSet const tables =
+        gef::data::load_tables(gef::data::ProgramData(gef::data::NuclideData::Jeff33));
+    return tables;
+}
 
 std::uint32_t bits(float x) {
     return std::bit_cast<std::uint32_t>(x);
@@ -104,12 +116,69 @@ TEST_CASE("tables: a fragment-table write into a gap stays in the gap", "[unit][
 TEST_CASE("tables: fragment-table accesses before Zmean or after EPART throw", "[unit][tables]") {
     auto const t = marked();
     BinTables const& c = *t;
-    // Neither memory is known: the chunks next to the block hold other data.
+    // Without the mass tables neither memory is known: the chunks next to the block hold other
+    // data.
     CHECK_THROWS_AS(fragment_element(c, FragmentTable::Zmean, 0, 1, -1), std::out_of_range);
     CHECK_THROWS_AS(fragment_element(*t, FragmentTable::Epart, 7, 2, 351), std::out_of_range);
+    CHECK_THROWS_AS(fragment_element(c, FragmentTable::Epart, 7, 2, 351), std::out_of_range);
     CHECK_THROWS_AS(fragment_element(c, FragmentTable::Zshift, 0, 1, -100000), std::out_of_range);
     // Zshift(0, 1, -4215): back over the 4 gap Singles and 4,211 Zmean Singles, Zmean(0, 1, 1).
     CHECK(bits(fragment_element(c, FragmentTable::Zshift, 0, 1, -4215)) == bits(c.zmean(0, 1, 1)));
+}
+
+TEST_CASE("tables: EPART reads past its end reach the mass tables", "[T1][tables]") {
+    auto const t = marked();
+    BinTables const& c = *t;
+    TableSet const& m = jeff33();
+    // QUIRK(Q-061): EPART(7, 2, 351..) at GEF.bas:7475 (capture m7-q061-z120a385): 8 zero bytes,
+    // BEldmTF's size word 0x1B4C1, 4 zero bytes, then BEldmTF(0, 0), BEldmTF(0, 1).
+    CHECK(bits(fragment_element(c, m, FragmentTable::Epart, 7, 2, 351)) == 0x00000000U);
+    CHECK(bits(fragment_element(c, m, FragmentTable::Epart, 7, 2, 352)) == 0x00000000U);
+    CHECK(bits(fragment_element(c, m, FragmentTable::Epart, 7, 2, 353)) == 0x0001B4C1U);
+    CHECK(bits(fragment_element(c, m, FragmentTable::Epart, 7, 2, 354)) == 0x00000000U);
+    CHECK(bits(fragment_element(c, m, FragmentTable::Epart, 7, 2, 355)) == bits(m.beldm_tf(0, 0)));
+    CHECK(bits(fragment_element(c, m, FragmentTable::Epart, 7, 2, 356)) == bits(m.beldm_tf(0, 1)));
+    // Inside the block the overload reads what the other one reads.
+    CHECK(bits(fragment_element(c, m, FragmentTable::Epart, 7, 2, 350)) ==
+          bits(c.epart(7, 2, 350)));
+    CHECK(bits(fragment_element(c, m, FragmentTable::Peon, 7, 2, 355)) == bits(c.epart(0, 1, 0)));
+    // With the switch the read throws.
+    t->fix_fragment_table_overrun = true;
+    CHECK_THROWS_AS(fragment_element(c, m, FragmentTable::Epart, 7, 2, 351), std::out_of_range);
+}
+
+TEST_CASE("tables: SpinRMSNZ writes alias inside the array and are dropped past it",
+          "[unit][tables]") {
+    auto const t = std::make_unique<BinTables>();
+    // Inside the bounds: the element.
+    store_spin_rms(*t, 3, 1, 10, 20, 1.5F);
+    CHECK(t->spinrmsnz(3, 1, 10, 20) == 1.5F);
+    // QUIRK(Q-061): N past 200 reaches the next fragment's rows, Z past 150 the next N's row.
+    store_spin_rms(*t, 3, 1, 201, 5, 2.5F);
+    CHECK(t->spinrmsnz(3, 2, 1, 5) == 2.5F);
+    store_spin_rms(*t, 7, 1, 10, 151, 3.5F);
+    CHECK(t->spinrmsnz(7, 1, 11, 1) == 3.5F);
+    store_spin_rms(*t, 7, 2, 200, 150, 4.5F);
+    CHECK(t->spinrmsnz(7, 2, 200, 150) == 4.5F);
+    // Past the last element (mode 7, fragment 2, N 201 of capture m7-q061-z120a385) the write
+    // is dropped: what lies there in the reference binary is unknown.
+    std::vector<float> const before(t->spinrmsnz.elements().begin(), t->spinrmsnz.elements().end());
+    store_spin_rms(*t, 7, 2, 201, 1, 5.5F);
+    store_spin_rms(*t, 7, 2, 257, 111, 5.5F);
+    CHECK(std::ranges::equal(t->spinrmsnz.elements(), before));
+    // An address before the first element throws.
+    CHECK_THROWS_AS(store_spin_rms(*t, 0, 1, 0, 1, 6.5F), std::out_of_range);
+}
+
+TEST_CASE("tables: with fix_fragment_table_overrun a SpinRMSNZ write outside the bounds throws",
+          "[unit][tables]") {
+    auto const t = std::make_unique<BinTables>();
+    t->fix_fragment_table_overrun = true;
+    CHECK_THROWS_AS(store_spin_rms(*t, 3, 1, 201, 5, 2.5F), std::out_of_range);
+    CHECK_THROWS_AS(store_spin_rms(*t, 7, 2, 201, 1, 2.5F), std::out_of_range);
+    CHECK(t->spinrmsnz(3, 2, 1, 5) == 0.0F);
+    store_spin_rms(*t, 7, 2, 200, 150, 4.5F);
+    CHECK(t->spinrmsnz(7, 2, 200, 150) == 4.5F);
 }
 
 TEST_CASE("tables: with fix_fragment_table_overrun an access outside the bounds throws",

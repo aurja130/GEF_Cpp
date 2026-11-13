@@ -10,7 +10,8 @@
 // them), each a glibc malloc chunk, so an index past the end of one table reads the next table,
 // or the chunk header between them:
 //
-//   BEldmTF | 16 bytes | BEexp | 16 bytes | DEFOtab | 12 bytes | ShellMO | 16 bytes | EVOD
+//   (EPART) | 16 bytes | BEldmTF | 16 bytes | BEexp | 16 bytes | DEFOtab | 12 bytes | ShellMO |
+//   16 bytes | EVOD
 //
 // A gap is the zero-filled end of the previous chunk (libfb's ReDim allocates with calloc, which
 // clears the chunk up to the next one's size word), then the next chunk's 8-byte size word (its
@@ -37,9 +38,15 @@ enum class MassTable : std::uint8_t {
 
 // `table(i, j)` as GEF reads it. Inside the bounds: the element. Outside: with
 // `tables.fix_table_overrun` false (reproduce, the default), the Single the reference binary
-// finds at that address in the block above; with it true, std::out_of_range. An address before
-// BEldmTF or after EVOD lies outside the known memory and throws std::out_of_range either way.
+// finds at that address (read_mass_memory); with it true, std::out_of_range.
 [[nodiscard]] float read_mass_table(TableSet const& tables, MassTable table, std::int64_t i,
                                     std::int64_t j);
+
+// The Single the reference binary holds `offset` bytes from BEldmTF's first element (a multiple
+// of 4), from the 16 bytes before BEldmTF to EVOD's last element: the gap before BEldmTF is the
+// zero-filled end of the previous chunk, EPART's (QUIRK(Q-061): GEF.bas:7475 reads past EPART
+// into it), then BEldmTF's size word; from offset 0 on, the block above. Ignores
+// `tables.fix_table_overrun`; an offset outside that memory throws std::out_of_range.
+[[nodiscard]] float read_mass_memory(TableSet const& tables, std::int64_t offset);
 
 } // namespace gef::data

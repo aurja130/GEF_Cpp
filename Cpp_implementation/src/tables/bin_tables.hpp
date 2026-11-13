@@ -66,8 +66,13 @@ struct BinTables {
     // end of the previous chunk (8 bytes), then the chunk's size word (low half, high half 0).
     // Written by GEF's out-of-bound writes and carried like the tables.
     std::array<float, fragment_gap_singles> fragment_gaps = initial_fragment_gaps();
-    // Fidelity switch of QUIRK(Q-061): true makes an index beyond a bound of the eight tables
-    // throw (fb::Array) instead of reaching the memory the reference binary reaches.
+    // GEF.bas:1205 ReDim Shared SpinRMSNZ(0 To 7,1 To 2,1 To 200,1 To 150): RMS spin per mode,
+    // fragment, N, Z (written from M7.4 through store_spin_rms, QUIRK(Q-061))
+    fb::Array<float, 4> spinrmsnz{
+        {fb::Bounds{0, 7}, fb::Bounds{1, 2}, fb::Bounds{1, 200}, fb::Bounds{1, 150}}};
+    // Fidelity switch of QUIRK(Q-061): true makes an index beyond a bound of the eight tables or
+    // of SpinRMSNZ throw (fb::Array) instead of reaching the memory the reference binary reaches
+    // (or, for SpinRMSNZ past its end, dropping the write).
     bool fix_fragment_table_overrun = false;
 
     // --- bin-local (GEF.bas:5610 `Dim As Single Escission_lim` inside the bin's `If`)
@@ -267,6 +272,30 @@ struct BinTables {
     float siga_mode_11 = 0.0F;  // 841
     float siga_mode_22 = 0.0F;  // 841
 
+    // --- shell effects, intrinsic temperatures, even-odd effect and energy sorting
+    // (GEF.bas:7040-7379)
+    float du0 = 0.0F;                 // 824
+    float du1 = 0.0F;                 // 824
+    float du2 = 0.0F;                 // 824
+    float du3 = 0.0F;                 // 824
+    float du4 = 0.0F;                 // 824
+    float du5 = 0.0F;                 // 824
+    float t_intr_mode_0 = 0.0F;       // 818
+    float t_intr_mode_1_heavy = 0.0F; // 818
+    float t_intr_mode_1_light = 0.0F; // 818
+    float t_intr_mode_2_heavy = 0.0F; // 819
+    float t_intr_mode_2_light = 0.0F; // 819
+    float t_intr_mode_3_heavy = 0.0F; // 820
+    float t_intr_mode_3_light = 0.0F; // 820
+    float t_intr_mode_4_heavy = 0.0F; // 821
+    float t_intr_mode_4_light = 0.0F; // 821
+    float t_intr_mode_5_heavy = 0.0F; // 822
+    float t_intr_mode_5_light = 0.0F; // 822
+    float eintr_scission = 0.0F;      // 1548 `Dim Shared As Single EINTR_SCISSION = 0`
+    // GEF.bas:7178 `Redim As Single E_coll_saddle(0 To 7)` (bin-local, zero-filled by ReDim in
+    // every bin)
+    fb::Array<float, 1> e_coll_saddle;
+
     // --- GEF.bas:5052 `Dim As Single Racc` (a local of the pass loop, written per bin at 7920)
     float racc = 0.0F;
 };
@@ -289,6 +318,9 @@ struct Temporaries {
     float z2 = 0.0F;         // 797
     std::int64_t iz1 = 0;    // 798 Shared Integer
     std::int64_t iz2 = 0;    // 798
+    std::int64_t in1 = 0;    // 798
+    std::int64_t ia1 = 0;    // 800 Shared Integer
+    std::int64_t ia2 = 0;    // 800
     float a1 = 0.0F;         // 799
     float a2 = 0.0F;         // 799
     float e_defo = 0.0F;     // 801

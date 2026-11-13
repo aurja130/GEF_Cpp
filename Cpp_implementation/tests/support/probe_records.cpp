@@ -242,6 +242,7 @@ std::array<std::int64_t, rank> parse_index(std::string_view index) {
 
 template std::array<std::int64_t, 1> parse_index<1>(std::string_view);
 template std::array<std::int64_t, 3> parse_index<3>(std::string_view);
+template std::array<std::int64_t, 4> parse_index<4>(std::string_view);
 
 template <std::size_t rank>
 void load_single_array(ProbeRecord const& record, std::string_view name,
@@ -306,6 +307,7 @@ void load_single_array(ProbeRecord const& record, std::string_view name,
 template void load_single_array<1>(ProbeRecord const&, std::string_view, fb::Array<float, 1>&);
 template void load_single_array<2>(ProbeRecord const&, std::string_view, fb::Array<float, 2>&);
 template void load_single_array<3>(ProbeRecord const&, std::string_view, fb::Array<float, 3>&);
+template void load_single_array<4>(ProbeRecord const&, std::string_view, fb::Array<float, 4>&);
 
 template <std::size_t rank>
 fb::Array<float, rank> read_single_array(ProbeRecord const& record, std::string_view name) {
@@ -331,5 +333,6 @@ fb::Array<float, rank> read_single_array(ProbeRecord const& record, std::string_
 template fb::Array<float, 1> read_single_array<1>(ProbeRecord const&, std::string_view);
 template fb::Array<float, 2> read_single_array<2>(ProbeRecord const&, std::string_view);
 template fb::Array<float, 3> read_single_array<3>(ProbeRecord const&, std::string_view);
+template fb::Array<float, 4> read_single_array<4>(ProbeRecord const&, std::string_view);
 
 } // namespace gef::test

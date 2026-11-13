@@ -75,6 +75,7 @@ The glossary of the GEF port: every term a concept node uses, and the project's 
 | ENDF energy | The energy of an energy step in a file with ENDF output, taken from the ENDF energies instead of the energy table. | M6 plan decision 5 (control flow). |
 | ENDF-6 tape | An evaluated-data file in the ENDF-6 format that holds yields for selected nuclides. | DBC L1 (approved 2026-11-07); IMPLEMENTATION_STRATEGY milestone M13 |
 | energy line | The line of a sequence file that gives its energies: a quoted spectrum-file name, or a list of energies, each with an optional spin part. | Quirk Q-046 (a spectrum-file energy line keeps the earlier table); quirk Q-059 (an empty energy line reads past the table). |
+| `energy sorting` | The sharing of the intrinsic excitation energy at scission between the two fragments of a mode: by their temperatures, and by their masses at high energy; the GEF term. It replaces the retired term `sorted energy list` (2026-11-12), which was defined as "the modes' energies in order of size", a misreading: nothing is ordered. | Q-010; M7 plan |
 | energy step | One energy of a system's energy list; the run sets each step up in turn and hands it to its passes. | DBC L1 (approved 2026-11-07). |
 | energy table | The energies, with their spins, that an energy line gives; a spectrum-file energy line keeps the earlier table. | Quirk Q-046 (the earlier table is kept); quirk Q-059 (an empty table is read past its end). |
 | enhancement factor | The input factor that sets how many perturbed runs are made and how many events each has. | IMPLEMENTATION_STRATEGY milestone M12 |
@@ -171,7 +172,7 @@ The glossary of the GEF port: every term a concept node uses, and the project's 
 | mass table | One of the five per-nucleus tables GEF indexes by (N, Z): BEldmTF, BEexp, DEFOtab, ShellMO and EVOD; the measured masses are read from them as table lookups. | M4 plan; M5 plan §3; M6 plan (Q-042) |
 | master seed | Seed from which the seeds of all reseed scopes are derived | Reseed specification section 1 |
 | material number | The ENDF material number (MAT) of a nuclide, unique to it; nuclides missing from the table get one by the lookup form's rule. | M4 plan (lookups); ENDF-6 format |
-| `mean charge` | Mean proton number of a mode's fragment at a mass number. Above mass number 360 the reference writes past its arrays; the decided emulation is not built yet, and the code throws there. | Q-061 |
+| `mean charge` | Mean proton number of a mode's fragment at a mass number. Above mass number 360 the reference writes past its arrays, over the neighbouring tables; the C++ reproduces those writes. | Q-061 |
 | Mid function | Returns a piece of a string, from a start position for a given length | Milestone 4 plan |
 | minimum detectable effect | The smallest single-field shift of a family that its local test rejects, in value units, from the null variance of its fields. | compare/STATISTICS.md; Planning/MILESTONE_2_PLAN.md |
 | missing-isomer restart | Restart of the batch input after set-up finds no isomer for an energy step. | Quirk Q-049 (the restart repeats the whole input); M6 plan decision 5 (control flow). |
@@ -314,7 +315,6 @@ The glossary of the GEF port: every term a concept node uses, and the project's 
 | size word | The allocator chunk header, which a read in a gap returns. | Q-042 |
 | skippable step | A CI step that skips with a notice, rather than failing, when `validation/` is absent; a skip is not a pass. | `CURRENT_PROJECT_STATE.md` §3.3; `.omp/AGENTS.md` Deliver |
 | smoothed step | Step function smoothed by a Gaussian integral. | Keeps the GEF meaning |
-| `sorted energy list` | The modes' energies in order of size. | Q-010 |
 | source tool | A tool under `tools/fbsrc/` that maps BASIC lines and names to the emitted C or analyses it. | `tools/fbsrc/README.md` |
 | `spectrum point` | One point of a given spectrum; a first-chance step visits one bin per point. | M7 plan |
 | spin | The angular momentum of a fragment. | IMPLEMENTATION_STRATEGY milestone M10 |

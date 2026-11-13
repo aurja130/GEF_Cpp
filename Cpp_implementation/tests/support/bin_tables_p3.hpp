@@ -35,11 +35,17 @@ struct BuilderCase {
     tables::Temporaries temporaries;
     float spin_cn = 0.0F; // Spin_CN (run::ProcessState::spin_cn)
     float z = 0.0F;       // Z (run::ProcessState::z)
+    float t = 0.0F;       // T (run::ProcessState::t)
     std::int64_t f = 0;   // f, the file number Beta_Equi prints to (QUIRKS Q-041)
     // B_supp, I_Mode_selected (run::SequenceFileState::b_supp, i_mode_selected; Options(NOSUPP),
     // MODE(i))
     std::uint8_t b_supp = 1;
     std::int64_t i_mode_selected = -1;
+    // P3 variables the builder neither reads nor writes; they pass from P3in to P3 unchanged.
+    std::int64_t i_e_iso = 0; // I_E_iso (run::ProcessState::i_e_iso)
+    float spin_target = 0.0F; // Spin_target (run::ProcessState::spin_target)
+    float b_nopot = 0.0F;     // B_nopot (GEF.bas:808; no statement assigns it)
+    std::int64_t in2 = 0;     // IN2 (GEF.bas:798; no statement assigns it)
 };
 
 // The P3 names of the variables BuilderCase holds, ascending.

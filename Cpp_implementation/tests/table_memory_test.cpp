@@ -20,6 +20,7 @@
 namespace {
 
 using gef::data::MassTable;
+using gef::data::read_mass_memory;
 using gef::data::read_mass_table;
 using gef::data::TableSet;
 
@@ -75,13 +76,36 @@ TEST_CASE("data: mass-table reads between two tables read the malloc chunk heade
     CHECK(bits(read_mass_table(t, MassTable::ShellMo, 204, 2)) == 0x0001B4C1U);
 }
 
-TEST_CASE("data: mass-table reads before BEldmTF or after EVOD throw", "[T1][data]") {
+TEST_CASE("data: mass-table reads before BEldmTF reach EPART's chunk end, then throw",
+          "[T1][data]") {
     TableSet const& t = jeff33();
-    // Neither memory is known: the chunk before BEldmTF and the one after EVOD hold other data.
-    CHECK_THROWS_AS(read_mass_table(t, MassTable::BeldmTf, -1, 136), std::out_of_range);
+    // QUIRK(Q-061): the 16 bytes before BEldmTF (gdb, capture m7-q061-z120a385: EPART ends 16
+    // bytes before it): 8 zero bytes, BEldmTF's size word 0x1B4C1, 4 zero bytes.
+    CHECK(bits(read_mass_table(t, MassTable::BeldmTf, -1, 133)) == 0x00000000U);
+    CHECK(bits(read_mass_table(t, MassTable::BeldmTf, -1, 134)) == 0x00000000U);
+    CHECK(bits(read_mass_table(t, MassTable::BeldmTf, -1, 135)) == 0x0001B4C1U);
+    CHECK(bits(read_mass_table(t, MassTable::BeldmTf, -1, 136)) == 0x00000000U);
+    // Before them lies EPART itself (the tables builder's memory), and after EVOD other data.
+    CHECK_THROWS_AS(read_mass_table(t, MassTable::BeldmTf, -1, 132), std::out_of_range);
     CHECK_THROWS_AS(read_mass_table(t, MassTable::Evod, 204, 0), std::out_of_range);
     CHECK(bits(read_mass_table(t, MassTable::BeldmTf, 0, 0)) == bits(t.beldm_tf(0, 0)));
     CHECK(bits(read_mass_table(t, MassTable::Evod, 203, 136)) == bits(t.evod(203, 136)));
+}
+
+TEST_CASE("data: mass memory reads by byte offset from BEldmTF", "[T1][data]") {
+    TableSet t = jeff33();
+    CHECK(bits(read_mass_memory(t, -8)) == 0x0001B4C1U);
+    CHECK(bits(read_mass_memory(t, -16)) == 0x00000000U);
+    CHECK(bits(read_mass_memory(t, 0)) == bits(t.beldm_tf(0, 0)));
+    // BEldmTF(0, 1), then the gap after BEldmTF's 204 x 137 Singles and BEexp(0, 0) after it.
+    CHECK(bits(read_mass_memory(t, 4)) == bits(t.beldm_tf(0, 1)));
+    CHECK(bits(read_mass_memory(t, (204 * 137 * 4) + 8)) == 0x0001B4C1U);
+    CHECK(bits(read_mass_memory(t, (204 * 137 * 4) + 16)) == bits(t.be_exp(0, 0)));
+    CHECK_THROWS_AS(read_mass_memory(t, -20), std::out_of_range);
+    CHECK_THROWS_AS(read_mass_memory(t, 2), std::logic_error);
+    // The switch belongs to the table reads; the memory is the same with it.
+    t.fix_table_overrun = true;
+    CHECK(bits(read_mass_memory(t, -8)) == 0x0001B4C1U);
 }
 
 TEST_CASE("data: with fix_table_overrun a mass-table read outside the bounds throws",

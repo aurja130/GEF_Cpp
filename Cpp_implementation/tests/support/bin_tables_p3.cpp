@@ -117,6 +117,10 @@ void visit(Case& c, Visitor& v) {
     v.integer("Imulti", c.imulti);
     v.integer("B_supp", c.b_supp);
     v.integer("I_Mode_selected", c.i_mode_selected);
+    v.integer("I_E_iso", c.i_e_iso);
+    v.single("Spin_target", c.spin_target);
+    v.single("B_nopot", c.b_nopot);
+    v.integer("IN2", c.in2);
     v.single("Escission_lim", c.tables.escission_lim);
     // mode centres, mean Z, mean A and N of the modes
     v.single("ZC_Mode_0", c.tables.zc_mode_0);
@@ -291,6 +295,26 @@ void visit(Case& c, Visitor& v) {
     v.single("SigA_Mode_11", c.tables.siga_mode_11);
     v.single("SigA_Mode_22", c.tables.siga_mode_22);
     v.single("Racc", c.tables.racc);
+    // shell effects, intrinsic temperatures, scission energies (GEF.bas:7040-7226)
+    v.single("DU0", c.tables.du0);
+    v.single("DU1", c.tables.du1);
+    v.single("DU2", c.tables.du2);
+    v.single("DU3", c.tables.du3);
+    v.single("DU4", c.tables.du4);
+    v.single("DU5", c.tables.du5);
+    v.single("T_intr_Mode_0", c.tables.t_intr_mode_0);
+    v.single("T_intr_Mode_1_heavy", c.tables.t_intr_mode_1_heavy);
+    v.single("T_intr_Mode_1_light", c.tables.t_intr_mode_1_light);
+    v.single("T_intr_Mode_2_heavy", c.tables.t_intr_mode_2_heavy);
+    v.single("T_intr_Mode_2_light", c.tables.t_intr_mode_2_light);
+    v.single("T_intr_Mode_3_heavy", c.tables.t_intr_mode_3_heavy);
+    v.single("T_intr_Mode_3_light", c.tables.t_intr_mode_3_light);
+    v.single("T_intr_Mode_4_heavy", c.tables.t_intr_mode_4_heavy);
+    v.single("T_intr_Mode_4_light", c.tables.t_intr_mode_4_light);
+    v.single("T_intr_Mode_5_heavy", c.tables.t_intr_mode_5_heavy);
+    v.single("T_intr_Mode_5_light", c.tables.t_intr_mode_5_light);
+    v.single("EINTR_SCISSION", c.tables.eintr_scission);
+    v.array("E_coll_saddle", c.tables.e_coll_saddle);
     // stale temporaries
     v.single("beta1", c.temporaries.beta1);
     v.single("beta2", c.temporaries.beta2);
@@ -307,7 +331,11 @@ void visit(Case& c, Visitor& v) {
     v.single("A2", c.temporaries.a2);
     v.integer("IZ1", c.temporaries.iz1);
     v.integer("IZ2", c.temporaries.iz2);
+    v.integer("IN1", c.temporaries.in1);
+    v.integer("IA1", c.temporaries.ia1);
+    v.integer("IA2", c.temporaries.ia2);
     v.single("Z", c.z);
+    v.single("T", c.t);
     // persistent per-fragment tables
     v.array("beta", c.tables.beta);
     v.array("Edefo", c.tables.edefo);
@@ -319,6 +347,7 @@ void visit(Case& c, Visitor& v) {
     v.array("PEOZ", c.tables.peoz);
     v.array("PEON", c.tables.peon);
     v.array("EPART", c.tables.epart);
+    v.array("SpinRMSNZ", c.tables.spinrmsnz);
     // working parameter set
     for (WorkingName const& w : working_names) {
         v.single(w.name, c.working.*w.member);
